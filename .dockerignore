@@ -1,0 +1,17 @@
+deploy/
+coverage/
+node_modules/
+.dockerignore
+.editorconfig
+.git/
+.gitignore
+.istanbul.yml
+circle.yml
+docker-compose.circle.yml
+docker-compose.dev.yml
+docker-compose.functional.yml
+docker-compose.yml
+Dockerfile
+LICENSE
+README.md
+sonar-project.properties

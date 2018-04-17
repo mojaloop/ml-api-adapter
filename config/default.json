@@ -1,0 +1,122 @@
+{
+  "UV_THREADPOOL_SIZE": 16,
+  "PORT": 3000,
+  "ADMIN_PORT": 3001,
+  "HOSTNAME": "http://central-ledger",
+  "ENABLE_TOKEN_AUTH": false,
+  "ENABLE_BASIC_AUTH": false,
+  "LEDGER_ACCOUNT_NAME": "LedgerName",
+  "LEDGER_ACCOUNT_PASSWORD": "LedgerPassword",
+  "AMOUNT": {
+    "PRECISION": 10,
+    "SCALE": 2
+  },
+  "SIDECAR": {
+    "DISABLED": "true",
+    "HOST": "localhost",
+    "PORT": 5678,
+    "CONNECT_TIMEOUT": 45000,
+    "RECONNECT_INTERVAL": 5000
+  },
+  "EMAIL_USER": "modusboxemailtest@gmail.com",
+  "EMAIL_PASSWORD": "April2o0%",
+  "EMAIL_SMTP": "smtp.gmail.com",
+  "TOPICS":{
+    "KAFKA": {
+      "ZOOKEEPER": {
+        "HOSTS": "localhost:2181"
+      },
+      "CONSUMER": {
+        "CONFIG": {
+          "pollingEnabled": false,
+          "pollingCronTab": "*/10 * * * * *",
+          "pollingTimeZone": "UTC"
+        },
+        "OPTIONS": {
+          "debug": false,
+          "metadata.broker.list": "localhost:9092",
+          "group.id": "kafka-mojaloop-group",
+          "client.id": "kafka-mojaloop-client-cons",
+          "socket.keepalive.enable": true,
+          "concurrency": 1,
+          "queued.min.messages": 100000,
+          "queued.max.messages.kbytes": 1048576,
+          "fetch.message.max.bytes": 1048576,
+          "fetch.wait.max.ms": 20,
+          "fetch.error.backoff.ms": 100,
+          "fetch.min.bytes": 1000,
+          "fetch.max.bytes": 262144,
+          "batchSize": 100,
+          "commitEveryNBatch": 1,
+          "commitSync": true,
+          "noBatchCommits": true
+        },
+        "OPTIONS.NOTFIY": {
+          "debug": false,
+          "metadata.broker.list": "localhost:9092",
+          "group.id": "kafka-mojaloop-group",
+          "client.id": "kafka-mojaloop-client-cons",
+          "socket.keepalive.enable": true,
+          "concurrency": 1,
+          "queued.min.messages": 100000,
+          "queued.max.messages.kbytes": 1048576,
+          "fetch.message.max.bytes": 1048576,
+          "fetch.wait.max.ms": 20,
+          "fetch.error.backoff.ms": 100,
+          "fetch.min.bytes": 1000,
+          "fetch.max.bytes": 262144,
+          "batchSize": 10,
+          "commitEveryNBatch": 1,
+          "commitSync": true,
+          "noBatchCommits": true
+        }
+      },
+      "PRODUCER":{
+        "OPTIONS": {
+          "requiredAcks": -1,
+          "partitionCount": 1,
+          "debug": false,
+          "metadata.broker.list": "localhost:9092",
+          "client.id": "kafka-mojaloop-client-prod",
+          "compression.codec": "none",
+          "retry.backoff.ms": 100,
+          "message.send.max.retries": 10,
+          "socket.keepalive.enable": true,
+          "queue.buffering.max.messages": 100000,
+          "queue.buffering.max.ms": 20,
+          "queue.buffering.max.kbytes": 1048576,
+          "batch.num.messages": 100
+        },
+        "OPTIONS.NOTFIY": {
+          "requiredAcks": -1,
+          "partitionCount": 1,
+          "debug": false,
+          "metadata.broker.list": "localhost:9092",
+          "client.id": "kafka-mojaloop-client-prod",
+          "compression.codec": "none",
+          "retry.backoff.ms": 100,
+          "message.send.max.retries": 10,
+          "socket.keepalive.enable": true,
+          "queue.buffering.max.messages": 100000,
+          "queue.buffering.max.ms": 0,
+          "queue.buffering.max.kbytes": 1048576,
+          "batch.num.messages": 10
+        }
+      }
+    },
+    "PREPARE": {
+      "TX":{
+        "TEMPLATE": "topic-{{dfspName}}-prepare-tx",
+        "REGEX": "topic-(.*)-prepare-tx"
+      },
+      "NOTIFICATION":{
+        "TEMPLATE": "topic-{{dfspName}}-prepare-notification",
+        "REGEX": "topic-(.*)-prepare-notification"
+      },
+      "POSITION":{
+        "TEMPLATE": "topic-{{dfspName}}-prepare-position",
+        "REGEX": "topic-(.*)-prepare-position"
+      }
+    }
+  }
+}
