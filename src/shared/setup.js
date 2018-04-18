@@ -4,8 +4,6 @@ const Hapi = require('hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const P = require('bluebird')
 const Migrator = require('../lib/migrator')
-const Db = require('../db')
-const Eventric = require('../eventric')
 const Plugins = require('./plugins')
 const Config = require('../lib/config')
 const Sidecar = require('../lib/sidecar')
@@ -17,11 +15,6 @@ const migrate = (runMigrations) => {
   return runMigrations ? Migrator.migrate() : P.resolve()
 }
 
-const connectDatabase = () => Db.connect(Config.DATABASE_URI)
-
-const startEventric = (loadEventric) => {
-  return loadEventric ? Eventric.getContext() : P.resolve()
-}
 
 const createServer = (port, modules, addRequestLogging = true) => {
   return new P((resolve, reject) => {
@@ -50,12 +43,8 @@ const initialize = ({ service, port, modules = [], loadEventric = false, runMigr
   // ## Added to increase available threads for IO processing
   process.env.UV_THREADPOOL_SIZE = Config.UV_THREADPOOL_SIZE
   return migrate(runMigrations)
-    .then(() => connectDatabase())
-    .then(() => Sidecar.connect(service))
-    .then(() => startEventric(loadEventric))
     .then(() => createServer(port, modules))
     .catch(err => {
-      cleanup()
       throw err
     })
 }
@@ -70,10 +59,6 @@ const onServerRequest = (request, reply) => {
 const onServerPreResponse = (request, reply) => {
   RequestLogger.logResponse(request)
   reply.continue()
-}
-
-const cleanup = () => {
-  Db.disconnect()
 }
 
 module.exports = {

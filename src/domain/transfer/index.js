@@ -1,16 +1,11 @@
 'use strict'
 
 const P = require('bluebird')
-const TransferQueries = require('./queries')
-const SettleableTransfersReadModel = require('../../models/settleable-transfers-read-model')
-const SettlementsModel = require('../../models/settlements')
 const Commands = require('./commands')
 const Translator = require('./translator')
-const RejectionType = require('./rejection-type')
 const State = require('./state')
 const Events = require('../../lib/events')
 const Errors = require('../../errors')
-const Kafka = require('./kafka')
 const Logger = require('@mojaloop/central-services-shared').Logger
 
 const getById = (id) => {
@@ -59,9 +54,6 @@ const reject = (rejection) => {
     })
 }
 
-const expire = (id) => {
-  return reject({ id, rejection_reason: RejectionType.EXPIRED })
-}
 
 const fulfill = (fulfillment) => {
   return Commands.fulfill(fulfillment)
@@ -76,41 +68,11 @@ const fulfill = (fulfillment) => {
     })
 }
 
-const rejectExpired = () => {
-  const rejections = TransferQueries.findExpired().then(expired => expired.map(x => expire(x.transferUuid)))
-  return P.all(rejections).then(rejections => {
-    return rejections.map(r => r.transfer.id)
-  })
-}
 
-const settle = () => {
-  const settlementId = SettlementsModel.generateId()
-  const settledTransfers = SettlementsModel.create(settlementId, 'transfer').then(() => {
-    return SettleableTransfersReadModel.getSettleableTransfers().then(transfers => {
-      transfers.forEach(transfer => {
-        Commands.settle({ id: transfer.transferId, settlement_id: settlementId })
-      })
-      return transfers
-    })
-  })
-
-  return P.all(settledTransfers).then(settledTransfers => {
-    if (settledTransfers.length > 0) {
-      return settledTransfers
-    } else {
-      return P.resolve([])
-    }
-  })
-}
 
 module.exports = {
   fulfill,
-  getById,
-  getAll,
-  getFulfillment,
   prepare,
-  reject,
-  rejectExpired,
-  settle
+  reject
 }
 

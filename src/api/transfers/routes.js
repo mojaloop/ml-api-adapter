@@ -7,11 +7,11 @@ module.exports = [{
   method: 'POST',
   path: '/transfers',
   handler: Handler.create,
-  options: {
-    id: 'shashi',
+  config: {
+    id: 'transfers',
     tags: tags,
-    auth: Auth.strategy(),
-    description: 'Testing by Shashi.',
+    auth: null,
+    description: 'Transfer API.',
     payload: {
       allow: 'application/json',
       failAction: 'error',
