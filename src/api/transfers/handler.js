@@ -18,7 +18,8 @@ const buildGetTransferResponse = (record) => {
 exports.create = async function (request, reply) {
   try {
     Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
-    return reply.response(request.payload).code(201)
+    //return reply.response(request.payload).code(201)
+    return TransferService.prepare
   } catch (err) {
     throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
   }

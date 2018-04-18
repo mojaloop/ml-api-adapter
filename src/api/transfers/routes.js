@@ -32,7 +32,7 @@ module.exports = [{
             key: Joi.string().required().description('Key'),
             value: Joi.string().required().description('Value')
           })).required().description('extension')
-        }).required().description('Extention list'),
+        }).description('Extention list'),
         condition: Joi.string().trim().max(65535).optional().description('Condition of transfer'),
         expiration: Joi.string().isoDate().optional().description('When the transfer expires')
       }

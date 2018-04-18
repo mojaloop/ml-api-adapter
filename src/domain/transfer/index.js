@@ -37,10 +37,7 @@ const getFulfillment = (id) => {
 
 const prepare = (payload) => {
   Logger.info('prepare::start(%s)', payload)
-  // const transfer = Translator.fromPayload(payload)
-  // const transfer = Translator.fromUriIDtoUUIDFromPayload(payload)
-  // const transfer = payload
-  return Commands.prepare(payload)
+  return Commands.publishPrepare(payload)
 }
 
 const reject = (rejection) => {
