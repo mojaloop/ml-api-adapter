@@ -9,6 +9,7 @@ const UrlParser = require('../../../lib/urlparser')
 //const Errors = require('../../errors')
 
 const publishPrepare = async (message) => {
+  Logger.info('publishPrepare::start')
   var kafkaProducer = new Producer()
   var connectionResult = await kafkaProducer.connect()
   Logger.info(`Connected result=${connectionResult}`)

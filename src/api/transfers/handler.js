@@ -19,7 +19,7 @@ exports.create = async function (request, reply) {
   try {
     Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
     //return reply.response(request.payload).code(201)
-    return TransferService.prepare
+    return TransferService.prepare(request.payload)
   } catch (err) {
     throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
   }
