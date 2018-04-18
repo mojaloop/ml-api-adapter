@@ -16,13 +16,12 @@ const buildGetTransferResponse = (record) => {
 }
 
 exports.create = async function (request, reply) {
-  try {
     Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
     //return reply.response(request.payload).code(201)
     return TransferService.prepare(request.payload)
-  } catch (err) {
-    throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
-  }
+            .then(result => reply(result.transfer).code(202))
+            .catch(reply)
+  
 }
 
 // exports.prepareTransfer = function (request, reply) {
