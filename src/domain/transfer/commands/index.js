@@ -14,14 +14,30 @@ const publishPrepare = async (message) => {
   var connectionResult = await kafkaProducer.connect()
   Logger.info(`Connected result=${connectionResult}`)
   if(connectionResult){
-    await kafkaProducer.sendMessage('test', {test: 'test'}, '1234', 'testAccountSender', 'testAccountReciever', {date: new Date()}, 'application/json', ' ').then(results => {
-      Logger.info(`testProducer.sendMessage:: result:'${JSON.stringify(results)}'`)
-      if(results){
-        resolve("202")
-      } else {
-        reject("Not able to send the message")
+
+    let messageProtocol = {
+      content: message,
+      id: message.transferId,
+      to: message.payeeFsp,
+      from: message.payerFsp,
+      metadata: {
+        date: new Date()
+      },
+      type: 'application/json'
+    }
+    let topicConfig = {
+      topicName: 'transfer'
+    }
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+    .then (result => {
+        Logger.info('about to put messages to kafka topic: %s', result)
+        return result
       }
+    ).catch(err => {
+      Logger.error(`Kafka error:: ERROR:'${err}'`)
+      throw err
     })
+    Logger.info('shld not come here')
   } else {
     reject("Not succesful in connecting to kafka cluster")
   }
@@ -101,6 +117,7 @@ const settle = ({id, settlement_id}) => {
 module.exports = {
   fulfill,
   prepare,
+  publishPrepare,
   prepareExecute,
   reject,
   settle,
