@@ -43,5 +43,16 @@ const publishPrepare = async (message) => {
 }
 
 module.exports = {
+<<<<<<< HEAD
   publishPrepare
 }
+=======
+  fulfill,
+  prepare,
+  publishPrepare,
+  prepareExecute,
+  reject,
+  settle,
+  prepareNotification
+}
+>>>>>>> origin/story156-shashi
