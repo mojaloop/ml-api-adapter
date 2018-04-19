@@ -205,4 +205,3 @@ Test('charges model', modelTest => {
 
   modelTest.end()
 })
-

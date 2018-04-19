@@ -255,11 +255,11 @@ Test('setup', setupTest => {
         test.fail('Should have thrown error')
         test.end()
       })
-      .catch(e => {
-        test.ok(Db.disconnect.calledOnce)
-        test.equal(e, err)
-        test.end()
-      })
+        .catch(e => {
+          test.ok(Db.disconnect.calledOnce)
+          test.equal(e, err)
+          test.end()
+        })
     })
 
     initializeTest.end()

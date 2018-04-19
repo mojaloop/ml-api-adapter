@@ -42,20 +42,20 @@ Test('Token Model', modelTest => {
 
     tokensByAccountTest.test('return admin tokens if accountId is null', test => {
       createAccount()
-      .then(account1 => {
-        return P.all([
-          generateToken(account1),
-          generateToken({})
-        ]).then(([token1, token2]) => {
-          return Model.byAccount({ accountId: null }).then((results) => ({ results, token1, token2 }))
+        .then(account1 => {
+          return P.all([
+            generateToken(account1),
+            generateToken({})
+          ]).then(([token1, token2]) => {
+            return Model.byAccount({ accountId: null }).then((results) => ({ results, token1, token2 }))
+          })
         })
-      })
-      .then(({ results, token1, token2 }) => {
-        test.equal(results.length, 1)
-        test.ok(results.find(t => t.token === token2.token))
-        test.notOk(results.find(t => t.token === token1.token))
-        test.end()
-      })
+        .then(({ results, token1, token2 }) => {
+          test.equal(results.length, 1)
+          test.ok(results.find(t => t.token === token2.token))
+          test.notOk(results.find(t => t.token === token1.token))
+          test.end()
+        })
     })
 
     tokensByAccountTest.end()
@@ -67,28 +67,28 @@ Test('Token Model', modelTest => {
       let pastExpiration = Fixtures.getCurrentUTCTimeInMilliseconds() - 60000
 
       createAccount()
-      .then(account1 => {
-        return P.all([
-          generateToken(account1, futureExpiration),
-          generateToken(account1, futureExpiration),
-          generateToken(account1, pastExpiration),
-          generateToken(account1, pastExpiration)
-        ])
-        .then(([token1, token2, token3, token4]) => {
-          return Model.byAccount(account1).then(results => {
-            test.equal(results.length, 4)
-            return Model.removeExpired().then(results => {
-              test.equal(results.length, 2)
+        .then(account1 => {
+          return P.all([
+            generateToken(account1, futureExpiration),
+            generateToken(account1, futureExpiration),
+            generateToken(account1, pastExpiration),
+            generateToken(account1, pastExpiration)
+          ])
+            .then(([token1, token2, token3, token4]) => {
+              return Model.byAccount(account1).then(results => {
+                test.equal(results.length, 4)
+                return Model.removeExpired().then(results => {
+                  test.equal(results.length, 2)
+                })
+              })
+                .then(() => {
+                  return Model.byAccount(account1).then(results => {
+                    test.equal(results.length, 2)
+                    test.end()
+                  })
+                })
             })
-          })
-          .then(() => {
-            return Model.byAccount(account1).then(results => {
-              test.equal(results.length, 2)
-              test.end()
-            })
-          })
         })
-      })
     })
 
     removeExpiredTest.end()

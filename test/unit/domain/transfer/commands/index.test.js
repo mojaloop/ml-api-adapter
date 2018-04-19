@@ -31,11 +31,11 @@ Test('Eventric Transfer index test', indexTest => {
       let payload = {}
 
       TransferCommands.prepare(payload)
-      .then(tfr => {
-        t.ok(command.calledWith('PrepareTransfer', payload))
-        t.equal(tfr, expected)
-        t.end()
-      })
+        .then(tfr => {
+          t.ok(command.calledWith('PrepareTransfer', payload))
+          t.equal(tfr, expected)
+          t.end()
+        })
     })
 
     prepareTest.end()
@@ -50,11 +50,11 @@ Test('Eventric Transfer index test', indexTest => {
 
       let payload = {}
       TransferCommands.fulfill(payload)
-      .then(result => {
-        t.ok(command.calledWith('FulfillTransfer', payload))
-        t.equal(result, expected)
-        t.end()
-      })
+        .then(result => {
+          t.ok(command.calledWith('FulfillTransfer', payload))
+          t.equal(result, expected)
+          t.end()
+        })
     })
     fulfillTest.end()
   })
@@ -68,11 +68,11 @@ Test('Eventric Transfer index test', indexTest => {
 
       let rejection = { id: Uuid(), rejection_reason: 'another excuse' }
       TransferCommands.reject(rejection)
-      .then(result => {
-        t.ok(command.calledWith('RejectTransfer', Sinon.match({ id: rejection.id, rejection_reason: rejection.rejection_reason })))
-        t.equal(result, expected)
-        t.end()
-      })
+        .then(result => {
+          t.ok(command.calledWith('RejectTransfer', Sinon.match({ id: rejection.id, rejection_reason: rejection.rejection_reason })))
+          t.equal(result, expected)
+          t.end()
+        })
     })
     rejectTest.end()
   })
@@ -85,11 +85,11 @@ Test('Eventric Transfer index test', indexTest => {
       Eventric.getContext.returns(P.resolve({ command: command }))
       let payload = {id: Uuid(), settlement_id: Uuid()}
       TransferCommands.settle(payload)
-      .then(result => {
-        t.ok(command.calledWith('SettleTransfer', Sinon.match(payload)))
-        t.equal(result, expected)
-        t.end()
-      })
+        .then(result => {
+          t.ok(command.calledWith('SettleTransfer', Sinon.match(payload)))
+          t.equal(result, expected)
+          t.end()
+        })
     })
     settleTest.end()
   })
