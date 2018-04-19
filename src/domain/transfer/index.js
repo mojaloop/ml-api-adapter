@@ -52,23 +52,7 @@ const reject = (rejection) => {
 }
 
 
-const fulfill = (fulfillment) => {
-  return Commands.fulfill(fulfillment)
-    .then(transfer => {
-      const t = Translator.toTransfer(transfer)
-      Events.emitTransferExecuted(t, { execution_condition_fulfillment: fulfillment.fulfillment })
-      return t
-    })
-    .catch(Errors.ExpiredTransferError, () => {
-      return expire(fulfillment.id)
-        .then(() => { throw new Errors.UnpreparedTransferError() })
-    })
-}
-
-
-
 module.exports = {
-  fulfill,
   prepare,
   reject
 }
