@@ -17,25 +17,20 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
- 'use strict'
+'use strict'
 
-const Translator = require('../translator')
-const Events = require('../../../lib/events')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
-const UrlParser = require('../../../lib/urlparser')
 
 const publishPrepare = async (message) => {
-  Logger.info('publishPrepare::start')
   var kafkaProducer = new Producer()
   var connectionResult = await kafkaProducer.connect().catch(err => false)
   Logger.info(`Connected result=${connectionResult}`)
-  if(connectionResult){
-
+  if (connectionResult) {
     let messageProtocol = {
       content: message,
       id: message.transferId,
@@ -49,14 +44,19 @@ const publishPrepare = async (message) => {
     let topicConfig = {
       topicName: 'transfer'
     }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
-      Logger.error(`Kafka error:: ERROR:'${err}'`)
-      throw err
-    })
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+      .then(result => {
+        kafkaProducer.disconnect()
+        return result
+      })
+      .catch(err => {
+        Logger.error(`Kafka error:: ERROR:'${err}'`)
+        kafkaProducer.disconnect()
+        throw err
+      })
   } else {
-    reject("Not succesful in connecting to kafka cluster")
+    reject('Not succesful in connecting to kafka cluster')
   }
-  
 }
 
 module.exports = {

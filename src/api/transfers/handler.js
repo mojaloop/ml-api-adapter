@@ -17,31 +17,18 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
 'use strict'
 
-const Validator = require('./validator')
 const TransferService = require('../../domain/transfer')
-const TransferTranslator = require('../../domain/transfer/translator')
-const NotFoundError = require('../../errors').NotFoundError
-const Sidecar = require('../../lib/sidecar')
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
-
-const buildGetTransferResponse = (record) => {
-  if (!record) {
-    throw new NotFoundError('The requested resource could not be found.')
-  }
-  return TransferTranslator.toTransfer(record)
-}
 
 exports.create = async function (request, reply) {
-    Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
-    return TransferService.prepare(request.payload)
-            .then(result => reply(result).code(202))
-            .catch(reply)
-  
+  Logger.info('create::start(%s)', JSON.stringify(request.payload))
+  return TransferService.prepare(request.payload)
+    .then(result => reply(result).code(202))
+    .catch(reply)
 }

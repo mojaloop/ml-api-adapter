@@ -17,7 +17,7 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
@@ -26,17 +26,11 @@
 const Hapi = require('hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const P = require('bluebird')
-const Migrator = require('../lib/migrator')
 const Plugins = require('./plugins')
 const Config = require('../lib/config')
-const Sidecar = require('../lib/sidecar')
-const RequestLogger = require('../lib/request-logger')
+// const RequestLogger = require('../lib/request-logger')
 const Uuid = require('uuid4')
-const UrlParser = require('../lib/urlparser')
-
-const migrate = (runMigrations) => {
-  return runMigrations ? Migrator.migrate() : P.resolve()
-}
+// const UrlParser = require('../lib/urlparser')
 
 const createServer = (port, modules, addRequestLogging = true) => {
   return new P((resolve, reject) => {
@@ -48,10 +42,10 @@ const createServer = (port, modules, addRequestLogging = true) => {
       }
     })
 
-    if (addRequestLogging) {
-      server.ext('onRequest', onServerRequest)
-      server.ext('onPreResponse', onServerPreResponse)
-    }
+    // if (addRequestLogging) {
+    //   server.ext('onRequest', onServerRequest)
+    //   server.ext('onPreResponse', onServerPreResponse)
+    // }
 
     Plugins.registerPlugins(server)
     server.register(modules)
@@ -64,24 +58,28 @@ const createServer = (port, modules, addRequestLogging = true) => {
 const initialize = ({ service, port, modules = [], loadEventric = false, runMigrations = false }) => {
   // ## Added to increase available threads for IO processing
   process.env.UV_THREADPOOL_SIZE = Config.UV_THREADPOOL_SIZE
-  return migrate(runMigrations)
-    .then(() => createServer(port, modules))
+  // return migrate(runMigrations)
+  //   .then(() => createServer(port, modules))
+  //   .catch(err => {
+  //     throw err
+  //   })
+  return createServer(port, modules)
     .catch(err => {
       throw err
     })
 }
 
-const onServerRequest = (request, reply) => {
-  const transferId = UrlParser.idFromTransferUri(`${Config.HOSTNAME}${request.url.path}`)
-  request.headers.traceid = request.headers.traceid || transferId || Uuid()
-  RequestLogger.logRequest(request)
-  reply.continue()
-}
+// const onServerRequest = (request, reply) => {
+// const transferId = UrlParser.idFromTransferUri(`${Config.HOSTNAME}${request.url.path}`)
+// request.headers.traceid = request.headers.traceid || transferId || Uuid()
+// RequestLogger.logRequest(request)
+//   reply.continue()
+// }
 
-const onServerPreResponse = (request, reply) => {
-  RequestLogger.logResponse(request)
-  reply.continue()
-}
+// const onServerPreResponse = (request, reply) => {
+// RequestLogger.logResponse(request)
+//   reply.continue()
+// }
 
 module.exports = {
   initialize,

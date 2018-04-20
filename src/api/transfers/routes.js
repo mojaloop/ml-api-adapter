@@ -17,13 +17,12 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
 const Handler = require('./handler')
 const Joi = require('joi')
-const Auth = require('../auth')
 const tags = ['api', 'transfers']
 
 module.exports = [{
