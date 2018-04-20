@@ -32,9 +32,7 @@
  const publishPrepare = async (message) => {
    Logger.info('publishPrepare::start')
    var kafkaProducer = new Producer()
-   var connectionResult = await kafkaProducer.connect().catch(err => false)
-   Logger.info(`Connected result=${connectionResult}`)
-   if (connectionResult) {
+   var connectionResult = await kafkaProducer.connect().then(async (result) => {
      let messageProtocol = {
        content: message,
        id: message.transferId,
@@ -52,8 +50,12 @@
        Logger.error(`Kafka error:: ERROR:'${err}'`)
        throw err
      })
-   } else {
-     throw new Error('Not succesful in connecting to kafka cluster')
+   }).catch(err => {
+     Logger.error(`error connecting to kafka - ${err}`)
+   })
+   Logger.info(`Connected result=${connectionResult}`)
+   if (!connectionResult) {
+     throw new Error('Not successful in connecting to kafka cluster')
    }
  }
 
