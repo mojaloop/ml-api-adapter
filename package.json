@@ -56,7 +56,7 @@
     "@mojaloop/central-services-auth": "0.1.3",
     "@mojaloop/central-services-database": "0.3.0",
     "@mojaloop/central-services-error-handling": "0.2.3",
-    "@mojaloop/central-services-shared": "file:../../clones/central-services-shared",
+    "@mojaloop/central-services-shared": "1.2.0-snapshot",
     "@mojaloop/forensic-logging-client": "0.4.0",
     "argon2": "0.14.0",
     "blipp": "2.3.0",
