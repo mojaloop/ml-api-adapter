@@ -17,7 +17,7 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
@@ -73,7 +73,6 @@ const reject = (rejection) => {
       return { alreadyRejected, transfer: t }
     })
 }
-
 
 module.exports = {
   prepare,

@@ -17,7 +17,7 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
@@ -26,7 +26,6 @@
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../lib/config')
 const Routes = require('./routes')
-const Auth = require('./auth')
 
 const Setup = require('../shared/setup')
 
