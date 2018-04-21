@@ -1,16 +1,34 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ --------------
+ ******/
+
 'use strict'
 
 const P = require('bluebird')
-const TransferQueries = require('./queries')
-const SettleableTransfersReadModel = require('../../models/settleable-transfers-read-model')
-const SettlementsModel = require('../../models/settlements')
 const Commands = require('./commands')
 const Translator = require('./translator')
-const RejectionType = require('./rejection-type')
 const State = require('./state')
 const Events = require('../../lib/events')
 const Errors = require('../../errors')
-const Kafka = require('./kafka')
 const Logger = require('@mojaloop/central-services-shared').Logger
 
 const getById = (id) => {
@@ -42,10 +60,7 @@ const getFulfillment = (id) => {
 
 const prepare = (payload) => {
   Logger.info('prepare::start(%s)', payload)
-  // const transfer = Translator.fromPayload(payload)
-  // const transfer = Translator.fromUriIDtoUUIDFromPayload(payload)
-  // const transfer = payload
-  return Commands.prepare(payload)
+  return Commands.publishPrepare(payload)
 }
 
 const reject = (rejection) => {
@@ -59,58 +74,8 @@ const reject = (rejection) => {
     })
 }
 
-const expire = (id) => {
-  return reject({ id, rejection_reason: RejectionType.EXPIRED })
-}
-
-const fulfill = (fulfillment) => {
-  return Commands.fulfill(fulfillment)
-    .then(transfer => {
-      const t = Translator.toTransfer(transfer)
-      Events.emitTransferExecuted(t, { execution_condition_fulfillment: fulfillment.fulfillment })
-      return t
-    })
-    .catch(Errors.ExpiredTransferError, () => {
-      return expire(fulfillment.id)
-        .then(() => { throw new Errors.UnpreparedTransferError() })
-    })
-}
-
-const rejectExpired = () => {
-  const rejections = TransferQueries.findExpired().then(expired => expired.map(x => expire(x.transferUuid)))
-  return P.all(rejections).then(rejections => {
-    return rejections.map(r => r.transfer.id)
-  })
-}
-
-const settle = () => {
-  const settlementId = SettlementsModel.generateId()
-  const settledTransfers = SettlementsModel.create(settlementId, 'transfer').then(() => {
-    return SettleableTransfersReadModel.getSettleableTransfers().then(transfers => {
-      transfers.forEach(transfer => {
-        Commands.settle({ id: transfer.transferId, settlement_id: settlementId })
-      })
-      return transfers
-    })
-  })
-
-  return P.all(settledTransfers).then(settledTransfers => {
-    if (settledTransfers.length > 0) {
-      return settledTransfers
-    } else {
-      return P.resolve([])
-    }
-  })
-}
-
 module.exports = {
-  fulfill,
-  getById,
-  getAll,
-  getFulfillment,
   prepare,
-  reject,
-  rejectExpired,
-  settle
+  reject
 }
 

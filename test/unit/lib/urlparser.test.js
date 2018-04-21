@@ -52,19 +52,19 @@ Test('nameFromAccountUri', nameFromAccountUriTest => {
 Test('accountNameFromTransfersRoute', accountNameFromTransfersRouteTest => {
   accountNameFromTransfersRouteTest.test('return null if not url', t => {
     UrlParser.accountNameFromTransfersRoute('fjdklsjfld')
-    .catch(e => {
-      t.equal(e.message, 'No matching account found in url')
-      t.end()
-    })
+      .catch(e => {
+        t.equal(e.message, 'No matching account found in url')
+        t.end()
+      })
   })
 
   accountNameFromTransfersRouteTest.test('return name if url matches pattern', t => {
     const accountName = 'account1'
     UrlParser.accountNameFromTransfersRoute(`/accounts/${accountName}/transfers`)
-    .then(name => {
-      t.equal(name, accountName)
-      t.end()
-    })
+      .then(name => {
+        t.equal(name, accountName)
+        t.end()
+      })
   })
 
   accountNameFromTransfersRouteTest.end()

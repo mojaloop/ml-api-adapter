@@ -8,9 +8,6 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../../../src/lib/config')
 const Routes = require('../../../src/api/routes')
 const Auth = require('../../../src/api/auth')
-const Sockets = require('../../../src/api/sockets')
-const Worker = require('../../../src/api/worker')
-const Account = require('../../../src/domain/account')
 const Setup = require('../../../src/shared/setup')
 
 Test('Api index', indexTest => {
@@ -20,7 +17,6 @@ Test('Api index', indexTest => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(Setup)
     sandbox.stub(Logger)
-    sandbox.stub(Account, 'createLedgerAccount')
     test.end()
   })
 
@@ -42,7 +38,7 @@ Test('Api index', indexTest => {
       Account.createLedgerAccount.returns(P.resolve({}))
 
       require('../../../src/api/index').then(() => {
-        test.ok(Setup.initialize.calledWith({ service: 'api', port: Config.PORT, modules: [Auth, Routes, Sockets, Worker], loadEventric: true, runMigrations: true }))
+        test.ok(Setup.initialize.calledWith({ service: 'api', port: Config.PORT, modules: [Routes], loadEventric: true, runMigrations: true }))
         test.ok(Account.createLedgerAccount.calledWith(Config.LEDGER_ACCOUNT_NAME, Config.LEDGER_ACCOUNT_PASSWORD))
         test.ok(server.start.called)
         test.ok(Logger.info.called)

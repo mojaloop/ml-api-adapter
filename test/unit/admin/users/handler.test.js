@@ -139,4 +139,3 @@ Test('User handler', handlerTest => {
 
   handlerTest.end()
 })
-

@@ -27,12 +27,12 @@ Test('GET /transfers/:id/fulfillment', getTest => {
     const transferId = Fixtures.generateTransferId()
 
     Base.getFulfillment(transferId)
-          .expect(404)
-          .then(res => {
-            test.equal(res.body.id, 'TransferNotFoundError')
-            test.equal(res.body.message, 'This transfer does not exist')
-            test.end()
-          })
+      .expect(404)
+      .then(res => {
+        test.equal(res.body.id, 'TransferNotFoundError')
+        test.equal(res.body.message, 'This transfer does not exist')
+        test.end()
+      })
   })
 
   getTest.test('should return error when retrieving fulfillment if transfer not executed', test => {

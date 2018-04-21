@@ -109,16 +109,16 @@ Test('roles model', rolesTest => {
   rolesTest.test('addUserRole should', addUserRoleTest => {
     addUserRoleTest.test('add user role', test => {
       UserModel.save(createUser())
-      .then(userResult => Model.save(createRole())
+        .then(userResult => Model.save(createRole())
           .then(role => ({ userId: userResult.userId, roleId: role.roleId }))
-      )
-      .then(userRole => {
-        Model.addUserRole(userRole)
-        .then(result => {
-          test.deepEqual(result, userRole)
-          test.end()
+        )
+        .then(userRole => {
+          Model.addUserRole(userRole)
+            .then(result => {
+              test.deepEqual(result, userRole)
+              test.end()
+            })
         })
-      })
     })
 
     addUserRoleTest.end()
@@ -132,15 +132,15 @@ Test('roles model', rolesTest => {
         role2: Model.save(createRole()),
         role3: Model.save(createRole())
       })
-      .then(result => {
-        const user = result.user
-        Model.addUserRole({ userId: user.userId, roleId: result.role2.roleId })
-          .then(userRole => Model.getUserRoles(user.userId))
-          .then(results => {
-            test.deepEqual(results, [ result.role2 ])
-            test.end()
-          })
-      })
+        .then(result => {
+          const user = result.user
+          Model.addUserRole({ userId: user.userId, roleId: result.role2.roleId })
+            .then(userRole => Model.getUserRoles(user.userId))
+            .then(results => {
+              test.deepEqual(results, [ result.role2 ])
+              test.end()
+            })
+        })
     })
 
     getUserRolesTest.end()

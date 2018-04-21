@@ -130,4 +130,3 @@ Test('Users model', modelTest => {
 
   modelTest.end()
 })
-

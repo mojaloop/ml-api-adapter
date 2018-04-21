@@ -45,18 +45,18 @@ Test('positions handler', (handlerTest) => {
         receipts: '0',
         net: '-5'
       },
-        {
-          account: `${hostname}/accounts/account2`,
-          payments: '0',
-          receipts: '3',
-          net: '3'
-        },
-        {
-          account: `${hostname}/accounts/account3`,
-          payments: '0',
-          receipts: '2',
-          net: '2'
-        }
+      {
+        account: `${hostname}/accounts/account2`,
+        payments: '0',
+        receipts: '3',
+        net: '3'
+      },
+      {
+        account: `${hostname}/accounts/account3`,
+        payments: '0',
+        receipts: '2',
+        net: '2'
+      }
       ]
 
       PositionService.calculateForAllAccounts.returns(P.resolve(positions))
