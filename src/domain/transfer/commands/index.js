@@ -43,7 +43,7 @@ const publishPrepare = async (message) => {
     let topicConfig = {
       topicName: 'transfer'
     }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
+    return kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
       Logger.error(`Kafka error:: ERROR:'${err}'`)
       throw err
     })

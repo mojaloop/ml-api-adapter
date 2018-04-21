@@ -23,7 +23,6 @@
 
 const Handler = require('./handler')
 const Joi = require('joi')
-const Auth = require('../auth')
 const tags = ['api', 'transfers']
 
 module.exports = [{

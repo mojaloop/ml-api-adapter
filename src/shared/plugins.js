@@ -30,7 +30,6 @@ const Blipp = require('blipp')
 const Good = require('good')
 
 const HapiSwagger = require('hapi-swagger')
-const Logger = require('@mojaloop/central-services-shared').Logger
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Auth = require('@mojaloop/central-services-auth')
 

@@ -25,8 +25,6 @@
 
 const UrlParser = require('../../lib/urlparser')
 const Util = require('../../lib/util')
-const Logger = require('@mojaloop/central-services-shared').Logger
-
 const transferProperties = [
   'additional_info',
   'cancellation_condition',

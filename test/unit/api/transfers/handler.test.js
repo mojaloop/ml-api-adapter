@@ -5,7 +5,6 @@ const Test = require('tapes')(require('tape'))
 const P = require('bluebird')
 const Uuid = require('uuid4')
 const Fixtures = require('../../../fixtures')
-const Validator = require('../../../../src/api/transfers/validator')
 const Config = require('../../../../src/lib/config')
 const Errors = require('../../../../src/errors')
 const Handler = require('../../../../src/api/transfers/handler')
@@ -39,7 +38,6 @@ Test('transfer handler', handlerTest => {
 
   handlerTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
-    sandbox.stub(Validator, 'validate', a => P.resolve(a))
     sandbox.stub(TransferService, 'prepare')
     sandbox.stub(TransferService, 'getById')
     sandbox.stub(TransferService, 'reject')
@@ -156,7 +154,6 @@ Test('transfer handler', handlerTest => {
       sandbox.restore()
       const transferId = Uuid()
       const error = new Errors.ValidationError(errorMessage)
-      sandbox.stub(Validator, 'validate').withArgs(payload, transferId).returns(P.reject(error))
       sandbox.stub(Sidecar, 'logRequest')
 
       const request = createRequest(transferId, payload)
