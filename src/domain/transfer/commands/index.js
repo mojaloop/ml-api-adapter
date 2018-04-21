@@ -21,39 +21,41 @@
  --------------
  ******/
 
- 'use strict'
+'use strict'
 
- const Logger = require('@mojaloop/central-services-shared').Logger
- const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+const Logger = require('@mojaloop/central-services-shared').Logger
+const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 
- const publishPrepare = async (message) => {
-   Logger.info('publishPrepare::start')
-   var kafkaProducer = new Producer()
-   var connectionResult = await kafkaProducer.connect().catch(err => false)
-   Logger.info(`Connected result=${connectionResult}`)
-   if (connectionResult) {
-     let messageProtocol = {
-       content: message,
-       id: message.transferId,
-       to: message.payeeFsp,
-       from: message.payerFsp,
-       metadata: {
-         date: Date.now()
-       },
-       type: 'application/json'
-     }
-     let topicConfig = {
-       topicName: 'transfer'
-     }
-     return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
-       Logger.error(`Kafka error:: ERROR:'${err}'`)
-       throw err
-     })
-   } else {
-     reject('Not succesful in connecting to kafka cluster')
-   }
- }
+const publishPrepare = async (message) => {
+  Logger.info('publishPrepare::start')
+  var kafkaProducer = new Producer()
+  var connectionResult = await kafkaProducer.connect().then(async (result) => {
+    let messageProtocol = {
+      content: message,
+      id: message.transferId,
+      to: message.payeeFsp,
+      from: message.payerFsp,
+      metadata: {
+        date: Date.now()
+      },
+      type: 'application/json'
+    }
+    let topicConfig = {
+      topicName: 'transfer'
+    }
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
+      Logger.error(`Kafka error:: ERROR:'${err}'`)
+      throw err
+    })
+  }).catch(err => {
+    Logger.error(`error connecting to kafka - ${err}`)
+  })
+  Logger.info(`Connected result=${connectionResult}`)
+  if (!connectionResult) {
+    throw new Error('Not successful in connecting to kafka cluster')
+  }
+}
 
- module.exports = {
-   publishPrepare
- }
+module.exports = {
+  publishPrepare
+}

@@ -17,7 +17,7 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  --------------
  ******/
 
@@ -39,9 +39,8 @@ const buildGetTransferResponse = (record) => {
 }
 
 exports.create = async function (request, reply) {
-    Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
-    return TransferService.prepare(request.payload)
-            .then(result => reply(result).code(202))
-            .catch(reply)
-  
+  Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
+  return TransferService.prepare(request.payload)
+    .then(result => reply(result).code(202))
+    .catch(reply)
 }
