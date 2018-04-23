@@ -12,8 +12,9 @@ const nameFromAccountUri = (uri, callback) => {
   const hasCallback = (typeof callback === 'function')
   if (matches) {
     return (hasCallback) ? callback(null, matches[1]) : matches[1]
+  } else {
+    return (hasCallback) ? callback('no match', null) : null
   }
-  return (hasCallback) ? callback('no match', null) : null
 }
 
 const accountNameFromTransfersRoute = (url) => {
