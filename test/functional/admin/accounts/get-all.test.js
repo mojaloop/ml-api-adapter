@@ -29,4 +29,3 @@ Test('GET /accounts', getTest => {
 
   getTest.end()
 })
-

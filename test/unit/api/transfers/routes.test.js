@@ -56,7 +56,7 @@ Test('return error if amount is not a number', async function (assert) {
 })
 
 Test('return error if payeeFsp is not a number', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { payeeFsp: 'invalid payeeFsp' } })  
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { payeeFsp: 'invalid payeeFsp' } })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp must be a number]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]')
@@ -65,7 +65,7 @@ Test('return error if payeeFsp is not a number', async function (assert) {
 })
 
 Test('return error if payerFsp is not a number', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { payerFsp: 'invalid payerFsp' } })  
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { payerFsp: 'invalid payerFsp' } })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp must be a number]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]')

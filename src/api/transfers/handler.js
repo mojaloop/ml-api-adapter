@@ -20,7 +20,7 @@
  --------------
  ******/
 
- 'use strict'
+'use strict'
 
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger

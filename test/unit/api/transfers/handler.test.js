@@ -90,7 +90,7 @@ Test('transfer handler', handlerTest => {
 
       TransferService.prepare.returns(P.resolve(true))
 
-      const request = createRequest(payload)      
+      const request = createRequest(payload)
       const reply = {
         response: (response) => {
           test.equal(response, true)
@@ -102,7 +102,6 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
-      
 
       Handler.create(request, reply)
     })

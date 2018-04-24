@@ -20,7 +20,7 @@
  --------------
  ******/
 
- 'use strict'
+'use strict'
 
 const Config = require('../lib/config')
 const Routes = require('./routes')
