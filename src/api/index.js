@@ -29,6 +29,5 @@ const Setup = require('../shared/setup')
 module.exports = Setup.initialize({
   service: 'api',
   port: Config.PORT,
-  modules: [Routes],
-  runMigrations: true
+  modules: [Routes]
 })

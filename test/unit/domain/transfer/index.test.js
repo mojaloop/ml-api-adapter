@@ -57,19 +57,19 @@ Test('Transfer Service tests', serviceTest => {
         expiration: '2016-05-24T08:38:08.699-04:00',
 
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       Commands.publishPrepare.withArgs(payload).returns(P.resolve(true))

@@ -58,19 +58,19 @@ Test('Eventric Transfer index test', indexTest => {
         expiration: '2016-05-24T08:38:08.699-04:00',
 
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       TransferCommands.publishPrepare(payload)

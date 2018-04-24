@@ -72,19 +72,19 @@ Test('transfer handler', handlerTest => {
         condition: 'q8q-v7RAbJTLf3DsetPTEOLBLUxtMe3c',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       TransferService.prepare.returns(P.resolve(true))
@@ -118,19 +118,19 @@ Test('transfer handler', handlerTest => {
         condition: 'q8q-v7RAbJTLf3DsetPTEOLBLUxtMe3c',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       const error = new Error()

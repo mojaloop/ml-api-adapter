@@ -58,12 +58,6 @@ Test('Api index', indexTest => {
       Setup.initialize.returns(P.resolve(server))
 
       await require('../../../src/api/index')
-
-      Setup.initialize.calledWith({
-        service: 'api',
-        port: Config.PORT,
-        modules: [Routes]
-      })
       test.ok(Setup.initialize.calledWith({
         service: 'api',
         port: Config.PORT,
