@@ -47,7 +47,7 @@ Test('return error if transferId is not a guid', async function (assert) {
 })
 
 Test('return error if amount is not a number', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { amount: { currency: 'USD', amount: 'invalid amount'} } })
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { amount: { currency: 'USD', amount: 'invalid amount' } } })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [child "amount" fails because [amount must be a number]]. child "ilpPacket" fails because [ilpPacket is required]')

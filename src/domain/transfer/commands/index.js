@@ -27,7 +27,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 
 const publishPrepare = async (message) => {
   var kafkaProducer = new Producer()
-  var connectionResult = await kafkaProducer.connect().catch(err => false)
+  var connectionResult = await kafkaProducer.connect().catch(err => { throw err })
   Logger.info(`Connected result=${connectionResult}`)
   if (connectionResult) {
     let messageProtocol = {
@@ -43,7 +43,7 @@ const publishPrepare = async (message) => {
     let topicConfig = {
       topicName: 'transfer'
     }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+    return kafkaProducer.sendMessage(messageProtocol, topicConfig)
       .then(result => {
         kafkaProducer.disconnect()
         return result
@@ -53,7 +53,7 @@ const publishPrepare = async (message) => {
         throw err
       })
   } else {
-    reject('Not succesful in connecting to kafka cluster')
+    throw new Error('Not succesful in connecting to kafka cluster')
   }
 }
 module.exports = {

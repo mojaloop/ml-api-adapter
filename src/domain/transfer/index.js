@@ -22,13 +22,12 @@
 
 'use strict'
 
-const P = require('bluebird')
 const Commands = require('./commands')
 const Logger = require('@mojaloop/central-services-shared').Logger
 
 const prepare = async (payload) => {
   Logger.info('prepare::start(%s)', payload)
-  return await Commands.publishPrepare(payload)
+  return Commands.publishPrepare(payload)
 }
 
 module.exports = {

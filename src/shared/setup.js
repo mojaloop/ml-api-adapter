@@ -24,9 +24,7 @@
 
 const Hapi = require('hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const P = require('bluebird')
 const Plugins = require('./plugins')
-const Config = require('../lib/config')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 

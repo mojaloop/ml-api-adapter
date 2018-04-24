@@ -24,8 +24,6 @@
 
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const P = require('bluebird')
-const Uuid = require('uuid4')
 const TransferCommands = require('../../../../../src/domain/transfer/commands')
 
 Test('Eventric Transfer index test', indexTest => {

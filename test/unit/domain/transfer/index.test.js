@@ -22,7 +22,6 @@
 
 'use strict'
 
-const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const P = require('bluebird')
@@ -75,7 +74,7 @@ Test('Transfer Service tests', serviceTest => {
 
       Commands.publishPrepare.withArgs(payload).returns(P.resolve(true))
 
-      let a = Service.prepare(payload)
+      Service.prepare(payload)
         .then(result => {
           test.ok(Commands.publishPrepare.calledWith(payload))
           test.end()
