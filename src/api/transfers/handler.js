@@ -23,6 +23,7 @@
 'use strict'
 
 const TransferService = require('../../domain/transfer')
+const Notification = require('../../handlers/notification')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 
@@ -31,6 +32,22 @@ exports.create = async function (request, h) {
     Logger.info('create::start(%s)', JSON.stringify(request.payload))
     const result = await TransferService.prepare(request.payload)
     return h.response(result).code((result === true) ? 202 : 201)
+  } catch (err) {
+    throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
+  }
+}
+
+
+exports.readMessage = async function (request, h) {
+  try {
+    Logger.info('create::start(%s)', JSON.stringify(request.params.id))
+    const result = await Notification.testConsumer()
+
+    console.log('##############################################################')
+    console.log(result)
+    console.log('##############################################################')
+    
+    return h.response(result).code(200)
   } catch (err) {
     throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
   }

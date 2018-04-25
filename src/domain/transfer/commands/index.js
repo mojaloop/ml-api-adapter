@@ -41,7 +41,7 @@ const publishPrepare = async (message) => {
       type: 'application/json'
     }
     let topicConfig = {
-      topicName: 'transfer'
+      topicName: `transfer-${message.payerFsp}-prepare`
     }
     return kafkaProducer.sendMessage(messageProtocol, topicConfig)
       .then(result => {
