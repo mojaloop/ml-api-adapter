@@ -24,23 +24,34 @@
 
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
+const Uuid = require('uuid4')
 
-const publishPrepare = async (message) => {
+
+const publishPrepare = async (headers, message) => {
   var kafkaProducer = new Producer()
   var connectionResult = await kafkaProducer.connect().catch(err => { throw err })
   Logger.info(`Connected result=${connectionResult}`)
   if (connectionResult) {
-    let messageProtocol = {
-      content: message,
+    const messageProtocol = {
       id: message.transferId,
       to: message.payeeFsp,
       from: message.payerFsp,
-      metadata: {
-        date: new Date()
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: message
       },
-      type: 'application/json'
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'prepare',
+          action: 'prepare',
+          createdAt: new Date(),
+          status: 'success'
+        }
+      }
     }
-    let topicConfig = {
+    const topicConfig = {
       topicName: `transfer-${message.payerFsp}-prepare`
     }
     return kafkaProducer.sendMessage(messageProtocol, topicConfig)

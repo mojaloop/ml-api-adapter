@@ -26,27 +26,35 @@ const TransferService = require('../../domain/transfer')
 const Notification = require('../../handlers/notification')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
+const { Map } = require('immutable')
 
 exports.create = async function (request, h) {
+  const allHeaders = Map(request.headers);
   try {
+    const headers = {
+        'Content-Length': allHeaders.get('content-length'),
+        'Content-Type': allHeaders.get('content-type'),
+        'Date': allHeaders.get('date'),
+        'x-forwarded-for': allHeaders.get('x-forwarded-for'),
+        'fspiop-source': allHeaders.get('fspiop-source'),
+        'FSPIOP-destination': allHeaders.get('fspiop-destination'),
+        'FSPIOP-encryption': allHeaders.get('fspiop-encryption'),
+        'FSPIOP-signature': allHeaders.get('fspiop-signature'),
+        'FSPIOP-uri': allHeaders.get('fspiop-uri'),
+        'FSPIOP-http-method': allHeaders.get('fspiop-http-method')
+    }
     Logger.info('create::start(%s)', JSON.stringify(request.payload))
-    const result = await TransferService.prepare(request.payload)
+    const result = await TransferService.prepare(JSON.parse(JSON.stringify(headers)), request.payload)
     return h.response(result).code((result === true) ? 202 : 201)
   } catch (err) {
     throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
   }
 }
 
-
 exports.readMessage = async function (request, h) {
   try {
     Logger.info('create::start(%s)', JSON.stringify(request.params.id))
     const result = await Notification.testConsumer()
-
-    console.log('##############################################################')
-    console.log(result)
-    console.log('##############################################################')
-    
     return h.response(result).code(200)
   } catch (err) {
     throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
