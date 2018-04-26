@@ -19,5 +19,10 @@
   },
   "EMAIL_USER": "modusboxemailtest@gmail.com",
   "EMAIL_PASSWORD": "April2o0%",
-  "EMAIL_SMTP": "smtp.gmail.com"
+  "EMAIL_SMTP": "smtp.gmail.com",
+  "DFSP_URLS": {
+    "dfsp1": "http://localhost:3000/dfsp1/notify",
+    "dfsp2": "http://localhost:3000/dfsp2/notify",
+    "dfsp3": "http://localhost:3000/dfsp3/notify"
+  }  
 }

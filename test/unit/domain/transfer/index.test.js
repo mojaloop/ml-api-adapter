@@ -71,7 +71,7 @@ Test('Transfer Service tests', serviceTest => {
           ]
         }
       }
-      
+
       let headers = {}
 
       Commands.publishPrepare.withArgs(headers, payload).returns(P.resolve(true))

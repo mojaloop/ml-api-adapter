@@ -27,6 +27,7 @@ const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Plugins = require('./plugins')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
+const Notification = require('../handlers/notification')
 
 const createServer = (port, modules) => {
   return (async () => {
@@ -52,6 +53,7 @@ const createServer = (port, modules) => {
 // Migrator.migrate is called before connecting to the database to ensure all new tables are loaded properly.
 const initialize = async function ({service, port, modules = []}) {
   const server = await createServer(port, modules)
+  await Notification.startConsumer()
   return server
 }
 
