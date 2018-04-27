@@ -28,8 +28,9 @@ const Config = require('../../lib/config')
 const request = require('request')
 
 const startConsumer = async () => {
+  const topics = Object.keys(Config.DFSP_URLS).map(x => `topic-${x}-transfer-prepare`)
   Logger.info('Instantiate consumer')
-  var c = new Consumer(['topic-dfsp1-transfer-prepare', 'topic-dfsp2-transfer-prepare', 'topic-dfsp3-transfer-prepare'], {
+  var c = new Consumer(topics, {
     options: {
       mode: ConsumerEnums.CONSUMER_MODES.recursive,
       batchSize: 1,
@@ -125,5 +126,6 @@ const sendNotification = async (url, headers, message) => {
   })
 }
 module.exports = {
-  startConsumer
+  startConsumer,
+  sendNotification
 }

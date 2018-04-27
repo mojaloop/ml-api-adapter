@@ -50,21 +50,8 @@ exports.create = async function (request, h) {
   }
 }
 
-// exports.readMessage = async function (request, h) {
-//   try {
-//     Logger.info('create::start(%s)', JSON.stringify(request))
-//     const result = await Notification.testConsumer()
-//     return h.response(result).code(200)
-//   } catch (err) {
-//     throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
-//   }
-// }
-
 exports.receiveNotification = async function (request, h) {
-  try {
-    console.log(request.payload)
-    return h.response(true).code(200)
-  } catch (err) {
-    throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
-  }
+  console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
+  console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
+  return h.response(true).code(200)
 }
