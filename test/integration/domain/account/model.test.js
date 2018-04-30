@@ -27,7 +27,6 @@ Test('accounts model', modelTest => {
           test.ok(account.accountId)
           test.ok(account.emailAddress)
           test.equal(account.isDisabled, false)
-          test.ok
           test.end()
         })
     })

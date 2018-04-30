@@ -17,7 +17,6 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
  --------------
  ******/
 
@@ -25,62 +24,35 @@
 
 const Hapi = require('hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const P = require('bluebird')
-const Migrator = require('../lib/migrator')
 const Plugins = require('./plugins')
-const Config = require('../lib/config')
-const Sidecar = require('../lib/sidecar')
-const RequestLogger = require('../lib/request-logger')
-const Uuid = require('uuid4')
-const UrlParser = require('../lib/urlparser')
+const Logger = require('@mojaloop/central-services-shared').Logger
+const Boom = require('boom')
 
-const migrate = (runMigrations) => {
-  return runMigrations ? Migrator.migrate() : P.resolve()
-}
-
-const createServer = (port, modules, addRequestLogging = true) => {
-  return new P((resolve, reject) => {
-    const server = new Hapi.Server()
-    server.connection({
+const createServer = (port, modules) => {
+  return (async () => {
+    const server = await new Hapi.Server({
       port,
       routes: {
-        validate: ErrorHandling.validateRoutes()
+        validate: {
+          options: ErrorHandling.validateRoutes(),
+          failAction: async (request, h, err) => {
+            throw Boom.boomify(err)
+          }
+        }
       }
     })
-
-    if (addRequestLogging) {
-      server.ext('onRequest', onServerRequest)
-      server.ext('onPreResponse', onServerPreResponse)
-    }
-
-    Plugins.registerPlugins(server)
-    server.register(modules)
-    resolve(server)
-  })
+    await Plugins.registerPlugins(server)
+    await server.register(modules)
+    await server.start()
+    Logger.info('Server running at: ', server.info.uri)
+    return server
+  })()
 }
 
 // Migrator.migrate is called before connecting to the database to ensure all new tables are loaded properly.
-// Eventric.getContext is called to replay all events through projections (creating the read-model) before starting the server.
-const initialize = ({ service, port, modules = [], loadEventric = false, runMigrations = false }) => {
-  // ## Added to increase available threads for IO processing
-  process.env.UV_THREADPOOL_SIZE = Config.UV_THREADPOOL_SIZE
-  return migrate(runMigrations)
-    .then(() => createServer(port, modules))
-    .catch(err => {
-      throw err
-    })
-}
-
-const onServerRequest = (request, reply) => {
-  const transferId = UrlParser.idFromTransferUri(`${Config.HOSTNAME}${request.url.path}`)
-  request.headers.traceid = request.headers.traceid || transferId || Uuid()
-  RequestLogger.logRequest(request)
-  reply.continue()
-}
-
-const onServerPreResponse = (request, reply) => {
-  RequestLogger.logResponse(request)
-  reply.continue()
+const initialize = async function ({service, port, modules = []}) {
+  const server = await createServer(port, modules)
+  return server
 }
 
 module.exports = {
