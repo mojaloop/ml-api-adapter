@@ -61,7 +61,8 @@ ftest() {
 
 is_api_up() {
     # curl --output /dev/null --silent --head --fail http://${LEDGER_HOST}:3000/health
-    fcurl "http://centralledger_central-ledger_1:3000/health?"
+    # fcurl "http://centralledger_central-ledger_1:3000/health?"
+    fcurl "http://central-ledger:3000/"
 }
 
 is_admin_up() {
@@ -110,6 +111,8 @@ EOSQL
 
 >&2 printf "Central-ledger is building ..."
 docker-compose -p centralledger -f $docker_compose_file -f $docker_functional_compose_file up -d central-ledger
+
+sh ./server.sh
 
 >&2 printf "Central-ledger is starting ..."
 until is_api_up; do

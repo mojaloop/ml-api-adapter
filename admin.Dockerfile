@@ -3,7 +3,7 @@ USER root
 
 WORKDIR /opt/central-ledger
 COPY src /opt/central-ledger/src
-COPY migrations /opt/central-ledger/migrations
+#COPY migrations /opt/central-ledger/migrations
 COPY config /opt/central-ledger/config
 COPY package.json server.sh /opt/central-ledger/
 

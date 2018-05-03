@@ -38,7 +38,7 @@ Test('Eventric Transfer index test', indexTest => {
     sandbox.restore()
     t.end()
   })
-
+  
   indexTest.test('publishPrepare should', prepareTest => {
     prepareTest.test('execute publishPrepare command on context', async t => {
       let command = sandbox.stub()
@@ -75,55 +75,13 @@ Test('Eventric Transfer index test', indexTest => {
 
       let headers = {}
 
-      TransferCommands.publishPrepare(headers, payload)
-        .then(tfr => {
+        let tfr = await TransferCommands.publishPrepare(headers, payload)
           t.equal(tfr, expected)
           t.end()
-        })
     })
-
-    // prepareTest.test('throws error if could not send message to kafka', async t => {
-    //   let command = sandbox.stub()
-    //   const error = new Error()
-    //   command.returns(P.reject(error))
-    //   let payload = {
-    //     transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
-    //     payeeFsp: '1234',
-    //     payerFsp: '5678',
-    //     amount: {
-    //       currency: 'USD',
-    //       amount: 123.45
-    //     },
-    //     ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-    //     condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-    //     expiration: '2016-05-24T08:38:08.699-04:00',
-
-    //     extensionList:
-    //       {
-    //         extension:
-    //           [
-    //             {
-    //               key: 'errorDescription',
-    //               value: 'This is a more detailed error description'
-    //             },
-    //             {
-    //               key: 'errorDescription',
-    //               value: 'This is a more detailed error description'
-    //             }
-    //           ]
-    //       }
-    //   }
-
-    //   try {
-    //     await TransferCommands.publishPrepare(payload)
-    //   } catch (e) {
-    //     test.ok(e instanceof Error)
-    //     test.equal(e.message, 'An error has occurred')
-    //     test.end()
-    //   }
-    // })
 
     prepareTest.end()
   })
   indexTest.end()
 })
+

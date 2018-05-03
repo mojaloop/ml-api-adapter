@@ -72,48 +72,50 @@ const createAccountSettlement = (accountName, accountNumber, routingNumber) => p
   routing_number: routingNumber
 })
 
-const getAccount = (accountName) => getApi(`/accounts/${accountName}`)
+// const getAccount = (accountName) => getApi(`/accounts/${accountName}`)
 
-const updateAccount = (accountName, isDisabled) => putAdmin(`/accounts/${accountName}`, {is_disabled: isDisabled})
+// const updateAccount = (accountName, isDisabled) => putAdmin(`/accounts/${accountName}`, {is_disabled: isDisabled})
 
-const getTransfer = (transferId) => getApi(`/transfers/${transferId}`)
+// const getTransfer = (transferId) => getApi(`/transfers/${transferId}`)
 
-const getFulfillment = (transferId) => getApi(`/transfers/${transferId}/fulfillment`)
+// const getFulfillment = (transferId) => getApi(`/transfers/${transferId}/fulfillment`)
 
-const prepareTransfer = (transferId, transfer) => P.resolve(putApi(`/transfers/${transferId}`, transfer))
+// const prepareTransfer = (transferId, transfer) => P.resolve(putApi(`/transfers/${transferId}`, transfer))
+const create = (transfer) => P.resolve(postApi(`/transfers`, transfer))
 
-const fulfillTransfer = (transferId, fulfillment, auth) => putApi(`/transfers/${transferId}/fulfillment`, fulfillment, auth, 'text/plain')
+// const fulfillTransfer = (transferId, fulfillment, auth) => putApi(`/transfers/${transferId}/fulfillment`, fulfillment, auth, 'text/plain')
 
-const rejectTransfer = (transferId, reason, auth) => putApi(`/transfers/${transferId}/rejection`, reason, auth)
+// const rejectTransfer = (transferId, reason, auth) => putApi(`/transfers/${transferId}/rejection`, reason, auth)
 
-const createCharge = (payload) => postAdmin('/charges', payload)
+// const createCharge = (payload) => postAdmin('/charges', payload)
 
-const updateCharge = (name, payload) => putAdmin(`/charges/${name}`, payload)
+// const updateCharge = (name, payload) => putAdmin(`/charges/${name}`, payload)
 
 module.exports = {
-  account1Name: account1().name,
-  account1AccountNumber,
-  account1RoutingNumber,
-  account1Password: account1Name,
-  account2Name: account2().name,
-  account2AccountNumber,
-  account2RoutingNumber,
-  account2Password: account2Name,
-  basicAuth,
-  createAccount,
-  createCharge,
-  fulfillTransfer,
-  getTransfer,
-  getFulfillment,
-  getApi,
-  getAdmin,
-  getAccount,
+  // account1Name: account1().name,
+  // account1AccountNumber,
+  // account1RoutingNumber,
+  // account1Password: account1Name,
+  // account2Name: account2().name,
+  // account2AccountNumber,
+  // account2RoutingNumber,
+  // account2Password: account2Name,
+  // basicAuth,
+  // createAccount,
+  // createCharge,
+  // fulfillTransfer,
+  // getTransfer,
+  // getFulfillment,
+  // getApi,
+  // getAdmin,
+  // getAccount,
   postApi,
-  postAdmin,
-  prepareTransfer,
-  putApi,
-  putAdmin,
-  rejectTransfer,
-  updateAccount,
-  updateCharge
+  // postAdmin,
+  // prepareTransfer,
+  create
+  // putApi,
+  // putAdmin,
+  // rejectTransfer,
+  // updateAccount,
+  // updateCharge
 }

@@ -28,9 +28,8 @@ const Config = require('../../lib/config')
 const request = require('request')
 
 const startConsumer = async () => {
-  const topics = Object.keys(Config.DFSP_URLS).map(x => `topic-${x}-transfer-prepare`)
   Logger.info('Instantiate consumer')
-  var c = new Consumer(topics, {
+  var c = new Consumer(['notifications'], {
     options: {
       mode: ConsumerEnums.CONSUMER_MODES.recursive,
       batchSize: 1,
@@ -69,23 +68,13 @@ const startConsumer = async () => {
         if (Array.isArray(message) && message.length != null && message.length > 0) {
           message.forEach(msg => {
             c.commitMessage(msg)
+            let url = getUrl(msg)
 
-            if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
-              // reject('Invalid message format received from Kafka!')
-              resolve(false)
-            }
-            const { content, metadata, from, to } = msg.value
-            const { type, action, status } = metadata.event
-            let url
-            if (action === 'prepare' && type === 'prepare' && status === 'success') {
-              url = Config.DFSP_URLS[to]
-            } else if (action === 'prepare' && type === 'prepare' && status !== 'success') {
-              url = Config.DFSP_URLS[from]
-            }
             if (url == null) {
               // reject('Cant determine the destination of notification')
               resolve(false)
             }
+            const { content } = msg.value
             sendNotification(url, content.headers, content.payload)
           })
         } else {
@@ -109,6 +98,23 @@ const startConsumer = async () => {
   Logger.debug('testConsumer::end')
 }
 
+// const sendNotification = async (url, headers, message) => {
+//   delete headers['Content-Length']
+//   const options = {
+//     url,
+//     method: 'put',
+//     headers,
+
+//     body: JSON.stringify(message)
+//   }
+//   request(options, (error, response, body) => {
+//     if (error) {
+//       return 400
+//     }
+//     return response.statusCode
+//   })
+// }
+
 const sendNotification = async (url, headers, message) => {
   delete headers['Content-Length']
   const options = {
@@ -118,14 +124,36 @@ const sendNotification = async (url, headers, message) => {
 
     body: JSON.stringify(message)
   }
-  request(options, (error, response, body) => {
-    if (error) {
-      return 400
-    }
-    return response.statusCode
-  })
+
+  return new Promise((resolve, reject) => {
+    return request(options, (error, response, body) => {
+      if (error) {
+        return resolve(400)
+      }
+      return resolve (response.statusCode)
+    })
+  });
 }
+
+
+const getUrl = (msg) => {
+  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
+    // reject('Invalid message format received from Kafka!')
+    return null
+  }
+  const { content, metadata, from, to } = msg.value
+  const { type, action, status } = metadata.event
+  let url
+  if (action === 'prepare' && type === 'prepare' && status === 'success') {
+    url = Config.DFSP_URLS[to]
+  } else if (action === 'prepare' && type === 'prepare' && status !== 'success') {
+    url = Config.DFSP_URLS[from]
+  }
+  return url
+}
+
 module.exports = {
   startConsumer,
-  sendNotification
+  sendNotification,
+  getUrl
 }

@@ -27,11 +27,13 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Uuid = require('uuid4')
 
 const publishPrepare = async (headers, message) => {
+  Logger.info('publishPrepare::start')
   var kafkaProducer = new Producer()
-  var connectionResult = await kafkaProducer.connect().catch(err => { throw err })
-  Logger.info(`Connected result=${connectionResult}`)
-  if (connectionResult) {
-    const messageProtocol = {
+  await kafkaProducer.connect().catch(err => {
+    Logger.error(`error connecting to kafka - ${err}`)
+    throw err
+  })
+  const messageProtocol = {
       id: message.transferId,
       to: message.payeeFsp,
       from: message.payerFsp,
@@ -53,19 +55,12 @@ const publishPrepare = async (headers, message) => {
     const topicConfig = {
       topicName: `topic-${message.payerFsp}-transfer-prepare`
     }
-    return kafkaProducer.sendMessage(messageProtocol, topicConfig)
-      .then(result => {
-        kafkaProducer.disconnect()
-        return result
-      })
-      .catch(err => {
-        kafkaProducer.disconnect()
-        throw err
-      })
-  } else {
-    throw new Error('Not succesful in connecting to kafka cluster')
-  }
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).then( result => {return result}).catch(err => {
+      Logger.error(`Kafka error:: ERROR:'${err}'`)
+      throw err
+    })
 }
+
 module.exports = {
   publishPrepare
 }

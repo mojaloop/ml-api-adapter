@@ -72,19 +72,19 @@ Test('transfer handler', handlerTest => {
         condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       TransferService.prepare.returns(P.resolve(true))
@@ -118,19 +118,19 @@ Test('transfer handler', handlerTest => {
         condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       const error = new Error()
@@ -162,19 +162,19 @@ Test('transfer handler', handlerTest => {
         condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       // TransferService.prepare.returns(P.resolve(true))
