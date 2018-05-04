@@ -130,18 +130,17 @@ const sendNotification = async (url, headers, message) => {
       if (error) {
         return resolve(400)
       }
-      return resolve (response.statusCode)
+      return resolve(response.statusCode)
     })
-  });
+  })
 }
-
 
 const getUrl = (msg) => {
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
     // reject('Invalid message format received from Kafka!')
     return null
   }
-  const { content, metadata, from, to } = msg.value
+  const { metadata, from, to } = msg.value
   const { type, action, status } = metadata.event
   let url
   if (action === 'prepare' && type === 'prepare' && status === 'success') {

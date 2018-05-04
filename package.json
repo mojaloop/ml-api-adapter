@@ -55,7 +55,6 @@
     "@mojaloop/central-services-auth": "0.2.0",
     "@mojaloop/central-services-database": "1.2.3-snapshotMYSQL",
     "@mojaloop/central-services-error-handling": "0.5.1",
-    "@mojaloop/central-services-shared": "file:../central-services-shared",
     "@mojaloop/forensic-logging-client": "0.5.1",
     "@now-ims/hapi-now-auth": "1.0.1",
     "argon2": "0.17.1",

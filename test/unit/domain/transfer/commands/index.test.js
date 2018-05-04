@@ -38,7 +38,7 @@ Test('Eventric Transfer index test', indexTest => {
     sandbox.restore()
     t.end()
   })
-  
+
   indexTest.test('publishPrepare should', prepareTest => {
     prepareTest.test('execute publishPrepare command on context', async t => {
       let command = sandbox.stub()
@@ -75,13 +75,12 @@ Test('Eventric Transfer index test', indexTest => {
 
       let headers = {}
 
-        let tfr = await TransferCommands.publishPrepare(headers, payload)
-          t.equal(tfr, expected)
-          t.end()
+      let tfr = await TransferCommands.publishPrepare(headers, payload)
+      t.equal(tfr, expected)
+      t.end()
     })
 
     prepareTest.end()
   })
   indexTest.end()
 })
-

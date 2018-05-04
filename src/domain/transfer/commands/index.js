@@ -25,6 +25,8 @@
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Uuid = require('uuid4')
+const Notification = require('../../../handlers/notification')
+const Config = require('../../../lib/config')
 
 const publishPrepare = async (headers, message) => {
   Logger.info('publishPrepare::start')
@@ -34,31 +36,33 @@ const publishPrepare = async (headers, message) => {
     throw err
   })
   const messageProtocol = {
-      id: message.transferId,
-      to: message.payeeFsp,
-      from: message.payerFsp,
-      type: 'application/json',
-      content: {
-        headers: headers,
-        payload: message
-      },
-      metadata: {
-        event: {
-          id: Uuid(),
-          type: 'prepare',
-          action: 'prepare',
-          createdAt: new Date(),
-          status: 'success'
-        }
+    id: message.transferId,
+    to: message.payeeFsp,
+    from: message.payerFsp,
+    type: 'application/json',
+    content: {
+      headers: headers,
+      payload: message
+    },
+    metadata: {
+      event: {
+        id: Uuid(),
+        type: 'prepare',
+        action: 'prepare',
+        createdAt: new Date(),
+        status: 'success'
       }
     }
-    const topicConfig = {
-      topicName: `topic-${message.payerFsp}-transfer-prepare`
-    }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).then( result => {return result}).catch(err => {
-      Logger.error(`Kafka error:: ERROR:'${err}'`)
-      throw err
-    })
+  }
+  const topicConfig = {
+    topicName: `topic-${message.payerFsp}-transfer-prepare`
+  }
+  return kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
+    const url = Config.DFSP_URLS[message.payerFsp]
+    Notification.sendNotification(url, headers, message)
+    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    throw err
+  })
 }
 
 module.exports = {
