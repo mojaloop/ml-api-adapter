@@ -123,18 +123,18 @@ run_test_command()
    -c "source test/.env; $TEST_CMD"
 }
 
-#>&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
-##docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
-#docker build -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
-#echo "result "$?""
-#if [ "$?" != 0 ]
-#then
-#  >&2 echo "Build failed...exiting"
-#  clean_docker
-#  exit 1
-#fi
-
 stop_docker
+
+>&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
+##docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+docker build -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+echo "result "$?""
+if [ "$?" != 0 ]
+then
+  >&2 echo "Build failed...exiting"
+  clean_docker
+  exit 1
+fi
 
 >&2 echo "Kafka is starting"
 start_kafka

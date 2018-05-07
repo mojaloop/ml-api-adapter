@@ -8,7 +8,7 @@ module.exports = [
     handler: Handler.health,
     options: {
       tags: tags,
-      description: 'Status of directory',
+      description: 'Status of adapter',
       id: 'health'
     }
   },
