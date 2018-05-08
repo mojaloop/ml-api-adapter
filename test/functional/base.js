@@ -1,13 +1,33 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+ --------------
+ ******/
+
 'use strict'
 
-// const host = process.env.API_HOST_IP || 'localhost'
-const apiHost = process.env.API_HOST_IP || 'localhost'
-// const adminHost = process.env.ADMIN_HOST_IP || 'localhost'
+const apiHost = process.env.APP_HOST || 'localhost'
+//  const apiHost = 'ml-api-adapter-functional'
 const RequestApi = require('supertest')('http://' + apiHost + ':3000')
-// const RequestAdmin = require('supertest')('http://' + adminHost + ':3001')
 const P = require('bluebird')
-const Encoding = require('@mojaloop/central-services-shared').Encoding
-const DA = require('deasync-promise')
+// const Encoding = require('@mojaloop/central-services-shared').Encoding
+// const DA = require('deasync-promise')
 
 // const account1Name = 'dfsp1'
 // const account1AccountNumber = '1234'
@@ -43,11 +63,8 @@ const DA = require('deasync-promise')
 
 const getApi = (path, headers = {}) => RequestApi.get(path).auth('admin', 'admin').set(headers)
 
-const postApi = (path, data, auth = {
-  name: 'admin',
-  password: 'admin',
-  emailAddress: 'admin@test.com'
-}, contentType = 'application/json') => RequestApi.post(path).auth(auth.name, auth.password, auth.emailAddress).set('Content-Type', contentType).send(data)
+// const postApi = (path, data, contentType = 'application/json') => RequestApi.post(path).set('Content-Type', contentType).send(data)
+const postApi = (path, headers, data) => RequestApi.post(path).set(headers).send(data)
 
 const putApi = (path, data, auth = {
   name: 'admin',
@@ -92,30 +109,8 @@ const create = (transfer) => P.resolve(postApi(`/transfers`, transfer))
 // const updateCharge = (name, payload) => putAdmin(`/charges/${name}`, payload)
 
 module.exports = {
-  // account1Name: account1().name,
-  // account1AccountNumber,
-  // account1RoutingNumber,
-  // account1Password: account1Name,
-  // account2Name: account2().name,
-  // account2AccountNumber,
-  // account2RoutingNumber,
-  // account2Password: account2Name,
-  // basicAuth,
-  // createAccount,
-  // createCharge,
-  // fulfillTransfer,
-  // getTransfer,
-  // getFulfillment,
   getApi,
-  // getAdmin,
-  // getAccount,
   postApi,
-  // postAdmin,
-  // prepareTransfer,
   create,
   putApi
-  // putAdmin,
-  // rejectTransfer,
-  // updateAccount,
-  // updateCharge
 }

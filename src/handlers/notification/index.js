@@ -98,23 +98,6 @@ const startConsumer = async () => {
   Logger.debug('testConsumer::end')
 }
 
-// const sendNotification = async (url, headers, message) => {
-//   delete headers['Content-Length']
-//   const options = {
-//     url,
-//     method: 'put',
-//     headers,
-
-//     body: JSON.stringify(message)
-//   }
-//   request(options, (error, response, body) => {
-//     if (error) {
-//       return 400
-//     }
-//     return response.statusCode
-//   })
-// }
-
 const sendNotification = async (url, headers, message) => {
   delete headers['Content-Length']
   const options = {

@@ -1,28 +1,11 @@
 {
   "PORT": 3000,
-  "ADMIN_PORT": 3001,
   "HOSTNAME": "http://central-ledger",
-  "ENABLE_TOKEN_AUTH": false,
-  "ENABLE_BASIC_AUTH": false,
-  "LEDGER_ACCOUNT_NAME": "LedgerName",
-  "LEDGER_ACCOUNT_PASSWORD": "LedgerPassword",
-  "AMOUNT": {
-    "PRECISION": 10,
-    "SCALE": 2
-  },
-  "SIDECAR": {
-    "DISABLED": false,
-    "HOST": "localhost",
-    "PORT": 5678,
-    "CONNECT_TIMEOUT": 45000,
-    "RECONNECT_INTERVAL": 5000
-  },
-  "EMAIL_USER": "modusboxemailtest@gmail.com",
-  "EMAIL_PASSWORD": "April2o0%",
-  "EMAIL_SMTP": "smtp.gmail.com",
   "DFSP_URLS": {
     "dfsp1": "http://localhost:3000/dfsp1/notify",
     "dfsp2": "http://localhost:3000/dfsp2/notify",
     "dfsp3": "http://localhost:3000/dfsp3/notify"
-  }  
+  },
+  "KAFKA_HOST": "localhost",
+  "KAFKA_BROKER_PORT": "9092" 
 }

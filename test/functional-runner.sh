@@ -64,7 +64,7 @@ stop_docker() {
 
 clean_docker() {
   stop_docker
-  #  >&2 echo "Removing docker kaka image"
+  #  >&2 echo "Removing docker kafka image"
 #  (docker rmi $DOCKER_IMAGE:$DOCKER_TAG) > /dev/null 2>&1
 #  >&2 echo "Removing docker test image $DOCKER_IMAGE:$DOCKER_TAG"
 #  (docker rmi $DOCKER_IMAGE:$DOCKER_TAG) > /dev/null 2>&1
@@ -105,6 +105,7 @@ start_ml_api_adapter()
    --link $KAFKA_HOST \
    --name $APP_HOST \
    --env KAFKA_HOST="$KAFKA_HOST" \
+   --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
    -p $APP_PORT:$APP_PORT \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
@@ -117,7 +118,9 @@ run_test_command()
  docker run -i \
    --link $APP_HOST \
    --name $APP_TEST_HOST \
+   --env APP_HOST=$APP_HOST \
    --env HOST_IP="$APP_HOST" \
+   --env KAFKA_HOST="$KAFKA_HOST" \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
    -c "source test/.env; $TEST_CMD"
@@ -126,7 +129,7 @@ run_test_command()
 stop_docker
 
 >&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
-##docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+# docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
 docker build -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
 echo "result "$?""
 if [ "$?" != 0 ]
@@ -161,20 +164,27 @@ until is_api_up; do
   sleep 5
 done
 
-##run_test_command
-#test_exit_code=$?
-#
-#>&2 echo "Displaying test logs"
-#docker logs $APP_TEST_HOST
-#
-#>&2 echo "Copy results to local directory"
-#docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
-#
-#if [ "$test_exit_code" != 0 ]
-#then
-#  >&2 echo "Functional tests failed...exiting"
-#  >&2 echo "Test environment logs..."
-#fi
-#
-#clean_docker
-#exit "$test_exit_code"
+run_test_command
+test_exit_code=$?
+>&2 echo "Test result.... $test_exit_code ..."
+
+
+>&2 echo "Displaying test logs"
+docker logs $APP_TEST_HOST
+
+>&2 echo "Displaying app logs"
+docker logs $APP_HOST
+
+
+>&2 echo "Copy results to local directory"
+docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
+
+if [ "$test_exit_code" != 0 ]
+then
+ >&2 echo "Functional tests failed...exiting"
+ >&2 echo "Test environment logs..."
+fi
+
+clean_docker
+exit "$test_exit_code"
+#sleep 2000000

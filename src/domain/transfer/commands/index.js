@@ -27,10 +27,29 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Uuid = require('uuid4')
 const Notification = require('../../../handlers/notification')
 const Config = require('../../../lib/config')
+const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA_HOST || 'localhost'
+const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA_BROKER_PORT || '9092'
 
 const publishPrepare = async (headers, message) => {
   Logger.info('publishPrepare::start')
-  var kafkaProducer = new Producer()
+  const kafkaConfig = {
+    rdkafkaConf: {
+      'metadata.broker.list': `${kafkaHost}:${kafkaPort}`,
+      'client.id': 'default-client',
+      'event_cb': true,
+      'compression.codec': 'none',
+      'retry.backoff.ms': 100,
+      'message.send.max.retries': 2,
+      'socket.keepalive.enable': true,
+      'queue.buffering.max.messages': 10,
+      'queue.buffering.max.ms': 50,
+      'batch.num.messages': 100,
+      'api.version.request': true,
+      'dr_cb': true
+    }
+  }
+
+  var kafkaProducer = new Producer(kafkaConfig)
   await kafkaProducer.connect().catch(err => {
     Logger.error(`error connecting to kafka - ${err}`)
     throw err

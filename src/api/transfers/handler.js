@@ -44,7 +44,7 @@ exports.create = async function (request, h) {
     }
     Logger.info('create::start(%s)', JSON.stringify(request.payload))
     const result = await TransferService.prepare(JSON.parse(JSON.stringify(headers)), request.payload)
-    return h.response(result).code((result === true) ? 202 : 500)
+    return h.response().code((result === true) ? 202 : 500)
   } catch (err) {
     throw Boom.boomify(err, {statusCode: 500, message: 'An error has occurred'})
   }
