@@ -26,8 +26,6 @@ const apiHost = process.env.APP_HOST || 'localhost'
 //  const apiHost = 'ml-api-adapter-functional'
 const RequestApi = require('supertest')('http://' + apiHost + ':3000')
 const P = require('bluebird')
-// const Encoding = require('@mojaloop/central-services-shared').Encoding
-// const DA = require('deasync-promise')
 
 // const account1Name = 'dfsp1'
 // const account1AccountNumber = '1234'

@@ -48,38 +48,38 @@ const publishPrepare = async (headers, message) => {
       'dr_cb': true
     }
   }
-
   var kafkaProducer = new Producer(kafkaConfig)
-  await kafkaProducer.connect().catch(err => {
-    Logger.error(`error connecting to kafka - ${err}`)
-    throw err
-  })
-  const messageProtocol = {
-    id: message.transferId,
-    to: message.payeeFsp,
-    from: message.payerFsp,
-    type: 'application/json',
-    content: {
-      headers: headers,
-      payload: message
-    },
-    metadata: {
-      event: {
-        id: Uuid(),
-        type: 'prepare',
-        action: 'prepare',
-        createdAt: new Date(),
-        status: 'success'
+  await kafkaProducer.connect().then(async (result) => {
+    const messageProtocol = {
+      id: message.transferId,
+      to: message.payeeFsp,
+      from: message.payerFsp,
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'prepare',
+          action: 'prepare',
+          createdAt: new Date(),
+          status: 'success'
+        }
       }
     }
-  }
-  const topicConfig = {
-    topicName: `topic-${message.payerFsp}-transfer-prepare`
-  }
-  return kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
-    const url = Config.DFSP_URLS[message.payerFsp]
-    Notification.sendNotification(url, headers, message)
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    const topicConfig = {
+      topicName: `topic-${message.payerFsp}-transfer-prepare`
+    }
+    return kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
+      const url = Config.DFSP_URLS[message.payerFsp]
+      Notification.sendNotification(url, headers, message)
+      Logger.error(`Kafka error:: ERROR:'${err}'`)
+      throw err
+    })
+  }).catch(err => {
+    Logger.error(`error connecting to kafka - ${err}`)
     throw err
   })
 }
