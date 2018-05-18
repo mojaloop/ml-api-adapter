@@ -57,12 +57,11 @@ const futureDate = () => {
   return d
 }
 
-const buildTransfer = (transferId, amount, expiresAt) => {
-  expiresAt = (expiresAt || futureDate()).toISOString()
+const buildTransfer = (transferId) => {
   return {
-    transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
-    payeeFsp: '1234',
-    payerFsp: '5678',
+    transferId,
+    payeeFsp: 'dfsp1',
+    payerFsp: 'dfsp2',
     amount: {
       currency: 'USD',
       amount: '123.45'

@@ -27,8 +27,8 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Uuid = require('uuid4')
 const Notification = require('../../../handlers/notification')
 const Config = require('../../../lib/config')
-const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA_HOST || 'localhost'
-const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA_BROKER_PORT || '9092'
+const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA.KAFKA_HOST || 'localhost'
+const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA.KAFKA_BROKER_PORT || '9092'
 
 const publishPrepare = async (headers, message) => {
   Logger.info('publishPrepare::start')
@@ -49,7 +49,7 @@ const publishPrepare = async (headers, message) => {
     }
   }
   var kafkaProducer = new Producer(kafkaConfig)
-  await kafkaProducer.connect().then(async (result) => {
+  return await kafkaProducer.connect().then(async (result) => {
     const messageProtocol = {
       id: message.transferId,
       to: message.payeeFsp,
@@ -72,9 +72,9 @@ const publishPrepare = async (headers, message) => {
     const topicConfig = {
       topicName: `topic-${message.payerFsp}-transfer-prepare`
     }
-    return kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
       const url = Config.DFSP_URLS[message.payerFsp]
-      Notification.sendNotification(url, headers, message)
+      Notification.sendNotification(url, 'put', headers, message)
       Logger.error(`Kafka error:: ERROR:'${err}'`)
       throw err
     })

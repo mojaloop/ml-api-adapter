@@ -92,6 +92,7 @@
     "pg": "7.4.1"
   },
   "devDependencies": {
+    "async-request": "^1.2.0",
     "aws-sdk": "2.16.0",
     "faucet": "0.0.1",
     "immutable": "^3.8.2",

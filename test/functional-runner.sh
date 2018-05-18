@@ -169,11 +169,11 @@ test_exit_code=$?
 >&2 echo "Test result.... $test_exit_code ..."
 
 
->&2 echo "Displaying test logs"
-docker logs $APP_TEST_HOST
+# >&2 echo "Displaying test logs"
+# docker logs $APP_TEST_HOST
 
->&2 echo "Displaying app logs"
-docker logs $APP_HOST
+# >&2 echo "Displaying app logs"
+# docker logs $APP_HOST
 
 >&2 echo "Copy results to local directory"
 docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test

@@ -22,14 +22,28 @@
 
 'use strict'
 
-const Commands = require('./commands')
 const Logger = require('@mojaloop/central-services-shared').Logger
+const request = require('request')
 
-const prepare = async (headers, payload) => {
-  Logger.info('prepare::start(%s)', payload)
-  return await Commands.publishPrepare(headers, payload)
+const sendCallback = async (url, method, headers, message) => {
+  delete headers['Content-Length']
+  const options = {
+    url,
+    method,
+    headers,
+    body: JSON.stringify(message)
+  }
+
+  return new Promise((resolve, reject) => {
+    return request(options, (error, response, body) => {
+      if (error) {
+        Logger.error(`error while callback - ${error}`)
+        throw error
+      }
+      return resolve(response.statusCode)
+    })
+  })
 }
-
 module.exports = {
-  prepare
+  sendCallback
 }

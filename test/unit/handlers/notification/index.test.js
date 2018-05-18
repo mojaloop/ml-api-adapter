@@ -25,18 +25,20 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Notification = require('../../../../src/handlers/notification')
-// const Service = require('../../../../src/domain/transfer')
+const Callback = require('../../../../src/handlers/notification/callbacks.js')
 const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
+const P = require('bluebird')
+// const proxyquire = require('proxyquire');
 
-Test('Transfer Service tests', notificationTest => {
+Test('Notification Service tests', notificationTest => {
   let sandbox
 
   notificationTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(Consumer.prototype, 'constructor')
     sandbox.stub(Logger)
-    // sandbox.stub(request)
+    sandbox.stub(Callback, 'sendCallback')
     t.end()
   })
 
@@ -45,8 +47,8 @@ Test('Transfer Service tests', notificationTest => {
     t.end()
   })
 
-  notificationTest.test('getUrl should', async getUrlTest => {
-    getUrlTest.test('return the valid URL for the recepient on success', async test => {
+  notificationTest.test('processMessage should', async processMessageTest => {
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
       const msg = {
         value: {
           metadata: {
@@ -64,16 +66,22 @@ Test('Transfer Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
+      const url = 'http://localhost:3000/dfsp2/transfers'
+      const method = 'post'
+      const headers = {}
+      const message = {}
 
-      const expected = 'http://localhost:3000/dfsp2/notify'
+      const expected = 200
 
-      let result = Notification.getUrl(msg)
+      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.resolve(200))
 
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(url, method, headers, message))
       test.equal(result, expected)
       test.end()
     })
 
-    getUrlTest.test('return the valid URL for the sender on failure', async test => {
+    processMessageTest.test('process the message received from kafka and send out a transfer error notication to the sender', async test => {
       const msg = {
         value: {
           metadata: {
@@ -91,52 +99,101 @@ Test('Transfer Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
+      const url = 'http://localhost:3000/dfsp1/transfers/error'
+      const method = 'put'
+      const headers = {}
+      const message = {}
 
-      const expected = 'http://localhost:3000/dfsp1/notify'
+      const expected = 200
 
-      let result = Notification.getUrl(msg)
+      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.resolve(200))
 
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(url, method, headers, message))
       test.equal(result, expected)
       test.end()
     })
 
-    getUrlTest.test('return the null on invalid msg', async test => {
-      const msg = {}
-      const expected = null
-
-      let result = Notification.getUrl(msg)
-
-      test.equal(result, expected)
-      test.end()
-    })
-
-    getUrlTest.end()
-  })
-
-  notificationTest.test('sendNotification should', async sendNotificationTest => {
-    sendNotificationTest.test('send the notification to the URL', async test => {
-      const url = 'http://localhost:3000/dfsp1/notify'
-      const headers = {
-        // 'content-type': 'application/json',
-        // 'content-length': '100',
-        // 'date': '2018-05-03',
-        // 'x-forwarded-for': '',
-        // 'fspiop-source': '',
-        // 'fspiop-destination': '',
-        // 'fspiop-encryption': '',
-        // 'fspiop-signature': '',
-        // 'fspiop-uri': '',
-        // 'fspiop-http-method': ''
+    processMessageTest.test('throw error if not able to post the transfer to the receiver', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
       }
-      const msg = {}
-      const expected = 400
+      const url = 'http://localhost:3000/dfsp2/transfers'
+      const method = 'post'
+      const headers = {}
+      const message = {}
 
-      await Notification.sendNotification(url, headers, msg).then(result => {
-        test.equal(result, expected)
+      const error = new Error()
+      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.reject(error))
+
+      try {
+        await Notification.processMessage(msg)
+      } catch (e) {
+        test.ok(e instanceof Error)
         test.end()
-      })
+      }
     })
-    sendNotificationTest.end()
+
+    processMessageTest.test('throw error if not able to send the notification to the sender', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'failure'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+      const url = 'http://localhost:3000/dfsp1/transfers/error'
+      const method = 'put'
+      const headers = {}
+      const message = {}
+
+      const error = new Error()
+      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.reject(error))
+
+      try {
+        await Notification.processMessage(msg)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    processMessageTest.test('throw error if invalid message received from kafka', async test => {
+      const msg = {}
+
+      try {
+        await Notification.processMessage(msg)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, 'Invalid message received from kafka')
+        test.end()
+      }
+    })
+    processMessageTest.end()
   })
 
   notificationTest.test('startConsumer should', async startConsumerTest => {

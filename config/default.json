@@ -2,10 +2,25 @@
   "PORT": 3000,
   "HOSTNAME": "http://central-ledger",
   "DFSP_URLS": {
-    "dfsp1": "http://localhost:3000/dfsp1/notify",
-    "dfsp2": "http://localhost:3000/dfsp2/notify",
-    "dfsp3": "http://localhost:3000/dfsp3/notify"
+    "dfsp1": {
+      "transfers": "http://localhost:3000/dfsp1/transfers",
+      "error": "http://localhost:3000/dfsp1/transfers/error"
+    },
+    "dfsp2": {
+      "transfers": "http://localhost:3000/dfsp2/transfers",
+      "error": "http://localhost:3000/dfsp2/transfers/error"
+    },
+    "dfsp3": {
+      "transfers": "http://localhost:3000/dfsp3/transfers",
+      "error": "http://localhost:3000/dfsp3/transfers/error"
+    }
   },
-  "KAFKA_HOST": "localhost",
-  "KAFKA_BROKER_PORT": "9092" 
+  "KAFKA": {
+    "KAFKA_HOST": "localhost",
+    "KAFKA_BROKER_PORT": "9092",
+    "KAFKA_NOTIFICATION_TOPICS": [
+      "notifications"
+    ],
+    "KAFKA_CONSUMER_BATCH_SIZE": 1
+  }
 }

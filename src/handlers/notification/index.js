@@ -25,14 +25,21 @@ const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const ConsumerEnums = require('@mojaloop/central-services-shared').Kafka.Consumer.ENUMS
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../../lib/config')
-const request = require('request')
+const Callback = require('./callbacks.js')
+const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA.KAFKA_HOST || 'localhost'
+const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA.KAFKA_BROKER_PORT || '9092'
+const batchSize = Config.KAFKA.KAFKA_CONSUMER_BATCH_SIZE || 1
+let topicList = Config.KAFKA.KAFKA_NOTIFICATION_TOPICS || ['notifications']
 
 const startConsumer = async () => {
-  Logger.info('Instantiate consumer')
-  var c = new Consumer(['notifications'], {
+  Logger.info('Instantiate the kafka consumer')
+
+  topicList = (!Array.isArray(topicList) ? [topicList] : topicList)
+
+  var c = new Consumer(topicList, {
     options: {
       mode: ConsumerEnums.CONSUMER_MODES.recursive,
-      batchSize: 1,
+      batchSize,
       recursiveTimeout: 100,
       messageCharset: 'utf8',
       messageAsJSON: true,
@@ -40,42 +47,38 @@ const startConsumer = async () => {
       consumeTimeout: 1000
     },
     rdkafkaConf: {
-      'group.id': 'kafka-test',
-      'metadata.broker.list': 'localhost:9092',
+      'group.id': 'kafka-ml-api-adapter',
+      'metadata.broker.list': `${kafkaHost}:${kafkaPort}`,
       'enable.auto.commit': false
     },
     topicConf: {},
     logger: Logger
   })
 
-  Logger.debug('Connect consumer')
-  var connectionResult = await c.connect()
-
-  Logger.debug(`Connected result=${connectionResult}`)
-
-  Logger.debug('Consume messages')
+  await c.connect().catch(err => {
+    Logger.error(`error connecting to kafka - ${err}`)
+    throw err
+  })
 
   c.consume((error, message) => {
     return new Promise((resolve, reject) => {
       if (error) {
         Logger.debug(`WTDSDSD!!! error ${error}`)
-        // resolve(false)
         reject(error)
       }
-      if (message) { // check if there is a valid message comming back
-        Logger.debug(`Message Received by callback function - ${JSON.stringify(message)}`)
-        // lets check if we have received a batch of messages or single. This is dependant on the Consumer Mode
-        if (Array.isArray(message) && message.length != null && message.length > 0) {
-          message.forEach(msg => {
-            c.commitMessage(msg)
-            let url = getUrl(msg)
+      if (message) {
+        Logger.debug(`Message Received from kafka - ${JSON.stringify(message)}`)
 
-            if (url == null) {
-              // reject('Cant determine the destination of notification')
-              resolve(false)
-            }
-            const { content } = msg.value
-            sendNotification(url, content.headers, content.payload)
+        message = (!Array.isArray(message) ? [message] : message)
+
+        if (Array.isArray(message) && message.length != null && message.length > 0) {
+          message.forEach(async msg => {
+            c.commitMessage(msg)
+            let res = await processMessage(msg).catch(err => {
+              Logger.error(`error posting to the callback - ${err}`)
+              throw err
+            })
+            resolve(res)
           })
         } else {
           c.commitMessage(message)
@@ -84,7 +87,6 @@ const startConsumer = async () => {
       } else {
         resolve(false)
       }
-      // resolve(true)
     })
   })
 
@@ -94,48 +96,28 @@ const startConsumer = async () => {
   c.on('message', message => Logger.debug(`onMessage: ${message.offset}, ${JSON.stringify(message.value)}`))
   // consume 'batch' event
   c.on('batch', message => Logger.debug(`onBatch: ${JSON.stringify(message)}`))
-
-  Logger.debug('testConsumer::end')
 }
 
-const sendNotification = async (url, headers, message) => {
-  delete headers['Content-Length']
-  const options = {
-    url,
-    method: 'put',
-    headers,
-
-    body: JSON.stringify(message)
-  }
-
-  return new Promise((resolve, reject) => {
-    return request(options, (error, response, body) => {
-      if (error) {
-        return resolve(400)
-      }
-      return resolve(response.statusCode)
-    })
-  })
-}
-
-const getUrl = (msg) => {
+const processMessage = async (msg) => {
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
-    // reject('Invalid message format received from Kafka!')
-    return null
+    throw new Error('Invalid message received from kafka')
   }
-  const { metadata, from, to } = msg.value
-  const { type, action, status } = metadata.event
-  let url
-  if (action === 'prepare' && type === 'prepare' && status === 'success') {
-    url = Config.DFSP_URLS[to]
-  } else if (action === 'prepare' && type === 'prepare' && status !== 'success') {
-    url = Config.DFSP_URLS[from]
+  const { metadata, from, to, content } = msg.value
+  const { action, status } = metadata.event
+  if (action === 'prepare' && status === 'success') {
+    return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload).catch(err => {
+      Logger.error(`error posting to the callback - ${err}`)
+      throw err
+    })
+  } else if (action === 'prepare' && status !== 'success') {
+    return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload).catch(err => {
+      Logger.error(`error sending notification to the callback - ${err}`)
+      throw err
+    })
   }
-  return url
 }
 
 module.exports = {
   startConsumer,
-  sendNotification,
-  getUrl
+  processMessage
 }

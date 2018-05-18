@@ -114,12 +114,12 @@ module.exports = [{
 // },
 {
   method: 'PUT',
-  path: '/dfsp1/notify',
+  path: '/dfsp1/transfers/error',
   handler: Handler.receiveNotification,
   options: {
-    id: 'dfsp1',
+    id: 'dfsp1-error',
     tags: tags,
-    description: 'receive notification for dfsp1',
+    description: 'receive error notification for dfsp1',
     payload: {
       allow: 'application/json',
       failAction: 'error',
@@ -129,12 +129,12 @@ module.exports = [{
 },
 {
   method: 'PUT',
-  path: '/dfsp2/notify',
+  path: '/dfsp2/transfers/error',
   handler: Handler.receiveNotification,
   options: {
-    id: 'dfsp2',
+    id: 'dfsp2-error',
     tags: tags,
-    description: 'receive notification for dfsp2',
+    description: 'receive error notification for dfsp2',
     payload: {
       allow: 'application/json',
       failAction: 'error',
@@ -144,12 +144,57 @@ module.exports = [{
 },
 {
   method: 'PUT',
-  path: '/dfsp3/notify',
+  path: '/dfsp3/transfers/error',
   handler: Handler.receiveNotification,
   options: {
-    id: 'dfsp3',
+    id: 'dfsp3-error',
     tags: tags,
-    description: 'receive notification for dfsp3',
+    description: 'receive error notification for dfsp3',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error',
+      output: 'data'
+    }
+  }
+},
+{
+  method: 'POST',
+  path: '/dfsp1/transfers',
+  handler: Handler.receiveNotification,
+  options: {
+    id: 'dfsp1-transfers',
+    tags: tags,
+    description: 'receive -transfers for dfsp1',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error',
+      output: 'data'
+    }
+  }
+},
+{
+  method: 'POST',
+  path: '/dfsp2/transfers',
+  handler: Handler.receiveNotification,
+  options: {
+    id: 'dfsp2-transfers',
+    tags: tags,
+    description: 'receive -transfers for dfsp2',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error',
+      output: 'data'
+    }
+  }
+},
+{
+  method: 'POST',
+  path: '/dfsp3/transfers',
+  handler: Handler.receiveNotification,
+  options: {
+    id: 'dfsp3-transfers',
+    tags: tags,
+    description: 'receive transfers for dfsp3',
     payload: {
       allow: 'application/json',
       failAction: 'error',

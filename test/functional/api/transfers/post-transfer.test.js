@@ -70,12 +70,16 @@ Test('POST /transfers', postTest => {
     create(headers, transfer)
       .expect(202)
       .then(res => {
-        console.log(res)
-        test.equal(res.text, 'true')
+        test.pass()
         test.end()
       }).catch(err => {
         console.log(err)
+        throw err
       })
   })
   postTest.end()
+})
+
+Test.onFinish(function () {
+  process.exit(0)
 })

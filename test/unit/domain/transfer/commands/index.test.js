@@ -26,7 +26,7 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const TransferCommands = require('../../../../../src/domain/transfer/commands')
 
-Test('Eventric Transfer index test', indexTest => {
+Test('Commands Transfer index test', indexTest => {
   let sandbox
 
   indexTest.beforeEach(t => {
@@ -41,10 +41,6 @@ Test('Eventric Transfer index test', indexTest => {
 
   indexTest.test('publishPrepare should', prepareTest => {
     prepareTest.test('execute publishPrepare command on context', async t => {
-      let command = sandbox.stub()
-      let expected = true
-      command.returns(expected)
-
       let payload = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
         payeeFsp: '1234',
@@ -75,8 +71,7 @@ Test('Eventric Transfer index test', indexTest => {
 
       let headers = {}
 
-      let tfr = await TransferCommands.publishPrepare(headers, payload)
-      t.equal(tfr, expected)
+      t.ok(TransferCommands.publishPrepare(headers, payload))
       t.end()
     })
 
