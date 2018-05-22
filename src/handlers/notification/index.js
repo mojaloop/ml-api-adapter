@@ -33,7 +33,7 @@ const Callback = require('./callbacks.js')
 
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
-let notificationConsumer
+let notificationConsumer = {}
 
 const startConsumer = async () => {
   Logger.debug('Instantiate the kafka consumer')
@@ -53,7 +53,7 @@ const startConsumer = async () => {
   }
 }
 const consumeMessage = async (error, message) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (error) {
       Logger.error(`Error while reading message from kafka ${error}`)
       return reject(error)
@@ -63,7 +63,7 @@ const consumeMessage = async (error, message) => {
     message = (!Array.isArray(message) ? [message] : message)
 
     if (Array.isArray(message)) {
-      message.forEach(async msg => {
+      for (let msg of message) {
         let res = await processMessage(msg).catch(err => {
           Logger.error(`Error posting to the callback - ${err}`)
           notificationConsumer.commitMessageSync(msg)
@@ -71,14 +71,22 @@ const consumeMessage = async (error, message) => {
         })
         notificationConsumer.commitMessageSync(msg)
         return resolve(res)
-      })
+      }
+      // message.forEach(async msg => {
+      //   let res = await processMessage(msg).catch(err => {
+      //     Logger.error(`Error posting to the callback - ${err}`)
+      //     notificationConsumer.commitMessageSync(msg)
+      //     throw err
+      //   })
+      //   notificationConsumer.commitMessageSync(msg)
+      //   return resolve(res)
+      // })
     } else {
       notificationConsumer.commitMessageSync(message)
     }
     return resolve(message)
   })
 }
-
 
 const processMessage = async (msg) => {
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {

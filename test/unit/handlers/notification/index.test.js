@@ -41,11 +41,11 @@ Test('Notification Service tests', notificationTest => {
 
     sandbox.stub(Consumer.prototype, 'connect').returns(P.resolve(true))
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0) //.returns(P.resolve(true))
-    sandbox.stub(Consumer.prototype, 'consume') //.callsArgAsync(0) //.returns(P.resolve(true))
-    sandbox.stub(Consumer.prototype, 'commitMessageSync') //.returns(P.resolve(true))
+    sandbox.stub(Consumer.prototype, 'consume', () => { return P.resolve(true) }) // .callsArgAsync(0) //.returns(P.resolve(true))
+    sandbox.stub(Consumer.prototype, 'commitMessageSync', () => { return P.resolve(true) }) // .returns(P.resolve(true))
 
     sandbox.stub(Logger)
-    sandbox.stub(Callback, 'sendCallback')
+    sandbox.stub(Callback, 'sendCallback').returns(P.resolve(true))
     t.end()
   })
 
@@ -244,7 +244,6 @@ Test('Notification Service tests', notificationTest => {
 
   notificationTest.test('consumeMessage should', async consumeMessageTest => {
     consumeMessageTest.test('process the message', async test => {
-
       const msg = {
         value: {
           metadata: {
@@ -264,8 +263,8 @@ Test('Notification Service tests', notificationTest => {
       }
 
       const message = [msg]
-
-      test.ok(Notification.consumeMessage(null, message))
+      let result = await Notification.consumeMessage(null, message)
+      test.ok(result)
       test.end()
       // process.exit(0)
     })
