@@ -112,7 +112,7 @@ Test('Commands Transfer index test', indexTest => {
       }
 
       let headers = {}
-      t.ok(TransferCommands.publishPrepare(headers, payload))
+      t.ok(await TransferCommands.publishPrepare(headers, payload))
       t.end()
     })
 

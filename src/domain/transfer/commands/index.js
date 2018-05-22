@@ -32,11 +32,12 @@ const PREPARE = 'prepare'
 
 const publishPrepare = async (headers, message) => {
   Logger.debug('publishPrepare::start')
+  try {
 
-  let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
-  var kafkaProducer = new Producer(kafkaConfig)
-  return await kafkaProducer.connect().then(async (result) => {
+    var kafkaProducer = new Producer(kafkaConfig)
+    await kafkaProducer.connect()
     const messageProtocol = {
       id: message.transferId,
       to: message.payeeFsp,
@@ -59,14 +60,11 @@ const publishPrepare = async (headers, message) => {
     const topicConfig = {
       topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
     }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
-      Logger.error(`Kafka error:: ERROR:'${err}'`)
-      throw err
-    })
-  }).catch(err => {
-    Logger.error(`error connecting to kafka - ${err}`)
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+  } catch (err) {
+    Logger.error(`Kafka error:: ERROR:'${err}'`)
     throw err
-  })
+  }
 }
 
 module.exports = {

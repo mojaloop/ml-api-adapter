@@ -40,7 +40,9 @@ Test('Notification Service tests', notificationTest => {
     sandbox.stub(Consumer.prototype, 'constructor')
 
     sandbox.stub(Consumer.prototype, 'connect').returns(P.resolve(true))
-    sandbox.stub(Consumer.prototype, 'consume').returns(P.resolve(true))
+    // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0) //.returns(P.resolve(true))
+    sandbox.stub(Consumer.prototype, 'consume') //.callsArgAsync(0) //.returns(P.resolve(true))
+    sandbox.stub(Consumer.prototype, 'commitMessageSync') //.returns(P.resolve(true))
 
     sandbox.stub(Logger)
     sandbox.stub(Callback, 'sendCallback')
@@ -203,12 +205,71 @@ Test('Notification Service tests', notificationTest => {
 
   notificationTest.test('startConsumer should', async startConsumerTest => {
     startConsumerTest.test('start the consumer and consumer messages', async test => {
-      test.ok(Notification.startConsumer())
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const message = [msg]
+
+      // let spy = Sinon.spy(Notification, 'consumeMessage')
+      // await Notification.startConsumer()
+      // setTimeout(async () => {
+      //   while (spy.called) {
+      //     return await true
+      //   }
+      // }
+      //   , 1000)
+      // test.assert(spy.called)
+      test.ok(await Notification.startConsumer())
       test.end()
-      process.exit(0)
+      // Notification.consumeMessage.restore()
+      // process.exit(0)
     })
     startConsumerTest.end()
   })
 
+  notificationTest.test('consumeMessage should', async consumeMessageTest => {
+    consumeMessageTest.test('process the message', async test => {
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const message = [msg]
+
+      test.ok(Notification.consumeMessage(null, message))
+      test.end()
+      // process.exit(0)
+    })
+    consumeMessageTest.end()
+  })
   notificationTest.end()
 })

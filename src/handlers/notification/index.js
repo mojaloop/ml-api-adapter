@@ -33,55 +33,52 @@ const Callback = require('./callbacks.js')
 
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
+let notificationConsumer
 
 const startConsumer = async () => {
   Logger.debug('Instantiate the kafka consumer')
+  try {
+    let topicName = Utility.getNotificationTopicName()
+    let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
+    config.rdkafkaConf['client.id'] = topicName
 
-  let topicName = Utility.getNotificationTopicName()
-  let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
-  config.rdkafkaConf['client.id'] = topicName
+    notificationConsumer = new Consumer([topicName], config)
 
-  var c = new Consumer([topicName], config)
-
-  await c.connect().catch(err => {
-    Logger.error(`error connecting to kafka - ${err}`)
+    await notificationConsumer.connect()
+    await notificationConsumer.consume(consumeMessage)
+    return true
+  } catch (err) {
+    Logger.error(`error consuming kafka messages- ${err}`)
     throw err
-  })
-
-  c.consume((error, message) => {
-    return new Promise((resolve, reject) => {
-      if (error) {
-        Logger.error(`Error while reading message from kafka ${error}`)
-        return reject(error)
-      }
-      Logger.debug(`Message Received from kafka - ${JSON.stringify(message)}`)
-
-      message = (!Array.isArray(message) ? [message] : message)
-
-      if (Array.isArray(message)) {
-        message.forEach(async msg => {
-          let res = await processMessage(msg).catch(err => {
-            Logger.error(`Error posting to the callback - ${err}`)
-            c.commitMessageSync(msg)
-            throw err
-          })
-          c.commitMessageSync(msg)
-          return resolve(res)
-        })
-      } else {
-        c.commitMessageSync(message)
-      }
-      return resolve(message)
-    })
-  })
-
-  // consume 'ready' event
-  c.on('ready', arg => Logger.debug(`onReady: ${JSON.stringify(arg)}`))
-  // consume 'message' event
-  c.on('message', message => Logger.debug(`onMessage: ${message.offset}, ${JSON.stringify(message.value)}`))
-  // consume 'batch' event
-  c.on('batch', message => Logger.debug(`onBatch: ${JSON.stringify(message)}`))
+  }
 }
+const consumeMessage = async (error, message) => {
+  return new Promise((resolve, reject) => {
+    if (error) {
+      Logger.error(`Error while reading message from kafka ${error}`)
+      return reject(error)
+    }
+    Logger.debug(`Message Received from kafka - ${JSON.stringify(message)}`)
+
+    message = (!Array.isArray(message) ? [message] : message)
+
+    if (Array.isArray(message)) {
+      message.forEach(async msg => {
+        let res = await processMessage(msg).catch(err => {
+          Logger.error(`Error posting to the callback - ${err}`)
+          notificationConsumer.commitMessageSync(msg)
+          throw err
+        })
+        notificationConsumer.commitMessageSync(msg)
+        return resolve(res)
+      })
+    } else {
+      notificationConsumer.commitMessageSync(message)
+    }
+    return resolve(message)
+  })
+}
+
 
 const processMessage = async (msg) => {
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
@@ -104,5 +101,6 @@ const processMessage = async (msg) => {
 
 module.exports = {
   startConsumer,
-  processMessage
+  processMessage,
+  consumeMessage
 }
