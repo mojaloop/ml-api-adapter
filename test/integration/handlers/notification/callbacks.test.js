@@ -4,7 +4,10 @@ const src = '../../../../src'
 const Test = require('tape')
 const CallbackService = require(`${src}/handlers/notification/callbacks.js`)
 // const Fixtures = require('../../../fixtures')
-const url = process.env.REQUESTBIN_URL
+let url = process.env.ENDPOINT_URL
+console.log(process.env)
+console.log('URL===========', url)
+console.log('URL111===========', url)
 
 Test('callback service', function (modelTest) {
   modelTest.test('prepare should', function (sendCallbackTest) {
@@ -28,7 +31,6 @@ Test('callback service', function (modelTest) {
           from: 'dfsp1'
         }
       }
-      // const url = `http://172.17.0.4:8000/${suffix}`
       const method = 'post'
       const headers = {}
 

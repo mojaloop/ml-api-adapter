@@ -25,29 +25,16 @@
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Uuid = require('uuid4')
-const Notification = require('../../../handlers/notification')
-const Config = require('../../../lib/config')
-const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA.KAFKA_HOST || 'localhost'
-const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA.KAFKA_BROKER_PORT || '9092'
+const Utility = require('../../../lib/utility')
+
+const TRANSFER = 'transfer'
+const PREPARE = 'prepare'
 
 const publishPrepare = async (headers, message) => {
-  Logger.info('publishPrepare::start')
-  const kafkaConfig = {
-    rdkafkaConf: {
-      'metadata.broker.list': `${kafkaHost}:${kafkaPort}`,
-      'client.id': 'default-client',
-      'event_cb': true,
-      'compression.codec': 'none',
-      'retry.backoff.ms': 100,
-      'message.send.max.retries': 2,
-      'socket.keepalive.enable': true,
-      'queue.buffering.max.messages': 10,
-      'queue.buffering.max.ms': 50,
-      'batch.num.messages': 100,
-      'api.version.request': true,
-      'dr_cb': true
-    }
-  }
+  Logger.debug('publishPrepare::start')
+
+  let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+
   var kafkaProducer = new Producer(kafkaConfig)
   return await kafkaProducer.connect().then(async (result) => {
     const messageProtocol = {
@@ -70,11 +57,9 @@ const publishPrepare = async (headers, message) => {
       }
     }
     const topicConfig = {
-      topicName: `topic-${message.payerFsp}-transfer-prepare`
+      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
     }
     return await kafkaProducer.sendMessage(messageProtocol, topicConfig).catch(err => {
-      const url = Config.DFSP_URLS[message.payerFsp]
-      Notification.sendNotification(url, 'put', headers, message)
       Logger.error(`Kafka error:: ERROR:'${err}'`)
       throw err
     })

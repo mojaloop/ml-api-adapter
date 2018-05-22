@@ -51,11 +51,11 @@ const generateTransferId = () => {
 //   }
 // }
 
-const futureDate = () => {
-  let d = new Date()
-  d.setTime(d.getTime() + 86400000)
-  return d
-}
+// const futureDate = () => {
+//   let d = new Date()
+//   d.setTime(d.getTime() + 86400000)
+//   return d
+// }
 
 const buildTransfer = (transferId) => {
   return {

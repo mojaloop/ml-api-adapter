@@ -22,38 +22,26 @@
 
 'use strict'
 const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
-const ConsumerEnums = require('@mojaloop/central-services-shared').Kafka.Consumer.ENUMS
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../../lib/config')
+const Utility = require('../../lib/utility')
 const Callback = require('./callbacks.js')
-const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA.KAFKA_HOST || 'localhost'
-const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA.KAFKA_BROKER_PORT || '9092'
-const batchSize = Config.KAFKA.KAFKA_CONSUMER_BATCH_SIZE || 1
-let topicList = Config.KAFKA.KAFKA_NOTIFICATION_TOPICS || ['notifications']
+// const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA.KAFKA_HOST || 'localhost'
+// const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA.KAFKA_BROKER_PORT || '9092'
+// const batchSize = Config.KAFKA.KAFKA_CONSUMER_BATCH_SIZE || 1
+// let topicList = Config.KAFKA.KAFKA_NOTIFICATION_TOPICS || ['notifications']
+
+const NOTIFICATION = 'notification'
+const EVENT = 'event'
 
 const startConsumer = async () => {
-  Logger.info('Instantiate the kafka consumer')
+  Logger.debug('Instantiate the kafka consumer')
 
-  topicList = (!Array.isArray(topicList) ? [topicList] : topicList)
+  let topicName = Utility.getNotificationTopicName()
+  let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
+  config.rdkafkaConf['client.id'] = topicName
 
-  var c = new Consumer(topicList, {
-    options: {
-      mode: ConsumerEnums.CONSUMER_MODES.recursive,
-      batchSize,
-      recursiveTimeout: 100,
-      messageCharset: 'utf8',
-      messageAsJSON: true,
-      sync: true,
-      consumeTimeout: 1000
-    },
-    rdkafkaConf: {
-      'group.id': 'kafka-ml-api-adapter',
-      'metadata.broker.list': `${kafkaHost}:${kafkaPort}`,
-      'enable.auto.commit': false
-    },
-    topicConf: {},
-    logger: Logger
-  })
+  var c = new Consumer([topicName], config)
 
   await c.connect().catch(err => {
     Logger.error(`error connecting to kafka - ${err}`)
@@ -63,30 +51,27 @@ const startConsumer = async () => {
   c.consume((error, message) => {
     return new Promise((resolve, reject) => {
       if (error) {
-        Logger.debug(`WTDSDSD!!! error ${error}`)
-        reject(error)
+        Logger.error(`Error while reading message from kafka ${error}`)
+        return reject(error)
       }
-      if (message) {
-        Logger.debug(`Message Received from kafka - ${JSON.stringify(message)}`)
+      Logger.debug(`Message Received from kafka - ${JSON.stringify(message)}`)
 
-        message = (!Array.isArray(message) ? [message] : message)
+      message = (!Array.isArray(message) ? [message] : message)
 
-        if (Array.isArray(message) && message.length != null && message.length > 0) {
-          message.forEach(async msg => {
-            c.commitMessage(msg)
-            let res = await processMessage(msg).catch(err => {
-              Logger.error(`error posting to the callback - ${err}`)
-              throw err
-            })
-            resolve(res)
+      if (Array.isArray(message)) {
+        message.forEach(async msg => {
+          let res = await processMessage(msg).catch(err => {
+            Logger.error(`Error posting to the callback - ${err}`)
+            c.commitMessageSync(msg)
+            throw err
           })
-        } else {
-          c.commitMessage(message)
-        }
-        resolve(message)
+          c.commitMessageSync(msg)
+          return resolve(res)
+        })
       } else {
-        resolve(false)
+        c.commitMessageSync(message)
       }
+      return resolve(message)
     })
   })
 

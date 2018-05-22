@@ -22,16 +22,29 @@
 
 'use strict'
 
-const TransferService = require('../../domain/transfer')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Hapi = require('hapi')
+const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Boom = require('boom')
+const Routes = require('./routes')
 
-exports.create = async function (request, h) {
-  try {
-    Logger.debug('create::start(%s)', JSON.stringify(request.payload))
-    await TransferService.prepare(request.headers, request.payload)
-    return h.response().code(202)
-  } catch (err) {
-    throw Boom.boomify(err, {message: 'An error has occurred'})
-  }
+const createServer = (port, modules) => {
+  return (async () => {
+    const server = await new Hapi.Server({
+      port,
+      routes: {
+        validate: {
+          options: ErrorHandling.validateRoutes(),
+          failAction: async (request, h, err) => {
+            throw Boom.boomify(err)
+          }
+        }
+      }
+    })
+    await server.register(modules)
+    await server.start()
+    console.log('Test Server started')
+    return server
+  })()
 }
+
+module.exports = createServer(4545, [Routes])

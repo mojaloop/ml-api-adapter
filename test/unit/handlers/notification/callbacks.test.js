@@ -22,10 +22,12 @@
 
 'use strict'
 
+const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const proxyquire = require('proxyquire')
+const Config = require(`${src}/lib/config.js`)
 
 Test('Callback Service tests', callbacksTest => {
   let sandbox, callback, request
@@ -63,7 +65,7 @@ Test('Callback Service tests', callbacksTest => {
           from: 'dfsp1'
         }
       }
-      const url = 'http://localhost:3000/dfsp2/transfers'
+      const url = Config.DFSP_URLS['dfsp2'].transfers
       const method = 'post'
       const headers = {}
 
@@ -71,7 +73,7 @@ Test('Callback Service tests', callbacksTest => {
 
       const body = JSON.stringify(message)
 
-      request.withArgs({ url, method, headers, body }).yields(null, { statusCode: 200 }, null)
+      request.withArgs({ url, method, body }).yields(null, { statusCode: 200 }, null)
 
       let result = await callback.sendCallback(url, method, headers, message)
       test.equal(result, expected)
@@ -96,14 +98,14 @@ Test('Callback Service tests', callbacksTest => {
           from: 'dfsp1'
         }
       }
-      const url = 'http://localhost:3000/dfsp2/transfers'
+      const url = Config.DFSP_URLS['dfsp2'].transfers
       const method = 'post'
       const headers = {}
 
       const body = JSON.stringify(message)
       const error = new Error()
 
-      request.withArgs({ url, method, headers, body }).yields(error, null, null)
+      request.withArgs({ url, method, body }).yields(error, null, null)
 
       try {
         await callback.sendCallback(url, method, headers, message)

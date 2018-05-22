@@ -43,7 +43,7 @@ module.exports = [{
       headers: Joi.object({
         'content-type': Joi.string().required().valid('application/json'),
         'content-length': Joi.number().max(5242880),
-        'date': Joi.date().required(),
+        'date': Joi.date().iso().required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -51,7 +51,7 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(),
+      }).unknown(false).options({ stripUnknown: true }),
       payload: {
         transferId: Joi.string().guid().required().description('Id of transfer'),
         payeeFsp: Joi.string().required().min(1).max(32).description('Financial Service Provider of Payee'),
@@ -62,7 +62,7 @@ module.exports = [{
         }).required().description('Amount of the transfer'),
         ilpPacket: Joi.string().required().regex(/^[A-Za-z0-9-_]+[=]{0,2}$/).min(1).max(32768).description('ilp packet'),
         condition: Joi.string().required().trim().max(48).regex(/^[A-Za-z0-9-_]{43}$/).description('Condition of transfer'),
-        expiration: Joi.string().required().isoDate().regex(/^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$/).description('When the transfer expires'),
+        expiration: Joi.string().required().regex(/^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$/).description('When the transfer expires'),
         extensionList: Joi.object().keys({
           extension: Joi.array().items(Joi.object().keys({
             key: Joi.string().required().min(1).max(32).description('Key'),
@@ -70,135 +70,6 @@ module.exports = [{
           })).required().min(1).max(16).description('extension')
         }).optional().description('Extention list')
       }
-    }
-  }
-},
-// {
-//   method: 'GET',
-//   path: '/transfers/{id}',
-//   handler: Handler.readMessage,
-//   config: {
-//     id: 'transfer',
-//     tags: tags,
-//     auth: null,
-//     description: 'Get kafka message',
-//     // payload: {
-//     //   allow: 'application/json',
-//     //   failAction: 'error',
-//     //   output: 'data'
-//     // },
-//     validate: {
-//       params: {
-//         id: Joi.number().required().description('Financial Service Provider of Payer')
-//       }
-//       // payload: {
-//       //   transferId: Joi.string().guid().required().description('Id of transfer'),
-//       //   payeeFsp: Joi.number().required().description('Financial Service Provider of Payee'),
-//       //   payerFsp: Joi.number().required().description('Financial Service Provider of Payer'),
-//       //   amount: Joi.object().keys({
-//       //     currency: Joi.string().required().description('Currency of the transfer'),
-//       //     amount: Joi.number().required().description('Amount of the transfer')
-//       //   }).required().description('Amount of the transfer'),
-//       //   ilpPacket: Joi.string().required().description('ilp packet'),
-//       //   extensionList: Joi.object().keys({
-//       //     extension: Joi.array().items(Joi.object().keys({
-//       //       key: Joi.string().required().description('Key'),
-//       //       value: Joi.string().required().description('Value')
-//       //     })).required().description('extension')
-//       //   }).description('Extention list'),
-//       //   condition: Joi.string().trim().max(65535).optional().description('Condition of transfer'),
-//       //   expiration: Joi.string().isoDate().optional().description('When the transfer expires')
-//       // }
-//     }
-//   }
-// },
-{
-  method: 'PUT',
-  path: '/dfsp1/transfers/error',
-  handler: Handler.receiveNotification,
-  options: {
-    id: 'dfsp1-error',
-    tags: tags,
-    description: 'receive error notification for dfsp1',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
-    }
-  }
-},
-{
-  method: 'PUT',
-  path: '/dfsp2/transfers/error',
-  handler: Handler.receiveNotification,
-  options: {
-    id: 'dfsp2-error',
-    tags: tags,
-    description: 'receive error notification for dfsp2',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
-    }
-  }
-},
-{
-  method: 'PUT',
-  path: '/dfsp3/transfers/error',
-  handler: Handler.receiveNotification,
-  options: {
-    id: 'dfsp3-error',
-    tags: tags,
-    description: 'receive error notification for dfsp3',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
-    }
-  }
-},
-{
-  method: 'POST',
-  path: '/dfsp1/transfers',
-  handler: Handler.receiveNotification,
-  options: {
-    id: 'dfsp1-transfers',
-    tags: tags,
-    description: 'receive -transfers for dfsp1',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
-    }
-  }
-},
-{
-  method: 'POST',
-  path: '/dfsp2/transfers',
-  handler: Handler.receiveNotification,
-  options: {
-    id: 'dfsp2-transfers',
-    tags: tags,
-    description: 'receive -transfers for dfsp2',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
-    }
-  }
-},
-{
-  method: 'POST',
-  path: '/dfsp3/transfers',
-  handler: Handler.receiveNotification,
-  options: {
-    id: 'dfsp3-transfers',
-    tags: tags,
-    description: 'receive transfers for dfsp3',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
     }
   }
 }

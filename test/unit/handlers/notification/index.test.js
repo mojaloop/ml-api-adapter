@@ -22,6 +22,7 @@
 
 'use strict'
 
+const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Notification = require('../../../../src/handlers/notification')
@@ -29,7 +30,7 @@ const Callback = require('../../../../src/handlers/notification/callbacks.js')
 const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const P = require('bluebird')
-// const proxyquire = require('proxyquire');
+const Config = require(`${src}/lib/config.js`)
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
@@ -37,6 +38,10 @@ Test('Notification Service tests', notificationTest => {
   notificationTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(Consumer.prototype, 'constructor')
+
+    sandbox.stub(Consumer.prototype, 'connect').returns(P.resolve(true))
+    sandbox.stub(Consumer.prototype, 'consume').returns(P.resolve(true))
+
     sandbox.stub(Logger)
     sandbox.stub(Callback, 'sendCallback')
     t.end()
@@ -66,7 +71,7 @@ Test('Notification Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
-      const url = 'http://localhost:3000/dfsp2/transfers'
+      const url = Config.DFSP_URLS['dfsp2'].transfers
       const method = 'post'
       const headers = {}
       const message = {}
@@ -99,7 +104,7 @@ Test('Notification Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
-      const url = 'http://localhost:3000/dfsp1/transfers/error'
+      const url = Config.DFSP_URLS['dfsp1'].error
       const method = 'put'
       const headers = {}
       const message = {}
@@ -132,7 +137,7 @@ Test('Notification Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
-      const url = 'http://localhost:3000/dfsp2/transfers'
+      const url = Config.DFSP_URLS['dfsp2'].transfers
       const method = 'post'
       const headers = {}
       const message = {}
@@ -166,7 +171,7 @@ Test('Notification Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
-      const url = 'http://localhost:3000/dfsp1/transfers/error'
+      const url = Config.DFSP_URLS['dfsp1'].error
       const method = 'put'
       const headers = {}
       const message = {}

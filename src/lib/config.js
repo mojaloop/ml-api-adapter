@@ -4,5 +4,5 @@ module.exports = {
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),
   PORT: RC.PORT,
   DFSP_URLS: RC.DFSP_URLS,
-  KAFKA: RC.KAFKA
+  KAFKA_CONFIG: RC.KAFKA
 }

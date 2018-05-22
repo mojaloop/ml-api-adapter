@@ -49,10 +49,6 @@ fkafka() {
 
 is_kafka_up() {
   fkafka -c 'kafka-topics.sh --list --zookeeper $KAFKA_HOST:$KAFKA_ZOO_PORT' > /dev/null 2>&1
-#  fkafka -c 'env; kafka-topics.sh --list --zookeeper $KAFKA_HOST:$KAFKA_ZOO_PORT'
-#  test_exit_code=$?
-#  echo "is_kafka_up result = $test_exit_code"
-#  return $test_exit_code
 }
 
 stop_docker() {
@@ -61,18 +57,11 @@ stop_docker() {
   >&2 echo "$APP_HOST environment is shutting down"
   (docker stop $APP_HOST && docker rm $APP_HOST) > /dev/null 2>&1
   (docker stop $APP_TEST_HOST && docker rm $APP_TEST_HOST) > /dev/null 2>&1
-  (docker stop $REDIS_HOST && docker rm $REDIS_HOST) > /dev/null 2>&1
-  (docker stop $REQUESTBIN_HOST && docker rm $REQUESTBIN_HOST) > /dev/null 2>&1
-  (docker network disconnect $NETWORK_NAME $REQUESTBIN_HOST) > /dev/null 2>&1 
-  (docker network rm $NETWORK_NAME) > /dev/null 2>&1  
+  (docker stop $ENDPOINT_HOST && docker rm $ENDPOINT_HOST) > /dev/null 2>&1
 }
 
 clean_docker() {
   stop_docker
-  #  >&2 echo "Removing docker kafka image"
-#  (docker rmi $DOCKER_IMAGE:$DOCKER_TAG) > /dev/null 2>&1
-#  >&2 echo "Removing docker test image $DOCKER_IMAGE:$DOCKER_TAG"
-#  (docker rmi $DOCKER_IMAGE:$DOCKER_TAG) > /dev/null 2>&1
 }
 
 
@@ -90,57 +79,47 @@ start_kafka()
    --env GROUP_ID=mymirror \
    $KAFKA_IMAGE
 }
+
 run_test_command()
 {
  >&2 echo "Running $APP_HOST Test command: $TEST_CMD"
  docker run -i \
    --link $KAFKA_HOST \
+   --link $ENDPOINT_HOST \
    --name $APP_TEST_HOST \
    --env APP_HOST=$APP_HOST \
    --env HOST_IP="$APP_HOST" \
    --env KAFKA_HOST="$KAFKA_HOST" \
-   --env REQUESTBIN_URL="$REQUESTBIN_URL" \
+   --env ENDPOINT_URL="http://$ENDPOINT_HOST:$ENDPOINT_PORT/dfsp2/transfers" \
   $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
    -c "source test/.env; $TEST_CMD"
 }
 
 
-start_requestbin()
+start_test_endpoint()
 {
-docker run -td -i \
-  -p $REDIS_PORT:$REDIS_PORT \
-  --net $NETWORK_NAME \
-  --name $REDIS_HOST $REDIS_IMAGE
-
-docker run -td -i \
-  -p $REQUESTBIN_PORT:$REQUESTBIN_PORT \
-  --link $REDIS_HOST \
-  --net $NETWORK_NAME \
-  --ip $REQUESTBIN_IP \
-  --env REALM=prod \
-  --env REDIS_URL="//$REDIS_IMAGE:$REDIS_PORT" \
-  --name $REQUESTBIN_HOST \
-   $REQUESTBIN_IMAGE  
-
+ docker run -d -i \
+   --name $ENDPOINT_HOST \
+   -p $ENDPOINT_PORT:$ENDPOINT_PORT \
+   $DOCKER_IMAGE:$DOCKER_TAG \
+   /bin/sh \
+   -c "source test/.env; $ENDPOINT_CMD"
 }
 
-is_requestbin_up() {
-#  curl -X GET http://$REQUESTBIN_IP:$REQUESTBIN_PORT/ > /dev/null 2>&1
- output=$(curl -X POST http://$REQUESTBIN_IP:$REQUESTBIN_PORT/api/v1/bins)
- echo "OUTPUT: $output"
- SUFFIX=$(echo $output | grep -Po '(?<="name")\W*\K[^ ]*' | sed -e 's/,//' -e 's/"//')
- REQUESTBIN_URL=http://$REQUESTBIN_IP:$REQUESTBIN_PORT/$SUFFIX
- REQUESTBIN_URL=http://$REQUESTBIN_IP:$REQUESTBIN_PORT/1jj5lua1
-#  REQUESTBIN_URL=http://172.20.0.7:8000/116ahfc1
-
- echo "Request URL $REQUESTBIN_URL"
+fcurl() {
+	docker run --rm -i \
+		--link $ENDPOINT_HOST \
+		--entrypoint curl \
+		"jlekie/curl:latest" \
+        --silent --head --fail \
+		"$@"
 }
 
-create_network()
-{
-  docker network create --subnet=$SUBNET/16 $NETWORK_NAME
+is_endpoint_up() {
+    fcurl "http://$ENDPOINT_HOST:$ENDPOINT_PORT?"
 }
+
 
 
 stop_docker
@@ -152,15 +131,6 @@ echo "result "$?""
 if [ "$?" != 0 ]
 then
   >&2 echo "Build failed...exiting"
-  clean_docker
-  exit 1
-fi
-
->&2 echo "Creating network $NETWORK_NAME"
-create_network
-if [ "$?" != 0 ]
-then
-  >&2 echo "Creating network failed...exiting"
   clean_docker
   exit 1
 fi
@@ -182,18 +152,18 @@ until is_kafka_up; do
 done
 
 
->&2 echo "starting requestbin"
-start_requestbin
+>&2 echo "starting test endpoint"
+start_test_endpoint
 
 if [ "$?" != 0 ]
 then
-  >&2 echo "start requestbin failed...exiting"
+  >&2 echo "start test endpoint failed...exiting"
   clean_docker
   exit 1
 fi
 
->&2 echo "Waiting for requestbin to start"
-until is_requestbin_up; do
+>&2 echo "Waiting for endpoint to start"
+until is_endpoint_up; do
   >&2 printf "."
   sleep 5
 done
@@ -218,6 +188,6 @@ then
  >&2 echo "Integration tests failed...exiting"
  >&2 echo "Test environment logs..."
 fi
-sleep 200
+#sleep 300
 clean_docker
 exit "$test_exit_code"

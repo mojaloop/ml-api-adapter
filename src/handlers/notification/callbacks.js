@@ -30,7 +30,7 @@ const sendCallback = async (url, method, headers, message) => {
   const options = {
     url,
     method,
-    headers,
+    // headers,
     body: JSON.stringify(message)
   }
 

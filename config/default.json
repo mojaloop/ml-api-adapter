@@ -3,24 +3,79 @@
   "HOSTNAME": "http://central-ledger",
   "DFSP_URLS": {
     "dfsp1": {
-      "transfers": "http://localhost:3000/dfsp1/transfers",
-      "error": "http://localhost:3000/dfsp1/transfers/error"
+      "transfers": "http://localhost:4545/dfsp1/transfers",
+      "error": "http://localhost:4545/dfsp1/transfers/error"
     },
     "dfsp2": {
-      "transfers": "http://localhost:3000/dfsp2/transfers",
-      "error": "http://localhost:3000/dfsp2/transfers/error"
+      "transfers": "http://localhost:4545/dfsp2/transfers",
+      "error": "http://localhost:4545/dfsp2/transfers/error"
     },
     "dfsp3": {
-      "transfers": "http://localhost:3000/dfsp3/transfers",
-      "error": "http://localhost:3000/dfsp3/transfers/error"
+      "transfers": "http://localhost:4545/dfsp3/transfers",
+      "error": "http://localhost:4545/dfsp3/transfers/error"
     }
   },
+  
   "KAFKA": {
-    "KAFKA_HOST": "localhost",
-    "KAFKA_BROKER_PORT": "9092",
-    "KAFKA_NOTIFICATION_TOPICS": [
-      "notifications"
-    ],
-    "KAFKA_CONSUMER_BATCH_SIZE": 1
+    "TOPIC_TEMPLATES": {
+      "PARTICIPANT_TOPIC_TEMPLATE": {
+        "TEMPLATE": "topic-{{participantName}}-{{functionality}}-{{action}}",
+        "REGEX": "topic-(.*)-(.*)-(.*)"
+      },
+      "NOTIFICATION_TOPIC_TEMPLATE": {
+        "TEMPLATE": "notifications",
+        "REGEX": "notifications"
+      }
+    },
+    "CONSUMER": {
+      "NOTIFICATION": {
+        "EVENT": {
+          "config": {
+            "options": {
+              "mode": 2,
+              "batchSize": 1,
+              "recursiveTimeout": 100,
+              "messageCharset": "utf8",
+              "messageAsJSON": true,
+              "sync": true,
+              "consumeTimeout": 1000
+            },
+            "rdkafkaConf": {
+              "client.id": "notification",
+              "debug": "all",
+              "group.id": "kafka-ml-api-adapter",
+              "metadata.broker.list": "localhost:9092",
+              "enable.auto.commit": false
+            }
+          }
+        }
+      }
+    },
+    "PRODUCER": {
+      "TRANSFER": {
+        "PREPARE": {
+          "config": {
+            "options": {
+              "messageCharset": "utf8"
+            },
+            "rdkafkaConf": {
+              "debug": "all",
+              "metadata.broker.list": "localhost:9092",
+              "client.id": "default-client",
+              "event_cb": true,
+              "compression.codec": "none",
+              "retry.backoff.ms": 100,
+              "message.send.max.retries": 2,
+              "socket.keepalive.enable": true,
+              "queue.buffering.max.messages": 10,
+              "queue.buffering.max.ms": 50,
+              "batch.num.messages": 100,
+              "api.version.request": true,
+              "dr_cb": true
+            }
+          }
+        }
+      }
+    }
   }
 }
