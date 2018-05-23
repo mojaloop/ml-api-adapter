@@ -189,6 +189,32 @@ Test('Notification Service tests', notificationTest => {
       }
     })
 
+    processMessageTest.test('throw error if invalid action received from kafka', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'invalid action',
+              status: 'failure'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+      try {
+        await Notification.processMessage(msg)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
     processMessageTest.test('throw error if invalid message received from kafka', async test => {
       const msg = {}
 
@@ -205,40 +231,21 @@ Test('Notification Service tests', notificationTest => {
 
   notificationTest.test('startConsumer should', async startConsumerTest => {
     startConsumerTest.test('start the consumer and consumer messages', async test => {
-      const msg = {
-        value: {
-          metadata: {
-            event: {
-              type: 'prepare',
-              action: 'prepare',
-              status: 'success'
-            }
-          },
-          content: {
-            headers: {},
-            payload: {}
-          },
-          to: 'dfsp2',
-          from: 'dfsp1'
-        }
-      }
-
-      const message = [msg]
-
-      // let spy = Sinon.spy(Notification, 'consumeMessage')
-      // await Notification.startConsumer()
-      // setTimeout(async () => {
-      //   while (spy.called) {
-      //     return await true
-      //   }
-      // }
-      //   , 1000)
-      // test.assert(spy.called)
       test.ok(await Notification.startConsumer())
       test.end()
-      // Notification.consumeMessage.restore()
-      // process.exit(0)
     })
+
+    startConsumerTest.test('throw error on error connecting to kafka', async test => {
+      const error = new Error()
+      Consumer.prototype.connect.returns(P.reject(error))
+      try {
+        await Notification.startConsumer()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
     startConsumerTest.end()
   })
 
@@ -261,12 +268,68 @@ Test('Notification Service tests', notificationTest => {
           from: 'dfsp1'
         }
       }
-
-      const message = [msg]
-      let result = await Notification.consumeMessage(null, message)
+      let result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
-      // process.exit(0)
+    })
+
+    consumeMessageTest.test('throw error is there is any error processing the message', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+      try {
+        await Notification.consumeMessage(null, [msg])
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    consumeMessageTest.test('convert a single message into an array', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+      test.ok(await Notification.consumeMessage(null, msg))
+      test.end()
+    })
+
+    consumeMessageTest.test('throw error on invalid message', async test => {
+      const msg = {
+      }
+
+      const message = [msg]
+      const error = new Error()
+
+      try {
+        await Notification.consumeMessage(error, message)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
     })
     consumeMessageTest.end()
   })

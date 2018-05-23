@@ -27,7 +27,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 
 const prepare = async (headers, payload) => {
   Logger.debug('prepare::start(%s)', payload)
-  return await Commands.publishPrepare(headers, payload)
+  return Commands.publishPrepare(headers, payload)
 }
 
 module.exports = {

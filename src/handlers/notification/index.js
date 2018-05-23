@@ -26,11 +26,6 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../../lib/config')
 const Utility = require('../../lib/utility')
 const Callback = require('./callbacks.js')
-// const kafkaHost = process.env.KAFKA_HOST || Config.KAFKA.KAFKA_HOST || 'localhost'
-// const kafkaPort = process.env.KAFKA_BROKER_PORT || Config.KAFKA.KAFKA_BROKER_PORT || '9092'
-// const batchSize = Config.KAFKA.KAFKA_CONSUMER_BATCH_SIZE || 1
-// let topicList = Config.KAFKA.KAFKA_NOTIFICATION_TOPICS || ['notifications']
-
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
 let notificationConsumer = {}
@@ -62,29 +57,15 @@ const consumeMessage = async (error, message) => {
 
     message = (!Array.isArray(message) ? [message] : message)
 
-    if (Array.isArray(message)) {
-      for (let msg of message) {
-        let res = await processMessage(msg).catch(err => {
-          Logger.error(`Error posting to the callback - ${err}`)
-          notificationConsumer.commitMessageSync(msg)
-          throw err
-        })
+    for (let msg of message) {
+      let res = await processMessage(msg).catch(err => {
+        Logger.error(`Error processing the kafka message - ${err}`)
         notificationConsumer.commitMessageSync(msg)
-        return resolve(res)
-      }
-      // message.forEach(async msg => {
-      //   let res = await processMessage(msg).catch(err => {
-      //     Logger.error(`Error posting to the callback - ${err}`)
-      //     notificationConsumer.commitMessageSync(msg)
-      //     throw err
-      //   })
-      //   notificationConsumer.commitMessageSync(msg)
-      //   return resolve(res)
-      // })
-    } else {
-      notificationConsumer.commitMessageSync(message)
+        return reject(err)
+      })
+      notificationConsumer.commitMessageSync(msg)
+      return resolve(res)
     }
-    return resolve(message)
   })
 }
 
@@ -95,15 +76,19 @@ const processMessage = async (msg) => {
   const { metadata, from, to, content } = msg.value
   const { action, status } = metadata.event
   if (action === 'prepare' && status === 'success') {
-    return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload).catch(err => {
+    return Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload).catch(err => {
       Logger.error(`error posting to the callback - ${err}`)
       throw err
     })
   } else if (action === 'prepare' && status !== 'success') {
-    return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload).catch(err => {
+    return Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload).catch(err => {
       Logger.error(`error sending notification to the callback - ${err}`)
       throw err
     })
+  } else {
+    const err = new Error('invalid action received from kafka')
+    Logger.error(`error sending notification to the callback - ${err}`)
+    throw err
   }
 }
 

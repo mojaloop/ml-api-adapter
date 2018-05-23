@@ -33,7 +33,6 @@ const PREPARE = 'prepare'
 const publishPrepare = async (headers, message) => {
   Logger.debug('publishPrepare::start')
   try {
-
     let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
     var kafkaProducer = new Producer(kafkaConfig)

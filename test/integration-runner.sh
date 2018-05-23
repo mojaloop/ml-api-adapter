@@ -76,7 +76,7 @@ start_kafka()
    --env CONSUMER_THREADS=1 \
    --env TOPICS=my-topic,some-other-topic \
    --env ZK_CONNECT=kafka7zookeeper:2181/root/path \
-   --env GROUP_ID=mymirror \
+   --env GROUP_ID=ml-api-adapter \
    $KAFKA_IMAGE
 }
 
@@ -88,8 +88,8 @@ run_test_command()
    --link $ENDPOINT_HOST \
    --name $APP_TEST_HOST \
    --env APP_HOST=$APP_HOST \
-   --env HOST_IP="$APP_HOST" \
    --env KAFKA_HOST="$KAFKA_HOST" \
+   --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
    --env ENDPOINT_URL="http://$ENDPOINT_HOST:$ENDPOINT_PORT/dfsp2/transfers" \
   $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
@@ -177,8 +177,8 @@ test_exit_code=$?
 # >&2 echo "Displaying test logs"
 # docker logs $APP_TEST_HOST
 
-# >&2 echo "Displaying app logs"
-# docker logs $APP_HOST
+# >&2 echo "Displaying endpoint logs"
+# docker logs $ENDPOINT_HOST
 
 >&2 echo "Copy results to local directory"
 docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
@@ -188,6 +188,6 @@ then
  >&2 echo "Integration tests failed...exiting"
  >&2 echo "Test environment logs..."
 fi
-#sleep 300
+# sleep 3000
 clean_docker
 exit "$test_exit_code"

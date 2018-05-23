@@ -34,7 +34,7 @@ Test('Commands Transfer index test', indexTest => {
   indexTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(Producer.prototype, 'constructor')
-    sandbox.stub(Producer.prototype, 'connect').returns(P.resolve(true))
+    sandbox.stub(Producer.prototype, 'connect') // .returns(P.resolve(true))
     sandbox.stub(Producer.prototype, 'sendMessage').returns(P.resolve(true))
     t.end()
   })
@@ -82,7 +82,7 @@ Test('Commands Transfer index test', indexTest => {
 
     // prepareTest.end()
 
-    prepareTest.test('execute publishPrepare command on context', async t => {
+    prepareTest.test('connect to kafka and produce a message', async t => {
       let payload = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
         payeeFsp: '1234',
@@ -112,8 +112,51 @@ Test('Commands Transfer index test', indexTest => {
       }
 
       let headers = {}
+      Producer.prototype.connect.returns(P.resolve(true))
       t.ok(await TransferCommands.publishPrepare(headers, payload))
       t.end()
+    })
+
+    prepareTest.test('should throw error on error from kafka', async t => {
+      let payload = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
+
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      let headers = {}
+
+      const error = new Error()
+      Producer.prototype.connect.returns(P.reject(error))
+
+      try {
+        await TransferCommands.publishPrepare(headers, payload)
+      } catch (e) {
+        t.ok(e instanceof Error)
+        t.end()
+      }
     })
 
     prepareTest.end()

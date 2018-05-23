@@ -15,6 +15,10 @@
       "error": "http://localhost:4545/dfsp3/transfers/error"
     }
   },
+  "AMOUNT": {
+    "PRECISION": 10,
+    "SCALE": 2
+  },
   
   "KAFKA": {
     "TOPIC_TEMPLATES": {
@@ -42,7 +46,6 @@
             },
             "rdkafkaConf": {
               "client.id": "notification",
-              "debug": "all",
               "group.id": "kafka-ml-api-adapter",
               "metadata.broker.list": "localhost:9092",
               "enable.auto.commit": false
@@ -59,7 +62,6 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "debug": "all",
               "metadata.broker.list": "localhost:9092",
               "client.id": "default-client",
               "event_cb": true,
