@@ -22,16 +22,12 @@
 
 'use strict'
 
-const TransferService = require('../../domain/transfer')
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
+const Glob = require('glob')
 
-exports.create = async function (request, h) {
-  try {
-    Logger.debug('create::start(%s)', JSON.stringify(request.payload))
-    await TransferService.prepare(request.headers, request.payload)
-    return h.response().code(202)
-  } catch (err) {
-    throw Boom.boomify(err, {message: 'An error has occurred'})
+exports.plugin = {
+  name: 'api routes',
+  register: function (server, options) {
+    Glob.sync('**/routes.js', {cwd: __dirname, ignore: 'routes.js'})
+      .forEach(x => server.route(require('./' + x)))
   }
 }

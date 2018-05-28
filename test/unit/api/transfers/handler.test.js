@@ -66,10 +66,10 @@ Test('transfer handler', handlerTest => {
         payerFsp: '5678',
         amount: {
           currency: 'USD',
-          amount: 123.45
+          amount: '123.45'
         },
         ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-        condition: 'q8q-v7RAbJTLf3DsetPTEOLBLUxtMe3c',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -92,7 +92,6 @@ Test('transfer handler', handlerTest => {
       const request = createRequest(payload)
       const reply = {
         response: (response) => {
-          test.equal(response, true)
           return {
             code: statusCode => {
               test.equal(statusCode, 202)
@@ -112,10 +111,10 @@ Test('transfer handler', handlerTest => {
         payerFsp: '5678',
         amount: {
           currency: 'USD',
-          amount: 123.45
+          amount: '123.45'
         },
         ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-        condition: 'q8q-v7RAbJTLf3DsetPTEOLBLUxtMe3c',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         expiration: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -147,6 +146,5 @@ Test('transfer handler', handlerTest => {
 
     createTransferTest.end()
   })
-
   handlerTest.end()
 })

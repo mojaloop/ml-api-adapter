@@ -1,150 +1,188 @@
-#!/bin/bash
-export POSTGRES_USER=${POSTGRES_USER:-'postgres'}
-export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-'postgres'}
-export LEDGER_HOST=${HOST_IP:-'localhost'}
-export API_IMAGE=${API_IMAGE:-'central-ledger'}
-export ADMIN_IMAGE=${ADMIN_IMAGE:-'central-ledger-admin'}
-export CLEDG_HOSTNAME='http://central-ledger'
-export CLEDG_EXPIRES_TIMEOUT=0
-export CENRRALLEDGER_TEST_HOST=${HOST_IP:-"centralledger-int"}
-export POSTGRES_HOST=${HOST_IP:-"centralledger_postgres_1"}
-env_file=$3
-FUNC_TEST_CMD=${FUNC_TEST_CMD:-"source $env_file; tape 'test/functional/**/*.test.js' | tap-xunit > ./test/results/tape-functional.xml"}
-docker_compose_file=$1
-docker_functional_compose_file=$2
+#!/usr/bin/env bash
+>&2 echo "--==== Functional Tests Runner ====--"
 
-
-#create a directory for test results
-mkdir -p ./test/results
-
-if [ $# -ne 3 ]; then
-    echo "Usage: $0 docker-compose-file docker-functional-compose-file env-file"
+if [ $# -ne 1 ]; then
+    echo ""
+    echo "Usage: $0 {env-file}"
+    echo "{env-file} must contain the following variables:"
+    echo " - DOCKER_IMAGE: Name of Image"
+    echo " - DOCKER_TAG: Tag/Version of Image"
+    echo " - DOCKER_FILE: Recipe to be used for Docker build"
+    echo " - DOCKER_WORKING_DIR: Docker working directory"
+    echo " - KAFKA_IMAGE: Kafka image:tag"
+    echo " - KAFKA_HOST: Kafka host"
+    echo " - KAFKA_ZOO_PORT: Kafka host name"
+    echo " - KAFKA_BROKER_PORT: Kafka container port"
+    echo " - APP_HOST: Application host name"
+    echo " - APP_PORT: Application port"
+    echo " - APP_TEST_HOST: Application test host"
+    echo " - APP_DIR_TEST_RESULTS: Location of test results relative to the working directory"
+    echo " - TEST_CMD: Interation test command to be executed"
+    echo ""
+    echo " * IMPORTANT: Ensure you have the required env in the test/.env to execute the application"
+    echo ""
     exit 1
 fi
+>&2 echo ""
+>&2 echo "====== Loading environment variables ======"
+cat $1
+. $1
+>&2 echo "==========================================="
+>&2 echo ""
 
-fpsql() {
+>&2 echo "Executing Functional Tests for $APP_HOST ..."
+
+>&2 echo "Creating local directory to store test results"
+mkdir -p test/results
+
+fkafka() {
 	docker run --rm -i \
-		--net centralledger_back \
-		--entrypoint psql \
-		-e PGPASSWORD=$POSTGRES_PASSWORD \
-		"postgres:9.4" \
-    --host postgres \
-		--username $POSTGRES_USER \
-    --dbname postgres \
-		--quiet --no-align --tuples-only \
+	  --link $KAFKA_HOST \
+	  --env KAFKA_HOST="$KAFKA_HOST" \
+	  --env KAFKA_ZOO_PORT="$KAFKA_ZOO_PORT" \
+	  taion809/kafka-cli \
+	  /bin/sh \
+	  -c \
 		"$@"
 }
 
-is_psql_up() {
-    fpsql -c '\l' > /dev/null 2>&1
-    # fpsql -c '\l'
+is_kafka_up() {
+  fkafka -c 'kafka-topics.sh --list --zookeeper $KAFKA_HOST:$KAFKA_ZOO_PORT' > /dev/null 2>&1
+#  fkafka -c 'env; kafka-topics.sh --list --zookeeper $KAFKA_HOST:$KAFKA_ZOO_PORT'
+#  test_exit_code=$?
+#  echo "is_kafka_up result = $test_exit_code"
+#  return $test_exit_code
+}
+
+stop_docker() {
+  >&2 echo "Kafka is shutting down $KAFKA_HOST"
+  (docker stop $KAFKA_HOST && docker rm $KAFKA_HOST) > /dev/null 2>&1
+  >&2 echo "$APP_HOST environment is shutting down"
+  (docker stop $APP_HOST && docker rm $APP_HOST) > /dev/null 2>&1
+  (docker stop $APP_TEST_HOST && docker rm $APP_TEST_HOST) > /dev/null 2>&1
+}
+
+clean_docker() {
+  stop_docker
+  #  >&2 echo "Removing docker kafka image"
+#  (docker rmi $DOCKER_IMAGE:$DOCKER_TAG) > /dev/null 2>&1
+#  >&2 echo "Removing docker test image $DOCKER_IMAGE:$DOCKER_TAG"
+#  (docker rmi $DOCKER_IMAGE:$DOCKER_TAG) > /dev/null 2>&1
 }
 
 fcurl() {
 	docker run --rm -i \
-		--net centralledger_back \
+		--link $APP_HOST \
 		--entrypoint curl \
 		"jlekie/curl:latest" \
         --output /dev/null --silent --head --fail \
 		"$@"
 }
 
-ftest() {
-	docker run --rm -i \
-    --net centralledger_back \
-    --env CLEDG_DATABASE_URI="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/central_ledger_integration" \
-		$API_IMAGE:test \
-    /bin/sh \
-    -c \
-    "$@"
-}
-
 is_api_up() {
-    # curl --output /dev/null --silent --head --fail http://${LEDGER_HOST}:3000/health
-    fcurl "http://centralledger_central-ledger_1:3000/health?"
+    fcurl "http://$APP_HOST:$APP_PORT/health?"
 }
 
-is_admin_up() {
-    # curl --output /dev/null --silent --head --fail http://${LEDGER_HOST}:3001/health
-    fcurl "http://centralledger_central-ledger-admin_1:3001/health?"
+
+start_kafka()
+{
+   docker run -td -i \
+   -p $KAFKA_ZOO_PORT:$KAFKA_ZOO_PORT \
+   -p $KAFKA_BROKER_PORT:$KAFKA_BROKER_PORT \
+   --name=$KAFKA_HOST \
+   --env ADVERTISED_HOST=$KAFKA_HOST \
+   --env ADVERTISED_PORT=$KAFKA_BROKER_PORT \
+   --env CONSUMER_THREADS=1 \
+   --env TOPICS=my-topic,some-other-topic \
+   --env ZK_CONNECT=kafka7zookeeper:2181/root/path \
+   --env GROUP_ID=mymirror \
+   $KAFKA_IMAGE
+}
+
+start_ml_api_adapter()
+{
+ docker run -d -i \
+   --link $KAFKA_HOST \
+   --name $APP_HOST \
+   --env KAFKA_HOST="$KAFKA_HOST" \
+   --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
+   -p $APP_PORT:$APP_PORT \
+   $DOCKER_IMAGE:$DOCKER_TAG \
+   /bin/sh \
+   -c "source test/.env; $APP_CMD"
 }
 
 run_test_command()
 {
-  # eval "$FUNC_TEST_CMD"
-  >&2 echo "Running Central Ledger Test command: $FUNC_TEST_CMD"
-  docker run -i \
-    --net centralledger_back \
-    --name $CENRRALLEDGER_TEST_HOST \
-    --env API_HOST_IP="centralledger_central-ledger_1" \
-    --env ADMIN_HOST_IP="centralledger_central-ledger-admin_1" \
-		$API_IMAGE:test \
-    /bin/sh \
-    -c "$FUNC_TEST_CMD"
+ >&2 echo "Running $APP_HOST Test command: $TEST_CMD"
+ docker run -i \
+   --link $APP_HOST \
+   --name $APP_TEST_HOST \
+   --env APP_HOST=$APP_HOST \
+   --env HOST_IP="$APP_HOST" \
+   --env KAFKA_HOST="$KAFKA_HOST" \
+   $DOCKER_IMAGE:$DOCKER_TAG \
+   /bin/sh \
+   -c "source test/.env; $TEST_CMD"
 }
 
-shutdown_and_remove() {
-  docker-compose -p centralledger -f $docker_compose_file -f $docker_functional_compose_file stop
-  >&2 echo "Cleaning docker image: centralledger_central-ledger_1" && (docker rm centralledger_central-ledger_1) > /dev/null 2>&1
-  >&2 echo "Cleaning docker image: centralledger_central-ledger-admin_1" && (docker rm centralledger_central-ledger-admin_1) > /dev/null 2>&1
-  >&2 echo "Cleaning docker image: centralledger_postgres_1" && (docker rm centralledger_postgres_1) > /dev/null 2>&1
-  >&2 echo "Cleaning docker image: Central Ledger Test environment" &&  (docker stop $CENRRALLEDGER_TEST_HOST && docker rm $CENRRALLEDGER_TEST_HOST) > /dev/null 2>&1
-}
+stop_docker
 
->&2 echo "Loading environment variables"
-. $env_file
+>&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
+# docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+docker build -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+echo "result "$?""
+if [ "$?" != 0 ]
+then
+  >&2 echo "Build failed...exiting"
+  clean_docker
+  exit 1
+fi
 
->&2 echo "Postgres is starting"
-docker-compose -p centralledger -f $docker_compose_file -f $docker_functional_compose_file up -d postgres
+>&2 echo "Kafka is starting"
+start_kafka
 
-until is_psql_up; do
-  >&2 echo "Postgres is unavailable - sleeping"
-  sleep 1
+if [ "$?" != 0 ]
+then
+  >&2 echo "Starting Kafka failed...exiting"
+  clean_docker
+  exit 1
+fi
+
+>&2 echo "Waiting for Kafka to start"
+until is_kafka_up; do
+  >&2 printf "."
+  sleep 5
 done
 
->&2 echo "Postgres is up - creating functional database"
-fpsql <<'EOSQL'
-    DROP DATABASE IF EXISTS "central_ledger_functional";
-	  CREATE DATABASE "central_ledger_functional";
-EOSQL
+>&2 echo "Starting ml api adapter"
+start_ml_api_adapter
 
->&2 printf "Central-ledger is building ..."
-docker-compose -p centralledger -f $docker_compose_file -f $docker_functional_compose_file up -d central-ledger
-
->&2 printf "Central-ledger is starting ..."
+>&2 printf "Starting up..."
 until is_api_up; do
   >&2 printf "."
   sleep 5
 done
 
->&2 echo " done"
-
->&2 printf "Central-ledger-admin is building ..."
-docker-compose -p centralledger -f $docker_compose_file -f $docker_functional_compose_file up -d central-ledger-admin
-
->&2 printf "Central-ledger-admin is starting ..."
-until is_admin_up; do
-  >&2 printf "."
-  sleep 5
-done
-
->&2 echo " done"
-
->&2 echo "Functional tests are starting"
 run_test_command
 test_exit_code=$?
+>&2 echo "Test result.... $test_exit_code ..."
+
+
+# >&2 echo "Displaying test logs"
+# docker logs $APP_TEST_HOST
+
+# >&2 echo "Displaying app logs"
+# docker logs $APP_HOST
+
+>&2 echo "Copy results to local directory"
+docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
 
 if [ "$test_exit_code" != 0 ]
 then
-  >&2 echo "Test failed..."
-  docker logs centralledger_central-ledger_1
-  >&2 echo "Test environment logs..."
-  docker logs $CENRRALLEDGER_TEST_HOST
+ >&2 echo "Functional tests failed...exiting"
+ >&2 echo "Test environment logs..."
 fi
 
->&2 echo "Copy results to local directory"
-docker cp $CENRRALLEDGER_TEST_HOST:/opt/central-ledger/test/results ./test
-
-shutdown_and_remove
-
+clean_docker
 exit "$test_exit_code"
