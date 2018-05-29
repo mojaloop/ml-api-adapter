@@ -133,8 +133,20 @@ jobs:
           name: Install interledgerjs/five-bells-ledger-api-tests
           command: npm install github:interledgerjs/five-bells-ledger-api-tests
       - run:
+          name: Build dependencies
+          command: apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
+      - run:
+          name: Access npm folder as root
+          command: cd $(npm root -g)/npm
+      - run:
+          name: Install node-gyp globally
+          command: npm install -g node-gyp
+      - run:
           name: Update NPM install
           command: npm install
+      - run:
+          name: Delete build dependencies
+          command: apk del build-dependencies
       # - run:
       #     name: Update NPM install
       #     command: npm link sodium && npm link argon2 && npm install --production
@@ -154,11 +166,14 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: Install tap and tap-xunit
+          name: Install tape and tap-xunit
           command: npm install tape tap-xunit
       - run:
           name: Create dir for test results
           command: mkdir -p ./test/results
+      - run:
+          name: Install tapes
+          command: npm install -g tapes
       - run:
           name: Execute unit tests
           command: npm -s run test:xunit > ./test/results/tape.xml
@@ -195,7 +210,7 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ];
             then
                 echo "Sending lcov.info to SonarQube..."
-                aws s3 cp coverage/lcov.info $AWS_S3_DIR_SONARQUBE/central-ledger/lcov.info
+                aws s3 cp coverage/lcov.info $AWS_S3_DIR_SONARQUBE/ml-api-adapter/lcov.info
             else
                 echo "Not a release (env CIRCLE_BRANCH != 'master'), skipping sending lcov.info to SonarQube."
             fi
@@ -564,39 +579,39 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-    #   - test-coverage:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #         tags:
-    #           only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
-    #   - test-integration:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #         tags:
-    #           only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
-    #   - test-functional:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #         tags:
-    #           only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
+      - test-coverage:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-integration:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-functional:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
     #   - test-spec:
     #       context: org-global
     #       requires:
@@ -613,9 +628,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -638,9 +653,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -663,9 +678,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -688,9 +703,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -713,9 +728,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
