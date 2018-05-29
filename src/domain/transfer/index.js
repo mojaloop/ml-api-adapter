@@ -29,7 +29,12 @@ const prepare = async (headers, payload) => {
   Logger.debug('prepare::start(%s)', payload)
   return Commands.publishPrepare(headers, payload)
 }
+const fulfill = async (id, headers, payload) => {
+  Logger.debug('prepare::start(%s)', payload)
+  return Commands.publishFulfill(id, headers, payload)
+}
 
 module.exports = {
-  prepare
+  prepare,
+  fulfill
 }

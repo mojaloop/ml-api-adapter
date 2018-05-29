@@ -29,6 +29,7 @@ const Utility = require('../../../lib/utility')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
+const FULFILL = 'fulfill'
 
 const publishPrepare = async (headers, message) => {
   Logger.debug('publishPrepare::start')
@@ -66,6 +67,45 @@ const publishPrepare = async (headers, message) => {
   }
 }
 
+const publishFulfill = async (id, headers, message) => {
+  Logger.debug('publishFulfill::start')
+  try {
+    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFILL.toUpperCase())
+
+    var kafkaProducer = new Producer(kafkaConfig)
+    await kafkaProducer.connect()
+    const messageProtocol = {
+      id,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'fulfill',
+          action: 'commit',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = {
+      topicName: Utility.getParticipantTopicName(headers['fspiop-source'], TRANSFER, FULFILL) // `topic-${message.payerFsp}-transfer-prepare`
+    }
+    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+  } catch (err) {
+    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
+}
 module.exports = {
-  publishPrepare
+  publishPrepare,
+  publishFulfill
 }

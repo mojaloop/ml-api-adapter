@@ -34,6 +34,7 @@ Test('Transfer Service tests', serviceTest => {
   serviceTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(Commands, 'publishPrepare')
+    sandbox.stub(Commands, 'publishFulfill')
     t.end()
   })
 
@@ -44,7 +45,7 @@ Test('Transfer Service tests', serviceTest => {
 
   serviceTest.test('prepare should', prepareTest => {
     prepareTest.test('execute prepare function', test => {
-      let payload = {
+      const payload = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
         payeeFsp: '1234',
         payerFsp: '5678',
@@ -72,7 +73,7 @@ Test('Transfer Service tests', serviceTest => {
         }
       }
 
-      let headers = {}
+      const headers = {}
 
       Commands.publishPrepare.withArgs(headers, payload).returns(P.resolve(true))
 
@@ -83,6 +84,42 @@ Test('Transfer Service tests', serviceTest => {
         })
     })
     prepareTest.end()
+  })
+
+  serviceTest.test('fulfill should', fulfillTest => {
+    fulfillTest.test('execute fulfill function', test => {
+      const payload = {
+        transferState: 'RECEIVED',
+        fulfillment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const id = 'dfsp1'
+
+      Commands.publishFulfill.withArgs(id, headers, payload).returns(P.resolve(true))
+
+      Service.fulfill(id, headers, payload)
+        .then(result => {
+          test.ok(Commands.publishFulfill.calledWith(id, headers, payload))
+          test.end()
+        })
+    })
+    fulfillTest.end()
   })
   serviceTest.end()
 })
