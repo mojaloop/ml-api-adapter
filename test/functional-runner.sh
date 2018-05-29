@@ -166,7 +166,7 @@ done
 
 run_test_command
 test_exit_code=$?
->&2 echo "Test result.... $test_exit_code ..."
+>&2 echo "Test result.... $test_exit_code"
 
 
 # >&2 echo "Displaying test logs"
@@ -180,8 +180,8 @@ docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
 
 if [ "$test_exit_code" != 0 ]
 then
- >&2 echo "Functional tests failed...exiting"
- >&2 echo "Test environment logs..."
+ >&2 echo "Functional tests failed... exiting"
+ # >&2 echo "Test environment logs..."
 fi
 
 clean_docker
