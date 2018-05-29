@@ -22,50 +22,28 @@
 
 'use strict'
 
-const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Uuid = require('uuid4')
-const Utility = require('../../../lib/utility')
+const request = require('request')
 
-const TRANSFER = 'transfer'
-const PREPARE = 'prepare'
-
-const publishPrepare = async (headers, message) => {
-  Logger.debug('publishPrepare::start')
-  try {
-    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
-
-    var kafkaProducer = new Producer(kafkaConfig)
-    await kafkaProducer.connect()
-    const messageProtocol = {
-      id: message.transferId,
-      to: message.payeeFsp,
-      from: message.payerFsp,
-      type: 'application/json',
-      content: {
-        headers: headers,
-        payload: message
-      },
-      metadata: {
-        event: {
-          id: Uuid(),
-          type: 'prepare',
-          action: 'prepare',
-          createdAt: new Date(),
-          status: 'success'
-        }
-      }
-    }
-    const topicConfig = {
-      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-    }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
-  } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
-    throw err
+const sendCallback = async (url, method, headers, message) => {
+  delete headers['Content-Length']
+  const options = {
+    url,
+    method,
+    // headers,
+    body: JSON.stringify(message)
   }
-}
 
+  return new Promise((resolve, reject) => {
+    return request(options, (error, response, body) => {
+      if (error) {
+        Logger.error(`error while callback - ${error}`)
+        throw error
+      }
+      return resolve(response.statusCode)
+    })
+  })
+}
 module.exports = {
-  publishPrepare
+  sendCallback
 }

@@ -25,12 +25,17 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const TransferCommands = require('../../../../../src/domain/transfer/commands')
+const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+const P = require('bluebird')
 
-Test('Eventric Transfer index test', indexTest => {
+Test('Commands Transfer index test', indexTest => {
   let sandbox
 
   indexTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
+    sandbox.stub(Producer.prototype, 'constructor')
+    sandbox.stub(Producer.prototype, 'connect') // .returns(P.resolve(true))
+    sandbox.stub(Producer.prototype, 'sendMessage').returns(P.resolve(true))
     t.end()
   })
 
@@ -40,11 +45,44 @@ Test('Eventric Transfer index test', indexTest => {
   })
 
   indexTest.test('publishPrepare should', prepareTest => {
-    prepareTest.test('execute publishPrepare command on context', async t => {
-      let command = sandbox.stub()
-      let expected = true
-      command.returns(expected)
+    // prepareTest.test('execute publishPrepare command on context', async t => {
+    //   let payload = {
+    //     transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+    //     payeeFsp: '1234',
+    //     payerFsp: '5678',
+    //     amount: {
+    //       currency: 'USD',
+    //       amount: 123.45
+    //     },
+    //     ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+    //     condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+    //     expiration: '2016-05-24T08:38:08.699-04:00',
 
+    //     extensionList:
+    //     {
+    //       extension:
+    //       [
+    //         {
+    //           key: 'errorDescription',
+    //           value: 'This is a more detailed error description'
+    //         },
+    //         {
+    //           key: 'errorDescription',
+    //           value: 'This is a more detailed error description'
+    //         }
+    //       ]
+    //     }
+    //   }
+
+    //   let headers = {}
+
+    //   t.ok(TransferCommands.publishPrepare(headers, payload))
+    //   t.end()
+    // })
+
+    // prepareTest.end()
+
+    prepareTest.test('connect to kafka and produce a message', async t => {
       let payload = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
         payeeFsp: '1234',
@@ -54,7 +92,7 @@ Test('Eventric Transfer index test', indexTest => {
           amount: 123.45
         },
         ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-        condition: 'q8q-v7RAbJTLf3DsetPTEOLBLUxtMe3c',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         expiration: '2016-05-24T08:38:08.699-04:00',
 
         extensionList:
@@ -73,53 +111,53 @@ Test('Eventric Transfer index test', indexTest => {
         }
       }
 
-      TransferCommands.publishPrepare(payload)
-        .then(tfr => {
-          t.equal(tfr, expected)
-          t.end()
-        })
+      let headers = {}
+      Producer.prototype.connect.returns(P.resolve(true))
+      t.ok(await TransferCommands.publishPrepare(headers, payload))
+      t.end()
     })
 
-    // prepareTest.test('throws error if could not send message to kafka', async t => {
-    //   let command = sandbox.stub()
-    //   const error = new Error()
-    //   command.returns(P.reject(error))
-    //   let payload = {
-    //     transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
-    //     payeeFsp: '1234',
-    //     payerFsp: '5678',
-    //     amount: {
-    //       currency: 'USD',
-    //       amount: 123.45
-    //     },
-    //     ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-    //     condition: 'q8q-v7RAbJTLf3DsetPTEOLBLUxtMe3c',
-    //     expiration: '2016-05-24T08:38:08.699-04:00',
+    prepareTest.test('should throw error on error from kafka', async t => {
+      let payload = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
 
-    //     extensionList:
-    //       {
-    //         extension:
-    //           [
-    //             {
-    //               key: 'errorDescription',
-    //               value: 'This is a more detailed error description'
-    //             },
-    //             {
-    //               key: 'errorDescription',
-    //               value: 'This is a more detailed error description'
-    //             }
-    //           ]
-    //       }
-    //   }
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
 
-    //   try {
-    //     await TransferCommands.publishPrepare(payload)
-    //   } catch (e) {
-    //     test.ok(e instanceof Error)
-    //     test.equal(e.message, 'An error has occurred')
-    //     test.end()
-    //   }
-    // })
+      let headers = {}
+
+      const error = new Error()
+      Producer.prototype.connect.returns(P.reject(error))
+
+      try {
+        await TransferCommands.publishPrepare(headers, payload)
+      } catch (e) {
+        t.ok(e instanceof Error)
+        t.end()
+      }
+    })
 
     prepareTest.end()
   })
