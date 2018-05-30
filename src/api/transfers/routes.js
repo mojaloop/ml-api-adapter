@@ -24,7 +24,7 @@
 const Handler = require('./handler')
 const Joi = require('joi-currency-code')(require('joi'))
 const tags = ['api', 'transfers']
-const transferState = [ 'RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED' ]
+const transferState = [ 'RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED',  'SETTLED' ]
 
 module.exports = [{
   method: 'POST',
@@ -77,12 +77,12 @@ module.exports = [{
 {
   method: 'PUT',
   path: '/transfers/{id}',
-  handler: Handler.fulfillTransfer,
+  handler: Handler.fulfilTransfer,
   options: {
-    id: 'transfer_fulfillment',
+    id: 'transfer_fulfilment',
     tags: tags,
     // auth: Auth.strategy(),
-    description: 'Fulfill a transfer',
+    description: 'Fulfil a transfer',
     payload: {
       failAction: 'error'
     },
@@ -102,7 +102,7 @@ module.exports = [{
         id: Joi.string().required().description('path')
       },
       payload: {
-        fulfillment: Joi.string().regex(/^[A-Za-z0-9-_]{43}$/).max(48).description('fulfillment of the transfer'),
+        fulfilment: Joi.string().regex(/^[A-Za-z0-9-_]{43}$/).max(48).description('fulfilment of the transfer'),
         completedTimestamp: Joi.string().regex(/^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$/).description('When the transfer was completed'),
         transferState: Joi.string().required().valid(transferState).description('State of the transfer'),
         extensionList: Joi.object().keys({

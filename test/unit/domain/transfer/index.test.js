@@ -34,7 +34,7 @@ Test('Transfer Service tests', serviceTest => {
   serviceTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(Commands, 'publishPrepare')
-    sandbox.stub(Commands, 'publishFulfill')
+    sandbox.stub(Commands, 'publishFulfil')
     t.end()
   })
 
@@ -86,11 +86,11 @@ Test('Transfer Service tests', serviceTest => {
     prepareTest.end()
   })
 
-  serviceTest.test('fulfill should', fulfillTest => {
-    fulfillTest.test('execute fulfill function', test => {
+  serviceTest.test('fulfil should', fulfilTest => {
+    fulfilTest.test('execute fulfil function', test => {
       const payload = {
         transferState: 'RECEIVED',
-        fulfillment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -111,15 +111,15 @@ Test('Transfer Service tests', serviceTest => {
       const headers = {}
       const id = 'dfsp1'
 
-      Commands.publishFulfill.withArgs(id, headers, payload).returns(P.resolve(true))
+      Commands.publishFulfil.withArgs(id, headers, payload).returns(P.resolve(true))
 
-      Service.fulfill(id, headers, payload)
+      Service.fulfil(id, headers, payload)
         .then(result => {
-          test.ok(Commands.publishFulfill.calledWith(id, headers, payload))
+          test.ok(Commands.publishFulfil.calledWith(id, headers, payload))
           test.end()
         })
     })
-    fulfillTest.end()
+    fulfilTest.end()
   })
   serviceTest.end()
 })

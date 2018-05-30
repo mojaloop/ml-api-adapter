@@ -77,7 +77,7 @@
             }
           }
         },
-        "FULFILL": {
+        "FULFIL": {
           "config": {
             "options": {
               "messageCharset": "utf8"

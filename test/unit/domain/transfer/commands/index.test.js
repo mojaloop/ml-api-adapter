@@ -125,11 +125,11 @@ Test('Commands Transfer index test', indexTest => {
     publishPrepareTest.end()
   })
 
-  indexTest.test('publishFulfill should', publishFulfillTest => {
-    publishFulfillTest.test('connect to kafka and produce a message', async t => {
+  indexTest.test('publishFulfil should', publishFulfilTest => {
+    publishFulfilTest.test('connect to kafka and produce a message', async t => {
       const payload = {
         transferState: 'RECEIVED',
-        fulfillment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -150,14 +150,14 @@ Test('Commands Transfer index test', indexTest => {
       const headers = {}
       const id = 'dfsp1'
       Producer.prototype.connect.returns(P.resolve(true))
-      t.ok(await TransferCommands.publishFulfill(id, headers, payload))
+      t.ok(await TransferCommands.publishFulfil(id, headers, payload))
       t.end()
     })
 
-    publishFulfillTest.test('should throw error on error from kafka', async t => {
+    publishFulfilTest.test('should throw error on error from kafka', async t => {
       const payload = {
         transferState: 'RECEIVED',
-        fulfillment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -182,14 +182,14 @@ Test('Commands Transfer index test', indexTest => {
       Producer.prototype.connect.returns(P.reject(error))
 
       try {
-        await TransferCommands.publishFulfill(id, headers, payload)
+        await TransferCommands.publishFulfil(id, headers, payload)
       } catch (e) {
         t.ok(e instanceof Error)
         t.end()
       }
     })
 
-    publishFulfillTest.end()
+    publishFulfilTest.end()
   })
   indexTest.end()
 })

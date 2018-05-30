@@ -59,7 +59,7 @@ Test('transfer handler', handlerTest => {
   handlerTest.beforeEach(t => {
     sandbox = Sinon.sandbox.create()
     sandbox.stub(TransferService, 'prepare')
-    sandbox.stub(TransferService, 'fulfill')
+    sandbox.stub(TransferService, 'fulfil')
     originalHostName = Config.HOSTNAME
     Config.HOSTNAME = hostname
     t.end()
@@ -160,11 +160,11 @@ Test('transfer handler', handlerTest => {
     createTransferTest.end()
   })
 
-  handlerTest.test('fulfillTransfer should', async fulfillTransferTest => {
-    fulfillTransferTest.test('reply with status code 202 if message is sent successfully to kafka', test => {
+  handlerTest.test('fulfilTransfer should', async fulfilTransferTest => {
+    fulfilTransferTest.test('reply with status code 202 if message is sent successfully to kafka', test => {
       const payload = {
         transferState: 'RECEIVED',
-        fulfillment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -185,7 +185,7 @@ Test('transfer handler', handlerTest => {
         id: 'dfsp1'
       }
 
-      TransferService.fulfill.returns(P.resolve(true))
+      TransferService.fulfil.returns(P.resolve(true))
 
       const request = createPutRequest(params, payload)
       const reply = {
@@ -199,13 +199,13 @@ Test('transfer handler', handlerTest => {
         }
       }
 
-      Handler.fulfillTransfer(request, reply)
+      Handler.fulfilTransfer(request, reply)
     })
 
-    fulfillTransferTest.test('return error if fulfillTransfer throws', async test => {
+    fulfilTransferTest.test('return error if fulfilTransfer throws', async test => {
       const payload = {
         transferState: 'RECEIVED',
-        fulfillment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
         {
@@ -227,10 +227,10 @@ Test('transfer handler', handlerTest => {
       }
 
       const error = new Error()
-      TransferService.fulfill.returns(P.reject(error))
+      TransferService.fulfil.returns(P.reject(error))
 
       try {
-        await Handler.fulfillTransfer(createPutRequest(params, payload))
+        await Handler.fulfilTransfer(createPutRequest(params, payload))
       } catch (e) {
         test.ok(e instanceof Error)
         test.equal(e.message, 'An error has occurred')
@@ -238,7 +238,7 @@ Test('transfer handler', handlerTest => {
       }
     })
 
-    fulfillTransferTest.end()
+    fulfilTransferTest.end()
   })
   handlerTest.end()
 })
