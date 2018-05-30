@@ -40,7 +40,7 @@ fkafka() {
 	  --link $KAFKA_HOST \
 	  --env KAFKA_HOST="$KAFKA_HOST" \
 	  --env KAFKA_ZOO_PORT="$KAFKA_ZOO_PORT" \
-	  taion809/kafka-cli \
+	  $KAFKA_CLI_IMAGE \
 	  /bin/sh \
 	  -c \
 		"$@"
@@ -83,7 +83,6 @@ is_api_up() {
     fcurl "http://$APP_HOST:$APP_PORT/health?"
 }
 
-
 start_kafka()
 {
    docker run -td -i \
@@ -92,10 +91,10 @@ start_kafka()
    --name=$KAFKA_HOST \
    --env ADVERTISED_HOST=$KAFKA_HOST \
    --env ADVERTISED_PORT=$KAFKA_BROKER_PORT \
-   --env CONSUMER_THREADS=1 \
-   --env TOPICS=my-topic,some-other-topic \
-   --env ZK_CONNECT=kafka7zookeeper:2181/root/path \
-   --env GROUP_ID=mymirror \
+   --env CONSUMER_THREADS=$KAFKA_CONSUMER_THREADS \
+   --env TOPICS=$KAFKA_TOPIC_1,$KAFKA_TOPIC_2 \
+   --env ZK_CONNECT=$ZK_CONNECT_PATH \
+   --env GROUP_ID=$KAFKA_GROUP_ID \
    $KAFKA_IMAGE
 }
 
@@ -167,7 +166,6 @@ done
 run_test_command
 test_exit_code=$?
 >&2 echo "Test result.... $test_exit_code"
-
 
 # >&2 echo "Displaying test logs"
 # docker logs $APP_TEST_HOST

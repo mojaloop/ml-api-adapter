@@ -7,10 +7,10 @@ COPY test /opt/ml-api-adapter/test
 COPY config /opt/ml-api-adapter/config
 COPY package.json /opt/ml-api-adapter/
 
-RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
-    && cd $(npm root -g)/npm \
-    && npm install -g node-gyp \
-    && apk --no-cache add git
+RUN apk --no-cache add git
+RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake && \
+    cd $(npm root -g)/npm && \
+    npm install -g node-gyp
 
 RUN npm install -g tape tap-xunit
 RUN npm install
