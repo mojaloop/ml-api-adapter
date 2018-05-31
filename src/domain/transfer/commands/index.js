@@ -20,92 +20,92 @@
  --------------
  ******/
 
-'use strict'
+// 'use strict'
 
-const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Uuid = require('uuid4')
-const Utility = require('../../../lib/utility')
+// const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+// const Logger = require('@mojaloop/central-services-shared').Logger
+// const Uuid = require('uuid4')
+// const Utility = require('../../../lib/utility')
 
-const TRANSFER = 'transfer'
-const PREPARE = 'prepare'
-const FULFIL = 'fulfil'
+// const TRANSFER = 'transfer'
+// const PREPARE = 'prepare'
+// const FULFIL = 'fulfil'
 
-const publishPrepare = async (headers, message) => {
-  Logger.debug('publishPrepare::start')
-  try {
-    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+// const publishPrepare = async (headers, message) => {
+//   Logger.debug('publishPrepare::start')
+//   try {
+//     let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
-    var kafkaProducer = new Producer(kafkaConfig)
-    await kafkaProducer.connect()
-    const messageProtocol = {
-      id: message.transferId,
-      to: message.payeeFsp,
-      from: message.payerFsp,
-      type: 'application/json',
-      content: {
-        headers: headers,
-        payload: message
-      },
-      metadata: {
-        event: {
-          id: Uuid(),
-          type: 'prepare',
-          action: 'prepare',
-          createdAt: new Date(),
-          status: 'success'
-        }
-      }
-    }
-    const topicConfig = {
-      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-    }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
-  } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
-    throw err
-  }
-}
+//     var kafkaProducer = new Producer(kafkaConfig)
+//     await kafkaProducer.connect()
+//     const messageProtocol = {
+//       id: message.transferId,
+//       to: message.payeeFsp,
+//       from: message.payerFsp,
+//       type: 'application/json',
+//       content: {
+//         headers: headers,
+//         payload: message
+//       },
+//       metadata: {
+//         event: {
+//           id: Uuid(),
+//           type: 'prepare',
+//           action: 'prepare',
+//           createdAt: new Date(),
+//           status: 'success'
+//         }
+//       }
+//     }
+//     const topicConfig = {
+//       topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
+//     }
+//     return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+//   } catch (err) {
+//     Logger.error(`Kafka error:: ERROR:'${err}'`)
+//     throw err
+//   }
+// }
 
-const publishFulfil = async (id, headers, message) => {
-  Logger.debug('publishFulfil::start')
-  try {
-    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+// const publishFulfil = async (id, headers, message) => {
+//   Logger.debug('publishFulfil::start')
+//   try {
+//     let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
 
-    var kafkaProducer = new Producer(kafkaConfig)
-    await kafkaProducer.connect()
-    const messageProtocol = {
-      id,
-      to: headers['fspiop-destination'],
-      from: headers['fspiop-source'],
-      type: 'application/json',
-      content: {
-        headers: headers,
-        payload: message
-      },
-      metadata: {
-        event: {
-          id: Uuid(),
-          type: 'fulfil',
-          action: 'commit',
-          createdAt: new Date(),
-          state: {
-            status: 'success',
-            code: 0
-          }
-        }
-      }
-    }
-    const topicConfig = {
-      topicName: Utility.getParticipantTopicName(headers['fspiop-source'], TRANSFER, FULFIL) // `topic-${message.payerFsp}-transfer-prepare`
-    }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
-  } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
-    throw err
-  }
-}
-module.exports = {
-  publishPrepare,
-  publishFulfil
-}
+//     var kafkaProducer = new Producer(kafkaConfig)
+//     await kafkaProducer.connect()
+//     const messageProtocol = {
+//       id,
+//       to: headers['fspiop-destination'],
+//       from: headers['fspiop-source'],
+//       type: 'application/json',
+//       content: {
+//         headers: headers,
+//         payload: message
+//       },
+//       metadata: {
+//         event: {
+//           id: Uuid(),
+//           type: 'fulfil',
+//           action: 'commit',
+//           createdAt: new Date(),
+//           state: {
+//             status: 'success',
+//             code: 0
+//           }
+//         }
+//       }
+//     }
+//     const topicConfig = {
+//       topicName: Utility.getParticipantTopicName(headers['fspiop-source'], TRANSFER, FULFIL) // `topic-${message.payerFsp}-transfer-prepare`
+//     }
+//     return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
+//   } catch (err) {
+//     Logger.error(`Kafka error:: ERROR:'${err}'`)
+//     throw err
+//   }
+// }
+// module.exports = {
+//   publishPrepare,
+//   publishFulfil
+// }

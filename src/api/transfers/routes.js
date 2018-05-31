@@ -24,7 +24,7 @@
 const Handler = require('./handler')
 const Joi = require('joi-currency-code')(require('joi'))
 const tags = ['api', 'transfers']
-const transferState = [ 'RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED',  'SETTLED' ]
+const transferState = [ 'RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED', 'SETTLED' ]
 
 module.exports = [{
   method: 'POST',

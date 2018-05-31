@@ -20,176 +20,176 @@
  --------------
  ******/
 
-'use strict'
+// 'use strict'
 
-const Test = require('tapes')(require('tape'))
-const Sinon = require('sinon')
-const TransferCommands = require('../../../../../src/domain/transfer/commands')
-const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
-const P = require('bluebird')
+// const Test = require('tapes')(require('tape'))
+// const Sinon = require('sinon')
+// const TransferCommands = require('../../../../../src/domain/transfer/commands')
+// const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+// const P = require('bluebird')
 
-Test('Commands Transfer index test', indexTest => {
-  let sandbox
+// Test('Commands Transfer index test', indexTest => {
+//   let sandbox
 
-  indexTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
-    sandbox.stub(Producer.prototype, 'constructor')
-    sandbox.stub(Producer.prototype, 'connect') // .returns(P.resolve(true))
-    sandbox.stub(Producer.prototype, 'sendMessage').returns(P.resolve(true))
-    t.end()
-  })
+//   indexTest.beforeEach(t => {
+//     sandbox = Sinon.sandbox.create()
+//     sandbox.stub(Producer.prototype, 'constructor')
+//     sandbox.stub(Producer.prototype, 'connect') // .returns(P.resolve(true))
+//     sandbox.stub(Producer.prototype, 'sendMessage').returns(P.resolve(true))
+//     t.end()
+//   })
 
-  indexTest.afterEach(t => {
-    sandbox.restore()
-    t.end()
-  })
+//   indexTest.afterEach(t => {
+//     sandbox.restore()
+//     t.end()
+//   })
 
-  indexTest.test('publishPrepare should', publishPrepareTest => {
-    publishPrepareTest.test('connect to kafka and produce a message', async t => {
-      const payload = {
-        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
-        payeeFsp: '1234',
-        payerFsp: '5678',
-        amount: {
-          currency: 'USD',
-          amount: 123.45
-        },
-        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        expiration: '2016-05-24T08:38:08.699-04:00',
+//   indexTest.test('publishPrepare should', publishPrepareTest => {
+//     publishPrepareTest.test('connect to kafka and produce a message', async t => {
+//       const payload = {
+//         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+//         payeeFsp: '1234',
+//         payerFsp: '5678',
+//         amount: {
+//           currency: 'USD',
+//           amount: 123.45
+//         },
+//         ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+//         condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+//         expiration: '2016-05-24T08:38:08.699-04:00',
 
-        extensionList:
-        {
-          extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
-        }
-      }
+//         extensionList:
+//         {
+//           extension:
+//           [
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             },
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             }
+//           ]
+//         }
+//       }
 
-      const headers = {}
-      Producer.prototype.connect.returns(P.resolve(true))
-      t.ok(await TransferCommands.publishPrepare(headers, payload))
-      t.end()
-    })
+//       const headers = {}
+//       Producer.prototype.connect.returns(P.resolve(true))
+//       t.ok(await TransferCommands.publishPrepare(headers, payload))
+//       t.end()
+//     })
 
-    publishPrepareTest.test('should throw error on error from kafka', async t => {
-      const payload = {
-        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
-        payeeFsp: '1234',
-        payerFsp: '5678',
-        amount: {
-          currency: 'USD',
-          amount: 123.45
-        },
-        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        expiration: '2016-05-24T08:38:08.699-04:00',
+//     publishPrepareTest.test('should throw error on error from kafka', async t => {
+//       const payload = {
+//         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+//         payeeFsp: '1234',
+//         payerFsp: '5678',
+//         amount: {
+//           currency: 'USD',
+//           amount: 123.45
+//         },
+//         ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+//         condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+//         expiration: '2016-05-24T08:38:08.699-04:00',
 
-        extensionList:
-        {
-          extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
-        }
-      }
+//         extensionList:
+//         {
+//           extension:
+//           [
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             },
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             }
+//           ]
+//         }
+//       }
 
-      const headers = {}
+//       const headers = {}
 
-      const error = new Error()
-      Producer.prototype.connect.returns(P.reject(error))
+//       const error = new Error()
+//       Producer.prototype.connect.returns(P.reject(error))
 
-      try {
-        await TransferCommands.publishPrepare(headers, payload)
-      } catch (e) {
-        t.ok(e instanceof Error)
-        t.end()
-      }
-    })
+//       try {
+//         await TransferCommands.publishPrepare(headers, payload)
+//       } catch (e) {
+//         t.ok(e instanceof Error)
+//         t.end()
+//       }
+//     })
 
-    publishPrepareTest.end()
-  })
+//     publishPrepareTest.end()
+//   })
 
-  indexTest.test('publishFulfil should', publishFulfilTest => {
-    publishFulfilTest.test('connect to kafka and produce a message', async t => {
-      const payload = {
-        transferState: 'RECEIVED',
-        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
-        extensionList:
-        {
-          extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
-        }
-      }
+//   indexTest.test('publishFulfil should', publishFulfilTest => {
+//     publishFulfilTest.test('connect to kafka and produce a message', async t => {
+//       const payload = {
+//         transferState: 'RECEIVED',
+//         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+//         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+//         extensionList:
+//         {
+//           extension:
+//           [
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             },
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             }
+//           ]
+//         }
+//       }
 
-      const headers = {}
-      const id = 'dfsp1'
-      Producer.prototype.connect.returns(P.resolve(true))
-      t.ok(await TransferCommands.publishFulfil(id, headers, payload))
-      t.end()
-    })
+//       const headers = {}
+//       const id = 'dfsp1'
+//       Producer.prototype.connect.returns(P.resolve(true))
+//       t.ok(await TransferCommands.publishFulfil(id, headers, payload))
+//       t.end()
+//     })
 
-    publishFulfilTest.test('should throw error on error from kafka', async t => {
-      const payload = {
-        transferState: 'RECEIVED',
-        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
-        extensionList:
-        {
-          extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
-        }
-      }
+//     publishFulfilTest.test('should throw error on error from kafka', async t => {
+//       const payload = {
+//         transferState: 'RECEIVED',
+//         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+//         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+//         extensionList:
+//         {
+//           extension:
+//           [
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             },
+//             {
+//               key: 'errorDescription',
+//               value: 'This is a more detailed error description'
+//             }
+//           ]
+//         }
+//       }
 
-      const headers = {}
-      const id = 'dfsp1'
+//       const headers = {}
+//       const id = 'dfsp1'
 
-      const error = new Error()
-      Producer.prototype.connect.returns(P.reject(error))
+//       const error = new Error()
+//       Producer.prototype.connect.returns(P.reject(error))
 
-      try {
-        await TransferCommands.publishFulfil(id, headers, payload)
-      } catch (e) {
-        t.ok(e instanceof Error)
-        t.end()
-      }
-    })
+//       try {
+//         await TransferCommands.publishFulfil(id, headers, payload)
+//       } catch (e) {
+//         t.ok(e instanceof Error)
+//         t.end()
+//       }
+//     })
 
-    publishFulfilTest.end()
-  })
-  indexTest.end()
-})
+//     publishFulfilTest.end()
+//   })
+//   indexTest.end()
+// })
