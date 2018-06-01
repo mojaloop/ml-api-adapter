@@ -1,11 +1,10 @@
 FROM mhart/alpine-node:8.9.4
 USER root
 
-WORKDIR /opt/central-ledger
-COPY src /opt/central-ledger/src
-#COPY migrations /opt/central-ledger/migrations
-COPY config /opt/central-ledger/config
-COPY package.json server.sh /opt/central-ledger/
+WORKDIR /opt/ml-api-adapter
+COPY src /opt/ml-api-adapter/src
+COPY config /opt/ml-api-adapter/config
+COPY package.json server.sh /opt/ml-api-adapter/
 
 RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
     && cd $(npm root -g)/npm \
