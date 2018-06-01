@@ -4,12 +4,12 @@ USER root
 WORKDIR /opt/ml-api-adapter
 COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
-COPY package.json server.sh /opt/ml-api-adapter/
+COPY package.json /opt/ml-api-adapter/
 
+RUN apk --no-cache add git
 RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
     && cd $(npm root -g)/npm \
-    && npm install -g node-gyp \
-    && apk --no-cache add git
+    && npm install -g node-gyp
 
 RUN npm install --production && \
   npm uninstall -g npm
