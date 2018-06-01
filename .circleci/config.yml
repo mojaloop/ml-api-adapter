@@ -130,9 +130,6 @@ jobs:
           command: *defaults_Dependencies
       - checkout
       - run:
-          name: Install interledgerjs/five-bells-ledger-api-tests
-          command: npm install github:interledgerjs/five-bells-ledger-api-tests
-      - run:
           name: Build dependencies
           command: apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
       - run:
