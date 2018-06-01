@@ -22,16 +22,9 @@
 
 'use strict'
 
-const TransferService = require('../../domain/transfer')
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
-
-exports.create = async function (request, h) {
-  try {
-    Logger.debug('create::start(%s)', JSON.stringify(request.payload))
-    await TransferService.prepare(request.headers, request.payload)
-    return h.response().code(202)
-  } catch (err) {
-    throw Boom.boomify(err, {message: 'An error has occurred'})
-  }
+exports.receiveNotification = async function (request, h) {
+  console.log('Received message')
+  console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
+  console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
+  return h.response(true).code(200)
 }

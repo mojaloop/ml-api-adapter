@@ -22,50 +22,29 @@
 
 'use strict'
 
-const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Uuid = require('uuid4')
-const Utility = require('../../../lib/utility')
+const Hapi = require('hapi')
+const ErrorHandling = require('@mojaloop/central-services-error-handling')
+const Boom = require('boom')
+const Routes = require('./routes')
 
-const TRANSFER = 'transfer'
-const PREPARE = 'prepare'
-
-const publishPrepare = async (headers, message) => {
-  Logger.debug('publishPrepare::start')
-  try {
-    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
-
-    var kafkaProducer = new Producer(kafkaConfig)
-    await kafkaProducer.connect()
-    const messageProtocol = {
-      id: message.transferId,
-      to: message.payeeFsp,
-      from: message.payerFsp,
-      type: 'application/json',
-      content: {
-        headers: headers,
-        payload: message
-      },
-      metadata: {
-        event: {
-          id: Uuid(),
-          type: 'prepare',
-          action: 'prepare',
-          createdAt: new Date(),
-          status: 'success'
+const createServer = (port, modules) => {
+  return (async () => {
+    const server = await new Hapi.Server({
+      port,
+      routes: {
+        validate: {
+          options: ErrorHandling.validateRoutes(),
+          failAction: async (request, h, err) => {
+            throw Boom.boomify(err)
+          }
         }
       }
-    }
-    const topicConfig = {
-      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-    }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
-  } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
-    throw err
-  }
+    })
+    await server.register(modules)
+    await server.start()
+    console.log('Test Server started')
+    return server
+  })()
 }
 
-module.exports = {
-  publishPrepare
-}
+module.exports = createServer(4545, [Routes])
