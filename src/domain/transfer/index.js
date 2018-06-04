@@ -92,7 +92,7 @@ const fulfil = async (id, headers, message) => {
       }
     }
     const topicConfig = {
-      topicName: Utility.getParticipantTopicName(headers['fspiop-source'], TRANSFER, FULFIL) // `topic-${message.payerFsp}-transfer-prepare`
+      topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
     }
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return Kafka.Producer.disconnect()

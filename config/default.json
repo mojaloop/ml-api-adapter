@@ -29,6 +29,10 @@
       "NOTIFICATION_TOPIC_TEMPLATE": {
         "TEMPLATE": "notifications",
         "REGEX": "notifications"
+      },
+      "FULFIL_TOPIC_TEMPLATE": {
+        "TEMPLATE": "topic-transfer-fulfil",
+        "REGEX": "topic-transfer-fulfil"
       }
     },
     "CONSUMER": {
