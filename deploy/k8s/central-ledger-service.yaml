@@ -1,9 +1,9 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: central-ledger
+  name: ml-api-adapter
   labels:
-      app: central-ledger
+      app: ml-api-adapter
 spec:
   ports:
     - port: 3000
@@ -15,5 +15,5 @@ spec:
       name: http-api-admin
       protocol: TCP
   selector:
-    app: central-ledger
+    app: ml-api-adapter
 

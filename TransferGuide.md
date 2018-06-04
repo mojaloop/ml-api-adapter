@@ -18,7 +18,7 @@ Start off by creating an account with the name **dfsp1**. Simply provide the acc
 
 #### Request
 ```
-POST http://central-ledger/accounts
+POST http://ml-api-adapter/accounts
 Content-Type: application/json
 {
   "name": "dfsp1",
@@ -30,12 +30,12 @@ Content-Type: application/json
 ```
 HTTP/1.1 201 Created
 {
-  "id": "http://central-ledger/accounts/dfsp1",
+  "id": "http://ml-api-adapter/accounts/dfsp1",
   "name": "dfsp1",
   "created": "2017-01-03T22:29:46.068Z",
   "balance": "0",
   "is_disabled": false,
-  "ledger": "http://central-ledger"
+  "ledger": "http://ml-api-adapter"
 }
 ```
 
@@ -44,7 +44,7 @@ Next, create an account with the name **dfsp2**. Like before, provide the accoun
 
 #### Request
 ```
-POST http://central-ledger/accounts HTTP/1.1
+POST http://ml-api-adapter/accounts HTTP/1.1
 Content-Type: application/json
 {
   "name": "dfsp2",
@@ -56,12 +56,12 @@ Content-Type: application/json
 ```
 HTTP/1.1 201 Created
 {
-  "id": "http://central-ledger/accounts/dfsp1",
+  "id": "http://ml-api-adapter/accounts/dfsp1",
   "name": "dfsp2",
   "created": "2017-01-03T22:30:46.068Z",
   "balance": "0",
   "is_disabled": false,
-  "ledger": "http://central-ledger"
+  "ledger": "http://ml-api-adapter"
 }
 ```
 
@@ -70,17 +70,17 @@ Now that you have two accounts created, a transfer can be prepared. For this tra
 
 #### Request
 ```
-PUT http://central-ledger/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204 HTTP/1.1
+PUT http://ml-api-adapter/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204 HTTP/1.1
 Content-Type: application/json
 {
-    "id": "http://central-ledger/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204",
-    "ledger": "http://central-ledger",
+    "id": "http://ml-api-adapter/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204",
+    "ledger": "http://ml-api-adapter",
     "debits": [{
-      "account": "http://central-ledger/accounts/dfsp1",
+      "account": "http://ml-api-adapter/accounts/dfsp1",
       "amount": "100"
     }],
     "credits": [{
-      "account": "http://central-ledger/accounts/dfsp2",
+      "account": "http://ml-api-adapter/accounts/dfsp2",
       "amount": "100"
     }],
     "execution_condition": "ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0",
@@ -92,17 +92,17 @@ Content-Type: application/json
 ```
 HTTP/1.1 201 Created
 {
-  "id": "http://central-ledger/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204",
-  "ledger": "http://central-ledger",
+  "id": "http://ml-api-adapter/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204",
+  "ledger": "http://ml-api-adapter",
   "debits": [
     {
-      "account": "http://central-ledger/accounts/dfsp1",
+      "account": "http://ml-api-adapter/accounts/dfsp1",
       "amount": 50
     }
   ],
   "credits": [
     {
-      "account": "http://central-ledger/accounts/dfsp2",
+      "account": "http://ml-api-adapter/accounts/dfsp2",
       "amount": 50
     }
   ],
@@ -120,7 +120,7 @@ Now that the transfer is prepared, you are free to execute the transfer. This co
 
 #### Request
 ```
-PUT http://central-ledger/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204/fulfillment HTTP/1.1
+PUT http://ml-api-adapter/transfers/3a2a1d9e-8640-4d2d-b06c-84f2cd613204/fulfillment HTTP/1.1
 Content-Type: text/plain
 oAKAAA
 ```

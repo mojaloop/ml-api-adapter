@@ -1,21 +1,21 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: central-ledger
+  name: ml-api-adapter
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: '/'
   labels:
-      app: central-ledger
+      app: ml-api-adapter
 spec:
   rules:
-    - host: central-ledger.local
+    - host: ml-api-adapter.local
       http:
         paths:
         - path: /
           backend:
-            serviceName: central-ledger
+            serviceName: ml-api-adapter
             servicePort: 3000
         - path: /admin
           backend:
-            serviceName: central-ledger
+            serviceName: ml-api-adapter
             servicePort: 3001

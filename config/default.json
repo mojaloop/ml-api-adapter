@@ -1,6 +1,6 @@
 {
   "PORT": 3000,
-  "HOSTNAME": "http://central-ledger",
+  "HOSTNAME": "http://ml-api-adapter",
   "DFSP_URLS": {
     "dfsp1": {
       "transfers": "http://localhost:4545/dfsp1/transfers",

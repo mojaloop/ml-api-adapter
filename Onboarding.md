@@ -1,9 +1,9 @@
-# Central Ledger Setup
+# ml api adapter Setup
 
 ***
 
 ### Introduction 
-In this document we'll walk through the setup for the Mojaloop Central Ledger. It consists of three sections:
+In this document we'll walk through the setup for the Mojaloop ml api adapter. It consists of three sections:
 
 * [Software List](#software-list)
 * [Setup](#setup)
@@ -26,7 +26,7 @@ In this document we'll walk through the setup for the Mojaloop Central Ledger. I
 ***
 
 ### Setup
-Make sure you have access to [Mojaloop on Github](https://github.com/mojaloop/central-ledger) and clone the project.
+Make sure you have access to [Mojaloop on Github](https://github.com/mojaloop/ml-api-adapter) and clone the project.
 
 #### Installing brew
 ##### macOS
@@ -184,7 +184,7 @@ export CLEDG_DATABASE_URI=postgres://central_ledger:cVq8iFqaLuHy8jjKuA@localhost
 * run `npm start` *(to run it locally)* or `npm run dev` *(to run it on your Docker host)*
 
 ##### Run Postman
-* click on **Central Ledger** and then **Prepare transfer**
+* click on **ml api adapter** and then **Prepare transfer**
 * click **Send**
 * if you get a valid response, you should be ready to go
 

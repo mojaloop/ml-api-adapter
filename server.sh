@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cd /opt/central-ledger/
+cd /opt/ml-api-adapter/
 node src/api/index.js

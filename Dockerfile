@@ -1,7 +1,7 @@
 FROM mhart/alpine-node:8.9.4
 
-WORKDIR /opt/central-ledger
-COPY . /opt/central-ledger
+WORKDIR /opt/ml-api-adapter
+COPY . /opt/ml-api-adapter
 
 RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
     && cd $(npm root -g)/npm \

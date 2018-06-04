@@ -174,7 +174,7 @@
 			]
 		},
 		{
-			"name": "Central Ledger",
+			"name": "ml api adapter",
 			"description": "",
 			"item": [
 				{

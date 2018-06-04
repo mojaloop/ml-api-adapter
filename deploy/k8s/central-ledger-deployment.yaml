@@ -2,19 +2,19 @@
  apiVersion: extensions/v1beta1
  kind: Deployment
  metadata:
-    name: central-ledger-deployment
+    name: ml-api-adapter-deployment
     labels:
-      app: central-ledger
+      app: ml-api-adapter
  spec:
     replicas: 1
     template:
       metadata:
         labels:
-          app: central-ledger
+          app: ml-api-adapter
       spec:
         containers:
-          - name: central-ledger
-            image: mojaloop/central-ledger:latest
+          - name: ml-api-adapter
+            image: mojaloop/ml-api-adapter:latest
             command: ["node", "src/api/index.js"]
             ports:
               - containerPort: 3000
@@ -31,33 +31,33 @@
             #       - NET_ADMIN
             # envFrom:
             #   - configMapRef:
-            #       name: central-ledger-config-env
+            #       name: ml-api-adapter-config-env
             env:
               - name: CLEDG_PORT
                 valueFrom:
                   configMapKeyRef:
-                    name: central-ledger-config
+                    name: ml-api-adapter-config
                     key: server.port
               # - name: CLEDG_ADMIN_PORT
               #   valueFrom:
               #     configMapKeyRef:
-              #       name: central-ledger-config
+              #       name: ml-api-adapter-config
               #       key: admin.port
               - name: CLEDG_HOSTNAME
                 valueFrom:
                   configMapKeyRef:
-                    name: central-ledger-config
+                    name: ml-api-adapter-config
                     key: server.host
               - name: CLEDG_DATABASE_URI
                 valueFrom:
                   secretKeyRef:
-                    name: central-ledger-secret
+                    name: ml-api-adapter-secret
                     key: db.uri
             volumeMounts:
             - name: config-volume
-              mountPath: /opt/central-ledger/config
-          - name: central-ledger-admin
-            image: mojaloop/central-ledger:latest
+              mountPath: /opt/ml-api-adapter/config
+          - name: ml-api-adapter-admin
+            image: mojaloop/ml-api-adapter:latest
             command: ["node", "src/admin/index.js"]
             ports:
               # - containerPort: 3000
@@ -76,30 +76,30 @@
               # - name: CLEDG_PORT
               #   valueFrom:
               #     configMapKeyRef:
-              #       name: central-ledger-config
+              #       name: ml-api-adapter-config
               #       key: server.port
               - name: CLEDG_ADMIN_PORT
                 valueFrom:
                   configMapKeyRef:
-                    name: central-ledger-config
+                    name: ml-api-adapter-config
                     key: admin.port
               - name: CLEDG_HOSTNAME
                 valueFrom:
                   configMapKeyRef:
-                    name: central-ledger-config
+                    name: ml-api-adapter-config
                     key: server.host
               - name: CLEDG_DATABASE_URI
                 valueFrom:
                   secretKeyRef:
-                    name: central-ledger-secret
+                    name: ml-api-adapter-secret
                     key: db.uri
             volumeMounts:
             - name: config-volume
-              mountPath: /opt/central-ledger/config
+              mountPath: /opt/ml-api-adapter/config
         volumes:
           - name: config-volume
             configMap:
-              name: central-ledger-config
+              name: ml-api-adapter-config
               items:
               - key: default.json
                 path: default.json

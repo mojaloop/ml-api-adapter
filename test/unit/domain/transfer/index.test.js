@@ -64,19 +64,19 @@ Test('Transfer Service tests', serviceTest => {
         expiration: '2016-05-24T08:38:08.699-04:00',
 
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       const headers = {}
@@ -125,19 +125,19 @@ Test('Transfer Service tests', serviceTest => {
         expiration: '2016-05-24T08:38:08.699-04:00',
 
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       const headers = {}
@@ -161,19 +161,19 @@ Test('Transfer Service tests', serviceTest => {
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       const headers = {}
@@ -217,19 +217,19 @@ Test('Transfer Service tests', serviceTest => {
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
-          {
-            extension:
-              [
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                },
-                {
-                  key: 'errorDescription',
-                  value: 'This is a more detailed error description'
-                }
-              ]
-          }
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
       }
 
       const headers = {}
