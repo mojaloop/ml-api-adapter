@@ -74,21 +74,17 @@ const processMessage = async (msg) => {
     throw new Error('Invalid message received from kafka')
   }
   const { metadata, from, to, content } = msg.value
-  const { action, status } = metadata.event
-  if (action === 'prepare' && status === 'success') {
+  const {status } = metadata.event
+  if (status === 'success') {
     return Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload).catch(err => {
       Logger.error(`error posting to the callback - ${err}`)
       throw err
     })
-  } else if (action === 'prepare' && status !== 'success') {
+  } else {
     return Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload).catch(err => {
       Logger.error(`error sending notification to the callback - ${err}`)
       throw err
     })
-  } else {
-    const err = new Error('invalid action received from kafka')
-    Logger.error(`error sending notification to the callback - ${err}`)
-    throw err
   }
 }
 

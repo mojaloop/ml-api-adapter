@@ -27,8 +27,8 @@
         "REGEX": "topic-(.*)-(.*)-(.*)"
       },
       "NOTIFICATION_TOPIC_TEMPLATE": {
-        "TEMPLATE": "notifications",
-        "REGEX": "notifications"
+        "TEMPLATE": "topic-notification-event",
+        "REGEX": "topic-notification-event"
       }
     },
     "CONSUMER": {
