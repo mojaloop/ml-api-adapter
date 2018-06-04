@@ -74,7 +74,7 @@ const processMessage = async (msg) => {
     throw new Error('Invalid message received from kafka')
   }
   const { metadata, from, to, content } = msg.value
-  const {status } = metadata.event
+  const {status} = metadata.event
   if (status === 'success') {
     return Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload).catch(err => {
       Logger.error(`error posting to the callback - ${err}`)
