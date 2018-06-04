@@ -27,27 +27,12 @@ The ml api adapter has many options that can be configured through environment v
 
 | Environment variable | Description | Example values |
 | -------------------- | ----------- | ------ |
-| CLEDG\_DATABASE_URI   | The connection string for the database the ml api adapter will use. Postgres is currently the only supported database. | postgres://\<username>:\<password>@localhost:5432/central_ledger |
-| CLEDG\_PORT | The port the API server will run on. | 3000 |
-| CLEDG\_ADMIN_PORT | The port the Admin server will run on. | 3001 |
-| CLEDG\_HOSTNAME | The URI that will be used to create and validate links to resources on the ml api adapter.  | http://ml-api-adapter |
-| CLEDG\_ENABLE\_BASIC_AUTH | Flag to enable basic auth protection on endpoints that require authorization. Username and password would be the account name and password. | false |
-| CLEDG\_ENABLE\_TOKEN_AUTH | Flag to enable token protection on endpoints that require authorization. To create a token, reference the [API documentation](API.md). | false |
-| CLEDG\_LEDGER\_ACCOUNT_NAME | Name of the account setup to receive fees owed to the ml api adapter. If the account doesn't exist, it will be created on start up. | LedgerName |
-| CLEDG\_LEDGER\_ACCOUNT_PASSWORD | Password of the account setup to receive fees owed to the ml api adapter.  | LedgerPassword |
-| CLEDG\_ADMIN_KEY | Key used for admin access to endpoints that require validation. | AdminKey |
-| CLEDG\_ADMIN_SECRET | Secret used for admin access to endpoints that require validation. Secret also used to sign JWTs used for Admin API. | AdminSecret |
-| CLEDG\_TOKEN_EXPIRATION | Time in milliseconds for Admin API tokens to expire. | 3600000 |
-| CLEDG\_EXPIRES_TIMEOUT | Time in milliseconds to determine how often transfer expiration process runs. | 5000 |
-| CLEDG\_AMOUNT__PRECISION | Numeric value used to determine precision recorded for transfer amounts on this ledger. | 10 |
-| CLEDG\_AMOUNT__SCALE | Numeric value used to determine scale recorded for transfer amounts on this ledger. | 2 |
 
 
 ## API
 
 For endpoint documentation, see the [API documentation](API.md).
 
-For help preparing and executing transfers, see the [Transfer Guide](TransferGuide.md)
 
 ## Logging
 

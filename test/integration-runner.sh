@@ -173,7 +173,6 @@ run_test_command
 test_exit_code=$?
 >&2 echo "Test result.... $test_exit_code ..."
 
-
 # >&2 echo "Displaying test logs"
 # docker logs $APP_TEST_HOST
 
@@ -188,6 +187,6 @@ then
  >&2 echo "Integration tests failed...exiting"
  >&2 echo "Test environment logs..."
 fi
-# sleep 3000
+
 clean_docker
 exit "$test_exit_code"
