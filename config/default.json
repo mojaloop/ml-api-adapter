@@ -1,6 +1,6 @@
 {
   "PORT": 3000,
-  "HOSTNAME": "http://central-ledger",
+  "HOSTNAME": "http://ml-api-adapter",
   "DFSP_URLS": {
     "dfsp1": {
       "transfers": "http://localhost:4545/dfsp1/transfers",
@@ -27,8 +27,12 @@
         "REGEX": "topic-(.*)-(.*)-(.*)"
       },
       "NOTIFICATION_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-notification-event",
-        "REGEX": "topic-notification-event"
+        "TEMPLATE": "notifications",
+        "REGEX": "notifications"
+      },
+      "FULFIL_TOPIC_TEMPLATE": {
+        "TEMPLATE": "topic-transfer-fulfil",
+        "REGEX": "topic-transfer-fulfil"
       }
     },
     "CONSUMER": {
@@ -57,6 +61,27 @@
     "PRODUCER": {
       "TRANSFER": {
         "PREPARE": {
+          "config": {
+            "options": {
+              "messageCharset": "utf8"
+            },
+            "rdkafkaConf": {
+              "metadata.broker.list": "localhost:9092",
+              "client.id": "default-client",
+              "event_cb": true,
+              "compression.codec": "none",
+              "retry.backoff.ms": 100,
+              "message.send.max.retries": 2,
+              "socket.keepalive.enable": true,
+              "queue.buffering.max.messages": 10,
+              "queue.buffering.max.ms": 50,
+              "batch.num.messages": 100,
+              "api.version.request": true,
+              "dr_cb": true
+            }
+          }
+        },
+        "FULFIL": {
           "config": {
             "options": {
               "messageCharset": "utf8"
