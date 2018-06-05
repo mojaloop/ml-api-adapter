@@ -35,3 +35,12 @@ exports.create = async function (request, h) {
     throw Boom.boomify(err, {message: 'An error has occurred'})
   }
 }
+exports.fulfilTransfer = async function (request, h) {
+  try {
+    Logger.debug('fulfilTransfer::start(%s)', JSON.stringify(request.payload))
+    await TransferService.fulfil(request.params.id, request.headers, request.payload)
+    return h.response().code(202)
+  } catch (err) {
+    throw Boom.boomify(err, {message: 'An error has occurred'})
+  }
+}
