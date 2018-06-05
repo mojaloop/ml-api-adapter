@@ -83,6 +83,22 @@ Test('utility', utilityTest => {
     getNotificationTopicNameTest.end()
   })
 
+  utilityTest.test('getFulfilTopicName should', getFulfilTopicNameTest => {
+    getFulfilTopicNameTest.test('throw error on error in rendering', test => {
+      const error = new Error()
+      Mustache.render.withArgs(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.FULFIL_TOPIC_TEMPLATE.TEMPLATE).throws(error)
+
+      try {
+        Utility.getFulfilTopicName()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    getFulfilTopicNameTest.end()
+  })
+
   utilityTest.test('getKafkaConfig should', getKafkaConfigTest => {
     getKafkaConfigTest.test('throw error on error in rendering', test => {
       try {

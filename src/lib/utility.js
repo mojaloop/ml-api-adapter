@@ -130,10 +130,26 @@ const participantTopicTemplate = (participantName, functionality, action) => {
   }
 }
 
+
+/**
+ * @method FulfilTopicTemplate
+ *
+ * Generates a fulfil topic name found in the default.json
+ *
+ * @returns {string} - Returns topic name to be created, throws error if failure occurs
+ */
+const fulfilTopicTemplate = () => {
+  try {
+    return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.FULFIL_TOPIC_TEMPLATE.TEMPLATE)
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
+}
 /**
  * @method NotificationTopicTemplate
  *
- * Generates a notification topic name from the 2 inputs, which are used in the placeholder notification topic template found in the default.json
+ * Generates a notification topic name found in the default.json
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
@@ -148,12 +164,6 @@ const notificationTopicTemplate = () => {
 
 /**
  * @method GetNotificationTopicName
- *
- * @param {object} transfer - the transfer object used to get the accountUri from
- * @param {string} functionality - the functionality flow. Example: 'transfer'
- * @param {string} action - the action that applies to the flow. Example: 'prepare'
- *
- * Parses the accountUri into a participant name from the uri string
  *
  * @returns {string} - Returns notification topic, throws error if failure occurs
  */
@@ -243,6 +253,22 @@ const getParticipantTopicName = (participantName, functionality, action) => {
     throw e
   }
 }
+
+/**
+ * @method GetFulfilTopicName
+ *
+ * @function fulfilTopicTemplate called which generates a fulfil topic name found in the default.json
+ *
+ * @returns {string} - Returns topic name to be created, throws error if failure occurs
+ */
+const getFulfilTopicName = () => {
+  try {
+    return fulfilTopicTemplate()
+  } catch (e) {
+    throw e
+  }
+}
+
 
 /**
  * @method GetKafkaConfig
@@ -417,6 +443,8 @@ const getKafkaConfig = (flow, functionality, action) => {
 // }
 
 exports.getParticipantTopicName = getParticipantTopicName
+exports.getFulfilTopicName = getFulfilTopicName
+
 // exports.transformAccountToTopicName = transformAccountToTopicName
 // exports.transformGeneralTopicName = transformGeneralTopicName
 exports.getKafkaConfig = getKafkaConfig

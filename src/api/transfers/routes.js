@@ -24,6 +24,7 @@
 const Handler = require('./handler')
 const Joi = require('joi-currency-code')(require('joi'))
 const tags = ['api', 'transfers']
+const transferState = [ 'RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED', 'SETTLED' ]
 
 module.exports = [{
   method: 'POST',
@@ -63,6 +64,47 @@ module.exports = [{
         ilpPacket: Joi.string().required().regex(/^[A-Za-z0-9-_]+[=]{0,2}$/).min(1).max(32768).description('ilp packet'),
         condition: Joi.string().required().trim().max(48).regex(/^[A-Za-z0-9-_]{43}$/).description('Condition of transfer'),
         expiration: Joi.string().required().regex(/^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$/).description('When the transfer expires'),
+        extensionList: Joi.object().keys({
+          extension: Joi.array().items(Joi.object().keys({
+            key: Joi.string().required().min(1).max(32).description('Key'),
+            value: Joi.string().required().min(1).max(128).description('Value')
+          })).required().min(1).max(16).description('extension')
+        }).optional().description('Extention list')
+      }
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/transfers/{id}',
+  handler: Handler.fulfilTransfer,
+  options: {
+    id: 'transfer_fulfilment',
+    tags: tags,
+    // auth: Auth.strategy(),
+    description: 'Fulfil a transfer',
+    payload: {
+      failAction: 'error'
+    },
+    validate: {
+      headers: Joi.object({
+        'content-type': Joi.string().required().valid('application/json'),
+        'date': Joi.date().iso().required(),
+        'x-forwarded-for': Joi.string().optional(),
+        'fspiop-source': Joi.string().required(),
+        'fspiop-destination': Joi.string().optional(),
+        'fspiop-encryption': Joi.string().optional(),
+        'fspiop-signature': Joi.string().optional(),
+        'fspiop-uri': Joi.string().optional(),
+        'fspiop-http-method': Joi.string().optional()
+      }).unknown(false).options({ stripUnknown: true }),
+      params: {
+        id: Joi.string().required().description('path')
+      },
+      payload: {
+        fulfilment: Joi.string().regex(/^[A-Za-z0-9-_]{43}$/).max(48).description('fulfilment of the transfer'),
+        completedTimestamp: Joi.string().regex(/^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$/).description('When the transfer was completed'),
+        transferState: Joi.string().required().valid(transferState).description('State of the transfer'),
         extensionList: Joi.object().keys({
           extension: Joi.array().items(Joi.object().keys({
             key: Joi.string().required().min(1).max(32).description('Key'),

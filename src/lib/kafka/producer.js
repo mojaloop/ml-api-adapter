@@ -24,48 +24,35 @@
 
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Uuid = require('uuid4')
-const Utility = require('../../../lib/utility')
 
-const TRANSFER = 'transfer'
-const PREPARE = 'prepare'
+let p
 
-const publishPrepare = async (headers, message) => {
-  Logger.debug('publishPrepare::start')
+const produceMessage = async (messageProtocol, topicConf, config) => {
   try {
-    let kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+    Logger.debug('Producer::start::topic=' + topicConf.topicName)
+    p = new Producer(config)
+    Logger.debug('Producer::connect::start')
+    await p.connect()
+    Logger.debug('Producer::connect::end')
+    Logger.debug(`Producer.sendMessage:: messageProtocol:'${JSON.stringify(messageProtocol)}'`)
+    await p.sendMessage(messageProtocol, topicConf)
+    Logger.debug('Producer::end')
+    return true
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
+}
 
-    var kafkaProducer = new Producer(kafkaConfig)
-    await kafkaProducer.connect()
-    const messageProtocol = {
-      id: message.transferId,
-      to: message.payeeFsp,
-      from: message.payerFsp,
-      type: 'application/json',
-      content: {
-        headers: headers,
-        payload: message
-      },
-      metadata: {
-        event: {
-          id: Uuid(),
-          type: 'prepare',
-          action: 'prepare',
-          createdAt: new Date(),
-          status: 'success'
-        }
-      }
-    }
-    const topicConfig = {
-      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-    }
-    return await kafkaProducer.sendMessage(messageProtocol, topicConfig)
-  } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
-    throw err
+const disconnect = async () => {
+  try {
+    await p.disconnect()
+  } catch (e) {
+    throw e
   }
 }
 
 module.exports = {
-  publishPrepare
+  produceMessage,
+  disconnect
 }
