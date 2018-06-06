@@ -62,7 +62,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'success'
+              state: {
+                status: 'success',
+                code: 0
+              }
             }
           },
           content: {
@@ -96,7 +99,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'failure'
+              state: {
+                status: 'failure',
+                code: 0
+              }
             }
           },
           content: {
@@ -130,7 +136,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'success'
+              state: {
+                status: 'success',
+                code: 0
+              }
             }
           },
           content: {
@@ -165,7 +174,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'failure'
+              state: {
+                status: 'failure',
+                code: 0
+              }
             }
           },
           content: {
@@ -199,7 +211,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'fulfil',
               action: 'fulfil',
-              status: 'success'
+              state: {
+                status: 'success',
+                code: 0
+              }
             }
           },
           content: {
@@ -234,7 +249,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'fulfil',
               action: 'fulfil',
-              status: 'failure'
+              state: {
+                status: 'failure',
+                code: 0
+              }
             }
           },
           content: {
@@ -269,7 +287,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'invalid action',
-              status: 'failure'
+              state: {
+                status: 'failure',
+                code: 0
+              }
             }
           },
           content: {
@@ -333,7 +354,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'success'
+              state: {
+                status: 'success',
+                code: 0
+              }
             }
           },
           content: {
@@ -357,7 +381,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'success'
+              state: {
+                status: 'success',
+                code: 0
+              }
             }
           },
           to: 'dfsp2',
@@ -380,7 +407,10 @@ Test('Notification Service tests', notificationTest => {
             event: {
               type: 'prepare',
               action: 'prepare',
-              status: 'success'
+              state: {
+                status: 'success',
+                code: 0
+              }
             }
           },
           content: {

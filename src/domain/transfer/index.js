@@ -50,7 +50,10 @@ const prepare = async (headers, message) => {
           type: 'prepare',
           action: 'prepare',
           createdAt: new Date(),
-          status: 'success'
+          state: {
+            status: 'success',
+            code: 0
+          }
         }
       }
     }
@@ -58,11 +61,9 @@ const prepare = async (headers, message) => {
       topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
     }
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-    await Kafka.Producer.disconnect()
     return true
   } catch (err) {
     Logger.error(`Kafka error:: ERROR:'${err}'`)
-    await Kafka.Producer.disconnect()
     throw err
   }
 }
@@ -96,10 +97,9 @@ const fulfil = async (id, headers, message) => {
       topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
     }
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-    return Kafka.Producer.disconnect()
+    return true
   } catch (err) {
     Logger.error(`Kafka error:: ERROR:'${err}'`)
-    await Kafka.Producer.disconnect()
     throw err
   }
 }

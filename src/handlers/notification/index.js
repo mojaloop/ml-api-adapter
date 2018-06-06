@@ -31,16 +31,20 @@ const EVENT = 'event'
 let notificationConsumer = {}
 
 const startConsumer = async () => {
-  Logger.debug('Instantiate the kafka consumer')
+  Logger.info('Notification::startConsumer')
   try {
     let topicName = Utility.getNotificationTopicName()
+    Logger.info('Notification::startConsumer::topicName: ' + topicName)
     let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
     notificationConsumer = new Consumer([topicName], config)
+    Logger.info('Notification::startConsumer::Consumer: new')
 
     await notificationConsumer.connect()
+    Logger.info('Kafka Consumer connected')
     await notificationConsumer.consume(consumeMessage)
+    Logger.info('Kafka Consumer handler created')
     return true
   } catch (err) {
     Logger.error(`error consuming kafka messages- ${err}`)
@@ -48,16 +52,18 @@ const startConsumer = async () => {
   }
 }
 const consumeMessage = async (error, message) => {
+  Logger.info('Notification::consumeMessage')
   return new Promise(async (resolve, reject) => {
     if (error) {
       Logger.error(`Error while reading message from kafka ${error}`)
       return reject(error)
     }
-    Logger.debug(`Message Received from kafka - ${JSON.stringify(message)}`)
+    Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
 
     message = (!Array.isArray(message) ? [message] : message)
 
     for (let msg of message) {
+      Logger.info('Notification::consumeMessage::processMessage')
       let res = await processMessage(msg).catch(err => {
         Logger.error(`Error processing the kafka message - ${err}`)
         notificationConsumer.commitMessageSync(msg)
@@ -71,11 +77,15 @@ const consumeMessage = async (error, message) => {
 
 const processMessage = async (msg) => {
   try {
+    Logger.info('Notification::processMessage')
     if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
       throw new Error('Invalid message received from kafka')
     }
     const {metadata, from, to, content, id} = msg.value
-    const {action, status} = metadata.event
+    const {action, state} = metadata.event
+    const status = state.status
+    Logger.info('Notification::processMessage action: ' + action)
+    Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
       return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload)
     } else if (action === 'prepare' && status !== 'success') {
@@ -90,10 +100,9 @@ const processMessage = async (msg) => {
       Logger.error(`error sending notification to the callback - ${err}`)
       throw err
     }
-  } catch
-    (e) {
-      throw e
-    }
+  } catch (e) {
+    throw e
+  }
 }
 
 module.exports = {

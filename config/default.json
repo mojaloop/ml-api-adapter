@@ -19,7 +19,7 @@
     "PRECISION": 10,
     "SCALE": 2
   },
-  
+
   "KAFKA": {
     "TOPIC_TEMPLATES": {
       "PARTICIPANT_TOPIC_TEMPLATE": {
@@ -27,8 +27,8 @@
         "REGEX": "topic-(.*)-(.*)-(.*)"
       },
       "NOTIFICATION_TOPIC_TEMPLATE": {
-        "TEMPLATE": "notifications",
-        "REGEX": "notifications"
+        "TEMPLATE": "topic-notification-event",
+        "REGEX": "topic-notification-event"
       },
       "FULFIL_TOPIC_TEMPLATE": {
         "TEMPLATE": "topic-transfer-fulfil",
@@ -49,7 +49,7 @@
               "consumeTimeout": 1000
             },
             "rdkafkaConf": {
-              "client.id": "notification",
+              "client.id": "topic-notification-event",
               "group.id": "kafka-ml-api-adapter",
               "metadata.broker.list": "localhost:9092",
               "enable.auto.commit": false
