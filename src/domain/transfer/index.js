@@ -58,7 +58,8 @@ const prepare = async (headers, message) => {
       topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
     }
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-    return Kafka.Producer.disconnect()
+    await Kafka.Producer.disconnect()
+    return true
   } catch (err) {
     Logger.error(`Kafka error:: ERROR:'${err}'`)
     await Kafka.Producer.disconnect()

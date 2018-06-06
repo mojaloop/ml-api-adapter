@@ -130,7 +130,6 @@ const participantTopicTemplate = (participantName, functionality, action) => {
   }
 }
 
-
 /**
  * @method FulfilTopicTemplate
  *
@@ -268,7 +267,6 @@ const getFulfilTopicName = () => {
     throw e
   }
 }
-
 
 /**
  * @method GetKafkaConfig

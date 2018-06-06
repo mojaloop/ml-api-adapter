@@ -70,7 +70,8 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const url = Config.DFSP_URLS['dfsp2'].transfers
@@ -88,7 +89,7 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
-    processMessageTest.test('process the message received from kafka and send out a transfer error notication to the sender', async test => {
+    processMessageTest.test('process the message received from kafka and send out a transfer error notification to the sender', async test => {
       const msg = {
         value: {
           metadata: {
@@ -103,7 +104,8 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const url = Config.DFSP_URLS['dfsp1'].error
@@ -136,7 +138,8 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const url = Config.DFSP_URLS['dfsp2'].transfers
@@ -170,7 +173,77 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const url = Config.DFSP_URLS['dfsp1'].error
+      const method = 'put'
+      const headers = {}
+      const message = {}
+
+      const error = new Error()
+      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.reject(error))
+
+      try {
+        await Notification.processMessage(msg)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'fulfil',
+              action: 'fulfil',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const urlPayer = 'http://localhost:4545/dfsp1/transfers/b51ec534-ee48-4575-b6a9-ead2955b8098'
+      const urlPayee = 'http://localhost:4545/dfsp2/transfers/b51ec534-ee48-4575-b6a9-ead2955b8098'
+      const method = 'put'
+      const headers = {}
+      const message = {}
+
+      const expected = 200
+      Callback.sendCallback.withArgs(urlPayer, method, headers, message)
+      Callback.sendCallback.withArgs(urlPayee, method, headers, message).returns(P.resolve(200))
+
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(urlPayee, method, headers, message))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    processMessageTest.test('throw error if not able to send the notification to the sender', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'fulfil',
+              action: 'fulfil',
+              status: 'failure'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const url = Config.DFSP_URLS['dfsp1'].error
@@ -204,11 +277,14 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       try {
         await Notification.processMessage(msg)
+        test.fail('No error thrown')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -265,7 +341,8 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       let result = await Notification.consumeMessage(null, [msg])
@@ -284,7 +361,8 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       try {
@@ -310,7 +388,8 @@ Test('Notification Service tests', notificationTest => {
             payload: {}
           },
           to: 'dfsp2',
-          from: 'dfsp1'
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       test.ok(await Notification.consumeMessage(null, msg))

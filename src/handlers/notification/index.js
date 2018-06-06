@@ -70,26 +70,30 @@ const consumeMessage = async (error, message) => {
 }
 
 const processMessage = async (msg) => {
-  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
-    throw new Error('Invalid message received from kafka')
-  }
-  const { metadata, from, to, content } = msg.value
-  const { action, status } = metadata.event
-  if (action === 'prepare' && status === 'success') {
-    return Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload).catch(err => {
-      Logger.error(`error posting to the callback - ${err}`)
-      throw err
-    })
-  } else if (action === 'prepare' && status !== 'success') {
-    return Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload).catch(err => {
+  try {
+    if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
+      throw new Error('Invalid message received from kafka')
+    }
+    const {metadata, from, to, content, id} = msg.value
+    const {action, status} = metadata.event
+    if (action === 'prepare' && status === 'success') {
+      return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload)
+    } else if (action === 'prepare' && status !== 'success') {
+      return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
+    } else if (action === 'fulfil' && status === 'success') {
+      await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload)
+      return await Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload)
+    } else if (action === 'fulfil' && status !== 'success') {
+      return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
+    } else {
+      const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
       throw err
-    })
-  } else {
-    const err = new Error('invalid action received from kafka')
-    Logger.error(`error sending notification to the callback - ${err}`)
-    throw err
-  }
+    }
+  } catch
+    (e) {
+      throw e
+    }
 }
 
 module.exports = {
