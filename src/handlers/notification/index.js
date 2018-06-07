@@ -88,12 +88,12 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
       return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload)
-    } else if (action === 'prepare' && status !== 'success') {
+    } else if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
       return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
-    } else if (action === 'fulfil' && status === 'success') {
+    } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
       await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload)
       return await Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload)
-    } else if (action === 'fulfil' && status !== 'success') {
+    } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
       return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
     } else {
       const err = new Error('invalid action received from kafka')

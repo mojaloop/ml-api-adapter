@@ -209,8 +209,8 @@ Test('Notification Service tests', notificationTest => {
         value: {
           metadata: {
             event: {
-              type: 'fulfil',
-              action: 'fulfil',
+              type: 'commit',
+              action: 'commit',
               state: {
                 status: 'success',
                 code: 0
@@ -247,8 +247,8 @@ Test('Notification Service tests', notificationTest => {
         value: {
           metadata: {
             event: {
-              type: 'fulfil',
-              action: 'fulfil',
+              type: 'commit',
+              action: 'commit',
               state: {
                 status: 'failure',
                 code: 0
