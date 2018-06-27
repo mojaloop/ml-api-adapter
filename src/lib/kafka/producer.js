@@ -22,49 +22,37 @@
 
 'use strict'
 
-const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
-const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
+const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+const Logger = require('@mojaloop/central-services-shared').Logger
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
-      }
-    }
-  })
+let p
 
-  await server.register({
-    plugin: require('good'),
-    options: {
-      ops: {
-        interval: 10000
-      }
-    }
-  })
+const produceMessage = async (messageProtocol, topicConf, config) => {
+  try {
+    Logger.debug('Producer::start::topic=' + topicConf.topicName)
+    p = new Producer(config)
+    Logger.debug('Producer::connect::start')
+    await p.connect()
+    Logger.debug('Producer::connect::end')
+    Logger.debug(`Producer.sendMessage:: messageProtocol:'${JSON.stringify(messageProtocol)}'`)
+    await p.sendMessage(messageProtocol, topicConf)
+    Logger.debug('Producer::end')
+    return true
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
+}
 
-  await server.register({
-    plugin: require('hapi-auth-basic')
-  })
-
-  await server.register({
-    plugin: require('@now-ims/hapi-now-auth')
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling])
+const disconnect = async () => {
+  try {
+    await p.disconnect()
+  } catch (e) {
+    throw e
+  }
 }
 
 module.exports = {
-  registerPlugins
+  produceMessage,
+  disconnect
 }

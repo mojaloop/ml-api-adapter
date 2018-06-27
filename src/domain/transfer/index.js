@@ -22,14 +22,89 @@
 
 'use strict'
 
-const Commands = require('./commands')
 const Logger = require('@mojaloop/central-services-shared').Logger
+const Uuid = require('uuid4')
+const Utility = require('../../lib/utility')
+const Kafka = require('../../lib/kafka')
 
-const prepare = async (payload) => {
-  Logger.info('prepare::start(%s)', payload)
-  return Commands.publishPrepare(payload)
+const TRANSFER = 'transfer'
+const PREPARE = 'prepare'
+const FULFIL = 'fulfil'
+
+const prepare = async (headers, message) => {
+  Logger.debug('prepare::start(%s, %s)', headers, message)
+  try {
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+    const messageProtocol = {
+      id: message.transferId,
+      to: message.payeeFsp,
+      from: message.payerFsp,
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'prepare',
+          action: 'prepare',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = {
+      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
+    }
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    return true
+  } catch (err) {
+    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
+}
+const fulfil = async (id, headers, message) => {
+  Logger.debug('prepare::start(%s, %s, %s)', id, headers, message)
+  try {
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+    const messageProtocol = {
+      id,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'fulfil',
+          action: 'commit',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = {
+      topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
+    }
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    return true
+  } catch (err) {
+    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
 }
 
 module.exports = {
-  prepare
+  prepare,
+  fulfil
 }

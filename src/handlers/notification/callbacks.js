@@ -22,49 +22,28 @@
 
 'use strict'
 
-const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
-const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
+const Logger = require('@mojaloop/central-services-shared').Logger
+const request = require('request')
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
+const sendCallback = async (url, method, headers, message) => {
+  delete headers['Content-Length']
+  const options = {
+    url,
+    method,
+    // headers,
+    body: JSON.stringify(message)
+  }
+
+  return new Promise((resolve, reject) => {
+    return request(options, (error, response, body) => {
+      if (error) {
+        Logger.error(`error while callback - ${error}`)
+        throw error
       }
-    }
+      return resolve(response.statusCode)
+    })
   })
-
-  await server.register({
-    plugin: require('good'),
-    options: {
-      ops: {
-        interval: 10000
-      }
-    }
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-basic')
-  })
-
-  await server.register({
-    plugin: require('@now-ims/hapi-now-auth')
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling])
 }
-
 module.exports = {
-  registerPlugins
+  sendCallback
 }

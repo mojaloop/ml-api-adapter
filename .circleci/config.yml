@@ -41,12 +41,10 @@ defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
   command: |
     docker login -u $DOCKER_USER -p $DOCKER_PASS
-
 defaults_build_docker_build: &defaults_build_docker_build
   name: Build Docker image
   command: |
     docker build -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG .
-
 defaults_build_docker_publish: &defaults_build_docker_publish
   name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
   command: |
@@ -54,7 +52,6 @@ defaults_build_docker_publish: &defaults_build_docker_publish
     docker push $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG
     echo "Publishing $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG"
     docker push $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG
-
 defaults_deploy_prequisites: &defaults_deploy_prequisites
   name: Copy deployment pre-requisites from S3 bucket
   command: |
@@ -70,13 +67,11 @@ defaults_deploy_prequisites: &defaults_deploy_prequisites
     echo "Copying Helm value file into $AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_HELM folder for $K8_RELEASE_NAME release"
     mkdir $CIRCLE_WORKING_DIRECTORY/$AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_HELM
     aws s3 cp $AWS_S3_URI_DEVOPS_DEPLOYMENT_CONFIG/$AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_HELM/$HELM_VALUE_FILENAME $CIRCLE_WORKING_DIRECTORY/$AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_HELM/
-
 defaults_deploy_config_kubernetes_cluster: &defaults_deploy_config_kubernetes_cluster
   name: Configure Kubernetes cluster
   command: |
     echo "Configure Kubernetes cluster ${K8_CLUSTER_NAME}"
     kubectl config set-cluster $K8_CLUSTER_NAME --server=$K8_CLUSTER_SERVER --insecure-skip-tls-verify=true
-
 defaults_deploy_config_kubernetes_credentials: &defaults_deploy_config_kubernetes_credentials
   name: Configure Kubernetes credentails
   command: |
@@ -89,24 +84,20 @@ defaults_deploy_config_kubernetes_credentials: &defaults_deploy_config_kubernete
         echo "Configure Kubernetes credentials ${K8_USER_NAME} using Certs"
         kubectl config set-credentials $K8_USER_NAME --client-certificate=$CIRCLE_WORKING_DIRECTORY/$AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_KEYS/$K8_USER_PEM_CERT_FILENAME --client-key=$CIRCLE_WORKING_DIRECTORY/$AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_KEYS/$K8_USER_PEM_KEY_FILENAME
     fi
-
 defaults_deploy_config_kubernetes_context: &defaults_deploy_config_kubernetes_context
   name: Confi gure Kubernetes context
   command: |
     echo "Configure Kubernetes context ${K8_CLUSTER_NAME}"
     kubectl config set-context $K8_CLUSTER_NAME --cluster=$K8_CLUSTER_NAME --user=$K8_USER_NAME --namespace=$K8_NAMESPACE
-
 defaults_deploy_set_kubernetes_context: &defaults_deploy_set_kubernetes_context
   name: Set Kubernetes context
   command: |
     echo "Configure Kubernetes context ${K8_CLUSTER_NAME}"
     kubectl config use-context $K8_CLUSTER_NAME
-
 defaults_deploy_configure_helm: &defaults_deploy_configure_helm
   name: Configure Helm
   command: |
     helm init --client-only
-
 defaults_deploy_install_or_upgrade_helm_chart: &defaults_deploy_install_or_upgrade_helm_chart
   name: Install or Upgrade Helm Chart
   command: |
@@ -119,7 +110,6 @@ defaults_deploy_install_or_upgrade_helm_chart: &defaults_deploy_install_or_upgra
         echo "Upgrading ${K8_RELEASE_NAME} release"
         helm upgrade $K8_RELEASE_NAME --repo=$K8_HELM_REPO --reuse-values $HELM_VALUE_SET_VALUES -f $CIRCLE_WORKING_DIRECTORY/$AWS_S3_DIR_DEVOPS_DEPLOYMENT_CONFIG_HELM/$HELM_VALUE_FILENAME $K8_HELM_CHART_NAME
     fi
-
 jobs:
   setup:
     <<: *defaults_working_directory
@@ -130,11 +120,20 @@ jobs:
           command: *defaults_Dependencies
       - checkout
       - run:
-          name: Install interledgerjs/five-bells-ledger-api-tests
-          command: npm install github:interledgerjs/five-bells-ledger-api-tests
+          name: Build dependencies
+          command: apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
+      - run:
+          name: Access npm folder as root
+          command: cd $(npm root -g)/npm
+      - run:
+          name: Install node-gyp globally
+          command: npm install -g node-gyp
       - run:
           name: Update NPM install
           command: npm install
+      - run:
+          name: Delete build dependencies
+          command: apk del build-dependencies
       # - run:
       #     name: Update NPM install
       #     command: npm link sodium && npm link argon2 && npm install --production
@@ -154,11 +153,14 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: Install tap and tap-xunit
+          name: Install tape and tap-xunit
           command: npm install tape tap-xunit
       - run:
           name: Create dir for test results
           command: mkdir -p ./test/results
+      - run:
+          name: Install tapes
+          command: npm install -g tapes
       - run:
           name: Execute unit tests
           command: npm -s run test:xunit > ./test/results/tape.xml
@@ -180,7 +182,9 @@ jobs:
           command: *defaults_awsCliDependencies
       - checkout
       - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
+          keys: 
+            - dependency-cache-{{ checksum "package.json" }}
+            - dependency-cache-
       - run:
           name: Execute code coverage check
           command: npm -s run test:coverage-check
@@ -195,11 +199,10 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ];
             then
                 echo "Sending lcov.info to SonarQube..."
-                aws s3 cp coverage/lcov.info $AWS_S3_DIR_SONARQUBE/central-ledger/lcov.info
+                aws s3 cp coverage/lcov.info $AWS_S3_DIR_SONARQUBE/ml-api-adapter/lcov.info
             else
                 echo "Not a release (env CIRCLE_BRANCH != 'master'), skipping sending lcov.info to SonarQube."
             fi
-
   test-integration:
     machine: true
     <<: *defaults_working_directory
@@ -564,39 +567,39 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-    #   - test-coverage:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #         tags:
-    #           only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
-    #   - test-integration:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #         tags:
-    #           only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
-    #   - test-functional:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #         tags:
-    #           only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
+      - test-coverage:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-integration:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-functional:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
     #   - test-spec:
     #       context: org-global
     #       requires:
@@ -613,9 +616,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -638,9 +641,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -663,9 +666,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -688,9 +691,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:
@@ -713,9 +716,9 @@ workflows:
           requires:
             - setup
             - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
+            - test-coverage
+            - test-integration
+            - test-functional
             # - test-spec
           filters:
             tags:

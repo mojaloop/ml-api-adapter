@@ -22,49 +22,12 @@
 
 'use strict'
 
-const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
-const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
+const Glob = require('glob')
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
-      }
-    }
-  })
-
-  await server.register({
-    plugin: require('good'),
-    options: {
-      ops: {
-        interval: 10000
-      }
-    }
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-basic')
-  })
-
-  await server.register({
-    plugin: require('@now-ims/hapi-now-auth')
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling])
-}
-
-module.exports = {
-  registerPlugins
+exports.plugin = {
+  name: 'api routes',
+  register: function (server, options) {
+    Glob.sync('**/routes.js', {cwd: __dirname, ignore: 'routes.js'})
+      .forEach(x => server.route(require('./' + x)))
+  }
 }

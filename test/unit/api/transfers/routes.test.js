@@ -25,11 +25,20 @@
 const Test = require('tape')
 const Base = require('../../base')
 
-Test('return error if required field missing on prepare', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {} })
+Test('return error if required fields are missing on prepare', async function (assert) {
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' } })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]')
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on prepare', async function (assert) {
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: {} })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date is required]. child "fspiop-source" fails because [fspiop-source is required]')
   await server.stop()
   assert.end()
 })
@@ -37,38 +46,126 @@ Test('return error if required field missing on prepare', async function (assert
 Test('return error if transferId is not a guid', async function (assert) {
   let req = Base.buildRequest({ url: '/transfers',
     method: 'POST',
-    payload: { transferId: 'invalid transfer id'
-    } })
+    payload: { transferId: 'invalid transfer id' },
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+  })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid GUID]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]')
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid GUID]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
   await server.stop()
   assert.end()
 })
 
-Test('return error if amount is not a number', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { amount: { currency: 'USD', amount: 'invalid amount' } } })
+Test('return error if amount is not a valid amount', async function (assert) {
+  let req = Base.buildRequest({ url: '/transfers',
+    method: 'POST',
+    payload: {
+      transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'USD',
+        amount: 'invalid amount'
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+        [
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          },
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }
+        ]
+      }
+    },
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+  })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [child "amount" fails because [amount must be a number]]. child "ilpPacket" fails because [ilpPacket is required]')
+  Base.assertBadRequestError(assert, res, 'child "amount" fails because [child "amount" fails because [amount with value "invalid amount" fails to match the required pattern: /^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,3}[1-9])?$/]]')
   await server.stop()
   assert.end()
 })
 
-Test('return error if payeeFsp is not a number', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { payeeFsp: 'invalid payeeFsp' } })
+Test('return error if currency is not a valid ISO 4217 currency code', async function (assert) {
+  let req = Base.buildRequest({ url: '/transfers',
+    method: 'POST',
+    payload: {
+      transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'invalid currency',
+        amount: '123.45'
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+        [
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          },
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }
+        ]
+      }
+    },
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+  })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp must be a number]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]')
+  Base.assertBadRequestError(assert, res, 'child "amount" fails because [child "currency" fails because [currency needs to be a valid ISO 4217 currency code]]')
   await server.stop()
   assert.end()
 })
 
-Test('return error if payerFsp is not a number', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: { payerFsp: 'invalid payerFsp' } })
+Test('return error if condition is not valid according to the pattern /^[A-Za-z0-9-_]{43}$/', async function (assert) {
+  let req = Base.buildRequest({ url: '/transfers',
+    method: 'POST',
+    payload: {
+      transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'USD',
+        amount: '123.45'
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'invalid condition',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+        [
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          },
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }
+        ]
+      }
+    },
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+  })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp must be a number]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]')
+  Base.assertBadRequestError(assert, res, 'child "condition" fails because [condition with value "invalid condition" fails to match the required pattern: /^[A-Za-z0-9-_]{43}$/]')
   await server.stop()
   assert.end()
 })

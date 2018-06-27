@@ -28,10 +28,19 @@ const Boom = require('boom')
 
 exports.create = async function (request, h) {
   try {
-    Logger.info('create::start(%s)', JSON.stringify(request.payload))
-    const result = await TransferService.prepare(request.payload)
-    return h.response(result).code((result === true) ? 202 : 201)
+    Logger.debug('create::start(%s)', JSON.stringify(request.payload))
+    await TransferService.prepare(request.headers, request.payload)
+    return h.response().code(202)
   } catch (err) {
-    throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
+    throw Boom.boomify(err, {message: 'An error has occurred'})
+  }
+}
+exports.fulfilTransfer = async function (request, h) {
+  try {
+    Logger.debug('fulfilTransfer::start(%s)', JSON.stringify(request.payload))
+    await TransferService.fulfil(request.params.id, request.headers, request.payload)
+    return h.response().code(200)
+  } catch (err) {
+    throw Boom.boomify(err, {message: 'An error has occurred'})
   }
 }

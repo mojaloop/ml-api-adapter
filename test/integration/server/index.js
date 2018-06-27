@@ -22,49 +22,29 @@
 
 'use strict'
 
-const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
-const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
+const Hapi = require('hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
+const Boom = require('boom')
+const Routes = require('./routes')
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
+const createServer = (port, modules) => {
+  return (async () => {
+    const server = await new Hapi.Server({
+      port,
+      routes: {
+        validate: {
+          options: ErrorHandling.validateRoutes(),
+          failAction: async (request, h, err) => {
+            throw Boom.boomify(err)
+          }
+        }
       }
-    }
-  })
-
-  await server.register({
-    plugin: require('good'),
-    options: {
-      ops: {
-        interval: 10000
-      }
-    }
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-basic')
-  })
-
-  await server.register({
-    plugin: require('@now-ims/hapi-now-auth')
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling])
+    })
+    await server.register(modules)
+    await server.start()
+    console.log('Test Server started')
+    return server
+  })()
 }
 
-module.exports = {
-  registerPlugins
-}
+module.exports = createServer(4545, [Routes])
