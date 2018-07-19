@@ -53,7 +53,7 @@ Test('Producer', producerTest => {
   producerTest.test('produceMessage should', produceMessageTest => {
     produceMessageTest.test('should connect to kafka and publish a message', async test => {
       Producer.prototype.connect.returns(P.resolve(true))
-      test.ok(await Kafka.Producer.produceMessage({}, {}, {}))
+      test.ok(await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {}))
       test.end()
     })
 
@@ -74,26 +74,18 @@ Test('Producer', producerTest => {
 
   producerTest.test('disconnect should', disconnectTest => {
     disconnectTest.test('should disconnect from kafka', async test => {
+      Producer.prototype.connect.returns(P.resolve(true))
+      await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
       Producer.prototype.disconnect.returns(P.resolve(true))
-      test.ok(Kafka.Producer.disconnect())
+      test.ok(Kafka.Producer.disconnect('test'))
       test.end()
     })
 
-    disconnectTest.test('should throw error if failure to disconnect from kafka', async test => {
-      const error = new Error()
-      Producer.prototype.disconnect.returns(P.reject(error))
-
+    disconnectTest.test('should throw error if failure to disconnect from kafka if topic does not exist', async test => {
       try {
-        await Kafka.Producer.disconnect()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.end()
-      }
-    })
-
-    disconnectTest.test('should throw error if failure to disconnect from kafka', async test => {
-      try {
-        await Kafka.Producer.disconnect('test')
+        Producer.prototype.connect.returns(P.resolve(true))
+        await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
+        await Kafka.Producer.disconnect('')
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
