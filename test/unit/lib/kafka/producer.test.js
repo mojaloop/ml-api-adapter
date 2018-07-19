@@ -91,6 +91,15 @@ Test('Producer', producerTest => {
       }
     })
 
+    disconnectTest.test('should throw error if failure to disconnect from kafka', async test => {
+      try {
+        await Kafka.Producer.disconnect('test')
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
     disconnectTest.end()
   })
   producerTest.end()

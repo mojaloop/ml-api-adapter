@@ -83,11 +83,7 @@ const produceMessage = async (messageProtocol, topicConf, config) => {
  */
 const disconnect = async (topicName) => {
   try {
-    if (getProducer(topicName)) {
-      await getProducer(topicName).disconnect()
-    } else {
-      throw Error(`no producer found for topic ${topicName}`)
-    }
+    await getProducer(topicName).disconnect()
   } catch (e) {
     throw e
   }
