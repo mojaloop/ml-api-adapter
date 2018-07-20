@@ -11,23 +11,16 @@ const extractUrls = (request) => {
   }).forEach(route => {
     urls[route.settings.id] = `${Config.HOSTNAME}${route.path.replace(/\{/g, ':').replace(/\}/g, '')}`
   })
-  const host = Config.HOSTNAME.replace(/^https?:\/\//, '')
-  urls['websocket'] = `ws://${host}/websocket`
   return urls
 }
 
-exports.health = (request, reply) => {
-  reply({ status: 'OK' }).code(200)
+exports.health = function (request, h) {
+  return h.response({ status: 'OK' }).code(200)
 }
 
-exports.metadata = (request, reply) => {
-  reply({
-    currency_code: null,
-    currency_symbol: null,
-    ledger: Config.HOSTNAME,
-    urls: extractUrls(request),
-    precision: Config.AMOUNT.PRECISION,
-    scale: Config.AMOUNT.SCALE,
-    connectors: []
+exports.metadata = function (request, h) {
+  return h.response({
+    directory: Config.HOSTNAME,
+    urls: extractUrls(request)
   }).code(200)
 }

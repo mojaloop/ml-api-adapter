@@ -1,21 +1,33 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+ --------------
+ ******/
+
 'use strict'
 
-const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../lib/config')
 const Routes = require('./routes')
-const Auth = require('./auth')
-const Sockets = require('./sockets')
-const Worker = require('./worker')
-const Account = require('../domain/account')
-// const Publish = require('../domain/transfer/kafka/publish')
-const Kafka = require('../domain/transfer/kafka/registerKafka')
-
 const Setup = require('../shared/setup')
 
-module.exports = Setup.initialize({ service: 'api', port: Config.PORT, modules: [Auth, Routes, Sockets, Worker, Kafka], loadEventric: false, runMigrations: true })
-  .then(server => {
-    return Account.createLedgerAccount(Config.LEDGER_ACCOUNT_NAME, Config.LEDGER_ACCOUNT_PASSWORD, Config.LEDGER_ACCOUNT_EMAIL).then(() => server)
-  })
-  .then(server => server.start().then(() => {
-    Logger.info('Server running at: %s', server.info.uri)
-  }))
+module.exports = Setup.initialize({
+  service: 'api',
+  port: Config.PORT,
+  modules: [Routes]
+})
