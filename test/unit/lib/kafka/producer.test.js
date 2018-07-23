@@ -81,6 +81,39 @@ Test('Producer', producerTest => {
       test.end()
     })
 
+    disconnectTest.test('disconnect specific topic correctly', async test => {
+      Producer.prototype.connect.returns(P.resolve(true))
+      Producer.prototype.disconnect.returns(P.resolve(true))
+      try {
+        var topicName = 'someTopic'
+        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        await Kafka.Producer.disconnect(topicName)
+        test.pass('Disconnect specific topic successfully')
+        test.end()
+      } catch (e) {
+        test.fail('Error thrown')
+        test.end()
+      }
+    })
+
+    disconnectTest.test('disconnect all topics correctly', async test => {
+      Producer.prototype.connect.returns(P.resolve(true))
+      Producer.prototype.disconnect.returns(P.resolve(true))
+      try {
+        var topicName = 'someTopic1'
+        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        await Kafka.Producer.disconnect(topicName)
+        topicName = 'someTopic2'
+        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        await Kafka.Producer.disconnect()
+        test.pass('Disconnected all topics successfully')
+        test.end()
+      } catch (e) {
+        test.fail('Error thrown')
+        test.end()
+      }
+    })
+
     disconnectTest.test('should throw error if failure to disconnect from kafka if topic does not exist', async test => {
       try {
         Producer.prototype.connect.returns(P.resolve(true))
@@ -88,6 +121,18 @@ Test('Producer', producerTest => {
         await Kafka.Producer.disconnect('')
       } catch (e) {
         test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    disconnectTest.test('throw error when a non-string value is passed into disconnect', async (test) => {
+      try {
+        var badTopicName = { }
+        await Kafka.Producer.disconnect(badTopicName)
+        test.fail('Error not thrown')
+        test.end()
+      } catch (e) {
+        test.pass('Error Thrown')
         test.end()
       }
     })
