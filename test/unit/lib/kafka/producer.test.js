@@ -28,6 +28,7 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Kafka = require(`${src}/lib/kafka`)
+const rewire = require('rewire')
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
 
 Test('Producer', producerTest => {
@@ -72,8 +73,29 @@ Test('Producer', producerTest => {
     produceMessageTest.end()
   })
 
+  producerTest.test('getProducer should', getProducerTest => {
+    getProducerTest.test('fetch a specific Producers', async test => {
+      Producer.prototype.connect.returns(P.resolve(true))
+      await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
+      test.ok(Kafka.Producer.getProducer('test'))
+      test.end()
+    })
+
+    getProducerTest.test('throw an exception for a specific Producers not found', async test => {
+      try {
+        test.ok(Kafka.Producer.getProducer('undefined'))
+        test.fail('Error not thrown!')
+      } catch (e) {
+        test.ok(e.toString() === 'Error: No producer found for topic undefined')
+      }
+      test.end()
+    })
+
+    getProducerTest.end()
+  })
+
   producerTest.test('disconnect should', disconnectTest => {
-    disconnectTest.test('should disconnect from kafka', async test => {
+    disconnectTest.test('disconnect from kafka', async test => {
       Producer.prototype.connect.returns(P.resolve(true))
       await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
       Producer.prototype.disconnect.returns(P.resolve(true))
@@ -81,13 +103,87 @@ Test('Producer', producerTest => {
       test.end()
     })
 
-    disconnectTest.test('should throw error if failure to disconnect from kafka if topic does not exist', async test => {
+    disconnectTest.test('disconnect specific topic correctly', async test => {
+      Producer.prototype.connect.returns(P.resolve(true))
+      Producer.prototype.disconnect.returns(P.resolve(true))
+      try {
+        var topicName = 'someTopic'
+        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        await Kafka.Producer.disconnect(topicName)
+        test.pass('Disconnect specific topic successfully')
+        test.end()
+      } catch (e) {
+        test.fail('Error thrown')
+        test.end()
+      }
+    })
+
+    disconnectTest.test('disconnect all topics correctly', async test => {
+      Producer.prototype.connect.returns(P.resolve(true))
+      Producer.prototype.disconnect.returns(P.resolve(true))
+      try {
+        var topicName = 'someTopic1'
+        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        await Kafka.Producer.disconnect(topicName)
+        topicName = 'someTopic2'
+        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        await Kafka.Producer.disconnect()
+        test.pass('Disconnected all topics successfully')
+        test.end()
+      } catch (e) {
+        test.fail('Error thrown')
+        test.end()
+      }
+    })
+
+    disconnectTest.test('throw error if failure to disconnect from kafka when disconnecting all Producers', async test => {
+      try {
+        // setup stubs for getProducer method
+        var getProducerStub = sandbox.stub()
+        getProducerStub.returns(new Producer({}))
+        getProducerStub.withArgs('test2').throws(`No producer found for topic test2`)
+
+        // lets rewire the producer import
+        var KafkaProducer = rewire(`${src}/lib/kafka/producer`)
+        // lets override the getProducer method within the import
+        KafkaProducer.__set__('getProducer', getProducerStub)
+
+        Producer.prototype.connect.returns(P.resolve(true))
+
+        await KafkaProducer.produceMessage({}, {topicName: 'test1'}, {})
+        await KafkaProducer.produceMessage({}, {topicName: 'test2'}, {})
+
+        await KafkaProducer.disconnect()
+
+        test.fail()
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.ok(e.toString() === 'Error: The following Producers could not be disconnected: [{"topic":"test2","error":"No producer found for topic test2"}]')
+        test.end()
+      }
+      getProducerStub.restore()
+    })
+
+    disconnectTest.test('throw error if failure to disconnect from kafka if topic does not exist', async test => {
       try {
         Producer.prototype.connect.returns(P.resolve(true))
         await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
-        await Kafka.Producer.disconnect('')
+        await Kafka.Producer.disconnect('undefined')
       } catch (e) {
         test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    disconnectTest.test('throw error when a non-string value is passed into disconnect', async (test) => {
+      try {
+        var badTopicName = { }
+        await Kafka.Producer.disconnect(badTopicName)
+        test.fail('Error not thrown')
+        test.end()
+      } catch (e) {
+        test.pass('Error Thrown')
         test.end()
       }
     })
