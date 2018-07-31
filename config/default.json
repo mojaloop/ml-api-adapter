@@ -49,7 +49,7 @@
               "consumeTimeout": 1000
             },
             "rdkafkaConf": {
-              "client.id": "topic-notification-event",
+              "client.id": "ml-con-notification-event",
               "group.id": "kafka-ml-api-adapter",
               "metadata.broker.list": "localhost:9092",
               "socket.blocking.max.ms": 1,
@@ -62,6 +62,9 @@
               "auto.commit.interval.ms": 200,
               "socket.keepalive.enable": true,
               "socket.max.fails": 1
+            },
+            "topicConf": {
+              "auto.offset.reset": "earliest"
             }
           }
         }
@@ -76,7 +79,7 @@
             },
             "rdkafkaConf": {
               "metadata.broker.list": "localhost:9092",
-              "client.id": "ml-transfer-prepare",
+              "client.id": "ml-prod-transfer-prepare",
               "event_cb": true,
               "compression.codec": "none",
               "retry.backoff.ms": 100,
@@ -98,7 +101,7 @@
             },
             "rdkafkaConf": {
               "metadata.broker.list": "localhost:9092",
-              "client.id": "ml-transfer-fulfil",
+              "client.id": "ml-prod-transfer-fulfil",
               "event_cb": true,
               "compression.codec": "none",
               "retry.backoff.ms": 100,
