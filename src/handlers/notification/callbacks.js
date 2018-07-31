@@ -38,7 +38,8 @@ const sendCallback = async (url, method, headers, message) => {
     return request(options, (error, response, body) => {
       if (error) {
         Logger.error(`error while callback - ${error}`)
-        throw error
+        // throw error // this is not correct in the context of a Promise.
+        return reject(error)
       }
       return resolve(response.statusCode)
     })

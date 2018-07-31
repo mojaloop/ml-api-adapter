@@ -161,6 +161,8 @@ Test('Notification Service tests', notificationTest => {
 
       try {
         await Notification.processMessage(msg)
+        test.fail('Was expecting an error when receiving trying post the transfer to the receiver')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -199,6 +201,8 @@ Test('Notification Service tests', notificationTest => {
 
       try {
         await Notification.processMessage(msg)
+        test.fail('Was expecting an error when receiving trying to send an error notification to sender')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -274,6 +278,8 @@ Test('Notification Service tests', notificationTest => {
 
       try {
         await Notification.processMessage(msg)
+        test.fail('Was expecting an error when receiving trying to send an error notification to sender')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -304,7 +310,7 @@ Test('Notification Service tests', notificationTest => {
       }
       try {
         await Notification.processMessage(msg)
-        test.fail('No error thrown')
+        test.fail('Was expecting an error when receiving an invalid action from Kafka')
         test.end()
       } catch (e) {
         test.ok(e instanceof Error)
@@ -317,6 +323,8 @@ Test('Notification Service tests', notificationTest => {
 
       try {
         await Notification.processMessage(msg)
+        test.fail('Was expecting an error when receiving an invalid message from Kafka')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.equal(e.message, 'Invalid message received from kafka')
@@ -337,6 +345,8 @@ Test('Notification Service tests', notificationTest => {
       Consumer.prototype.connect.returns(P.reject(error))
       try {
         await Notification.startConsumer()
+        test.fail('Was expecting an error when connecting to Kafka')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -393,9 +403,11 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        await Notification.consumeMessage(null, [msg])
+        var result = await Notification.consumeMessage(null, [msg])
+        test.ok(result instanceof Error)
+        test.end()
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.fail('Should not have caught an error here since it should have been dealt with')
         test.end()
       }
     })
@@ -422,7 +434,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.consumeMessage(null, msg))
+      var result = await Notification.consumeMessage(null, msg)
+      test.ok(result === true)
       test.end()
     })
 
@@ -435,6 +448,8 @@ Test('Notification Service tests', notificationTest => {
 
       try {
         await Notification.consumeMessage(error, message)
+        test.fail('ehe')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
