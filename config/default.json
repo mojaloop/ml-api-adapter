@@ -52,7 +52,16 @@
               "client.id": "topic-notification-event",
               "group.id": "kafka-ml-api-adapter",
               "metadata.broker.list": "localhost:9092",
-              "enable.auto.commit": false
+              "socket.blocking.max.ms": 1,
+              "fetch.wait.max.ms": 1,
+              "fetch.error.backoff.ms": 1,
+              "queue.buffering.max.ms": 1,
+              "broker.version.fallback": "0.10.1.0",
+              "api.version.request": false,
+              "enable.auto.commit": false,
+              "auto.commit.interval.ms": 200,
+              "socket.keepalive.enable": true,
+              "socket.max.fails": 1
             }
           }
         }
@@ -67,13 +76,14 @@
             },
             "rdkafkaConf": {
               "metadata.broker.list": "localhost:9092",
-              "client.id": "default-client",
+              "client.id": "ml-transfer-prepare",
               "event_cb": true,
               "compression.codec": "none",
               "retry.backoff.ms": 100,
               "message.send.max.retries": 2,
               "socket.keepalive.enable": true,
-              "queue.buffering.max.messages": 10,
+              "socket.max.fails": 0,
+              "queue.buffering.max.messages": 10000,
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
@@ -88,13 +98,14 @@
             },
             "rdkafkaConf": {
               "metadata.broker.list": "localhost:9092",
-              "client.id": "default-client",
+              "client.id": "ml-transfer-fulfil",
               "event_cb": true,
               "compression.codec": "none",
               "retry.backoff.ms": 100,
               "message.send.max.retries": 2,
               "socket.keepalive.enable": true,
-              "queue.buffering.max.messages": 10,
+              "socket.max.fails": 0,
+              "queue.buffering.max.messages": 10000,
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
