@@ -1,9 +1,9 @@
 'use strict'
 
 const Test = require('tapes')(require('tape'))
-const Config = require('../../../../src/lib/config')
+// const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/handlers/api/routes')
-const apiTags = ['api']
+// const apiTags = ['api']
 
 function createRequest (routes) {
   let value = routes || []
