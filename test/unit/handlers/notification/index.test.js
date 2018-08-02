@@ -36,13 +36,13 @@ Test('Notification Service tests', notificationTest => {
   let sandbox
 
   notificationTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
+    sandbox = Sinon.createSandbox()
     sandbox.stub(Consumer.prototype, 'constructor')
 
     sandbox.stub(Consumer.prototype, 'connect').returns(P.resolve(true))
-    // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0) //.returns(P.resolve(true))
-    sandbox.stub(Consumer.prototype, 'consume', () => { return P.resolve(true) }) // .callsArgAsync(0) //.returns(P.resolve(true))
-    sandbox.stub(Consumer.prototype, 'commitMessageSync', () => { return P.resolve(true) }) // .returns(P.resolve(true))
+    // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
+    sandbox.stub(Consumer.prototype, 'consume').returns(P.resolve(true)) // .callsArgAsync(0)
+    sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(P.resolve(true))
 
     sandbox.stub(Logger)
     sandbox.stub(Callback, 'sendCallback').returns(P.resolve(true))
@@ -340,6 +340,13 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
+    startConsumerTest.test('start the consumer and consumer messages with auto-commit enabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = undefined
+      test.ok(await Notification.startConsumer())
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
     startConsumerTest.test('throw error on error connecting to kafka', async test => {
       const error = new Error()
       Consumer.prototype.connect.returns(P.reject(error))
@@ -384,6 +391,66 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
+    consumeMessageTest.test('process the message with auto-commit enabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      let result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
+    consumeMessageTest.test('process the message with auto-commit disabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      let result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
     consumeMessageTest.test('throw error is there is any error processing the message', async test => {
       const msg = {
         value: {
@@ -410,6 +477,37 @@ Test('Notification Service tests', notificationTest => {
         test.fail('Should not have caught an error here since it should have been dealt with')
         test.end()
       }
+    })
+
+    consumeMessageTest.test('throw error is there is any error processing the message with auto-commit enabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      try {
+        test.ok(await Notification.startConsumer())
+        var result = await Notification.consumeMessage(null, [msg])
+        test.ok(result instanceof Error)
+        test.end()
+      } catch (e) {
+        test.fail('Should not have caught an error here since it should have been dealt with')
+        test.end()
+      }
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
 
     consumeMessageTest.test('convert a single message into an array', async test => {
@@ -455,6 +553,7 @@ Test('Notification Service tests', notificationTest => {
         test.end()
       }
     })
+
     consumeMessageTest.end()
   })
   notificationTest.end()

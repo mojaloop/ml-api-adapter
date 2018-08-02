@@ -33,7 +33,7 @@ Test('Callback Service tests', callbacksTest => {
   let sandbox, callback, request
 
   callbacksTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
+    sandbox = Sinon.createSandbox()
     request = sandbox.stub()
     sandbox.stub(Logger)
     callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request': request })

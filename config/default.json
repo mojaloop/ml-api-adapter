@@ -19,7 +19,12 @@
     "PRECISION": 10,
     "SCALE": 2
   },
-
+  "HANDLERS": {
+    "DISABLED": false,
+    "API": {
+      "DISABLED": false
+    }
+  },
   "KAFKA": {
     "TOPIC_TEMPLATES": {
       "PARTICIPANT_TOPIC_TEMPLATE": {
@@ -57,7 +62,7 @@
               "fetch.error.backoff.ms": 1,
               "queue.buffering.max.ms": 1,
               "broker.version.fallback": "0.10.1.0",
-              "api.version.request": false,
+              "api.version.request": true,
               "enable.auto.commit": false,
               "auto.commit.interval.ms": 200,
               "socket.keepalive.enable": true,

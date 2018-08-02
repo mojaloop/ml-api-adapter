@@ -38,7 +38,7 @@ Test('Transfer Service tests', serviceTest => {
   let sandbox
 
   serviceTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
+    sandbox = Sinon.createSandbox()
     sandbox.stub(Kafka.Producer, 'produceMessage')
     sandbox.stub(Kafka.Producer, 'disconnect').returns(P.resolve(true))
     t.end()

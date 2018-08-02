@@ -3,8 +3,11 @@
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
  The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+
  http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
  Contributors
  --------------
  This is the official list of the Mojaloop project contributors for this file.
@@ -15,59 +18,34 @@
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
+
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- --------------
- ******/
 
+ * Lazola Lucas <lazola.lucas@modusbox.com>
+ * Rajiv Mothilal <rajiv.mothilal@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
+
+ --------------
+
+ ******/
 'use strict'
 
-const Test = require('tapes')(require('tape'))
-const Sinon = require('sinon')
-const P = require('bluebird')
+/**
+ * @module src/handlers
+ */
 
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Config = require('../../../src/lib/config')
-const Routes = require('../../../src/api/routes')
-const Setup = require('../../../src/shared/setup')
+/**
+ * @function Register Handler Routes HAPI
+ *
+ * @async
+ * @description Registers registers plugins on HAPI server. This retrieves all routes to be exposed from the routes.js file
+ * @returns {Promise} - Returns a promise: resolve if successful, or rejection if failed
+ */
 
-Test('Api index', indexTest => {
-  let sandbox
-
-  indexTest.beforeEach(test => {
-    sandbox = Sinon.createSandbox()
-    sandbox.stub(Setup)
-    sandbox.stub(Logger)
-    test.end()
-  })
-
-  indexTest.afterEach(test => {
-    sandbox.restore()
-    test.end()
-  })
-
-  indexTest.test('export should', exportTest => {
-    exportTest.test('initialize server', async function (test) {
-      const server = {
-        start: sandbox.stub(),
-        info: {
-          uri: ''
-        }
-      }
-      server.start.returns(P.resolve({}))
-      Setup.initialize.returns(P.resolve(server))
-
-      await require('../../../src/api/index')
-      test.ok(Setup.initialize.calledWith({
-        service: 'api',
-        port: Config.PORT,
-        modules: [Routes],
-        runHandlers: true
-      }))
-      test.end()
-    })
-    exportTest.end()
-  })
-
-  indexTest.end()
-})
+exports.plugin = {
+  name: 'handler routes',
+  register: function (server, options) {
+    server.route(require('./routes'))
+  }
+}
