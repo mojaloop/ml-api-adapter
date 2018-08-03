@@ -35,7 +35,7 @@ Test('Api index', indexTest => {
   let sandbox
 
   indexTest.beforeEach(test => {
-    sandbox = Sinon.sandbox.create()
+    sandbox = Sinon.createSandbox()
     sandbox.stub(Setup)
     sandbox.stub(Logger)
     test.end()
@@ -61,7 +61,8 @@ Test('Api index', indexTest => {
       test.ok(Setup.initialize.calledWith({
         service: 'api',
         port: Config.PORT,
-        modules: [Routes]
+        modules: [Routes],
+        runHandlers: true
       }))
       test.end()
     })

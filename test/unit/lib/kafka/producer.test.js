@@ -35,7 +35,7 @@ Test('Producer', producerTest => {
   let sandbox
 
   producerTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
+    sandbox = Sinon.createSandbox()
     sandbox.stub(Producer.prototype, 'constructor')
     sandbox.stub(Producer.prototype, 'connect') // .returns(P.resolve(true))
     sandbox.stub(Producer.prototype, 'disconnect') // .returns(P.resolve(true))

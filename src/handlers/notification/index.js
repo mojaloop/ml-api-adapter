@@ -29,6 +29,7 @@ const Callback = require('./callbacks.js')
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
 let notificationConsumer = {}
+let autoCommitEnabled = true
 
 const startConsumer = async () => {
   Logger.info('Notification::startConsumer')
@@ -38,6 +39,9 @@ const startConsumer = async () => {
     let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
+    if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
+      autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
+    }
     notificationConsumer = new Consumer([topicName], config)
     Logger.info('Notification::startConsumer::Consumer: new')
 
@@ -66,10 +70,15 @@ const consumeMessage = async (error, message) => {
       Logger.info('Notification::consumeMessage::processMessage')
       let res = await processMessage(msg).catch(err => {
         Logger.error(`Error processing the kafka message - ${err}`)
-        notificationConsumer.commitMessageSync(msg)
-        return reject(err)
+        if (!autoCommitEnabled) {
+          notificationConsumer.commitMessageSync(msg)
+        }
+        // return reject(err) // This is not handled correctly as we need to deal with the error here
+        return resolve(err) // We return 'resolved' since we have dealt with the error here
       })
-      notificationConsumer.commitMessageSync(msg)
+      if (!autoCommitEnabled) {
+        notificationConsumer.commitMessageSync(msg)
+      }
       return resolve(res)
     }
   })
@@ -98,9 +107,11 @@ const processMessage = async (msg) => {
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
+      // @TODO: Handle error for invalid action received failure
       throw err
     }
   } catch (e) {
+    // @TODO: Handle error for callback failure
     throw e
   }
 }

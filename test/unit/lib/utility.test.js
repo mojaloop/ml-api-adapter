@@ -34,7 +34,7 @@ Test('utility', utilityTest => {
   let sandbox
 
   utilityTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
+    sandbox = Sinon.createSandbox()
     sandbox.stub(Mustache, 'render')
     sandbox.stub(Logger)
 
