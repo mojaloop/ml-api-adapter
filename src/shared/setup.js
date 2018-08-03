@@ -79,8 +79,7 @@ const createHandlers = async (handlers) => {
     register: {},
     ext: {},
     start: new Date(),
-    info: {
-    },
+    info: {},
     handlers: handlers
   }
 
