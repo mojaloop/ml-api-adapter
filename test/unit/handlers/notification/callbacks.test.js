@@ -29,7 +29,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const proxyquire = require('proxyquire')
 const Config = require(`${src}/lib/config.js`)
 
-Test('Callback Service tests', callbacksTest => {
+Test('Callback Service tests', async callbacksTest => {
   let sandbox, callback, request
 
   callbacksTest.beforeEach(t => {
@@ -68,12 +68,15 @@ Test('Callback Service tests', callbacksTest => {
       const url = Config.DFSP_URLS['dfsp2'].transfers
       const method = 'post'
       const headers = {}
+      const agentOptions = {
+        rejectUnauthorized: false
+      }
 
       const expected = 200
 
       const body = JSON.stringify(message)
 
-      request.withArgs({ url, method, body }).yields(null, { statusCode: 200 }, null)
+      request.withArgs({ url, method, body, agentOptions }).yields(null, { statusCode: 200 }, null)
 
       let result = await callback.sendCallback(url, method, headers, message)
       test.equal(result, expected)
@@ -104,8 +107,11 @@ Test('Callback Service tests', callbacksTest => {
 
       const body = JSON.stringify(message)
       const error = new Error()
+      const agentOptions = {
+        rejectUnauthorized: false
+      }
 
-      request.withArgs({ url, method, body }).yields(error, null, null)
+      request.withArgs({ url, method, body, agentOptions }).yields(error, null, null)
 
       try {
         await callback.sendCallback(url, method, headers, message)

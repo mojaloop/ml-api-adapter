@@ -31,7 +31,10 @@ const sendCallback = async (url, method, headers, message) => {
     url,
     method,
     // headers,
-    body: JSON.stringify(message)
+    body: JSON.stringify(message),
+    agentOptions: {
+      rejectUnauthorized: false
+    }
   }
 
   return new Promise((resolve, reject) => {
