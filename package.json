@@ -108,7 +108,7 @@
     "proxyquire": "1.7.10",
     "request": "^2.85.0",
     "rewire": "^4.0.1",
-    "sinon": "^5.0.10",
+    "sinon": "^6.1.5",
     "standard": "8.5.0",
     "supertest": "2.0.1",
     "tap-xunit": "1.4.0",
