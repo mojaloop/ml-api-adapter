@@ -76,11 +76,16 @@ Test('Callback Service tests', async callbacksTest => {
 
       const body = JSON.stringify(message)
 
-      request.withArgs({ url, method, body, agentOptions }).yields(null, { statusCode: 200 }, null)
+      request.withArgs({ url, method, body, headers, agentOptions }).yields(null, { statusCode: 200 }, null)
 
-      let result = await callback.sendCallback(url, method, headers, message)
-      test.equal(result, expected)
-      test.end()
+      try {
+        let result = await callback.sendCallback(url, method, headers, message)
+        test.equal(result, expected)
+        test.end()
+      } catch (e) {
+        test.fail('Exception not expected!')
+        test.end()
+      }
     })
 
     sendCallbackTest.test('throw the error on error while calling the endpoint', async test => {
@@ -111,7 +116,7 @@ Test('Callback Service tests', async callbacksTest => {
         rejectUnauthorized: false
       }
 
-      request.withArgs({ url, method, body, agentOptions }).yields(error, null, null)
+      request.withArgs({ url, method, body, headers, agentOptions }).yields(error, null, null)
 
       try {
         await callback.sendCallback(url, method, headers, message)
