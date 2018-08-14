@@ -76,7 +76,7 @@ Test('Callback Service tests', callbacksTest => {
 
       const body = JSON.stringify(message)
 
-      request.withArgs({ url, method, body, agentOptions }).yields(null, { statusCode: 200 }, null)
+      request.withArgs({ url, method, body, headers, agentOptions }).yields(null, { statusCode: 200 }, null)
 
       let result = await callback.sendCallback(url, method, headers, message)
       test.equal(result, expected)
@@ -111,7 +111,7 @@ Test('Callback Service tests', callbacksTest => {
       const body = JSON.stringify(message)
       const error = new Error()
 
-      request.withArgs({ url, method, body, agentOptions }).yields(error, null, null)
+      request.withArgs({ url, method, body, headers, agentOptions }).yields(error, null, null)
 
       try {
         await callback.sendCallback(url, method, headers, message)
