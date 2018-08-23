@@ -26,11 +26,22 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const request = require('request')
 
 const sendCallback = async (url, method, headers, message) => {
-  delete headers['Content-Length']
+  // Normalized headers
+  var normalizedHeaders = {}
+  for (var headerKey in headers) {
+    var headerValue = headers[headerKey]
+    if (typeof headerValue === 'string' || headerValue instanceof String) {
+      normalizedHeaders[headerKey] = headerValue.toLowerCase()
+    }
+    normalizedHeaders[headerKey] = headerValue
+  }
+  // Remove any headers that must not be included
+  delete normalizedHeaders['content-length']
+
   const options = {
     url,
     method,
-    headers,
+    headers: normalizedHeaders,
     body: JSON.stringify(message),
     agentOptions: {
       rejectUnauthorized: false
