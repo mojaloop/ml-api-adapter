@@ -355,8 +355,9 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = `${Config.DFSP_URLS[msg.value.from].transfers}/${msg.value.id}`
-      const toUrl = `${Config.DFSP_URLS[msg.value.to].transfers}/${msg.value.id}`
+
+      const fromUrl = Mustache.render(Config.DFSP_URLS[msg.value.from].transfers.put, { transferId: msg.value.id })
+      const toUrl = Mustache.render(Config.DFSP_URLS[msg.value.to].transfers.put, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -395,8 +396,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = `${Config.DFSP_URLS[msg.value.from].transfers}/${msg.value.id}`
-      const toUrl = `${Config.DFSP_URLS[msg.value.to].transfers}/${msg.value.id}`
+      const fromUrl = Mustache.render(Config.DFSP_URLS[msg.value.from].transfers.put, { transferId: msg.value.id })
+      const toUrl = Mustache.render(Config.DFSP_URLS[msg.value.to].transfers.put, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -435,7 +436,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = `${Config.DFSP_URLS[msg.value.from].transfers}/${msg.value.id}`
+      const fromUrl = Mustache.render(Config.DFSP_URLS[msg.value.from].transfers.put, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
