@@ -2,11 +2,8 @@
 
 const src = '../../../../src'
 const Test = require('tape')
-const CallbackService = require(`${src}/handlers/notification/callbacks.js`)
+const CallbackService = require(`${src}/handlers/notification/callbacks`)
 let url = process.env.ENDPOINT_URL
-console.log(process.env)
-console.log('URL===========', url)
-console.log('URL111===========', url)
 
 Test('callback service', function (modelTest) {
   modelTest.test('prepare should', function (sendCallbackTest) {

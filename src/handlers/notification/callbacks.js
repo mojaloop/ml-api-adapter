@@ -25,29 +25,46 @@
 const Logger = require('@mojaloop/central-services-shared').Logger
 const request = require('request')
 
-const sendCallback = async (url, method, headers, message) => {
-  delete headers['Content-Length']
-  const options = {
+const sendCallback = async (url, method, headers, message, cid, fsp) => {
+  // Normalized headers
+  var normalizedHeaders = {}
+  for (var headerKey in headers) {
+    var headerValue = headers[headerKey]
+    if (typeof headerValue === 'string' || headerValue instanceof String) {
+      normalizedHeaders[headerKey] = headerValue.toLowerCase()
+    }
+    normalizedHeaders[headerKey] = headerValue
+  }
+  // Remove any headers that must not be included
+  delete normalizedHeaders['content-length']
+
+  const requestOptions = {
     url,
     method,
-    headers,
+    headers: normalizedHeaders,
     body: JSON.stringify(message),
     agentOptions: {
       rejectUnauthorized: false
     }
   }
 
+  Logger.info(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback URL: ${url}`)
+  Logger.debug(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback requestOptions: ${JSON.stringify(requestOptions)}`)
+
   return new Promise((resolve, reject) => {
-    return request(options, (error, response, body) => {
+    return request(requestOptions, (error, response, body) => {
       if (error) {
-        Logger.error(`error while callback - ${error}`)
         // throw error // this is not correct in the context of a Promise.
+        Logger.error(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
         return reject(error)
       }
+      Logger.info(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback successful with status code: ${response.statusCode}`)
+      Logger.debug(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback successful with response: ${JSON.stringify(response)}`)
       return resolve(response.statusCode)
     })
   })
 }
+
 module.exports = {
   sendCallback
 }
