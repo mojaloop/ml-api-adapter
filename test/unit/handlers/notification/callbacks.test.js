@@ -106,7 +106,11 @@ Test('Callback Service tests', callbacksTest => {
       }
       const url = Config.DFSP_URLS['dfsp2'].transfers
       const method = 'post'
-      const headers = {}
+      const headers = {
+        'Content-Length': 1234,
+        'Random': 'string'
+      }
+
       const agentOptions = {
         rejectUnauthorized: false
       }
