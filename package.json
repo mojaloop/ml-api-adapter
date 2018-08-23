@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "3.3.1-snapshot",
+  "version": "3.4.1-snapshot",
   "description": "Convert from ML API to/from internal Central Services messaging format.",
   "license": "Apache-2.0",
   "private": true,

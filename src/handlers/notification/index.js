@@ -26,6 +26,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../../lib/config')
 const Utility = require('../../lib/utility')
 const Callback = require('./callbacks.js')
+const Mustache = require('mustache')
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
 let notificationConsumer = {}
@@ -96,14 +97,19 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
-      return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload)
+      let callbackURL = Mustache.render(Config.DFSP_URLS[to].transfers.post, { transferId: id })
+      return await Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
-      return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
+      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
+      return await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
-      await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload)
-      return await Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload)
+      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
+      await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
+      return await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
-      return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
+      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
+      return await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
