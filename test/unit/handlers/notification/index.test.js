@@ -27,6 +27,7 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Notification = require('../../../../src/handlers/notification')
 const Callback = require('../../../../src/handlers/notification/callbacks.js')
+const Mustache = require('mustache')
 const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const P = require('bluebird')
@@ -77,7 +78,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Config.DFSP_URLS['dfsp2'].transfers
+      const url = Mustache.render(Config.DFSP_URLS['dfsp2'].transfers.post, { transferId: msg.value.id })
       const method = 'post'
       const headers = {}
       const message = {}
@@ -114,7 +115,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Config.DFSP_URLS['dfsp1'].error
+      const url = Mustache.render(Config.DFSP_URLS['dfsp1'].transfers.error, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -151,7 +152,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Config.DFSP_URLS['dfsp2'].transfers
+      const url = Mustache.render(Config.DFSP_URLS['dfsp2'].transfers.post, { transferId: msg.value.id })
       const method = 'post'
       const headers = {}
       const message = {}
@@ -191,7 +192,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Config.DFSP_URLS['dfsp1'].error
+      const url = Mustache.render(Config.DFSP_URLS['dfsp1'].transfers.error, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -230,8 +231,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const urlPayer = 'http://localhost:4545/dfsp1/transfers/b51ec534-ee48-4575-b6a9-ead2955b8098'
-      const urlPayee = 'http://localhost:4545/dfsp2/transfers/b51ec534-ee48-4575-b6a9-ead2955b8098'
+      const urlPayer = Mustache.render(Config.DFSP_URLS['dfsp1'].transfers.put, { transferId: msg.value.id })
+      const urlPayee = Mustache.render(Config.DFSP_URLS['dfsp2'].transfers.put, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -268,7 +269,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Config.DFSP_URLS['dfsp1'].error
+      const url = Mustache.render(Config.DFSP_URLS['dfsp1'].transfers.error, { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
