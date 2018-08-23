@@ -110,6 +110,19 @@ const processMessage = async (msg) => {
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
       return await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+    } else if (action.toLowerCase() === 'reject' && status.toLowerCase() === 'success') {
+      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
+      await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
+      return await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+    } else if (action.toLowerCase() === 'abort' && status.toLowerCase() === 'success') {
+      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
+      await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
+      return await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+    } else if (action.toLowerCase() === 'timeout-received' && status.toLowerCase() === 'success') {
+      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
