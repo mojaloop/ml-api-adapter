@@ -96,14 +96,22 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
-      return await Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload)
+      return Callback.sendCallback(Config.DFSP_URLS[to].transfers, 'post', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
-      return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
+      return Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
-      await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload)
-      return await Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload)
+      await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload, id, from)
+      return Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
-      return await Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload)
+      return Callback.sendCallback(Config.DFSP_URLS[from].error, 'put', content.headers, content.payload, id, from)
+    } else if (action.toLowerCase() === 'reject' && status.toLowerCase() === 'success') {
+      await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload, id, from)
+      return Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload, id, to)
+    } else if (action.toLowerCase() === 'abort' && status.toLowerCase() === 'success') {
+      await Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload, id, from)
+      return Callback.sendCallback(`${Config.DFSP_URLS[to].transfers}/${id}`, 'put', content.headers, content.payload, id, to)
+    } else if (action.toLowerCase() === 'timeout-received' && status.toLowerCase() === 'success') {
+      return Callback.sendCallback(`${Config.DFSP_URLS[from].transfers}/${id}`, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
