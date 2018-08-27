@@ -26,7 +26,7 @@ const tags = ['test', 'transfers']
 
 module.exports = [{
   method: 'GET',
-  path: '/notification/{fsp}/{transferId}',
+  path: '/notification/{fsp}/{operation}/{transferId}',
   handler: Handler.getNotification,
   options: {
     id: 'test-getNotification',

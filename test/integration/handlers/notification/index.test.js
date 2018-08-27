@@ -11,12 +11,12 @@ const Utility = require(`${src}/lib/utility`)
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 
-let getNotificationUrl = process.env.ENDPOINT_URL || 'http://localhost:4545/notification'
-console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-console.log(getNotificationUrl)
-console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-console.log(process.env.ENDPOINT_URL)
-console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
+const timeoutAttempts = 10
+const callbackWaitSeconds = 2
+
+const getNotificationUrl = process.env.ENDPOINT_URL
+
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
     notificationTest.test('consume a PREPARE message and send POST callback', async test => {
@@ -64,8 +64,15 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const response = await getNotifications(messageProtocol.to, transferId)
+
+      const operation = 'post'
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
       test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payee')
       test.end()
     })
@@ -113,8 +120,15 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const response = await getNotifications(messageProtocol.from, transferId)
+
+      const operation = 'error'
+      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = await getNotifications(messageProtocol.from, operation, transferId)
+        currentAttempts++
+      }
       test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Error notification sent successfully to Payer')
       test.end()
     })
@@ -166,9 +180,17 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const responseFrom = await getNotifications(messageProtocol.from, transferId)
-      const responseTo = await getNotifications(messageProtocol.to, transferId)
+
+      const operation = 'put'
+      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+      let currentAttempts = 0
+      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
       test.equal(responseFrom, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
       test.equal(responseTo, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payee')
       test.end()
@@ -217,8 +239,15 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const response = await getNotifications(messageProtocol.from, transferId)
+
+      const operation = 'error'
+      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = await getNotifications(messageProtocol.from, operation, transferId)
+        currentAttempts++
+      }
       test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
       test.end()
     })
@@ -270,9 +299,17 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const responseFrom = await getNotifications(messageProtocol.from, transferId)
-      const responseTo = await getNotifications(messageProtocol.to, transferId)
+
+      const operation = 'put'
+      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+      let currentAttempts = 0
+      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
       test.equal(responseFrom, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
       test.equal(responseTo, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payee')
       test.end()
@@ -325,9 +362,17 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const responseFrom = await getNotifications(messageProtocol.from, transferId)
-      const responseTo = await getNotifications(messageProtocol.to, transferId)
+
+      const operation = 'put'
+      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+      let currentAttempts = 0
+      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
       test.equal(responseFrom, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
       test.equal(responseTo, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payee')
       test.end()
@@ -380,8 +425,15 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      sleep(10)
-      const response = await getNotifications(messageProtocol.from, transferId)
+
+      const operation = 'put'
+      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = await getNotifications(messageProtocol.from, operation, transferId)
+        currentAttempts++
+      }
       test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
       test.end()
     })
@@ -390,21 +442,20 @@ Test('Notification Handler', notificationHandlerTest => {
       await Kafka.Producer.disconnect()
       test.end()
     })
- 
+
     notificationTest.end()
   })
   notificationHandlerTest.end()
 })
 
-
 function sleep(seconds) {
-  var waitUntil = new Date().getTime() + seconds * 1000;
-  while (new Date().getTime() < waitUntil) true;
+  var waitUntil = new Date().getTime() + seconds * 1000
+  while (new Date().getTime() < waitUntil) true
 }
 
-const getNotifications = async (fsp, id) => {
+const getNotifications = async (fsp, operation, id) => {
   const requestOptions = {
-    url: `${getNotificationUrl}/${fsp}/${id}`,
+    url: `${getNotificationUrl}/${fsp}/${operation}/${id}`,
     method: 'get',
     agentOptions: {
       rejectUnauthorized: false
