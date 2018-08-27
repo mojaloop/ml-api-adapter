@@ -26,18 +26,28 @@ const tags = ['test', 'transfers']
 
 module.exports = [{
   method: 'GET',
-  path: '/',
-  handler: Handler.receiveNotification,
+  path: '/notification/{fsp}/{transferId}',
+  handler: Handler.getNotification,
   options: {
-    id: 'test',
+    id: 'test-getNotification',
+    tags: tags,
+    description: 'Get Notification Details'
+  }
+},
+{
+  method: 'GET',
+  path: '/',
+  handler: Handler.getNotification,
+  options: {
+    id: 'test-get',
     tags: tags,
     description: 'test endpoint'
   }
 },
 {
   method: 'PUT',
-  path: '/dfsp1/transfers/error',
-  handler: Handler.receiveNotification,
+  path: '/dfsp1/transfers/{transferId}/error',
+  handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp1-error',
     tags: tags,
@@ -51,8 +61,8 @@ module.exports = [{
 },
 {
   method: 'PUT',
-  path: '/dfsp2/transfers/error',
-  handler: Handler.receiveNotification,
+  path: '/dfsp2/transfers/{transferId}/error',
+  handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp2-error',
     tags: tags,
@@ -66,8 +76,8 @@ module.exports = [{
 },
 {
   method: 'PUT',
-  path: '/dfsp3/transfers/error',
-  handler: Handler.receiveNotification,
+  path: '/dfsp3/transfers/{transferId}/error',
+  handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp3-error',
     tags: tags,
@@ -82,7 +92,7 @@ module.exports = [{
 {
   method: 'POST',
   path: '/dfsp1/transfers',
-  handler: Handler.receiveNotification,
+  handler: Handler.receiveNotificationPost,
   options: {
     id: 'dfsp1-transfers',
     tags: tags,
@@ -97,7 +107,7 @@ module.exports = [{
 {
   method: 'POST',
   path: '/dfsp2/transfers',
-  handler: Handler.receiveNotification,
+  handler: Handler.receiveNotificationPost,
   options: {
     id: 'dfsp2-transfers',
     tags: tags,
@@ -112,11 +122,56 @@ module.exports = [{
 {
   method: 'POST',
   path: '/dfsp3/transfers',
-  handler: Handler.receiveNotification,
+  handler: Handler.receiveNotificationPost,
   options: {
     id: 'dfsp3-transfers',
     tags: tags,
     description: 'receive transfers for dfsp3',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error',
+      output: 'data'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/dfsp1/transfers/{transferId}',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'dfsp1-put',
+    tags: tags,
+    description: 'receive put notification for dfsp1',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error',
+      output: 'data'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/dfsp2/transfers/{transferId}',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'dfsp2-put',
+    tags: tags,
+    description: 'receive put notification for dfsp2',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error',
+      output: 'data'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/dfsp3/transfers/{transferId}',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'dfsp3-put',
+    tags: tags,
+    description: 'receive put notification for dfsp3',
     payload: {
       allow: 'application/json',
       failAction: 'error',

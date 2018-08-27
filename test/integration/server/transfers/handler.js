@@ -21,10 +21,40 @@
  ******/
 
 'use strict'
-
-exports.receiveNotification = async function (request, h) {
+let notifications = {}
+exports.receiveNotificationPost = async function (request, h) {
   console.log('Received message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
+  const transferId = request.payload.transferId
+  const path = request.path
+  const result = path.split('/');
+  const fsp = result[1]
+  notifications[fsp] = {}
+  notifications[fsp][transferId] = request.payload
   return h.response(true).code(200)
+}
+
+exports.receiveNotificationPut = async function (request, h) {
+  console.log('Received message')
+  console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
+  console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
+  const transferId = request.params.transferId
+  const path = request.path
+  const result = path.split('/');
+  const fsp = result[1]
+  notifications[fsp] = {}
+  notifications[fsp][transferId] = request.payload
+  return h.response(true).code(200)
+}
+
+exports.getNotification = async function (request, h) {
+  console.log('getNotification::transferId(%s)', JSON.stringify(request.params.transferId))
+  const transferId = request.params.transferId
+  const fsp = request.params.fsp
+  let response = null
+  if (notifications[fsp] && notifications[fsp][transferId]) {
+    response = notifications[fsp][transferId]
+  }
+  return h.response(response).code(200)
 }

@@ -98,28 +98,28 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[to].transfers.post, { transferId: id })
-      return await Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
+      return Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
-      return await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
       let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
       await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
-      return await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
-      return await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'reject' && status.toLowerCase() === 'success') {
       let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
       await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
-      return await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'abort' && status.toLowerCase() === 'success') {
       let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
       await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
-      return await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'timeout-received' && status.toLowerCase() === 'success') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
