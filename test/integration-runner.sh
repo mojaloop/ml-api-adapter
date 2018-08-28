@@ -14,6 +14,9 @@ if [ $# -ne 1 ]; then
     echo " - KAFKA_HOST: Kafka host"
     echo " - KAFKA_ZOO_PORT: Kafka host name"
     echo " - KAFKA_BROKER_PORT: Kafka container port"
+    echo " - ENDPOINT_HOST: Endpoint host name"
+    echo " - ENDPOINT_PORT: Endpoint port"
+    echo " - ENDPOINT_CMD: Command to start enpoint server"
     echo " - APP_HOST: Application host name"
     echo " - APP_PORT: Application port"
     echo " - APP_TEST_HOST: Application test host"
@@ -38,7 +41,8 @@ mkdir -p test/results
 
 fkafka() {
 	docker run --rm -i \
-	  --link $KAFKA_HOST \
+	  --network $DOCKER_NETWORK \
+    --link $KAFKA_HOST \
 	  --env KAFKA_HOST="$KAFKA_HOST" \
     --env KAFKA_ZOO_PORT="$KAFKA_ZOO_PORT" \
 	  taion809/kafka-cli \
@@ -58,18 +62,20 @@ stop_docker() {
   (docker stop $APP_HOST && docker rm $APP_HOST) > /dev/null 2>&1
   (docker stop $APP_TEST_HOST && docker rm $APP_TEST_HOST) > /dev/null 2>&1
   (docker stop $ENDPOINT_HOST && docker rm $ENDPOINT_HOST) > /dev/null 2>&1
+  >&1 echo "Deleting test network: $DOCKER_NETWORK"
+  docker network rm integration-test-net
 }
 
 clean_docker() {
   stop_docker
 }
 
-
 start_kafka()
 {
-   docker run -td -i \
+  docker run -td -i \
    -p $KAFKA_ZOO_PORT:$KAFKA_ZOO_PORT \
    -p $KAFKA_BROKER_PORT:$KAFKA_BROKER_PORT \
+   --network $DOCKER_NETWORK \
    --name=$KAFKA_HOST \
    --env ADVERTISED_HOST=$KAFKA_HOST \
    --env ADVERTISED_PORT=$KAFKA_BROKER_PORT \
@@ -80,27 +86,58 @@ start_kafka()
    $KAFKA_IMAGE
 }
 
+start_ml_api_adapter()
+{
+  docker run -d -i \
+   --link $KAFKA_HOST \
+   --link $ENDPOINT_HOST \
+   --network $DOCKER_NETWORK \
+   --name $APP_HOST \
+   --env KAFKA_HOST="$KAFKA_HOST" \
+   --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
+   -p $APP_PORT:$APP_PORT \
+   $DOCKER_IMAGE:$DOCKER_TAG \
+   /bin/sh \
+   -c "source test/.env; $APP_CMD"
+}
+
+fcurl_api() {
+	docker run --rm -i \
+    --network $DOCKER_NETWORK \
+		--link $APP_HOST \
+		--entrypoint curl \
+		"jlekie/curl:latest" \
+        --output /dev/null --silent --head --fail \
+		"$@"
+}
+
+is_api_up() {
+    fcurl_api "http://$APP_HOST:$APP_PORT/health?"
+}
+
 run_test_command()
 {
  >&2 echo "Running $APP_HOST Test command: $TEST_CMD"
  docker run -i \
    --link $KAFKA_HOST \
    --link $ENDPOINT_HOST \
+   --link $APP_HOST \
+   --network $DOCKER_NETWORK \
    --name $APP_TEST_HOST \
    --env APP_HOST=$APP_HOST \
    --env KAFKA_HOST="$KAFKA_HOST" \
    --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
-   --env ENDPOINT_URL="http://$ENDPOINT_HOST:$ENDPOINT_PORT/dfsp2/transfers" \
+   --env ENDPOINT_URL="http://$ENDPOINT_HOST:$ENDPOINT_PORT/notification" \
   $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
    -c "source test/.env; $TEST_CMD"
 }
 
-
 start_test_endpoint()
 {
  docker run -d -i \
    --name $ENDPOINT_HOST \
+   --network $DOCKER_NETWORK \
    -p $ENDPOINT_PORT:$ENDPOINT_PORT \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
@@ -109,7 +146,8 @@ start_test_endpoint()
 
 fcurl() {
 	docker run --rm -i \
-		--link $ENDPOINT_HOST \
+		--network $DOCKER_NETWORK \
+    --link $ENDPOINT_HOST \
 		--entrypoint curl \
 		"jlekie/curl:latest" \
         --silent --head --fail \
@@ -119,8 +157,6 @@ fcurl() {
 is_endpoint_up() {
     fcurl "http://$ENDPOINT_HOST:$ENDPOINT_PORT?"
 }
-
-
 
 stop_docker
 
@@ -134,6 +170,9 @@ then
   clean_docker
   exit 1
 fi
+
+>&1 echo "Creating test network: $DOCKER_NETWORK"
+docker network create $DOCKER_NETWORK
 
 >&2 echo "Kafka is starting"
 start_kafka
@@ -164,6 +203,15 @@ fi
 
 >&2 echo "Waiting for endpoint to start"
 until is_endpoint_up; do
+  >&2 printf "."
+  sleep 5
+done
+
+>&2 echo "Starting ml api adapter"
+start_ml_api_adapter
+
+>&2 printf "Waiting for ml api adapter to start..."
+until is_api_up; do
   >&2 printf "."
   sleep 5
 done
