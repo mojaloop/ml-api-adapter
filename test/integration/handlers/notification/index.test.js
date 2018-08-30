@@ -11,7 +11,6 @@ const Utility = require(`${src}/lib/utility`)
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 
-
 const timeoutAttempts = 10
 const callbackWaitSeconds = 2
 
@@ -448,7 +447,7 @@ Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.end()
 })
 
-function sleep(seconds) {
+function sleep (seconds) {
   var waitUntil = new Date().getTime() + seconds * 1000
   while (new Date().getTime() < waitUntil) true
 }
