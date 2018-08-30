@@ -451,6 +451,43 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
+    processMessageTest.test('process the prepare-duplicate message received from kafka and send out a transfer put callback', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare-duplicate',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = Mustache.render(Config.DFSP_URLS[msg.value.from].transfers.put, { transferId: msg.value.id })
+      const method = 'put'
+      const headers = {}
+      const message = {}
+
+      const expected = 200
+
+      Callback.sendCallback.withArgs(fromUrl, method, headers, message).returns(P.resolve(200))
+
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headers, message))
+      test.equal(result, expected)
+      test.end()
+    })
+
     processMessageTest.end()
   })
 

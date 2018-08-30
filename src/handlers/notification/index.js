@@ -123,6 +123,9 @@ const processMessage = async (msg) => {
     } else if (action.toLowerCase() === 'timeout-received') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+    } else if (action === 'prepare-duplicate') {
+      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
