@@ -213,7 +213,7 @@ Test('Transfer Service tests', serviceTest => {
 
     fulfilTest.test('execute fulfil function', async test => {
       const message = {
-        transferState: 'RECEIVED',
+        transferState: 'COMMITTED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
         completedTimestamp: '2016-05-24T08:38:08.699-04:00',
         extensionList:
@@ -245,6 +245,39 @@ Test('Transfer Service tests', serviceTest => {
       }
     })
 
+    fulfilTest.test('execute fulfil function', async test => {
+      const message = {
+        transferState: 'ABORTED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const id = 'dfsp1'
+      const error = new Error()
+
+      Kafka.Producer.produceMessage.returns(P.reject(error))
+      try {
+        await Service.fulfil(id, headers, message)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
     fulfilTest.end()
   })
   serviceTest.end()
