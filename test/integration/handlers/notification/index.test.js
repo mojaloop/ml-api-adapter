@@ -437,6 +437,67 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
+    notificationTest.test('consume a PREPARE-DUPLICATE message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: 'prepare',
+            action: 'prepare-duplicate',
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/json',
+            'date': '2017-11-02T00:00:00.000Z',
+            'fspiop-destination': 'dfsp2',
+            'fspiop-source': 'dfsp1'
+          },
+          payload: {
+            amount: { amount: 100, currency: 'USD' },
+            transferState: 'COMMITTED',
+            completedTimestamp: '2018-08-23T21:31:00.534+01:00',
+            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+            condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+            expiration: '2018-08-24T21:31:00.534+01:00',
+            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+            payeeFsp: 'dfsp1',
+            payerFsp: 'dfsp2',
+            transferId: transferId
+          }
+        },
+        to: 'dfsp2',
+        from: 'dfsp1',
+        id: transferId,
+        type: 'application/json'
+      }
+
+      const topicConfig = {
+        topicName: Utility.getNotificationTopicName()
+      }
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const operation = 'put'
+      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = await getNotifications(messageProtocol.from, operation, transferId)
+        currentAttempts++
+      }
+      test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
+      test.end()
+    })
+
     notificationTest.test('tear down', async test => {
       await Kafka.Producer.disconnect()
       test.end()
