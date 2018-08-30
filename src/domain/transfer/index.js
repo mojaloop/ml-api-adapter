@@ -70,6 +70,7 @@ const prepare = async (headers, message) => {
 const fulfil = async (id, headers, message) => {
   Logger.debug('prepare::start(%s, %s, %s)', id, headers, message)
   try {
+    const action = message.transferState === 'ABORTED' ? 'reject' : 'commit'
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
     const messageProtocol = {
       id,
@@ -84,7 +85,7 @@ const fulfil = async (id, headers, message) => {
         event: {
           id: Uuid(),
           type: 'fulfil',
-          action: 'commit',
+          action,
           createdAt: new Date(),
           state: {
             status: 'success',
