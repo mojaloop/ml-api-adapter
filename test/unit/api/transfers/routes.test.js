@@ -26,7 +26,7 @@ const Test = require('tape')
 const Base = require('../../base')
 
 Test('return error if required fields are missing on prepare', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' } })
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' } })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
@@ -47,7 +47,7 @@ Test('return error if transferId is not a guid', async function (assert) {
   let req = Base.buildRequest({ url: '/transfers',
     method: 'POST',
     payload: { transferId: 'invalid transfer id' },
-    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -170,7 +170,45 @@ Test('return error if condition is not valid according to the pattern /^[A-Za-z0
   assert.end()
 })
 
-Test('return error if Date Header is not according to format in RFC7231 as per Mojaloop Spec', async function (assert) {
+Test('return error if Date Header is not according to format in RFC7231 as per Mojaloop Spec in POST /transfers', async function (assert) {
+  let req = Base.buildRequest({ url: '/transfers',
+    method: 'POST',
+    payload: {
+      transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'USD',
+        amount: '123.45'
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+        [
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          },
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }
+        ]
+      }
+    },
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if Date Header is not according to format in RFC7231 as per Mojaloop Spec in PUT /transfers', async function (assert) {
   let req = Base.buildRequest({ url: '/transfers',
     method: 'POST',
     payload: {
