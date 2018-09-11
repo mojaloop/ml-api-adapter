@@ -91,7 +91,7 @@ module.exports = [{
     validate: {
       headers: Joi.object({
         'content-type': Joi.string().required().valid('application/json'),
-        'date': Joi.date().iso().required(),
+        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
