@@ -22,7 +22,9 @@
 'use strict'
 
 const Handler = require('./handler')
-const Joi = require('joi-currency-code')(require('joi'))
+const BaseJoi = require('joi-currency-code')(require('joi'))
+const Extension = require('joi-date-extensions')
+const Joi = BaseJoi.extend(Extension)
 const tags = ['api', 'transfers']
 const transferState = [ 'RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED', 'SETTLED' ]
 
@@ -44,7 +46,7 @@ module.exports = [{
       headers: Joi.object({
         'content-type': Joi.string().required().valid('application/json'),
         'content-length': Joi.number().max(5242880),
-        'date': Joi.date().iso().required(),
+        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
