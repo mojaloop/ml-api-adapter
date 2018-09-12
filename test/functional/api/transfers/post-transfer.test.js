@@ -64,7 +64,7 @@ Test('POST /transfers', postTest => {
       }
     let headers = {
       'content-type': 'application/json',
-      'date': '2018-05-08',
+      'date': 'Mon, 10 Sep 2018 20:22:01 GMT',
       'fspiop-source': 'test'
     }
     create(headers, transfer)
