@@ -73,6 +73,7 @@
     "inert": "5.1.0",
     "joi": "13.1.2",
     "joi-currency-code": "^1.2.1",
+    "joi-date-extensions": "^1.2.0",
     "json2csv": "3.11.5",
     "jsonwebtoken": "8.1.1",
     "knex": "0.14.2",
