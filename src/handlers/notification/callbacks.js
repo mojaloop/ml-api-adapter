@@ -24,24 +24,16 @@
 
 const Logger = require('@mojaloop/central-services-shared').Logger
 const request = require('request')
+const Transformer = require('../../domain/transfer/transformer')
 
 const sendCallback = async (url, method, headers, message, cid, fsp) => {
-  // Normalized headers
-  var normalizedHeaders = {}
-  for (var headerKey in headers) {
-    var headerValue = headers[headerKey]
-    if (typeof headerValue === 'string' || headerValue instanceof String) {
-      normalizedHeaders[headerKey] = headerValue.toLowerCase()
-    }
-    normalizedHeaders[headerKey] = headerValue
-  }
-  // Remove any headers that must not be included
-  delete normalizedHeaders['content-length']
+  // Transform headers into Mojaloop v1.0 Specifications
+  const transformedHeaders = Transformer.transformHeaders(headers)
 
   const requestOptions = {
     url,
     method,
-    headers: normalizedHeaders,
+    headers: transformedHeaders,
     body: JSON.stringify(message),
     agentOptions: {
       rejectUnauthorized: false
