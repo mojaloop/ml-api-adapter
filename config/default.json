@@ -4,23 +4,16 @@
   "DFSP_URLS": {
     "dfsp1": {
       "transfers": {
-        "post": "http://localhost:4545/dfsp1/transfers",
-        "put": "http://localhost:4545/dfsp1/transfers/{{transferId}}",
-        "error": "http://localhost:4545/dfsp1/transfers/{{transferId}}/error"
+        "post": "http://localhost:1080/dfsp1/transfers",
+        "put": "http://localhost:1080/dfsp1/transfers/{{transferId}}",
+        "error": "http://localhost:1080/dfsp1/transfers/{{transferId}}/error"
       }
     },
     "dfsp2": {
       "transfers": {
-        "post": "http://localhost:4545/dfsp2/transfers",
-        "put": "http://localhost:4545/dfsp2/transfers/{{transferId}}",
-        "error": "http://localhost:4545/dfsp2/transfers/{{transferId}}/error"
-      }
-    },
-    "dfsp3": {
-      "transfers": {
-        "post": "http://localhost:4545/dfsp3/transfers",
-        "put": "http://localhost:4545/dfsp3/transfers/{{transferId}}",
-        "error": "http://localhost:4545/dfsp3/transfers/{{transferId}}/error"
+        "post": "http://localhost:1080/dfsp2/transfers",
+        "put": "http://localhost:1080/dfsp2/transfers/{{transferId}}",
+        "error": "http://localhost:1080/dfsp2/transfers/{{transferId}}/error"
       }
     }
   },

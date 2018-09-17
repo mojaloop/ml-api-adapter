@@ -94,6 +94,7 @@ const processMessage = async (msg) => {
     const {metadata, from, to, content, id} = msg.value
     const {action, state} = metadata.event
     const status = state.status
+    let headers
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
@@ -105,23 +106,29 @@ const processMessage = async (msg) => {
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
       let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
-      await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
-      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+      headers = Object.assign({}, content.headers, {'FSPIOP-Destination': from})
+      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
+      headers = Object.assign({}, content.headers, {'FSPIOP-Destination': to})
+      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'reject') {
       let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
       let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
-      await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
-      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+      headers = Object.assign({}, content.headers, {'FSPIOP-Destination': from})
+      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
+      headers = Object.assign({}, content.headers, {'FSPIOP-Destination': to})
+      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'abort') {
-      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
-      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
-      await Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from)
-      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, to)
+      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
+      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.error, { transferId: id })
+      headers = Object.assign({}, content.headers, {'FSPIOP-Destination': from})
+      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
+      headers = Object.assign({}, content.headers, {'FSPIOP-Destination': to})
+      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'timeout-received') {
-      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action === 'prepare-duplicate') {
       let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
