@@ -362,7 +362,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
-      const operation = 'put'
+      const operation = 'error'
       let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
       let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
       let currentAttempts = 0
@@ -425,7 +425,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
-      const operation = 'put'
+      const operation = 'error'
       let response = await getNotifications(messageProtocol.from, operation, transferId)
       let currentAttempts = 0
       while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
