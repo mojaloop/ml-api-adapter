@@ -1,14 +1,10 @@
 /*****
- * @file This registers all handlers for the central-ledger API
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
  The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
-
  http://www.apache.org/licenses/LICENSE-2.0
-
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
  Contributors
  --------------
  This is the official list of the Mojaloop project contributors for this file.
@@ -19,31 +15,38 @@
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
-
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
-
- * Miguel de Barros <miguel.debarros@modusbox.com>
-
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
+
 'use strict'
 
-const NotificationHandler = require('./notification')
+const Logger = require('@mojaloop/central-services-shared').Logger
+const { Map } = require('immutable')
 
 /**
- * @function RegisterAllHandlers
+ * @function GetEndpoint
  *
- * @async
- * @description Registers all handlers by using the require-glob to retrieve all handler exports in sub directories and access the registerAllHandlers()
- * in each of them. Every handler in the sub-folders must have a registerAllHandlers() function
- * @returns {boolean} - Returns a boolean: true if successful, or throws and error if failed
+ * @description It calls the server method, where the endpoint is fetched from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
+ *
+ * @param {object} server - The server object
+ * @param {string} fsp - the id of the fsp
+ * @param {string} enpointType - the type of the endpoint
+ *
+ * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const registerAllHandlers = async (server) => {
-  return await NotificationHandler.startConsumer(server)
+const getEndpoint = async (server, fsp, enpointType) => {
+  try {
+    let endpoints = await server.methods.getEndpoints(fsp)
+    return (new Map(endpoints).get(enpointType))
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
 }
 
 module.exports = {
-  registerAllHandlers: registerAllHandlers,
-  registerNotificationHandler: NotificationHandler.startConsumer
+  getEndpoint
 }

@@ -23,16 +23,21 @@
 'use strict'
 const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Config = require('../../lib/config')
+const Helper = require('../../lib/helper')
 const Utility = require('../../lib/utility')
 const Callback = require('./callbacks.js')
 const Mustache = require('mustache')
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
+const FSIOP_CALLBACK_URL_TRANSFER_POST = 'FSIOP_CALLBACK_URL_TRANSFER_POST'
+const FSIOP_CALLBACK_URL_TRANSFER_PUT = 'FSIOP_CALLBACK_URL_TRANSFER_PUT'
+const FSIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSIOP_CALLBACK_URL_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
+let server
 
-const startConsumer = async () => {
+const startConsumer = async (s) => {
+  server = s
   Logger.info('Notification::startConsumer')
   try {
     let topicName = Utility.getNotificationTopicName()
@@ -98,40 +103,40 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     if (action === 'prepare' && status === 'success') {
-      let callbackURL = Mustache.render(Config.DFSP_URLS[to].transfers.post, { transferId: id })
+      let callbackURL = Mustache.render(await Helper.getEndpoint(server, to, FSIOP_CALLBACK_URL_TRANSFER_POST), { transferId: id })
       return Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
-      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
+      let callbackURL = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
-      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
-      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
+      let callbackURLFrom = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: id })
+      let callbackURLTo = Mustache.render(await Helper.getEndpoint(server, to, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: id })
       headers = Object.assign({}, content.headers, {'FSPIOP-Destination': from})
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, {'FSPIOP-Destination': to})
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
-      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
+      let callbackURL = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'reject') {
-      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
-      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.put, { transferId: id })
+      let callbackURLFrom = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: id })
+      let callbackURLTo = Mustache.render(await Helper.getEndpoint(server, to, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: id })
       headers = Object.assign({}, content.headers, {'FSPIOP-Destination': from})
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, {'FSPIOP-Destination': to})
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'abort') {
-      let callbackURLFrom = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
-      let callbackURLTo = Mustache.render(Config.DFSP_URLS[to].transfers.error, { transferId: id })
+      let callbackURLFrom = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: id })
+      let callbackURLTo = Mustache.render(await Helper.getEndpoint(server, to, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: id })
       headers = Object.assign({}, content.headers, {'FSPIOP-Destination': from})
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, {'FSPIOP-Destination': to})
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'timeout-received') {
-      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.error, { transferId: id })
+      let callbackURL = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action === 'prepare-duplicate') {
-      let callbackURL = Mustache.render(Config.DFSP_URLS[from].transfers.put, { transferId: id })
+      let callbackURL = Mustache.render(await Helper.getEndpoint(server, from, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: id })
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')

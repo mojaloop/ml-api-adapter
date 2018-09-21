@@ -22,6 +22,36 @@
 
 'use strict'
 let notifications = {}
+const endpoints = {
+  dfsp1: [
+    {
+      type: 'FSIOP_CALLBACK_URL_TRANSFER_POST',
+      value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers'
+    },
+    {
+      type: 'FSIOP_CALLBACK_URL_TRANSFER_PUT',
+      value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers/{{transferId}}'
+    },
+    {
+      type: 'FSIOP_CALLBACK_URL_TRANSFER_ERROR',
+      value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers/{{transferId}}/error'
+    }
+  ],
+  dfsp2: [
+    {
+      type: 'FSIOP_CALLBACK_URL_TRANSFER_POST',
+      value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers'
+    },
+    {
+      type: 'FSIOP_CALLBACK_URL_TRANSFER_PUT',
+      value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers/{{transferId}}'
+    },
+    {
+      type: 'FSIOP_CALLBACK_URL_TRANSFER_ERROR',
+      value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers/{{transferId}}/error'
+    }
+  ]
+}
 exports.receiveNotificationPost = async function (request, h) {
   console.log('Received message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
@@ -64,4 +94,11 @@ exports.getNotification = async function (request, h) {
   }
   console.log('Respose: %s', JSON.stringify(response))
   return h.response(response).code(200)
+}
+
+exports.getEndpoints = async function (request, h) {
+  console.log('getEndpoints::fsp(%s)', request.params.fsp)
+  const fsp = request.params.fsp
+  console.log('Respose: %s', JSON.stringify(endpoints[fsp]))
+  return h.response(JSON.stringify(endpoints[fsp])).code(200)
 }

@@ -178,5 +178,15 @@ module.exports = [{
       output: 'data'
     }
   }
+},
+{
+  method: 'GET',
+  path: '/participants/{fsp}/endpoints',
+  handler: Handler.getEndpoints,
+  options: {
+    id: 'test-getEndpoints',
+    tags: tags,
+    description: 'Get Endpoint Details'
+  }
 }
 ]
