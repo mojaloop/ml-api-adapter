@@ -37,9 +37,9 @@ const Helper = require(`${src}/lib/helper.js`)
 Test('Notification Service tests', notificationTest => {
   let sandbox
   const server = {}
-  const FSIOP_CALLBACK_URL_TRANSFER_POST = 'FSIOP_CALLBACK_URL_TRANSFER_POST'
-  const FSIOP_CALLBACK_URL_TRANSFER_PUT = 'FSIOP_CALLBACK_URL_TRANSFER_PUT'
-  const FSIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSIOP_CALLBACK_URL_TRANSFER_ERROR'
+  const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
+  const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
+  const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
   const url = 'http://somehost:port/'
 
   notificationTest.beforeEach(t => {
@@ -86,7 +86,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSIOP_CALLBACK_URL_TRANSFER_POST), { transferId: msg.value.id })
+      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST), { transferId: msg.value.id })
       const method = 'post'
       const headers = {}
       const message = {}
@@ -123,7 +123,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -160,7 +160,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSIOP_CALLBACK_URL_TRANSFER_POST), { transferId: msg.value.id })
+      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST), { transferId: msg.value.id })
       const method = 'post'
       const headers = {}
       const message = {}
@@ -199,7 +199,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -237,8 +237,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const urlPayer = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
-      const urlPayee = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const urlPayer = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const urlPayee = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
       const method = 'put'
       const headersFrom = {'FSPIOP-Destination': msg.value.from}
       const headersTo = {'FSPIOP-Destination': msg.value.to}
@@ -277,7 +277,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -363,8 +363,8 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
-      const toUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const toUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
       const method = 'put'
       const headersFrom = {'FSPIOP-Destination': msg.value.from}
       const headersTo = {'FSPIOP-Destination': msg.value.to}
@@ -404,8 +404,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
-      const toUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const toUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
       const method = 'put'
       const headersFrom = {'FSPIOP-Destination': msg.value.from}
       const headersTo = {'FSPIOP-Destination': msg.value.to}
@@ -445,7 +445,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}
@@ -482,7 +482,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
       const method = 'put'
       const headers = {}
       const message = {}

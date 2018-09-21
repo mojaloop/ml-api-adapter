@@ -25,29 +25,29 @@ let notifications = {}
 const endpoints = {
   dfsp1: [
     {
-      type: 'FSIOP_CALLBACK_URL_TRANSFER_POST',
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
       value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers'
     },
     {
-      type: 'FSIOP_CALLBACK_URL_TRANSFER_PUT',
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
       value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers/{{transferId}}'
     },
     {
-      type: 'FSIOP_CALLBACK_URL_TRANSFER_ERROR',
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers/{{transferId}}/error'
     }
   ],
   dfsp2: [
     {
-      type: 'FSIOP_CALLBACK_URL_TRANSFER_POST',
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
       value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers'
     },
     {
-      type: 'FSIOP_CALLBACK_URL_TRANSFER_PUT',
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
       value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers/{{transferId}}'
     },
     {
-      type: 'FSIOP_CALLBACK_URL_TRANSFER_ERROR',
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers/{{transferId}}/error'
     }
   ]

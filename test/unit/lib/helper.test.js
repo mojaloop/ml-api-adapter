@@ -56,15 +56,15 @@ Test('Helper', async helperTest => {
     await getEndpointTest.test('return the endpoint for given fsp and type', async test => {
       const fsp = 'dfsp1'
       const endpoints = {
-        FSIOP_CALLBACK_URL_TRANSFER_POST: 'http://somehost:port/transfers',
-        FSIOP_CALLBACK_URL_TRANSFER_PUT: 'http://somehost:port/transfers/{{transferId}}',
-        FSIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://somehost:port/transfers/{{transferId}}/error'
+        FSPIOP_CALLBACK_URL_TRANSFER_POST: 'http://somehost:port/transfers',
+        FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://somehost:port/transfers/{{transferId}}',
+        FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://somehost:port/transfers/{{transferId}}/error'
       }
       server.methods.getEndpoints.withArgs(fsp).returns(P.resolve(endpoints))
 
       try {
-        const result = await Helper.getEndpoint(server, fsp, 'FSIOP_CALLBACK_URL_TRANSFER_POST')
-        test.equal(result, endpoints['FSIOP_CALLBACK_URL_TRANSFER_POST'], 'Results Match')
+        const result = await Helper.getEndpoint(server, fsp, 'FSPIOP_CALLBACK_URL_TRANSFER_POST')
+        test.equal(result, endpoints['FSPIOP_CALLBACK_URL_TRANSFER_POST'], 'Results Match')
         test.end()
       } catch (e) {
         test.fail('Error thrown', e)
@@ -77,7 +77,7 @@ Test('Helper', async helperTest => {
       server.methods.getEndpoints.withArgs(fsp).throws(new Error())
 
       try {
-        await Helper.getEndpoint(server, fsp, 'FSIOP_CALLBACK_URL_TRANSFER_POST')
+        await Helper.getEndpoint(server, fsp, 'FSPIOP_CALLBACK_URL_TRANSFER_POST')
         test.fail('Should fail')
         test.end()
       } catch (e) {

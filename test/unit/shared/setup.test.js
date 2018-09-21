@@ -277,15 +277,15 @@ Test('setup', setupTest => {
 
       const expected = [
         {
-          type: 'FSIOP_CALLBACK_URL_TRANSFER_POST',
+          type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
           value: 'http://localhost:1080/transfers'
         },
         {
-          type: 'FSIOP_CALLBACK_URL_TRANSFER_PUT',
+          type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
           value: 'http://localhost:1080/transfers/{{transferId}}'
         },
         {
-          type: 'FSIOP_CALLBACK_URL_TRANSFER_ERROR',
+          type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
           value: 'http://localhost:1080/transfers/{{transferId}}/error'
         }
       ]
@@ -343,15 +343,15 @@ Test('setup', setupTest => {
 
       const endpoints = [
         {
-          type: 'FSIOP_CALLBACK_URL_TRANSFER_POST',
+          type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
           value: 'http://localhost:1080/transfers'
         },
         {
-          type: 'FSIOP_CALLBACK_URL_TRANSFER_PUT',
+          type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
           value: 'http://localhost:1080/transfers/{{transferId}}'
         },
         {
-          type: 'FSIOP_CALLBACK_URL_TRANSFER_ERROR',
+          type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
           value: 'http://localhost:1080/transfers/{{transferId}}/error'
         }
       ]
