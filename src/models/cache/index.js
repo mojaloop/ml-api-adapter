@@ -1,0 +1,77 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ --------------
+ ******/
+
+'use strict'
+
+const Logger = require('@mojaloop/central-services-shared').Logger
+const Config = require('../../lib/config')
+const Mustache = require('mustache')
+const request = require('request')
+
+/**
+* @function fetchEndpoints
+*
+ * @description This returns fetches the endpoints from a remote URI, so that it will can be cached in ml-api-adapter
+ *
+ * @param {string} fsp The fsp id
+ * @returns {object} endpointMap Returns the object containing the endpoints for given fsp id
+ */
+
+const fetchEndpoints = async (fsp) => {
+  const url = Mustache.render(Config.ENDPOINT_CACHE_URI, { fsp })
+  const requestOptions = {
+    url,
+    method: 'get',
+    agentOptions: {
+      rejectUnauthorized: false
+    }
+  }
+  Logger.debug(`[fsp=${fsp}] ~ Setup::fetchEndpoints := fetching the endpoints from the resource with options: ${requestOptions}`)
+
+  return new Promise((resolve, reject) => {
+    return request(requestOptions, (error, response, body) => {
+      if (error) {
+        // throw error // this is not correct in the context of a Promise.
+        Logger.error(`[fsp=${fsp}] ~ Setup::fetchEndpoints := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
+        return reject(error)
+      }
+      Logger.info(`[fsp=${fsp}] ~ Setup::fetchEndpoints := Callback successful with body: ${response.body}`)
+      Logger.debug(`[fsp=${fsp}] ~ Setup::fetchEndpoints := Callback successful with response: ${JSON.stringify(response)}`)
+      let endpoints = JSON.parse(body)
+      let endpointMap = {}
+
+      if (Array.isArray(endpoints)) {
+        endpoints.forEach(item => {
+          endpointMap[item.type] = item.value
+        })
+      }
+
+      Logger.debug(`[fsp=${fsp}] ~ Setup::getEndpoints := Returning the endpoints: ${endpointMap}`)
+      return resolve(endpointMap)
+    })
+  })
+}
+module.exports = {
+  fetchEndpoints
+}

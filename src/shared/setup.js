@@ -31,10 +31,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-const request = require('request')
-const Mustache = require('mustache')
-
-const SECOND = 1000
+const Cache = require('../domain/cache')
 /**
  * @function createServer
  *
@@ -54,30 +51,12 @@ const createServer = async (port, modules) => {
           throw Boom.boomify(err)
         }
       }
-    },
-    cache: [
-      {
-        name: 'endpointCache',
-        engine: require('catbox-memory'),
-        partition: 'cache'
-      }
-    ]
+    }
   })
 
   await Plugins.registerPlugins(server)
   await server.register(modules)
 
-  server.method({
-    name: 'getEndpoints',
-    method: getEndpoints,
-    options: {
-      cache: {
-        cache: 'endpointCache',
-        expiresIn: Config.ENDPOINT_CACHE.expiresIn * SECOND,
-        generateTimeout: Config.ENDPOINT_CACHE.generateTimeout * SECOND
-      }
-    }
-  })
   await server.start()
   Logger.debug('Server running at: ', server.info.uri)
   return server
@@ -161,7 +140,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       Logger.error(`No valid service type ${service} found!`)
       throw new Error(`No valid service type ${service} found!`)
   }
-
+  await Cache.initializeCache()
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers, server)
@@ -173,69 +152,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   return server
 }
 
-/**
-* @function fetchEndpoints
-*
-* @description This calls the central-ledger service to fetch the endpoints for fsp
-*
-* @param {string} fsp The fsp id
-* @returns {object} Returns the object containing the endpoints for given fsp id
-*/
-const fetchEndpoints = async (fsp) => {
-  const url = Mustache.render(Config.ENDPOINT_CACHE.url, { fsp })
-  const requestOptions = {
-    url,
-    method: 'get',
-    agentOptions: {
-      rejectUnauthorized: false
-    }
-  }
-  Logger.debug(`[fsp=${fsp}] ~ Setup::fetchEndpoints := fetching the endpoints from the resource with options: ${requestOptions}`)
-
-  return new Promise((resolve, reject) => {
-    return request(requestOptions, (error, response, body) => {
-      if (error) {
-        // throw error // this is not correct in the context of a Promise.
-        Logger.error(`[fsp=${fsp}] ~ Setup::fetchEndpoints := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
-        return reject(error)
-      }
-      Logger.info(`[fsp=${fsp}] ~ Setup::fetchEndpoints := Callback successful with body: ${response.body}`)
-      Logger.debug(`[fsp=${fsp}] ~ Setup::fetchEndpoints := Callback successful with response: ${JSON.stringify(response)}`)
-      return resolve(JSON.parse(response.body))
-    })
-  })
-}
-
-/**
- * @function getEndpoints
- *
- * @description This populates the cache of endpoints
- *
- * @param {string} id The fsp id
- * @returns {object} endpointMap Returns the object containing the endpoints for given fsp id
- */
-
-const getEndpoints = async (id) => {
-  Logger.info(`[fsp=${id}] ~ Setup::getEndpoints := Refreshing the cache for FSP: ${id}`)
-  Logger.debug(`[fsp=${id}] ~ Setup::getEndpoints := Refreshing the cache for FSP: ${id}`)
-
-  const endpoints = await fetchEndpoints(id)
-
-  let endpointMap = {}
-
-  if (Array.isArray(endpoints)) {
-    endpoints.forEach(item => {
-      endpointMap[item.type] = item.value
-    })
-  }
-
-  Logger.debug(`[fsp=${id}] ~ Setup::getEndpoints := Returning the endpoints: ${endpointMap}`)
-  return endpointMap
-}
-
 module.exports = {
   initialize,
-  createServer,
-  fetchEndpoints,
-  getEndpoints
+  createServer
 }
