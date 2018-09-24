@@ -76,7 +76,7 @@ const createServer = async (port, modules) => {
  * @param {handler[]} handlers List of Handlers to be registered
  * @returns {Promise<boolean>} Returns true if Handlers were registered
  */
-const createHandlers = async (handlers, server) => {
+const createHandlers = async (handlers) => {
   let handlerIndex
   let registerdHandlers = {
     connection: {},
@@ -93,7 +93,7 @@ const createHandlers = async (handlers, server) => {
       Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       switch (handler.type) {
         case 'notification':
-          await RegisterHandlers.registerNotificationHandler(server)
+          await RegisterHandlers.registerNotificationHandler()
           break
         default:
           var error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
@@ -143,9 +143,9 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   await Cache.initializeCache()
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
-      await createHandlers(handlers, server)
+      await createHandlers(handlers)
     } else {
-      await RegisterHandlers.registerAllHandlers(server)
+      await RegisterHandlers.registerAllHandlers()
     }
   }
 
