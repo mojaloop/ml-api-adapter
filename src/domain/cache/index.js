@@ -35,6 +35,7 @@ const partition = 'endpoint-cache'
 const clientOptions = { partition }
 let policyOptions = Config.ENDPOINT_CACHE_CONFIG
 
+let client
 let policy
 
 /**
@@ -47,11 +48,10 @@ let policy
 const initializeCache = async () => {
   Logger.debug('initializeCache::start')
   try {
-    const client = new Catbox.Client(require('catbox-memory'), clientOptions)
+    client = new Catbox.Client(require('catbox-memory'), clientOptions)
     await client.start()
     policyOptions.generateFunc = fetchEndpoints
     policy = new Catbox.Policy(policyOptions, client, partition)
-
     return true
   } catch (err) {
     Logger.error(`Cache error:: ERROR:'${err}'`)
@@ -69,12 +69,12 @@ const initializeCache = async () => {
  */
 
 const fetchEndpoints = async (id) => {
-  Logger.info(`[fsp=${id}] ~ Setup::getEndpoints := Refreshing the cache for FSP: ${id}`)
-  Logger.debug(`[fsp=${id}] ~ Setup::getEndpoints := Refreshing the cache for FSP: ${id}`)
+  Logger.info(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Refreshing the cache for FSP: ${id}`)
+  Logger.debug(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Refreshing the cache for FSP: ${id}`)
 
   const endpointMap = await Facade.fetchEndpoints(id)
 
-  Logger.debug(`[fsp=${id}] ~ Setup::getEndpoints := Returning the endpoints: ${endpointMap}`)
+  Logger.debug(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Returning the endpoints: ${JSON.stringify(endpointMap)}`)
   return endpointMap
 }
 
@@ -100,7 +100,18 @@ const getEndpoint = async (fsp, enpointType, transferId = null) => {
   }
 }
 
+/**
+ * @function stopCache
+ *
+ * @description It stops the cache client
+ *
+ * @returns {boolean} - Returns the status
+ */
+const stopCache = async () => {
+  return client.stop()
+}
 module.exports = {
   initializeCache,
-  getEndpoint
+  getEndpoint,
+  stopCache
 }

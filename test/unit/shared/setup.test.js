@@ -5,8 +5,6 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
-const Mustache = require('mustache')
-const proxyquire = require('proxyquire')
 
 Test('setup', setupTest => {
   let sandbox
@@ -17,11 +15,9 @@ Test('setup', setupTest => {
   let PluginsStub
   let HapiStub
   let serverStub
-  let request
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
-    request = sandbox.stub()
 
     PluginsStub = {
       registerPlugins: sandbox.stub().returns(P.resolve())
@@ -263,148 +259,148 @@ Test('setup', setupTest => {
     initializeTest.end()
   })
 
-  setupTest.test('fetchEndpoints should', async (fetchEndpointsTest) => {
-    fetchEndpointsTest.test('return the array of endpoints', async (test) => {
-      const fsp = 'fsp'
+  // setupTest.test('fetchEndpoints should', async (fetchEndpointsTest) => {
+  //   fetchEndpointsTest.test('return the array of endpoints', async (test) => {
+  //     const fsp = 'fsp'
 
-      const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
-        method: 'get',
-        agentOptions: {
-          rejectUnauthorized: false
-        }
-      }
+  //     const requestOptions = {
+  //       url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
+  //       method: 'get',
+  //       agentOptions: {
+  //         rejectUnauthorized: false
+  //       }
+  //     }
 
-      const expected = [
-        {
-          type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
-          value: 'http://localhost:1080/transfers'
-        },
-        {
-          type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-          value: 'http://localhost:1080/transfers/{{transferId}}'
-        },
-        {
-          type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-          value: 'http://localhost:1080/transfers/{{transferId}}/error'
-        }
-      ]
-      request.withArgs(requestOptions).yields(null, { statusCode: 200, body: JSON.stringify(expected) }, null)
-      Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
+  //     const expected = [
+  //       {
+  //         type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
+  //         value: 'http://localhost:1080/transfers'
+  //       },
+  //       {
+  //         type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
+  //         value: 'http://localhost:1080/transfers/{{transferId}}'
+  //       },
+  //       {
+  //         type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
+  //         value: 'http://localhost:1080/transfers/{{transferId}}/error'
+  //       }
+  //     ]
+  //     request.withArgs(requestOptions).yields(null, { statusCode: 200, body: JSON.stringify(expected) }, null)
+  //     Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
 
-      try {
-        const result = await Setup.fetchEndpoints(fsp)
-        test.deepEqual(result, expected, 'The results match')
-        test.end()
-      } catch (err) {
-        test.fail('Error thrown', err)
-        test.end()
-      }
-    })
+  //     try {
+  //       const result = await Setup.fetchEndpoints(fsp)
+  //       test.deepEqual(result, expected, 'The results match')
+  //       test.end()
+  //     } catch (err) {
+  //       test.fail('Error thrown', err)
+  //       test.end()
+  //     }
+  //   })
 
-    fetchEndpointsTest.test('throw error', async (test) => {
-      const fsp = 'fsp'
+  //   fetchEndpointsTest.test('throw error', async (test) => {
+  //     const fsp = 'fsp'
 
-      const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
-        method: 'get',
-        agentOptions: {
-          rejectUnauthorized: false
-        }
-      }
+  //     const requestOptions = {
+  //       url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
+  //       method: 'get',
+  //       agentOptions: {
+  //         rejectUnauthorized: false
+  //       }
+  //     }
 
-      request.withArgs(requestOptions).yields(new Error(), null, null)
-      Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
+  //     request.withArgs(requestOptions).yields(new Error(), null, null)
+  //     Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
 
-      try {
-        await Setup.fetchEndpoints(fsp)
-        test.fail('should throw error')
-        test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.end()
-      }
-    })
+  //     try {
+  //       await Setup.fetchEndpoints(fsp)
+  //       test.fail('should throw error')
+  //       test.end()
+  //     } catch (e) {
+  //       test.ok(e instanceof Error)
+  //       test.end()
+  //     }
+  //   })
 
-    fetchEndpointsTest.end()
-  })
+  //   fetchEndpointsTest.end()
+  // })
 
-  setupTest.test('getEndpoints should', async (getEndpointsTest) => {
-    getEndpointsTest.test('return the array of endpoints', async (test) => {
-      const fsp = 'fsp'
+  // setupTest.test('getEndpoints should', async (getEndpointsTest) => {
+  //   getEndpointsTest.test('return the array of endpoints', async (test) => {
+  //     const fsp = 'fsp'
 
-      const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
-        method: 'get',
-        agentOptions: {
-          rejectUnauthorized: false
-        }
-      }
+  //     const requestOptions = {
+  //       url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
+  //       method: 'get',
+  //       agentOptions: {
+  //         rejectUnauthorized: false
+  //       }
+  //     }
 
-      const endpoints = [
-        {
-          type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
-          value: 'http://localhost:1080/transfers'
-        },
-        {
-          type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-          value: 'http://localhost:1080/transfers/{{transferId}}'
-        },
-        {
-          type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-          value: 'http://localhost:1080/transfers/{{transferId}}/error'
-        }
-      ]
+  //     const endpoints = [
+  //       {
+  //         type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
+  //         value: 'http://localhost:1080/transfers'
+  //       },
+  //       {
+  //         type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
+  //         value: 'http://localhost:1080/transfers/{{transferId}}'
+  //       },
+  //       {
+  //         type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
+  //         value: 'http://localhost:1080/transfers/{{transferId}}/error'
+  //       }
+  //     ]
 
-      let endpointMap = {}
+  //     let endpointMap = {}
 
-      if (Array.isArray(endpoints)) {
-        endpoints.forEach(item => {
-          endpointMap[item.type] = item.value
-        })
-      }
+  //     if (Array.isArray(endpoints)) {
+  //       endpoints.forEach(item => {
+  //         endpointMap[item.type] = item.value
+  //       })
+  //     }
 
-      request.withArgs(requestOptions).yields(null, { statusCode: 200, body: JSON.stringify(endpoints) }, null)
-      Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
+  //     request.withArgs(requestOptions).yields(null, { statusCode: 200, body: JSON.stringify(endpoints) }, null)
+  //     Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
 
-      try {
-        const result = await Setup.getEndpoints(fsp)
-        console.log(result)
-        test.deepEqual(result, endpointMap, 'The results match')
-        test.end()
-      } catch (err) {
-        test.fail('Error thrown', err)
-        test.end()
-      }
-    })
+  //     try {
+  //       const result = await Setup.getEndpoints(fsp)
+  //       console.log(result)
+  //       test.deepEqual(result, endpointMap, 'The results match')
+  //       test.end()
+  //     } catch (err) {
+  //       test.fail('Error thrown', err)
+  //       test.end()
+  //     }
+  //   })
 
-    getEndpointsTest.test('does not return the array', async (test) => {
-      const fsp = 'fsp'
+  //   getEndpointsTest.test('does not return the array', async (test) => {
+  //     const fsp = 'fsp'
 
-      const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
-        method: 'get',
-        agentOptions: {
-          rejectUnauthorized: false
-        }
-      }
+  //     const requestOptions = {
+  //       url: Mustache.render(Config.ENDPOINT_CACHE.url, { fsp }),
+  //       method: 'get',
+  //       agentOptions: {
+  //         rejectUnauthorized: false
+  //       }
+  //     }
 
-      request.withArgs(requestOptions).yields(null, { statusCode: 200, body: JSON.stringify('{}') }, null)
-      Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
+  //     request.withArgs(requestOptions).yields(null, { statusCode: 200, body: JSON.stringify('{}') }, null)
+  //     Setup = proxyquire('../../../src/shared/setup.js', { 'request': request })
 
-      try {
-        const result = await Setup.getEndpoints(fsp)
-        console.log(result)
-        test.deepEqual(result, {}, 'The results match')
-        test.end()
-      } catch (err) {
-        test.fail('Error thrown', err)
-        test.end()
-      }
-    })
+  //     try {
+  //       const result = await Setup.getEndpoints(fsp)
+  //       console.log(result)
+  //       test.deepEqual(result, {}, 'The results match')
+  //       test.end()
+  //     } catch (err) {
+  //       test.fail('Error thrown', err)
+  //       test.end()
+  //     }
+  //   })
 
-    getEndpointsTest.end()
-  })
+  //   getEndpointsTest.end()
+  // })
 
   setupTest.end()
 })

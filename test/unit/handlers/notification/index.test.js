@@ -27,16 +27,14 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Notification = require('../../../../src/handlers/notification')
 const Callback = require('../../../../src/handlers/notification/callbacks.js')
-const Mustache = require('mustache')
 const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const P = require('bluebird')
 const Config = require(`${src}/lib/config.js`)
-const Helper = require(`${src}/lib/helper.js`)
+const Cache = require(`${src}/domain/cache`)
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
-  const server = {}
   const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
   const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
   const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
@@ -50,7 +48,7 @@ Test('Notification Service tests', notificationTest => {
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'consume').returns(P.resolve(true)) // .callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(P.resolve(true))
-    sandbox.stub(Helper, 'getEndpoint').returns(P.resolve(url))
+    sandbox.stub(Cache, 'getEndpoint').returns(P.resolve(url))
 
     sandbox.stub(Logger)
     sandbox.stub(Callback, 'sendCallback').returns(P.resolve(true))
@@ -86,7 +84,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST), { transferId: msg.value.id })
+      const url = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.id)
       const method = 'post'
       const headers = {}
       const message = {}
@@ -123,7 +121,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const url = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -160,7 +158,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST), { transferId: msg.value.id })
+      const url = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.id)
       const method = 'post'
       const headers = {}
       const message = {}
@@ -199,7 +197,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const url = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -237,11 +235,11 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const urlPayer = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
-      const urlPayee = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const urlPayer = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const urlPayee = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
-      const headersFrom = {'FSPIOP-Destination': msg.value.from}
-      const headersTo = {'FSPIOP-Destination': msg.value.to}
+      const headersFrom = { 'FSPIOP-Destination': msg.value.from }
+      const headersTo = { 'FSPIOP-Destination': msg.value.to }
       const message = {}
 
       const expected = 200
@@ -277,7 +275,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const url = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -363,11 +361,11 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
-      const toUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const toUrl = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
-      const headersFrom = {'FSPIOP-Destination': msg.value.from}
-      const headersTo = {'FSPIOP-Destination': msg.value.to}
+      const headersFrom = { 'FSPIOP-Destination': msg.value.from }
+      const headersTo = { 'FSPIOP-Destination': msg.value.to }
       const message = {}
 
       const expected = 200
@@ -404,11 +402,11 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
-      const toUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const toUrl = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
-      const headersFrom = {'FSPIOP-Destination': msg.value.from}
-      const headersTo = {'FSPIOP-Destination': msg.value.to}
+      const headersFrom = { 'FSPIOP-Destination': msg.value.from }
+      const headersTo = { 'FSPIOP-Destination': msg.value.to }
       const message = {}
 
       const expected = 200
@@ -445,7 +443,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR), { transferId: msg.value.id })
+      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -482,7 +480,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = Mustache.render(await Helper.getEndpoint(server, msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT), { transferId: msg.value.id })
+      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -502,13 +500,13 @@ Test('Notification Service tests', notificationTest => {
 
   notificationTest.test('startConsumer should', async startConsumerTest => {
     startConsumerTest.test('start the consumer and consumer messages', async test => {
-      test.ok(await Notification.startConsumer(server))
+      test.ok(await Notification.startConsumer())
       test.end()
     })
 
     startConsumerTest.test('start the consumer and consumer messages with auto-commit enabled', async test => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = undefined
-      test.ok(await Notification.startConsumer(server))
+      test.ok(await Notification.startConsumer())
       test.end()
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
@@ -517,7 +515,7 @@ Test('Notification Service tests', notificationTest => {
       const error = new Error()
       Consumer.prototype.connect.returns(P.reject(error))
       try {
-        await Notification.startConsumer(server)
+        await Notification.startConsumer()
         test.fail('Was expecting an error when connecting to Kafka')
         test.end()
       } catch (e) {
@@ -580,7 +578,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer(server))
+      test.ok(await Notification.startConsumer())
       let result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -610,7 +608,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer(server))
+      test.ok(await Notification.startConsumer())
       let result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -665,7 +663,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        test.ok(await Notification.startConsumer(server))
+        test.ok(await Notification.startConsumer())
         var result = await Notification.consumeMessage(null, [msg])
         test.ok(result instanceof Error)
         test.end()
