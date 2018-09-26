@@ -1,7 +1,7 @@
 {
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_CACHE_URI": "http://ml-api-adapter-endpoint:4545/participants/{{fsp}}/endpoints",
+  "ENDPOINT_SOURCE_URI": "http://ml-api-adapter-endpoint:4545/participants/{{fsp}}/endpoints",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
     "generateTimeout": 30000

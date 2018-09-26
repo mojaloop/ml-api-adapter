@@ -27,7 +27,7 @@ Test('Cache Model Test', modelTest => {
     fetchEndpointsTest.test('return the object of endpoints', async (test) => {
       const fsp = 'fsp'
       const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE_URI, { fsp }),
+        url: Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp }),
         method: 'get',
         agentOptions: {
           rejectUnauthorized: false
@@ -70,7 +70,7 @@ Test('Cache Model Test', modelTest => {
     fetchEndpointsTest.test('return the empty object if no endpoints defined', async (test) => {
       const fsp = 'fsp'
       const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE_URI, { fsp }),
+        url: Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp }),
         method: 'get',
         agentOptions: {
           rejectUnauthorized: false
@@ -96,7 +96,7 @@ Test('Cache Model Test', modelTest => {
       const fsp = 'fsp'
 
       const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_CACHE_URI, { fsp }),
+        url: Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp }),
         method: 'get',
         agentOptions: {
           rejectUnauthorized: false
