@@ -39,7 +39,7 @@ const request = require('request')
  */
 
 const fetchEndpoints = async (fsp) => {
-  const url = Mustache.render(Config.ENDPOINT_CACHE_URI, { fsp })
+  const url = Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp })
   const requestOptions = {
     url,
     method: 'get',
