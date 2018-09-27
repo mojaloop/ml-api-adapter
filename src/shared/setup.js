@@ -31,7 +31,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-const Cache = require('../domain/cache')
+const Cache = require('../models/lib/cache')
 /**
  * @function createServer
  *

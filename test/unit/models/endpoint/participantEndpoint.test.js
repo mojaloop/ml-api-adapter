@@ -6,7 +6,7 @@ const Config = require('../../../../src/lib/config')
 const Mustache = require('mustache')
 const proxyquire = require('proxyquire')
 
-Test('Cache Model Test', modelTest => {
+Test('ParticipantEndpoint Model Test', modelTest => {
   let sandbox
   let request
   let Model
@@ -27,7 +27,7 @@ Test('Cache Model Test', modelTest => {
     fetchEndpointsTest.test('return the object of endpoints', async (test) => {
       const fsp = 'fsp'
       const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp }),
+        url: Mustache.render(Config.ENDPOINT_SOURCE_URL, { fsp }),
         method: 'get',
         agentOptions: {
           rejectUnauthorized: false
@@ -55,7 +55,7 @@ Test('Cache Model Test', modelTest => {
 
       }
       request.withArgs(requestOptions).yields(null, { statusCode: 200 }, JSON.stringify(endpoints))
-      Model = proxyquire('../../../../src/models/cache/index.js', { 'request': request })
+      Model = proxyquire('../../../../src/models/endpoint/participantEndpoint.js', { 'request': request })
 
       try {
         const result = await Model.fetchEndpoints(fsp)
@@ -70,7 +70,7 @@ Test('Cache Model Test', modelTest => {
     fetchEndpointsTest.test('return the empty object if no endpoints defined', async (test) => {
       const fsp = 'fsp'
       const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp }),
+        url: Mustache.render(Config.ENDPOINT_SOURCE_URL, { fsp }),
         method: 'get',
         agentOptions: {
           rejectUnauthorized: false
@@ -80,7 +80,7 @@ Test('Cache Model Test', modelTest => {
 
       const expected = {}
       request.withArgs(requestOptions).yields(null, { statusCode: 200 }, JSON.stringify(endpoints))
-      Model = proxyquire('../../../../src/models/cache/index.js', { 'request': request })
+      Model = proxyquire('../../../../src/models/endpoint/participantEndpoint.js', { 'request': request })
 
       try {
         const result = await Model.fetchEndpoints(fsp)
@@ -96,7 +96,7 @@ Test('Cache Model Test', modelTest => {
       const fsp = 'fsp'
 
       const requestOptions = {
-        url: Mustache.render(Config.ENDPOINT_SOURCE_URI, { fsp }),
+        url: Mustache.render(Config.ENDPOINT_SOURCE_URL, { fsp }),
         method: 'get',
         agentOptions: {
           rejectUnauthorized: false
@@ -104,7 +104,7 @@ Test('Cache Model Test', modelTest => {
       }
 
       request.withArgs(requestOptions).yields(new Error(), null, null)
-      Model = proxyquire('../../../../src/models/cache/index.js', { 'request': request })
+      Model = proxyquire('../../../../src/models/endpoint/participantEndpoint.js', { 'request': request })
 
       try {
         await Model.fetchEndpoints(fsp)

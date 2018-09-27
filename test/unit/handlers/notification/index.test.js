@@ -31,7 +31,7 @@ const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const P = require('bluebird')
 const Config = require(`${src}/lib/config.js`)
-const Cache = require(`${src}/domain/cache`)
+const Endpoint = require(`${src}/domain/endpoint`)
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
@@ -48,7 +48,7 @@ Test('Notification Service tests', notificationTest => {
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'consume').returns(P.resolve(true)) // .callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(P.resolve(true))
-    sandbox.stub(Cache, 'getEndpoint').returns(P.resolve(url))
+    sandbox.stub(Endpoint, 'getEndpoint').returns(P.resolve(url))
 
     sandbox.stub(Logger)
     sandbox.stub(Callback, 'sendCallback').returns(P.resolve(true))
@@ -84,7 +84,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const url = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.id)
+      const url = await Endpoint.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.id)
       const method = 'post'
       const headers = {}
       const message = {}
@@ -121,7 +121,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const url = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -158,7 +158,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.id)
+      const url = await Endpoint.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.id)
       const method = 'post'
       const headers = {}
       const message = {}
@@ -197,7 +197,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const url = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -235,8 +235,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const urlPayer = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
-      const urlPayee = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const urlPayer = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const urlPayee = await Endpoint.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
       const headersFrom = { 'FSPIOP-Destination': msg.value.from }
       const headersTo = { 'FSPIOP-Destination': msg.value.to }
@@ -275,7 +275,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const url = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -361,8 +361,8 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
-      const toUrl = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const fromUrl = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const toUrl = await Endpoint.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
       const headersFrom = { 'FSPIOP-Destination': msg.value.from }
       const headersTo = { 'FSPIOP-Destination': msg.value.to }
@@ -402,8 +402,8 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
-      const toUrl = await Cache.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const fromUrl = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const toUrl = await Endpoint.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headersFrom = { 'FSPIOP-Destination': msg.value.from }
       const headersTo = { 'FSPIOP-Destination': msg.value.to }
@@ -443,7 +443,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const fromUrl = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}
@@ -480,7 +480,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Cache.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const fromUrl = await Endpoint.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
       const headers = {}
       const message = {}

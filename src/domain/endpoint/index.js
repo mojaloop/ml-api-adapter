@@ -25,58 +25,7 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Config = require('../../lib/config')
-const Catbox = require('catbox')
-const Facade = require('../../models/cache')
-const { Map } = require('immutable')
-const Mustache = require('mustache')
-
-const partition = 'endpoint-cache'
-const clientOptions = { partition }
-let policyOptions = Config.ENDPOINT_CACHE_CONFIG
-
-let client
-let policy
-
-/**
-* @function initializeCache
-*
-* @description This initializes the cache for endpoints
-*
-* @returns {boolean} Returns true on successful initialization of the cache, throws error on falires
-*/
-const initializeCache = async () => {
-  Logger.debug('initializeCache::start')
-  try {
-    client = new Catbox.Client(require('catbox-memory'), clientOptions)
-    await client.start()
-    policyOptions.generateFunc = fetchEndpoints
-    policy = new Catbox.Policy(policyOptions, client, partition)
-    return true
-  } catch (err) {
-    Logger.error(`Cache error:: ERROR:'${err}'`)
-    throw err
-  }
-}
-
-/**
-* @function fetchEndpoints
-*
- * @description This populates the cache of endpoints
- *
- * @param {string} id The fsp id
- * @returns {object} endpointMap Returns the object containing the endpoints for given fsp id
- */
-
-const fetchEndpoints = async (id) => {
-  Logger.info(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Refreshing the cache for FSP: ${id}`)
-  Logger.debug(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Refreshing the cache for FSP: ${id}`)
-
-  const endpointMap = await Facade.fetchEndpoints(id)
-
-  Logger.debug(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Returning the endpoints: ${JSON.stringify(endpointMap)}`)
-  return endpointMap
-}
+const Facade = require('../../models/endpoint/facade')
 
 /**
  * @function GetEndpoint
@@ -85,33 +34,19 @@ const fetchEndpoints = async (id) => {
  *
  * @param {string} fsp - the id of the fsp
  * @param {string} enpointType - the type of the endpoint
+ * @param {string} transferId - optional transferId
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
 const getEndpoint = async (fsp, enpointType, transferId = null) => {
   try {
-    let endpoints = await policy.get(fsp)
-    let url = new Map(endpoints).get(enpointType)
-    url = Mustache.render(url, { transferId: transferId })
-    return (url)
+    return Facade.getEndpoint(fsp, enpointType, transferId)
   } catch (e) {
     Logger.error(e)
     throw e
   }
 }
 
-/**
- * @function stopCache
- *
- * @description It stops the cache client
- *
- * @returns {boolean} - Returns the status
- */
-const stopCache = async () => {
-  return client.stop()
-}
 module.exports = {
-  initializeCache,
-  getEndpoint,
-  stopCache
+  getEndpoint
 }

@@ -2,13 +2,11 @@
 
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const Uuid = require('uuid4')
 const P = require('bluebird')
-const Facade = require('../../../../src/models/cache')
-const Cache = require('../../../../src/domain/cache')
+const Model = require('../../../../src/models/endpoint/participantEndpoint')
+const Cache = require('../../../../src/models/lib/cache')
 // const Catbox = require('catbox')
 
-const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
 const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
 
 Test('Cache Test', cacheTest => {
@@ -16,7 +14,7 @@ Test('Cache Test', cacheTest => {
 
   cacheTest.beforeEach(async test => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Facade, 'fetchEndpoints')
+    sandbox.stub(Model, 'fetchEndpoints')
     // Catbox.Client = sandbox.stub()
     test.end()
   })
@@ -30,42 +28,17 @@ Test('Cache Test', cacheTest => {
     getEndpointTest.test('return the endpoint', async (test) => {
       const fsp = 'fsp'
       const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
-      const transferId = Uuid()
+
       const endpointMap = {
         FSPIOP_CALLBACK_URL_TRANSFER_POST: 'http://localhost:1080/transfers',
         FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://localhost:1080/transfers/{{transferId}}',
         FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://localhost:1080/transfers/{{transferId}}/error'
 
       }
-      const expected = `http://localhost:1080/transfers/${transferId}`
+      const expected = 'http://localhost:1080/transfers/{{transferId}}'
 
       await Cache.initializeCache()
-      Facade.fetchEndpoints.withArgs(fsp).returns(P.resolve(endpointMap))
-
-      try {
-        const result = await Cache.getEndpoint(fsp, enpointType, transferId)
-        test.equal(result, expected, 'The results match')
-        await Cache.stopCache()
-        test.end()
-      } catch (err) {
-        test.fail('Error thrown', err)
-        test.end()
-      }
-    })
-
-    getEndpointTest.test('return the endpoint when transferId is null', async (test) => {
-      const fsp = 'fsp'
-      const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_POST
-      const endpointMap = {
-        FSPIOP_CALLBACK_URL_TRANSFER_POST: 'http://localhost:1080/transfers',
-        FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://localhost:1080/transfers/{{transferId}}',
-        FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://localhost:1080/transfers/{{transferId}}/error'
-
-      }
-      const expected = `http://localhost:1080/transfers`
-
-      await Cache.initializeCache()
-      Facade.fetchEndpoints.withArgs(fsp).returns(P.resolve(endpointMap))
+      Model.fetchEndpoints.withArgs(fsp).returns(P.resolve(endpointMap))
 
       try {
         const result = await Cache.getEndpoint(fsp, enpointType)
@@ -81,12 +54,11 @@ Test('Cache Test', cacheTest => {
     getEndpointTest.test('throw error', async (test) => {
       const fsp = 'fsp1'
       const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
-      const transferId = Uuid()
 
       await Cache.initializeCache()
-      Facade.fetchEndpoints.withArgs(fsp).throws(new Error())
+      Model.fetchEndpoints.withArgs(fsp).throws(new Error())
       try {
-        await Cache.getEndpoint(fsp, enpointType, transferId)
+        await Cache.getEndpoint(fsp, enpointType)
         test.fail('should throw error')
         await Cache.stopCache()
         test.end()
@@ -114,18 +86,19 @@ Test('Cache Test', cacheTest => {
     })
 
     // initializeCacheTest.test('should throw error', async (test) => {
-    //   let localSandbox = Sinon.createSandbox()
+    //   // let localSandbox = Sinon.createSandbox()
     //   try {
-    //     Catbox.Client = localSandbox.stub()
+    //     Catbox.Client = sandbox.stub()
     //     Catbox.Client.throws(new Error())
-
     //     await Cache.initializeCache()
     //     test.fail('should throw')
+    //     Catbox.Client.reset()
     //     test.end()
     //   } catch (err) {
     //     test.ok(err instanceof Error)
+    //     Catbox.Client.reset()
     //     test.end()
-    //     localSandbox.restore()
+    //     // localSandbox.restore()
     //   }
     // })
 
