@@ -77,36 +77,5 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
     await getEndpointTest.end()
   })
 
-  // endpointTest.test('initializeCache should', async (initializeCacheTest) => {
-  //   initializeCacheTest.test('initializeCache cache and return true', async (test) => {
-  //     try {
-  //       const result = await Cache.initializeCache()
-  //       test.equal(result, true, 'The results match')
-  //       await Cache.stopCache()
-  //       test.end()
-  //     } catch (err) {
-  //       test.fail('Error thrown', err)
-  //       test.end()
-  //     }
-  //   })
-
-  //   // initializeCacheTest.test('should throw error', async (test) => {
-  //   //   let localSandbox = Sinon.createSandbox()
-  //   //   try {
-  //   //     Catbox.Client = localSandbox.stub()
-  //   //     Catbox.Client.throws(new Error())
-
-  //   //     await Cache.initializeCache()
-  //   //     test.fail('should throw')
-  //   //     test.end()
-  //   //   } catch (err) {
-  //   //     test.ok(err instanceof Error)
-  //   //     test.end()
-  //   //     localSandbox.restore()
-  //   //   }
-  //   // })
-
-  //   await initializeCacheTest.end()
-  // })
   endpointTest.end()
 })
