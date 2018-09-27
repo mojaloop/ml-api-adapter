@@ -5,7 +5,7 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Model = require('../../../../src/models/endpoint/participantEndpoint')
 const Cache = require('../../../../src/models/lib/cache')
-// const Catbox = require('catbox')
+const Catbox = require('catbox')
 
 const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
 
@@ -85,22 +85,18 @@ Test('Cache Test', cacheTest => {
       }
     })
 
-    // initializeCacheTest.test('should throw error', async (test) => {
-    //   // let localSandbox = Sinon.createSandbox()
-    //   try {
-    //     Catbox.Client = sandbox.stub()
-    //     Catbox.Client.throws(new Error())
-    //     await Cache.initializeCache()
-    //     test.fail('should throw')
-    //     Catbox.Client.reset()
-    //     test.end()
-    //   } catch (err) {
-    //     test.ok(err instanceof Error)
-    //     Catbox.Client.reset()
-    //     test.end()
-    //     // localSandbox.restore()
-    //   }
-    // })
+    initializeCacheTest.test('should throw error', async (test) => {
+      try {
+        Catbox.Client = sandbox.stub()
+        Catbox.Client.throws(new Error())
+        await Cache.initializeCache()
+        test.fail('should throw')
+        test.end()
+      } catch (err) {
+        test.ok(err instanceof Error)
+        test.end()
+      }
+    })
 
     await initializeCacheTest.end()
   })

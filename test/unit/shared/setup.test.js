@@ -5,6 +5,7 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
+const Cache = require('../../../src/models/lib/cache')
 
 Test('setup', setupTest => {
   let sandbox
@@ -18,6 +19,7 @@ Test('setup', setupTest => {
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
+    sandbox.stub(Cache, 'initializeCache').returns(P.resolve(true))
 
     PluginsStub = {
       registerPlugins: sandbox.stub().returns(P.resolve())
