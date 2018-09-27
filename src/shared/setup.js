@@ -17,6 +17,8 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hiruagde <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
@@ -29,7 +31,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-
+const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
 /**
  * @function createServer
  *
@@ -51,8 +53,10 @@ const createServer = async (port, modules) => {
       }
     }
   })
+
   await Plugins.registerPlugins(server)
   await server.register(modules)
+
   await server.start()
   Logger.debug('Server running at: ', server.info.uri)
   return server
@@ -89,6 +93,7 @@ const createHandlers = async (handlers) => {
       Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       switch (handler.type) {
         case 'notification':
+          await ParticipantEndpointCache.initializeCache()
           await RegisterHandlers.registerNotificationHandler()
           break
         default:
@@ -121,7 +126,7 @@ const createHandlers = async (handlers) => {
  * @param {handler[]} handlers List of Handlers to be registered
  * @returns {object} Returns HTTP Server object
  */
-const initialize = async function ({service, port, modules = [], runHandlers = false, handlers = []}) {
+const initialize = async function ({ service, port, modules = [], runHandlers = false, handlers = [] }) {
   let server
   switch (service) {
     case 'api':
@@ -136,11 +141,11 @@ const initialize = async function ({service, port, modules = [], runHandlers = f
       Logger.error(`No valid service type ${service} found!`)
       throw new Error(`No valid service type ${service} found!`)
   }
-
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers)
     } else {
+      await ParticipantEndpointCache.initializeCache()
       await RegisterHandlers.registerAllHandlers()
     }
   }
