@@ -25,14 +25,14 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Config = require('../../lib/config')
+const Config = require('../../../../lib/config')
 const Catbox = require('catbox')
-const Model = require('../endpoint/participantEndpoint')
+const Model = require('../../../../models/participant/participantEndpoint')
 const { Map } = require('immutable')
 
 const partition = 'endpoint-cache'
 const clientOptions = { partition }
-let policyOptions = Config.ENDPOINT_CACHE_CONFIG
+const policyOptions = Config.ENDPOINT_CACHE_CONFIG
 
 let client
 let policy
@@ -45,16 +45,16 @@ let policy
 * @returns {boolean} Returns true on successful initialization of the cache, throws error on falires
 */
 const initializeCache = async () => {
-  Logger.info('initializeCache::start')
+  Logger.info('participantEndpointCache::initializeCache::start')
   try {
     client = new Catbox.Client(require('catbox-memory'), clientOptions)
     await client.start()
     policyOptions.generateFunc = fetchEndpoints
     policy = new Catbox.Policy(policyOptions, client, partition)
-    Logger.info('initializeCache::Cache initialized successfully')
+    Logger.info('participantEndpointCache::initializeCache::Cache initialized successfully')
     return true
   } catch (err) {
-    Logger.error(`Cache error:: ERROR:'${err}'`)
+    Logger.error(`participantEndpointCache::Cache error:: ERROR:'${err}'`)
     throw err
   }
 }
@@ -69,12 +69,11 @@ const initializeCache = async () => {
  */
 
 const fetchEndpoints = async (id) => {
-  Logger.info(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Refreshing the cache for FSP: ${id}`)
-  Logger.debug(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Refreshing the cache for FSP: ${id}`)
+  Logger.debug(`[fsp=${id}] ~ participantEndpointCache::fetchEndpoints := Refreshing the cache for FSP: ${id}`)
 
-  const endpointMap = await Model.fetchEndpoints(id)
+  const endpointMap = await Model.getEndpoint(id)
 
-  Logger.debug(`[fsp=${id}] ~ Domain::Cache::getEndpoints := Returning the endpoints: ${JSON.stringify(endpointMap)}`)
+  Logger.debug(`[fsp=${id}] ~ participantEndpointCache::fetchEndpoints := Returning the endpoints: ${JSON.stringify(endpointMap)}`)
   return endpointMap
 }
 
@@ -107,7 +106,7 @@ const getEndpoint = async (fsp, enpointType) => {
  * @returns {boolean} - Returns the status
  */
 const stopCache = async () => {
-  Logger.info('stopCache::Stopping the cache')
+  Logger.info('participantEndpointCache::stopCache::Stopping the cache')
   return client.stop()
 }
 module.exports = {

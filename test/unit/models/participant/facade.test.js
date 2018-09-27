@@ -1,9 +1,10 @@
 'use strict'
 
+const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const Cache = require('../../../../src/models/lib/cache')
-const Facade = require('../../../../src/models/endpoint/facade')
+const Cache = require(`${src}/domain/participant/lib/cache/participantEndpoint`)
+const Facade = require(`${src}/models/participant/facade`)
 const Uuid = require('uuid4')
 const P = require('bluebird')
 

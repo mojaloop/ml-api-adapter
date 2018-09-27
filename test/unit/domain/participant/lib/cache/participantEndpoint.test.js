@@ -1,10 +1,11 @@
 'use strict'
 
 const Test = require('tapes')(require('tape'))
+const src = '../../../../../../src'
 const Sinon = require('sinon')
 const P = require('bluebird')
-const Model = require('../../../../src/models/endpoint/participantEndpoint')
-const Cache = require('../../../../src/models/lib/cache')
+const Model = require(`${src}/models/participant/participantEndpoint`)
+const Cache = require(`${src}/domain/participant/lib/cache/participantEndpoint`)
 const Catbox = require('catbox')
 
 const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
@@ -14,8 +15,7 @@ Test('Cache Test', cacheTest => {
 
   cacheTest.beforeEach(async test => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Model, 'fetchEndpoints')
-    // Catbox.Client = sandbox.stub()
+    sandbox.stub(Model, 'getEndpoint')
     test.end()
   })
 
@@ -38,7 +38,7 @@ Test('Cache Test', cacheTest => {
       const expected = 'http://localhost:1080/transfers/{{transferId}}'
 
       await Cache.initializeCache()
-      Model.fetchEndpoints.withArgs(fsp).returns(P.resolve(endpointMap))
+      Model.getEndpoint.withArgs(fsp).returns(P.resolve(endpointMap))
 
       try {
         const result = await Cache.getEndpoint(fsp, enpointType)
@@ -56,7 +56,7 @@ Test('Cache Test', cacheTest => {
       const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
 
       await Cache.initializeCache()
-      Model.fetchEndpoints.withArgs(fsp).throws(new Error())
+      Model.getEndpoint.withArgs(fsp).throws(new Error())
       try {
         await Cache.getEndpoint(fsp, enpointType)
         test.fail('should throw error')

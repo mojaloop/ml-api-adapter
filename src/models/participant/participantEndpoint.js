@@ -30,7 +30,7 @@ const Mustache = require('mustache')
 const request = require('request')
 
 /**
-* @function fetchEndpoints
+* @function getEndpoint
 *
  * @description This returns fetches the endpoints from a remote URI, so that it will can be cached in ml-api-adapter
  *
@@ -38,7 +38,7 @@ const request = require('request')
  * @returns {object} endpointMap Returns the object containing the endpoints for given fsp id
  */
 
-const fetchEndpoints = async (fsp) => {
+const getEndpoint = async (fsp) => {
   const url = Mustache.render(Config.ENDPOINT_SOURCE_URL, { fsp })
   const requestOptions = {
     url,
@@ -47,17 +47,16 @@ const fetchEndpoints = async (fsp) => {
       rejectUnauthorized: false
     }
   }
-  Logger.debug(`[fsp=${fsp}] ~ Model::Cache::fetchEndpoints := fetching the endpoints from the resource with options: ${JSON.stringify(requestOptions)}`)
+  Logger.debug(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := fetching the endpoints from the resource with options: ${JSON.stringify(requestOptions)}`)
 
   return new Promise((resolve, reject) => {
     return request(requestOptions, (error, response, body) => {
       if (error) {
-        // throw error // this is not correct in the context of a Promise.
-        Logger.error(`[fsp=${fsp}] ~ Model::Cache::fetchEndpoints := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
+        Logger.error(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := failed with error: ${error}, response: ${JSON.stringify(response)}`)
         return reject(error)
       }
-      Logger.info(`[fsp=${fsp}] ~ Model::Cache::fetchEndpoints := Callback successful with body: ${JSON.stringify(response.body)}`)
-      Logger.debug(`[fsp=${fsp}] ~ Model::Cache::fetchEndpoints := Callback successful with response: ${JSON.stringify(response)}`)
+      Logger.info(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := successful with body: ${JSON.stringify(response.body)}`)
+      Logger.debug(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := successful with response: ${JSON.stringify(response)}`)
       let endpoints = JSON.parse(body)
       let endpointMap = {}
 
@@ -67,11 +66,11 @@ const fetchEndpoints = async (fsp) => {
         })
       }
 
-      Logger.debug(`[fsp=${fsp}] ~ Model::Cache::getEndpoints := Returning the endpoints: ${JSON.stringify(response)}`)
+      Logger.debug(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoints := Returning the endpoints: ${JSON.stringify(response)}`)
       return resolve(endpointMap)
     })
   })
 }
 module.exports = {
-  fetchEndpoints
+  getEndpoint
 }

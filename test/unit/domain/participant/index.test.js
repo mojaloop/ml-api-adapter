@@ -4,8 +4,8 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Uuid = require('uuid4')
 const P = require('bluebird')
-const Facade = require('../../../../src/models/endpoint/facade')
-const Service = require('../../../../src/domain/endpoint')
+const Facade = require('../../../../src/models/participant/facade')
+const Service = require('../../../../src/domain/participant')
 
 const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
 const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'

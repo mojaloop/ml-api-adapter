@@ -25,7 +25,8 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Facade = require('../../models/endpoint/facade')
+const Cache = require('../../domain/participant/lib/cache/participantEndpoint')
+const Mustache = require('mustache')
 
 /**
  * @function GetEndpoint
@@ -40,7 +41,9 @@ const Facade = require('../../models/endpoint/facade')
  */
 const getEndpoint = async (fsp, enpointType, transferId = null) => {
   try {
-    return Facade.getEndpoint(fsp, enpointType, transferId)
+    let url = await Cache.getEndpoint(fsp, enpointType)
+    url = Mustache.render(url, { transferId: transferId })
+    return url
   } catch (e) {
     Logger.error(e)
     throw e

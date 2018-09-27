@@ -31,7 +31,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-const Cache = require('../models/lib/cache')
+const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
 /**
  * @function createServer
  *
@@ -93,6 +93,7 @@ const createHandlers = async (handlers) => {
       Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       switch (handler.type) {
         case 'notification':
+          await ParticipantEndpointCache.initializeCache()
           await RegisterHandlers.registerNotificationHandler()
           break
         default:
@@ -140,11 +141,11 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       Logger.error(`No valid service type ${service} found!`)
       throw new Error(`No valid service type ${service} found!`)
   }
-  await Cache.initializeCache()
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers)
     } else {
+      await ParticipantEndpointCache.initializeCache()
       await RegisterHandlers.registerAllHandlers()
     }
   }

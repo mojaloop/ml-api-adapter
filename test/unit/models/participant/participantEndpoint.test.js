@@ -23,8 +23,8 @@ Test('ParticipantEndpoint Model Test', modelTest => {
     test.end()
   })
 
-  modelTest.test('fetchEndpoints should', async (fetchEndpointsTest) => {
-    fetchEndpointsTest.test('return the object of endpoints', async (test) => {
+  modelTest.test('getEndpoint should', async (getEndpointTest) => {
+    getEndpointTest.test('return the object of endpoints', async (test) => {
       const fsp = 'fsp'
       const requestOptions = {
         url: Mustache.render(Config.ENDPOINT_SOURCE_URL, { fsp }),
@@ -55,10 +55,10 @@ Test('ParticipantEndpoint Model Test', modelTest => {
 
       }
       request.withArgs(requestOptions).yields(null, { statusCode: 200 }, JSON.stringify(endpoints))
-      Model = proxyquire('../../../../src/models/endpoint/participantEndpoint.js', { 'request': request })
+      Model = proxyquire('../../../../src/models/participant/participantEndpoint.js', { 'request': request })
 
       try {
-        const result = await Model.fetchEndpoints(fsp)
+        const result = await Model.getEndpoint(fsp)
         test.deepEqual(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -67,7 +67,7 @@ Test('ParticipantEndpoint Model Test', modelTest => {
       }
     })
 
-    fetchEndpointsTest.test('return the empty object if no endpoints defined', async (test) => {
+    getEndpointTest.test('return the empty object if no endpoints defined', async (test) => {
       const fsp = 'fsp'
       const requestOptions = {
         url: Mustache.render(Config.ENDPOINT_SOURCE_URL, { fsp }),
@@ -80,10 +80,10 @@ Test('ParticipantEndpoint Model Test', modelTest => {
 
       const expected = {}
       request.withArgs(requestOptions).yields(null, { statusCode: 200 }, JSON.stringify(endpoints))
-      Model = proxyquire('../../../../src/models/endpoint/participantEndpoint.js', { 'request': request })
+      Model = proxyquire('../../../../src/models/participant/participantEndpoint.js', { 'request': request })
 
       try {
-        const result = await Model.fetchEndpoints(fsp)
+        const result = await Model.getEndpoint(fsp)
         test.deepEqual(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -92,7 +92,7 @@ Test('ParticipantEndpoint Model Test', modelTest => {
       }
     })
 
-    fetchEndpointsTest.test('throw error', async (test) => {
+    getEndpointTest.test('throw error', async (test) => {
       const fsp = 'fsp'
 
       const requestOptions = {
@@ -104,10 +104,10 @@ Test('ParticipantEndpoint Model Test', modelTest => {
       }
 
       request.withArgs(requestOptions).yields(new Error(), null, null)
-      Model = proxyquire('../../../../src/models/endpoint/participantEndpoint.js', { 'request': request })
+      Model = proxyquire('../../../../src/models/participant/participantEndpoint.js', { 'request': request })
 
       try {
-        await Model.fetchEndpoints(fsp)
+        await Model.getEndpoint(fsp)
         test.fail('should throw error')
         test.end()
       } catch (e) {
@@ -116,7 +116,7 @@ Test('ParticipantEndpoint Model Test', modelTest => {
       }
     })
 
-    fetchEndpointsTest.end()
+    getEndpointTest.end()
   })
 
   modelTest.end()
