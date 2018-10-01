@@ -1,10 +1,12 @@
 'use strict'
 
+const src = '../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const P = require('bluebird')
-const Config = require('../../../src/lib/config')
+const Config = require(`${src}/lib/config`)
 const Proxyquire = require('proxyquire')
+const ParticipantEndpointCache = require(`${src}/domain/participant/lib/cache/participantEndpoint`)
 
 Test('setup', setupTest => {
   let sandbox
@@ -18,6 +20,7 @@ Test('setup', setupTest => {
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
+    sandbox.stub(ParticipantEndpointCache, 'initializeCache').returns(P.resolve(true))
 
     PluginsStub = {
       registerPlugins: sandbox.stub().returns(P.resolve())
@@ -28,6 +31,7 @@ Test('setup', setupTest => {
       register: sandbox.stub(),
       ext: sandbox.stub(),
       start: sandbox.stub(),
+      method: sandbox.stub(),
       info: {
         uri: sandbox.stub()
       }

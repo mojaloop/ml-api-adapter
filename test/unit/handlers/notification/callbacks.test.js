@@ -17,20 +17,21 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
-const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const proxyquire = require('proxyquire')
-const Config = require(`${src}/lib/config.js`)
 
 Test('Callback Service tests', callbacksTest => {
   let sandbox, callback, request
+  const url = 'http://somehost:port/'
 
   callbacksTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
@@ -65,8 +66,6 @@ Test('Callback Service tests', callbacksTest => {
           from: 'dfsp1'
         }
       }
-
-      const url = Config.DFSP_URLS['dfsp2'].transfers
 
       const method = 'post'
 
@@ -118,8 +117,6 @@ Test('Callback Service tests', callbacksTest => {
           from: 'dfsp1'
         }
       }
-
-      const url = Config.DFSP_URLS['dfsp2'].transfers
 
       const method = 'post'
 
