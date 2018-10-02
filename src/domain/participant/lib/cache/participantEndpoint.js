@@ -38,6 +38,10 @@ let client
 let policy
 
 /**
+ * @module src/domain/participant/lib/cache
+ */
+
+/**
 * @function initializeCache
 *
 * @description This initializes the cache for endpoints
@@ -47,9 +51,11 @@ let policy
 const initializeCache = async () => {
   Logger.info('participantEndpointCache::initializeCache::start')
   try {
+    Logger.debug(`participantEndpointCache::initializeCache::start::clientOptions - ${clientOptions}`)
     client = new Catbox.Client(require('catbox-memory'), clientOptions)
     await client.start()
     policyOptions.generateFunc = fetchEndpoints
+    Logger.debug(`participantEndpointCache::initializeCache::start::policyOptions - ${policyOptions}`)
     policy = new Catbox.Policy(policyOptions, client, partition)
     Logger.info('participantEndpointCache::initializeCache::Cache initialized successfully')
     return true
@@ -88,12 +94,14 @@ const fetchEndpoints = async (id) => {
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
 const getEndpoint = async (fsp, enpointType) => {
+  Logger.debug(`participantEndpointCache::getEndpoint::fsp - ${fsp}`)
+  Logger.debug(`participantEndpointCache::getEndpoint::enpointType - ${enpointType}`)
   try {
     let endpoints = await policy.get(fsp)
     let url = new Map(endpoints).get(enpointType)
     return url
   } catch (e) {
-    Logger.error(e)
+    Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${e}'`)
     throw e
   }
 }

@@ -28,6 +28,9 @@
  --------------
  ******/
 'use strict'
+/**
+ * @module src/handlers/register
+ */
 
 const NotificationHandler = require('./notification')
 

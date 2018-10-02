@@ -30,6 +30,10 @@ const Mustache = require('mustache')
 const request = require('request')
 
 /**
+ * @module src/models/participant
+ */
+
+/**
 * @function getEndpoint
 *
  * @description This returns fetches the endpoints from a remote URI, so that it will can be cached in ml-api-adapter

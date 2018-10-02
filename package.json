@@ -43,7 +43,8 @@
     "docker:build:admin_DONOTRUN": "docker build --no-cache -f admin.Dockerfile -t $npm_package_config_images_admin:latest .",
     "docker:stop": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml stop",
     "docker:rm": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml rm -f -v",
-    "docker:clean": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml down --rmi local"
+    "docker:clean": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml down --rmi local",
+    "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json"
   },
   "dependencies": {
     "@mojaloop/central-services-auth": "0.2.0",
@@ -61,6 +62,7 @@
     "continuation-local-storage": "3.2.0",
     "deasync-promise": "1.0.1",
     "decimal.js": "9.0.1",
+    "docdash": "^0.4.0",
     "flat": "4.0.0",
     "glob": "7.1.1",
     "good": "^8.1.0",
@@ -75,6 +77,7 @@
     "joi": "13.1.2",
     "joi-currency-code": "^1.2.1",
     "joi-date-extensions": "^1.2.0",
+    "jsdoc": "^3.5.5",
     "json2csv": "3.11.5",
     "jsonwebtoken": "8.1.1",
     "knex": "0.14.2",

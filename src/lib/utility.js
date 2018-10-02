@@ -28,6 +28,10 @@ const KafkaConfig = Config.KAFKA_CONFIG
 const Logger = require('@mojaloop/central-services-shared').Logger
 
 /**
+ * @module src/lib/utility
+ */
+
+/**
  * The Producer config required
  *
  * This ENUM is for the PRODUCER of the topic being created
@@ -133,7 +137,7 @@ const participantTopicTemplate = (participantName, functionality, action) => {
 /**
  * @method FulfilTopicTemplate
  *
- * Generates a fulfil topic name found in the default.json
+ * @description Generates a fulfil topic name found in the default.json
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
@@ -148,7 +152,7 @@ const fulfilTopicTemplate = () => {
 /**
  * @method NotificationTopicTemplate
  *
- * Generates a notification topic name found in the default.json
+ * @description Generates a notification topic name found in the default.json
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
@@ -240,7 +244,7 @@ const getNotificationTopicName = () => {
  * @param {string} functionality - the functionality flow. Example: 'transfer'
  * @param {string} action - the action that applies to the flow. Example: 'prepare'
  *
- * @function participantTopicTemplate called which generates a participant topic name from the 3 inputs,
+ * @description participantTopicTemplate called which generates a participant topic name from the 3 inputs,
  * which are used in the placeholder participant topic template found in the default.json
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
@@ -256,7 +260,7 @@ const getParticipantTopicName = (participantName, functionality, action) => {
 /**
  * @method GetFulfilTopicName
  *
- * @function fulfilTopicTemplate called which generates a fulfil topic name found in the default.json
+ * @description fulfilTopicTemplate called which generates a fulfil topic name found in the default.json
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */

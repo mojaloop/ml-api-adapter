@@ -26,6 +26,25 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const request = require('request')
 const Transformer = require('../../domain/transfer/transformer')
 
+/**
+ * @module src/handlers/notification/callbacks
+ */
+
+/**
+* @function sendCallback
+* @async
+
+* @description This sends an http request to a callback url with the details of the notification
+*
+* @param url - the callback url
+* @param method - the http method - e.g. post
+* @param headers - the http headers to be used while sending the request
+* @param message - the message that will be sent as the body of http request
+* @param cid - the component id (transferId) for which callback is being sent, its used for logging only
+* @param fsp - the fsp id for which callback is being sent, its used for logging only
+
+* @returns {Promise} Returns a promise which resolves the http status code on success or rejects the error on failure
+*/
 const sendCallback = async (url, method, headers, message, cid, fsp) => {
   // Transform headers into Mojaloop v1.0 Specifications
   const transformedHeaders = Transformer.transformHeaders(headers)

@@ -30,6 +30,10 @@ const Blipp = require('blipp')
 // const goodWinstonStream = new GoodWinston({winston: require('winston')})
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 
+/**
+ * @module src/shared/plugin
+ */
+
 const registerPlugins = async (server) => {
   await server.register({
     plugin: require('hapi-swagger'),
