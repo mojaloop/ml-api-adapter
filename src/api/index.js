@@ -30,7 +30,7 @@ const Setup = require('../shared/setup')
  * @module src/api/transfers
  */
 
- /**
+/**
  * @function Initialize
  * @async
  *

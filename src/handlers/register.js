@@ -43,7 +43,7 @@ const NotificationHandler = require('./notification')
  * @returns {boolean} - Returns a boolean: true if successful, or throws and error if failed
  */
 const registerAllHandlers = async (request, h) => {
-  return await NotificationHandler.startConsumer()
+  return NotificationHandler.startConsumer()
 }
 
 module.exports = {

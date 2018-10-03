@@ -6,7 +6,7 @@ const Config = require('../../lib/config')
  * @module src/api/metadata/handler
  */
 
- /**
+/**
  * @function ExtractUrls
  * @async
  *
@@ -29,7 +29,7 @@ const extractUrls = (request) => {
   return urls
 }
 
- /**
+/**
  * @function health
  * @async
  *
