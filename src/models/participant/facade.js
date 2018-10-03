@@ -29,6 +29,10 @@ const Cache = require('../../domain/participant/lib/cache/participantEndpoint')
 const Mustache = require('mustache')
 
 /**
+ * @module src/models/participant
+ */
+
+/**
  * @function GetEndpoint
  *
  * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value

@@ -26,6 +26,20 @@
 
 'use strict'
 
+/**
+ * @module src/domain/transfer/transformer
+ */
+
+/**
+* @function transformHeaders
+*
+* @description This will transform the headers before sending to kafka
+*
+* @param {object} headers - the http header from the request
+*
+* @returns {object} Returns the normalized headers
+*/
+
 const transformHeaders = (headers) => {
   // Normalized headers
   var normalizedHeaders = {}
