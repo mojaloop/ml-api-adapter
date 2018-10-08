@@ -31,8 +31,22 @@ const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
 
+/**
+ * @module src/domain/transfer
+ */
+
+/**
+* @function prepare
+* @async
+* @description This will produce a transfer prepare message to transfer prepare kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
+*
+* @param {object} headers - the http header from the request
+* @param {object} message - the transfer prepare message
+*
+* @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
+*/
 const prepare = async (headers, message) => {
-  Logger.debug('prepare::start(%s, %s)', headers, message)
+  Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
   try {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
     const messageProtocol = {
@@ -60,15 +74,30 @@ const prepare = async (headers, message) => {
     const topicConfig = {
       topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
     }
+    Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
+    Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
+    Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    Logger.error(`domain::transfer::prepare::Kafka error:: ERROR:'${err}'`)
     throw err
   }
 }
+
+/**
+* @function fulfil
+* @async
+* @description This will produce a transfer fulfil message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
+*
+* @param {string} id - the transferId
+* @param {object} headers - the http header from the request
+* @param {object} message - the transfer fulfil message
+*
+* @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
+*/
 const fulfil = async (id, headers, message) => {
-  Logger.debug('prepare::start(%s, %s, %s)', id, headers, message)
+  Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', id, headers, message)
   try {
     const action = message.transferState === 'ABORTED' ? 'reject' : 'commit'
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
@@ -97,10 +126,13 @@ const fulfil = async (id, headers, message) => {
     const topicConfig = {
       topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
     }
+    Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
+    Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
+    Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    Logger.error(`Kafka error:: ERROR:'${err}'`)
+    Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
     throw err
   }
 }

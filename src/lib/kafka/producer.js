@@ -30,7 +30,7 @@
 'use strict'
 
 /**
- * @module src/handlers/lib/kafka
+ * @module src/handlers/lib/kafka/producer
  */
 
 const Producer = require('@mojaloop/central-services-shared').Kafka.Producer

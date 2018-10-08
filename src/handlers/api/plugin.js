@@ -32,7 +32,7 @@
 'use strict'
 
 /**
- * @module src/handlers
+ * @module src/handlers/api/plugin
  */
 
 /**

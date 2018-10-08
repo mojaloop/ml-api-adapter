@@ -18,61 +18,42 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- * ModusBox
- - Miguel de Barros <miguel.debarros@modusbox.com>
-
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
+const Logger = require('@mojaloop/central-services-shared').Logger
+const Facade = require('../../models/participant/facade')
 /**
- * @module src/domain/transfer/transformer
+ * @module src/domain/participant
  */
 
 /**
-* @function transformHeaders
-*
-* @description This will transform the headers before sending to kafka
-*
-* @param {object} headers - the http header from the request
-*
-* @returns {object} Returns the normalized headers
-*/
+ * @function GetEndpoint
+ *
+ * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
+ *
+ * @param {string} fsp - the id of the fsp
+ * @param {string} enpointType - the type of the endpoint
+ * @param {string} transferId - optional transferId
+ *
+ * @returns {string} - Returns the endpoint, throws error if failure occurs
+ */
+const getEndpoint = async (fsp, enpointType, transferId = null) => {
+  Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
+  Logger.debug(`domain::participant::getEndpoint::enpointType - ${enpointType}`)
+  Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
-const transformHeaders = (headers) => {
-  // Normalized headers
-  var normalizedHeaders = {}
-  for (var headerKey in headers) {
-    var headerValue = headers[headerKey]
-    switch (headerKey.toLowerCase()) {
-      case ('date'):
-        var tempDate = {}
-        if (typeof headerValue === 'object' && headerValue instanceof Date) {
-          tempDate = headerValue.toUTCString()
-        } else {
-          try {
-            tempDate = (new Date(headerValue)).toUTCString()
-            if (tempDate === 'Invalid Date') {
-              throw new Error('Invalid Date')
-            }
-          } catch (err) {
-            tempDate = headerValue
-          }
-        }
-        normalizedHeaders[headerKey] = tempDate
-        break
-      case ('content-length'):
-        // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
-        break
-      default:
-        normalizedHeaders[headerKey] = headerValue
-    }
+  try {
+    return Facade.getEndpoint(fsp, enpointType, transferId)
+  } catch (e) {
+    Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${e}'`)
+    throw e
   }
-  return normalizedHeaders
-  // return headers
 }
 
 module.exports = {
-  transformHeaders
+  getEndpoint
 }

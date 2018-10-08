@@ -18,61 +18,42 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- * ModusBox
- - Miguel de Barros <miguel.debarros@modusbox.com>
-
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
+const Logger = require('@mojaloop/central-services-shared').Logger
+const Cache = require('../../domain/participant/lib/cache/participantEndpoint')
+const Mustache = require('mustache')
+
 /**
- * @module src/domain/transfer/transformer
+ * @module src/models/participant
  */
 
 /**
-* @function transformHeaders
-*
-* @description This will transform the headers before sending to kafka
-*
-* @param {object} headers - the http header from the request
-*
-* @returns {object} Returns the normalized headers
-*/
-
-const transformHeaders = (headers) => {
-  // Normalized headers
-  var normalizedHeaders = {}
-  for (var headerKey in headers) {
-    var headerValue = headers[headerKey]
-    switch (headerKey.toLowerCase()) {
-      case ('date'):
-        var tempDate = {}
-        if (typeof headerValue === 'object' && headerValue instanceof Date) {
-          tempDate = headerValue.toUTCString()
-        } else {
-          try {
-            tempDate = (new Date(headerValue)).toUTCString()
-            if (tempDate === 'Invalid Date') {
-              throw new Error('Invalid Date')
-            }
-          } catch (err) {
-            tempDate = headerValue
-          }
-        }
-        normalizedHeaders[headerKey] = tempDate
-        break
-      case ('content-length'):
-        // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
-        break
-      default:
-        normalizedHeaders[headerKey] = headerValue
-    }
+ * @function GetEndpoint
+ *
+ * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
+ *
+ * @param {string} fsp - the id of the fsp
+ * @param {string} enpointType - the type of the endpoint
+ * @param {string} transferId - optional transferId
+ *
+ * @returns {string} - Returns the endpoint, throws error if failure occurs
+ */
+const getEndpoint = async (fsp, enpointType, transferId = null) => {
+  try {
+    let url = await Cache.getEndpoint(fsp, enpointType)
+    url = Mustache.render(url, { transferId: transferId })
+    return url
+  } catch (e) {
+    Logger.error(e)
+    throw e
   }
-  return normalizedHeaders
-  // return headers
 }
 
 module.exports = {
-  transformHeaders
+  getEndpoint
 }
