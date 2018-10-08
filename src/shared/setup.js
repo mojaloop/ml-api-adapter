@@ -32,6 +32,11 @@ const Boom = require('boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
+
+/**
+ * @module src/shared/setup
+ */
+
 /**
  * @function createServer
  *

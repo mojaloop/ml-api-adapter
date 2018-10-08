@@ -17,6 +17,8 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
@@ -26,21 +28,60 @@ const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 
-exports.create = async function (request, h) {
+/**
+ * @module src/api/transfers/handler
+ */
+
+/**
+ * @function Create
+ * @async
+ *
+ * @description This will call prepare method of transfer service, which will produce a transfer message on prepare kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer request as payload
+ * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 202 on success, throws error if failure occurs
+ */
+
+const create = async function (request, h) {
   try {
-    Logger.debug('create::start(%s)', JSON.stringify(request.payload))
+    Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
+    Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await TransferService.prepare(request.headers, request.payload)
     return h.response().code(202)
   } catch (err) {
-    throw Boom.boomify(err, {message: 'An error has occurred'})
+    Logger.error(err)
+    throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
-exports.fulfilTransfer = async function (request, h) {
+
+/**
+ * @function FulfilTransfer
+ * @async
+ *
+ * @description This will call fulfil method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
+ * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
+ */
+
+const fulfilTransfer = async function (request, h) {
   try {
-    Logger.debug('fulfilTransfer::start(%s)', JSON.stringify(request.payload))
+    Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
+    Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
+    Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.fulfil(request.params.id, request.headers, request.payload)
     return h.response().code(200)
   } catch (err) {
-    throw Boom.boomify(err, {message: 'An error has occurred'})
+    Logger.error(err)
+    throw Boom.boomify(err, { message: 'An error has occurred' })
   }
+}
+
+module.exports = {
+  create,
+  fulfilTransfer
 }

@@ -37,6 +37,18 @@ const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
 
+/**
+ * @module src/handlers/notification
+ */
+
+/**
+* @function startConsumer
+* @async
+* @description This will create a kafka consumer which will listen to the notification topics configured in the config
+*
+* @returns {boolean} Returns true on sucess and throws error on failure
+*/
+
 const startConsumer = async () => {
   Logger.info('Notification::startConsumer')
   try {
@@ -61,6 +73,18 @@ const startConsumer = async () => {
     throw err
   }
 }
+
+/**
+* @function consumeMessage
+* @async
+* @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
+* processMessage - called to process the message received from kafka
+* @param {object} error - the error message received form kafka in case of error
+* @param {object} message - the message received form kafka
+
+* @returns {boolean} Returns true on sucess and throws error on failure
+*/
+
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
   return new Promise(async (resolve, reject) => {
@@ -85,10 +109,21 @@ const consumeMessage = async (error, message) => {
       if (!autoCommitEnabled) {
         notificationConsumer.commitMessageSync(msg)
       }
+      Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
       return resolve(res)
     }
   })
 }
+
+/**
+* @function processMessage
+* @async
+* @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
+* Callback.sendCallback - called to send the notification callback
+* @param {object} message - the message received form kafka
+
+* @returns {boolean} Returns true on sucess and throws error on failure
+*/
 
 const processMessage = async (msg) => {
   try {
@@ -141,11 +176,10 @@ const processMessage = async (msg) => {
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`error sending notification to the callback - ${err}`)
-      // @TODO: Handle error for invalid action received failure
       throw err
     }
   } catch (e) {
-    // @TODO: Handle error for callback failure
+    Logger.error(`error processing the message - ${e}`)
     throw e
   }
 }

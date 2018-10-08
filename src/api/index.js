@@ -26,6 +26,19 @@ const Config = require('../lib/config')
 const Routes = require('./routes')
 const Setup = require('../shared/setup')
 
+/**
+ * @module src/api/transfers
+ */
+
+/**
+ * @function Initialize
+ * @async
+ *
+ * @description This will initialize the api service by calling Setup.initialize
+ *
+ * @returns {object} - Returns the server object on success, throws error if failure occurs
+ */
+
 module.exports = Setup.initialize({
   service: 'api',
   port: Config.PORT,
