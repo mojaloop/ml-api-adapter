@@ -84,7 +84,7 @@ module.exports = [{
   options: {
     id: 'transfer_fulfilment',
     tags: tags,
-      // auth: Auth.strategy(),
+    // auth: Auth.strategy(),
     description: 'Fulfil a transfer',
     payload: {
       failAction: 'error'
@@ -114,6 +114,37 @@ module.exports = [{
             value: Joi.string().required().min(1).max(128).description('Value').label('@ Supplied key value fails to match the required format. @')
           })).required().min(1).max(16).description('extension')
         }).optional().description('Extention list')
+      }
+    }
+  }
+},
+
+{
+  method: 'GET',
+  path: '/transfers/{id}',
+  handler: Handler.getById,
+  options: {
+    id: 'transfer_getById',
+    tags: tags,
+    // auth: Auth.strategy(),
+    description: 'Get a transfer by Id',
+    /* payload: {
+      failAction: 'error'
+    }, */
+    validate: {
+      /* headers: Joi.object({
+        'content-type': Joi.string().required().valid('application/json'),
+        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        'x-forwarded-for': Joi.string().optional(),
+        'fspiop-source': Joi.string().required(),
+        'fspiop-destination': Joi.string().optional(),
+        'fspiop-encryption': Joi.string().optional(),
+        'fspiop-signature': Joi.string().optional(),
+        'fspiop-uri': Joi.string().optional(),
+        'fspiop-http-method': Joi.string().optional()
+      }).unknown(false).options({stripUnknown: true}), */
+      params: {
+        id: Joi.string().required().description('path').label('@ Supplied a valid transfer Id to continue. @')
       }
     }
   }

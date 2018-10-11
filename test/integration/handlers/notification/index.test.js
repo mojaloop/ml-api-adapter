@@ -510,7 +510,9 @@ Test('Notification Handler', notificationHandlerTest => {
 
 function sleep (seconds) {
   var waitUntil = new Date().getTime() + seconds * 1000
-  while (new Date().getTime() < waitUntil) true
+  while (new Date().getTime() < waitUntil) {
+
+  }
 }
 
 const getNotifications = async (fsp, operation, id) => {
