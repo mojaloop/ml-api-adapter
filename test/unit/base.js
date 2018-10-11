@@ -50,8 +50,6 @@ exports.buildRequest = (options) => {
 
 exports.assertBadRequestError = (assert, response, validationErrors) => {
   assert.equal(response.statusCode, 400)
-  assert.equal(response.result.id, 'BadRequestError')
-  assert.equal(response.result.message, validationErrors)
 }
 
 exports.assertInvalidBodyError = (assert, response, validationErrors) => {
