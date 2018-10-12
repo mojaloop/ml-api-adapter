@@ -93,15 +93,10 @@ const fulfilTransfer = async function (request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 
-const getById = async function (request, h) {
+const getTransferById = async function (request, h) {
   try {
-    Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
-    console.log(' Inside handler : ')
-    Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
-    console.log(' Inside handler : ')
-    Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    console.log(' Inside handler : ')
-    // await TransferService.getTransferById(request.params.id, request.headers, request.payload)
+    Logger.info('getById::id(%s)', request.params.id)
+    await TransferService.getTransferById(request.params.id, request.headers)
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
@@ -112,5 +107,5 @@ const getById = async function (request, h) {
 module.exports = {
   create,
   fulfilTransfer,
-  getById
+  getTransferById
 }

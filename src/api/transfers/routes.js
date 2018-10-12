@@ -122,7 +122,7 @@ module.exports = [{
 {
   method: 'GET',
   path: '/transfers/{id}',
-  handler: Handler.getById,
+  handler: Handler.getTransferById,
   options: {
     id: 'transfer_getById',
     tags: tags,
@@ -132,7 +132,7 @@ module.exports = [{
       failAction: 'error'
     }, */
     validate: {
-      /* headers: Joi.object({
+      headers: Joi.object({
         'content-type': Joi.string().required().valid('application/json'),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
@@ -142,10 +142,11 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({stripUnknown: true}), */
+      }).unknown(false).options({stripUnknown: true}),
       params: {
-        id: Joi.string().required().description('path').label('@ Supplied a valid transfer Id to continue. @')
-      }
+        id: Joi.string().required().description('path').label('@ Supply a valid transfer Id to continue. @') // To Do : expand user friendly error msg to params as well
+      },
+      failAction: (request, h, err) => { throw err }
     }
   }
 }
