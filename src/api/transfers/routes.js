@@ -54,7 +54,7 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({stripUnknown: true}),
+      }).unknown(false).options({ stripUnknown: true }),
       payload: {
         transferId: Joi.string().guid().required().description('Id of transfer').label('@ Transfer Id must be in a valid GUID format. @'),
         payeeFsp: Joi.string().required().min(1).max(32).description('Financial Service Provider of Payee').label('@ A valid Payee FSP number must be supplied. @'),
@@ -100,7 +100,7 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({stripUnknown: true}),
+      }).unknown(false).options({ stripUnknown: true }),
       params: {
         id: Joi.string().required().description('path')
       },
@@ -142,9 +142,9 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({stripUnknown: true}),
+      }).unknown(false).options({ stripUnknown: true }),
       params: {
-        id: Joi.string().required().description('path').label('@ Supply a valid transfer Id to continue. @') // To Do : expand user friendly error msg to params as well
+        id: Joi.string().guid().required().description('path').label('@ Supply a valid transfer Id to continue. @') // To Do : expand user friendly error msg to params as well
       },
       failAction: (request, h, err) => { throw err }
     }

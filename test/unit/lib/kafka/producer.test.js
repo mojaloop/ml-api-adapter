@@ -54,7 +54,7 @@ Test('Producer', producerTest => {
   producerTest.test('produceMessage should', produceMessageTest => {
     produceMessageTest.test('should connect to kafka and publish a message', async test => {
       Producer.prototype.connect.returns(P.resolve(true))
-      test.ok(await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {}))
+      test.ok(await Kafka.Producer.produceMessage({}, { topicName: 'test' }, {}))
       test.end()
     })
 
@@ -76,7 +76,7 @@ Test('Producer', producerTest => {
   producerTest.test('getProducer should', getProducerTest => {
     getProducerTest.test('fetch a specific Producers', async test => {
       Producer.prototype.connect.returns(P.resolve(true))
-      await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
+      await Kafka.Producer.produceMessage({}, { topicName: 'test' }, {})
       test.ok(Kafka.Producer.getProducer('test'))
       test.end()
     })
@@ -97,7 +97,7 @@ Test('Producer', producerTest => {
   producerTest.test('disconnect should', disconnectTest => {
     disconnectTest.test('disconnect from kafka', async test => {
       Producer.prototype.connect.returns(P.resolve(true))
-      await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
+      await Kafka.Producer.produceMessage({}, { topicName: 'test' }, {})
       Producer.prototype.disconnect.returns(P.resolve(true))
       test.ok(Kafka.Producer.disconnect('test'))
       test.end()
@@ -108,7 +108,7 @@ Test('Producer', producerTest => {
       Producer.prototype.disconnect.returns(P.resolve(true))
       try {
         var topicName = 'someTopic'
-        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        test.ok(await Kafka.Producer.produceMessage({}, { topicName: topicName }, {}))
         await Kafka.Producer.disconnect(topicName)
         test.pass('Disconnect specific topic successfully')
         test.end()
@@ -123,10 +123,10 @@ Test('Producer', producerTest => {
       Producer.prototype.disconnect.returns(P.resolve(true))
       try {
         var topicName = 'someTopic1'
-        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        test.ok(await Kafka.Producer.produceMessage({}, { topicName: topicName }, {}))
         await Kafka.Producer.disconnect(topicName)
         topicName = 'someTopic2'
-        test.ok(await Kafka.Producer.produceMessage({}, {topicName: topicName}, {}))
+        test.ok(await Kafka.Producer.produceMessage({}, { topicName: topicName }, {}))
         await Kafka.Producer.disconnect()
         test.pass('Disconnected all topics successfully')
         test.end()
@@ -150,8 +150,8 @@ Test('Producer', producerTest => {
 
         Producer.prototype.connect.returns(P.resolve(true))
 
-        await KafkaProducer.produceMessage({}, {topicName: 'test1'}, {})
-        await KafkaProducer.produceMessage({}, {topicName: 'test2'}, {})
+        await KafkaProducer.produceMessage({}, { topicName: 'test1' }, {})
+        await KafkaProducer.produceMessage({}, { topicName: 'test2' }, {})
 
         await KafkaProducer.disconnect()
 
@@ -168,7 +168,7 @@ Test('Producer', producerTest => {
     disconnectTest.test('throw error if failure to disconnect from kafka if topic does not exist', async test => {
       try {
         Producer.prototype.connect.returns(P.resolve(true))
-        await Kafka.Producer.produceMessage({}, {topicName: 'test'}, {})
+        await Kafka.Producer.produceMessage({}, { topicName: 'test' }, {})
         await Kafka.Producer.disconnect('undefined')
       } catch (e) {
         test.ok(e instanceof Error)
