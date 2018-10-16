@@ -71,7 +71,7 @@ module.exports = [{
             key: Joi.string().required().min(1).max(32).description('Key').label('@ Supplied key fails to match the required format. @'),
             value: Joi.string().required().min(1).max(128).description('Value').label('@ Supplied key value fails to match the required format. @')
           })).required().min(1).max(16).description('extension')
-        }).optional().description('Extention list')
+        }).optional().description('Extension list')
       },
       failAction: (request, h, err) => { throw err }
     }
@@ -113,7 +113,7 @@ module.exports = [{
             key: Joi.string().required().min(1).max(32).description('Key').label('@ Supplied key fails to match the required format. @'),
             value: Joi.string().required().min(1).max(128).description('Value').label('@ Supplied key value fails to match the required format. @')
           })).required().min(1).max(16).description('extension')
-        }).optional().description('Extention list')
+        }).optional().description('Extension list')
       }
     }
   }
