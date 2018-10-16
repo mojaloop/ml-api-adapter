@@ -10,7 +10,7 @@ function createRequest (routes) {
   return {
     server: {
       table: () => {
-        return [{table: value}]
+        return [{ table: value }]
       }
     }
   }
@@ -76,13 +76,13 @@ Test('metadata handler', (handlerTest) => {
       let hostName = 'some-host-name'
       Config.HOSTNAME = hostName
       let request = createRequest([
-        {settings: {id: 'first_route', tags: apiTags}, path: '/first'}
+        { settings: { id: 'first_route', tags: apiTags }, path: '/first' }
       ])
 
       let reply = {
         response: (response) => {
           t.equal(response.urls['first_route'], `${hostName}/first`)
-          return {code: statusCode => { t.end() }}
+          return { code: statusCode => { t.end() } }
         }
       }
       Handler.metadata(request, reply)
@@ -90,15 +90,15 @@ Test('metadata handler', (handlerTest) => {
 
     metadataTest.test('format url parameters with colons', t => {
       let request = createRequest([
-        {settings: {id: 'path', tags: apiTags}, path: '/somepath/{id}'},
-        {settings: {id: 'manyargs', tags: apiTags}, path: '/somepath/{id}/{path*}/{test2}/'}
+        { settings: { id: 'path', tags: apiTags }, path: '/somepath/{id}' },
+        { settings: { id: 'manyargs', tags: apiTags }, path: '/somepath/{id}/{path*}/{test2}/' }
       ])
 
       let reply = {
         response: (response) => {
           t.equal(response.urls['path'], '/somepath/:id')
           t.equal(response.urls['manyargs'], '/somepath/:id/:path*/:test2/')
-          return {code: statusCode => { t.end() }}
+          return { code: statusCode => { t.end() } }
         }
       }
 

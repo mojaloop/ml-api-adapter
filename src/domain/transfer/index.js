@@ -30,6 +30,7 @@ const Kafka = require('../../lib/kafka')
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
+const GET = 'get'
 
 /**
  * @module src/domain/transfer
@@ -137,7 +138,59 @@ const fulfil = async (id, headers, message) => {
   }
 }
 
+// to do
+/**
+ * @function byId
+ * @async
+ * @description This will produce a transfer fulfil message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
+ *
+ * @param {string} id - the transferId
+ * @param {object} headers - the http header from the request
+ * @param {object} message - the transfer fulfil message
+ *
+ * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
+ */
+const getTransferById = async (id, headers) => {
+  Logger.info('domain::transfer::transferById::start(%s, %s, %s)', id, headers)
+  try {
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), GET.toUpperCase())
+    const messageProtocol = {
+      id,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: {}
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'get',
+          action: 'get',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = {
+      topicName: Utility.getTransferByIdTopicName()
+    }
+    Logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
+    Logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
+    Logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    return true
+  } catch (err) {
+    Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
+}
 module.exports = {
   prepare,
-  fulfil
+  fulfil,
+  getTransferById
 }

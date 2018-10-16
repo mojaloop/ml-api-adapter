@@ -245,3 +245,21 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
   await server.stop()
   assert.end()
 })
+
+Test('return error if transfer is not provided', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'GET',
+    payload: {},
+    headers: {
+      'date': 'Mon, 10 Sep 2018 20:22:01 GMT',
+      'fspiop-source': 'value',
+      'content-type': 'application/json'
+    }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})

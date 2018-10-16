@@ -54,7 +54,7 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({stripUnknown: true}),
+      }).unknown(false).options({ stripUnknown: true }),
       payload: {
         transferId: Joi.string().guid().required().description('Id of transfer').label('@ Transfer Id must be in a valid GUID format. @'),
         payeeFsp: Joi.string().required().min(1).max(32).description('Financial Service Provider of Payee').label('@ A valid Payee FSP number must be supplied. @'),
@@ -84,6 +84,7 @@ module.exports = [{
   options: {
     id: 'transfer_fulfilment',
     tags: tags,
+    // auth: Auth.strategy(),
     description: 'Fulfil a transfer',
     payload: {
       failAction: 'error'
@@ -99,7 +100,7 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({stripUnknown: true}),
+      }).unknown(false).options({ stripUnknown: true }),
       params: {
         id: Joi.string().required().description('path')
       },
@@ -114,6 +115,38 @@ module.exports = [{
           })).required().min(1).max(16).description('extension')
         }).optional().description('Extension list')
       }
+    }
+  }
+},
+
+{
+  method: 'GET',
+  path: '/transfers/{id}',
+  handler: Handler.getTransferById,
+  options: {
+    id: 'transfer_getById',
+    tags: tags,
+    // auth: Auth.strategy(),
+    description: 'Get a transfer by Id',
+    /* payload: {
+      failAction: 'error'
+    }, */
+    validate: {
+      headers: Joi.object({
+        'content-type': Joi.string().required().valid('application/json'),
+        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        'x-forwarded-for': Joi.string().optional(),
+        'fspiop-source': Joi.string().required(),
+        'fspiop-destination': Joi.string().optional(),
+        'fspiop-encryption': Joi.string().optional(),
+        'fspiop-signature': Joi.string().optional(),
+        'fspiop-uri': Joi.string().optional(),
+        'fspiop-http-method': Joi.string().optional()
+      }).unknown(false).options({ stripUnknown: true }),
+      params: {
+        id: Joi.string().guid().required().description('path').label('@ Supply a valid transfer Id to continue. @') // To Do : expand user friendly error msg to params as well
+      },
+      failAction: (request, h, err) => { throw err }
     }
   }
 }

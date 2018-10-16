@@ -60,6 +60,7 @@ Test('transfer handler', handlerTest => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(TransferService, 'prepare')
     sandbox.stub(TransferService, 'fulfil')
+    sandbox.stub(TransferService, 'getTransferById')
     originalHostName = Config.HOSTNAME
     Config.HOSTNAME = hostname
     t.end()
@@ -239,6 +240,55 @@ Test('transfer handler', handlerTest => {
     })
 
     fulfilTransferTest.end()
+    handlerTest.test('Get transfer should', async getTransferByIdTest => {
+      await getTransferByIdTest.test('reply with status code 200 if message is sent to Kafka topic', async test => {
+        const request = {
+          params: {
+            transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+          },
+          server: {
+            log: () => { }
+          }
+        }
+        const reply = {
+          response: (response) => {
+            return {
+              code: statusCode => {
+                test.equal(statusCode, 200)
+                test.end()
+              }
+            }
+          }
+        }
+        TransferService.getTransferById.resolves()
+        try {
+          await Handler.getTransferById(request, reply)
+        } catch (e) {
+          test.fail()
+          test.end()
+        }
+      })
+      await getTransferByIdTest.test('return error if getTransferById throws', async test => {
+        const request = {
+          params: {
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+          },
+          server: {
+            log: () => { }
+          }
+        }
+        TransferService.getTransferById.rejects(new Error())
+        try {
+          await Handler.getTransferById(request)
+          test.fail('does not throw')
+        } catch (e) {
+          test.ok(e instanceof Error)
+          test.equal(e.message, 'An error has occurred')
+          test.end()
+        }
+      })
+      getTransferByIdTest.end()
+    })
   })
   handlerTest.end()
 })
