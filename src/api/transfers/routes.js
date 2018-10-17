@@ -38,7 +38,6 @@ module.exports = [{
     auth: null,
     description: 'Transfer API.',
     payload: {
-      allow: 'application/json',
       failAction: 'error',
       output: 'data'
     },
