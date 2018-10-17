@@ -132,7 +132,7 @@ module.exports = [{
     }, */
     validate: {
       headers: Joi.object({
-        'content-type': Joi.string().required().valid('application/json'),
+        'content-type': Joi.string().required().valid('application/vnd.interoperability.transfers+json;version=1.0'),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),

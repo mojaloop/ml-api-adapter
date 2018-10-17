@@ -254,7 +254,7 @@ Test('return error if transfer is not provided', async function (assert) {
     headers: {
       'date': 'Mon, 10 Sep 2018 20:22:01 GMT',
       'fspiop-source': 'value',
-      'content-type': 'application/json'
+      'content-type': 'application/vnd.interoperability.transfers+json;version=1.0'
     }
   })
   const server = await Base.setup()
