@@ -68,7 +68,7 @@ const putApi = (path, data, auth = {
   name: 'admin',
   password: 'admin',
   emailAddress: 'admin@test.com'
-}, contentType = 'application/json') => RequestApi.put(path).auth(auth.name, auth.password, auth.emailAddress).set('Content-Type', contentType).send(data)
+}, contentType = 'application/vnd.interoperability.transfers+json;version=1.0') => RequestApi.put(path).auth(auth.name, auth.password, auth.emailAddress).set('Content-Type', contentType).send(data)
 
 // const getAdmin = (path, headers = {}) => RequestAdmin.get(path).set(headers)
 

@@ -29,7 +29,7 @@ const Transformer = require('../../../../src/domain/transfer/transformer')
 // const Utility = require('../../../../src/lib/utility')
 
 const headerDataExample = {
-  'Content-Type': 'application/json',
+  'Content-Type': 'application/vnd.interoperability.transfers+json;version=1.0',
   'FSPIOP-Source': 'central-switch',
   'FSPIOP-Destination': 'payerfsp'
 }
