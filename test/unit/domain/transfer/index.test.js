@@ -86,7 +86,7 @@ Test('Transfer Service tests', serviceTest => {
         id: message.transferId,
         to: message.payeeFsp,
         from: message.payerFsp,
-        type: 'application/json',
+        type: 'application/vnd.interoperability.transfers+json;version=1.0',
         content: {
           headers: headers,
           payload: message
@@ -183,7 +183,7 @@ Test('Transfer Service tests', serviceTest => {
         id,
         to: headers['fspiop-destination'],
         from: headers['fspiop-source'],
-        type: 'application/json',
+        type: 'application/vnd.interoperability.transfers+json;version=1.0',
         content: {
           headers: headers,
           payload: message
@@ -279,6 +279,110 @@ Test('Transfer Service tests', serviceTest => {
       }
     })
     fulfilTest.end()
+  })
+  serviceTest.test('getById should', async getTransferByIdTest => {
+    await getTransferByIdTest.test('return transfer', async test => {
+      const message = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
+
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+      const messageProtocol = {
+        id: message.id,
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        content: {
+          headers: headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'prepare',
+            action: 'prepare',
+            createdAt: new Date(),
+            status: 'success'
+          }
+        }
+      }
+      const topicConfig = {
+        topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
+      }
+
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+
+      let result = await Service.getTransferById(headers, message)
+      test.equals(result, true)
+      test.end()
+    })
+    await getTransferByIdTest.test('throw error', async test => {
+      const message = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
+
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const error = new Error()
+      Kafka.Producer.produceMessage.rejects(error)
+      try {
+        await Service.getTransferById(headers, message)
+        test.fail('does not throw')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+    getTransferByIdTest.end()
   })
   serviceTest.end()
 })

@@ -26,7 +26,7 @@ const Test = require('tape')
 const Base = require('../../base')
 
 Test('return error if required fields are missing on prepare', async function (assert) {
-  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' } })
+  let req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' } })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
@@ -47,7 +47,7 @@ Test('return error if transferId is not a guid', async function (assert) {
   let req = Base.buildRequest({ url: '/transfers',
     method: 'POST',
     payload: { transferId: 'invalid transfer id' },
-    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -85,7 +85,7 @@ Test('return error if amount is not a valid amount', async function (assert) {
         ]
       }
     },
-    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -123,7 +123,7 @@ Test('return error if currency is not a valid ISO 4217 currency code', async fun
         ]
       }
     },
-    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -161,7 +161,7 @@ Test('return error if condition is not valid according to the pattern /^[A-Za-z0
         ]
       }
     },
-    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -199,7 +199,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
         ]
       }
     },
-    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -237,11 +237,29 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
         ]
       }
     },
-    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/json' }
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if transfer is not provided', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'GET',
+    payload: {},
+    headers: {
+      'date': 'Mon, 10 Sep 2018 20:22:01 GMT',
+      'fspiop-source': 'value',
+      'content-type': 'application/vnd.interoperability.transfers+json;version=1.0'
+    }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
   await server.stop()
   assert.end()
 })

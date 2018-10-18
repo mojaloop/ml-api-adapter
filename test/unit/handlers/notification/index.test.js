@@ -615,6 +615,36 @@ Test('Notification Service tests', notificationTest => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
 
+    consumeMessageTest.test('process the message with action = get', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'get',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      let result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
     consumeMessageTest.test('throw error is there is any error processing the message', async test => {
       const msg = {
         value: {

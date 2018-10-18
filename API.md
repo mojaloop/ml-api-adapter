@@ -219,8 +219,8 @@ Some fields are Read-only, meaning they are set by the API and cannot be modifie
 | ilpPacket | String | ILP packet |
 | condition | String | The condition for executing the transfer | 
 | expiration | DateTime | Time when the transfer expires. If the transfer has not executed by this time, the transfer is canceled. |
-| extensionList | Object | *Optional* Additional extention list |
-| extensionList.extension | Array | each extention object |
+| extensionList | Object | *Optional* Additional extension list |
+| extensionList.extension | Array | each extension object |
 | extensionList.extension[].key | String | Error Description |
 | extensionList.extension[].value | String | Detailed Error Description |
 
@@ -235,8 +235,8 @@ Some fields are Read-only, meaning they are set by the API and cannot be modifie
 | fulfilment   | String | fulfilment condition |
 | transferState | String | The state of the transfer |
 | completedTimestamp | DateTime | The time when the fulfilment was complete |
-| extensionList | Object | *Optional* Additional extention list |
-| extensionList.extension | Array | each extention object |
+| extensionList | Object | *Optional* Additional extension list |
+| extensionList.extension | Array | each extension object |
 | extensionList.extension[].key | String | Error Description |
 | extensionList.extension[].value | String | Detailed Error Description |
 

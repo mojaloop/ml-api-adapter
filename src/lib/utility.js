@@ -149,6 +149,22 @@ const fulfilTopicTemplate = () => {
     throw e
   }
 }
+
+/**
+ * @method FulfilTopicTemplate
+ *
+ * @description Generates a fulfil topic name found in the default.json
+ *
+ * @returns {string} - Returns topic name to be created, throws error if failure occurs
+ */
+const getTransferByidTopicTemplate = () => {
+  try {
+    return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GET_TRANSFERS_TOPIC_TEMPLATE.TEMPLATE)
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
+}
 /**
  * @method NotificationTopicTemplate
  *
@@ -273,6 +289,21 @@ const getFulfilTopicName = () => {
 }
 
 /**
+ * @method GetFulfilTopicName
+ *
+ * @description fulfilTopicTemplate called which generates a fulfil topic name found in the default.json
+ *
+ * @returns {string} - Returns topic name to be created, throws error if failure occurs
+ */
+const getTransferByIdTopicName = () => {
+  try {
+    return getTransferByidTopicTemplate()
+  } catch (e) {
+    throw e
+  }
+}
+
+/**
  * @method GetKafkaConfig
  *
  * @param {string} flow - This is required for the config for the ML API ADAPTER. Example: 'CONSUMER' ie: note the case of text
@@ -293,167 +324,8 @@ const getKafkaConfig = (flow, functionality, action) => {
   }
 }
 
-// /**
-//  * @method updateMessageProtocolMetadata
-//  *
-//  * @param {object} messageProtocol - The current messageProtocol from kafka
-//  * @param {string} metadataType - the action flow. Example: 'prepare'
-//  * @param {object} state - the tate of the message being passed.
-//  * Example:
-//  * SUCCESS: {
-//  *   status: 'success',
-//  *   code: 0,
-//  *   description: 'action successful'
-//  * }
-//  *
-//  * @returns {object} - Returns updated messageProtocol
-//  */
-// const updateMessageProtocolMetadata = (messageProtocol, metadataType, state) => {
-//   messageProtocol.metadata.event.responseTo = messageProtocol.metadata.event.id
-//   messageProtocol.metadata.event.id = Uuid()
-//   messageProtocol.metadata.event.type = metadataType
-//   messageProtocol.metadata.event.state = state
-//   return messageProtocol
-// }
-
-// /**
-//  * @method createTransferMessageProtocol
-//  *
-//  * @param {object} payload - The payload of the api request
-//  * @param {string} metadataType - the action flow. Example: 'prepare'
-//  * @param {object} state - the tate of the message being passed.
-//  * Example:
-//  * SUCCESS: {
-//  *   status: 'success',
-//  *   code: 0,
-//  *   description: 'action successful'
-//  * }
-//  * @param {string} pp - this is an optional field for future functionality to send the message to a third party
-//  *
-//  * @returns {object} - Returns newly created messageProtocol
-//  */
-// const createTransferMessageProtocol = (payload, metadataType, state, pp = '') => {
-//   return {
-//     id: payload.transferId,
-//     from: payload.payerFsp,
-//     to: payload.payeeFsp,
-//     type: 'application/json',
-//     content: {
-//       header: {},
-//       payload
-//     },
-//     metadata: {
-//       event: {
-//         id: Uuid(),
-//         responseTo: '',
-//         type: metadataType,
-//         action: metadataType,
-//         createdAt: new Date(),
-//         state
-//       }
-//     },
-//     pp
-//   }
-// }
-
-// /**
-//  * @method createParticipantTopicConf
-//  *
-//  * @param {string} participantName - The participant name
-//  * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
-//  * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
-//  * @param {number} partition - optional partition to produce to
-//  * @param {*} opaqueKey - optional opaque token, which gets passed along to your delivery reports
-//  *
-//  * @returns {object} - Returns newly created participant topicConfig
-//  */
-// const createParticipantTopicConf = (participantName, functionality, action, partition = 0, opaqueKey = 0) => {
-//   return {
-//     topicName: transformAccountToTopicName(participantName, functionality, action),
-//     key: Uuid(),
-//     partition,
-//     opaqueKey
-//   }
-// }
-
-// /**
-//  * @method createGeneralTopicConf
-//  *
-//  * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
-//  * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
-//  * @param {number} partition - optional partition to produce to
-//  * @param {*} opaqueKey - optional opaque token, which gets passed along to your delivery reports
-//  *
-//  * @returns {object} - Returns newly created general topicConfig
-//  */
-// const createGeneralTopicConf = (functionality, action, partition = 0, opaqueKey = 0) => {
-//   return {
-//     topicName: transformGeneralTopicName(functionality, action),
-//     key: Uuid(),
-//     partition,
-//     opaqueKey
-//   }
-// }
-
-// /**
-//  * @method produceGeneralMessage
-//  *
-//  * @async
-//  * This is an async method that produces a message against a generated Kafka topic. it is called multiple times
-//  *
-//  * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
-//  * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
-//  * @param {object} message - a list of messages to consume for the relevant topic
-//  * @param {object} state - state of the message being produced
-//  *
-//  * @function Kafka.Producer.produceMessage to persist the message to the configured topic on Kafka
-//  * @function Utility.updateMessageProtocolMetadata updates the messages metadata
-//  * @function Utility.createGeneralTopicConf dynamically generates the general topic configuration
-//  * @function Utility.getKafkaConfig dynamically gets Kafka configuration
-//  *
-//  * @returns {object} - Returns a boolean: true if successful, or throws and error if failed
-//  */
-// const produceGeneralMessage = async (functionality, action, message, state) => {
-//   return await Kafka.Producer.produceMessage(updateMessageProtocolMetadata(message, functionality, state),
-//     createGeneralTopicConf(functionality, action),
-//     getKafkaConfig(ENUMS.PRODUCER, functionality.toUpperCase(), action.toUpperCase()))
-// }
-
-// /**
-//  * @method produceParticipantMessage
-//  *
-//  * @async
-//  * This is an async method that produces a message against a Kafka generated topic for a specific participant. it is called multiple times
-//  *
-//  * @param {string} participantName - the name of the participant for topic creation
-//  * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
-//  * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
-//  * @param {object} message - a list of messages to consume for the relevant topic
-//  * @param {object} state - state of the message being produced
-//  *
-//  * @function Kafka.Producer.produceMessage to persist the message to the configured topic on Kafka
-//  * @function Utility.updateMessageProtocolMetadata updates the messages metadata
-//  * @function Utility.createParticipantTopicConf dynamically generates the topic configuration with a participant name
-//  * @function Utility.getKafkaConfig dynamically gets Kafka configuration
-//  *
-//  * @returns {object} - Returns a boolean: true if successful, or throws and error if failed
-//  */
-// const produceParticipantMessage = async (participantName, functionality, action, message, state) => {
-//   return await Kafka.Producer.produceMessage(updateMessageProtocolMetadata(message, functionality, state),
-//     createParticipantTopicConf(participantName, functionality, action),
-//     getKafkaConfig(ENUMS.PRODUCER, functionality.toUpperCase(), action.toUpperCase()))
-// }
-
 exports.getParticipantTopicName = getParticipantTopicName
 exports.getFulfilTopicName = getFulfilTopicName
-
-// exports.transformAccountToTopicName = transformAccountToTopicName
-// exports.transformGeneralTopicName = transformGeneralTopicName
 exports.getKafkaConfig = getKafkaConfig
-// exports.updateMessageProtocolMetadata = updateMessageProtocolMetadata
-// exports.createTransferMessageProtocol = createTransferMessageProtocol
-// exports.createParticipantTopicConf = createParticipantTopicConf
-// exports.createGeneralTopicConf = createGeneralTopicConf
-// exports.produceParticipantMessage = produceParticipantMessage
-// exports.produceGeneralMessage = produceGeneralMessage
 exports.getNotificationTopicName = getNotificationTopicName
+exports.getTransferByIdTopicName = getTransferByIdTopicName
