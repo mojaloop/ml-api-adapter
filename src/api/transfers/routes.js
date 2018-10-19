@@ -84,7 +84,6 @@ module.exports = [{
   options: {
     id: 'transfer_fulfilment',
     tags: tags,
-    // auth: Auth.strategy(),
     description: 'Fulfil a transfer',
     payload: {
       failAction: 'error'
