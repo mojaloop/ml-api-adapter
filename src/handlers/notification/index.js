@@ -87,32 +87,26 @@ const startConsumer = async () => {
 
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
-  return new Promise(async (resolve, reject) => {
+  try {
     if (error) {
       Logger.error(`Error while reading message from kafka ${error}`)
-      return reject(error)
+      throw error
     }
     Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
-
-    message = (!Array.isArray(message) ? [message] : message)
-
-    for (let msg of message) {
-      Logger.info('Notification::consumeMessage::processMessage')
-      let res = await processMessage(msg).catch(err => {
-        Logger.error(`Error processing the kafka message - ${err}`)
-        if (!autoCommitEnabled) {
-          notificationConsumer.commitMessageSync(msg)
-        }
-        // return reject(err) // This is not handled correctly as we need to deal with the error here
-        return resolve(err) // We return 'resolved' since we have dealt with the error here
-      })
-      if (!autoCommitEnabled) {
-        notificationConsumer.commitMessageSync(msg)
-      }
-      Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
-      return resolve(res)
+    if (Array.isArray(message)) {
+      message = message[0]
     }
-  })
+    Logger.info('Notification::consumeMessage::processMessage')
+    await processMessage(message)
+    Logger.info('Committing message back to kafka')
+    if (!autoCommitEnabled) {
+      notificationConsumer.commitMessageSync(message)
+    }
+    return true
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
 }
 
 /**
@@ -120,7 +114,7 @@ const consumeMessage = async (error, message) => {
 * @async
 * @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
 * Callback.sendCallback - called to send the notification callback
-* @param {object} message - the message received form kafka
+* @param {object} msg - the message received form kafka
 
 * @returns {boolean} Returns true on sucess and throws error on failure
 */
@@ -144,10 +138,7 @@ const processMessage = async (msg) => {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
-      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from })
-      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
