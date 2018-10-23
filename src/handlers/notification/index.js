@@ -138,10 +138,7 @@ const processMessage = async (msg) => {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
-      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from })
-      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {

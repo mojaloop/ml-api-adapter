@@ -235,19 +235,15 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const urlPayer = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const urlPayee = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
-      const headersFrom = { 'FSPIOP-Destination': msg.value.from }
       const headersTo = { 'FSPIOP-Destination': msg.value.to }
       const message = {}
 
       const expected = 200
-      Callback.sendCallback.withArgs(urlPayer, method, headersFrom, message, msg.value.id, msg.value.from).returns(P.resolve(200))
       Callback.sendCallback.withArgs(urlPayee, method, headersTo, message, msg.value.id, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(urlPayer, method, headersFrom, message, msg.value.id, msg.value.from))
       test.ok(Callback.sendCallback.calledWith(urlPayee, method, headersTo, message, msg.value.id, msg.value.to))
       test.equal(result, expected)
       test.end()
