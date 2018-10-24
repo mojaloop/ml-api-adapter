@@ -61,7 +61,8 @@
               "enable.auto.commit": false,
               "auto.commit.interval.ms": 200,
               "socket.keepalive.enable": true,
-              "socket.max.fails": 1
+              "socket.max.fails": 1,
+              "partition.assignment.strategy": "range"
             },
             "topicConf": {
               "auto.offset.reset": "earliest"
