@@ -27,6 +27,7 @@
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
+const Metrics = require('../../lib/metrics')
 
 /**
  * @module src/api/transfers/handler
@@ -45,13 +46,25 @@ const Boom = require('boom')
  */
 
 const create = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfers_prepare',
+    'Produce a transfer prepare message to transfer prepare kafka topic',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await TransferService.prepare(request.headers, request.payload)
+
+    // setTimeout(()=>{
+    histTimerEnd({success: true})
+    // }, 150)
+
     return h.response().code(202)
   } catch (err) {
     Logger.error(err)
+    histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
