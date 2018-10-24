@@ -11,7 +11,7 @@ module.exports = [
     method: 'GET',
     path: '/metrics',
     handler: Handler.metrics,
-    options: {
+    config: {
       tags: tags,
       description: 'Prometheus metrics endpoint',
       id: 'metrics'

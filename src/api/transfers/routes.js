@@ -43,8 +43,8 @@ module.exports = [{
     },
     validate: {
       headers: Joi.object({
-        // 'accept': Joi.string().optional().regex(/application\/vnd.interoperability[.]/),
-        // 'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
+        'accept': Joi.string().optional().regex(/application\/vnd.interoperability[.]/),
+        'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
         'content-length': Joi.number().max(5242880),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),

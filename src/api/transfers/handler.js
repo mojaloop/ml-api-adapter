@@ -40,14 +40,14 @@ const Metrics = require('../../lib/metrics')
  * @description This will call prepare method of transfer service, which will produce a transfer message on prepare kafka topic
  *
  * @param {object} request - the http request object, containing headers and transfer request as payload
- * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
  *
  * @returns {integer} - Returns the response code 202 on success, throws error if failure occurs
  */
 
 const create = async function (request, h) {
   const histTimerEnd = Metrics.getHistogram(
-    'transfers_prepare',
+    'transfers_prepare_ml_adapter',
     'Produce a transfer prepare message to transfer prepare kafka topic',
     ['success']
   ).startTimer()
@@ -76,20 +76,29 @@ const create = async function (request, h) {
  * @description This will call fulfil method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
  *
  * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
- * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
  *
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 
 const fulfilTransfer = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfers_fulfil_ml_adapter',
+    'Produce a transfer fulfil message to transfer fulfil kafka topic',
+    ['success']
+  ).startTimer()
   try {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.fulfil(request.params.id, request.headers, request.payload)
+    // setTimeout(()=>{
+    histTimerEnd({success: true})
+    // }, 150)
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
+    histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
@@ -101,7 +110,7 @@ const fulfilTransfer = async function (request, h) {
  * @description This will call getTransferById method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
  *
  * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
- * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
  *
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
