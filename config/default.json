@@ -91,7 +91,8 @@
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
-              "dr_cb": true
+              "dr_cb": true,
+              "partitioner": "random"
             }
           }
         },
@@ -113,7 +114,8 @@
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
-              "dr_cb": true
+              "dr_cb": true,
+              "partitioner": "random"
             }
           }
         },
@@ -135,7 +137,8 @@
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
-              "dr_cb": true
+              "dr_cb": true,
+              "partitioner": "random"
             }
           }
         }
