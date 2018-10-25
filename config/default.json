@@ -21,7 +21,7 @@
       "DISABLED": false,
       "config": {
         "timeout": 5000,
-        "prefix": "node"
+        "prefix": "moja_ml_"
       }
     }
   },
