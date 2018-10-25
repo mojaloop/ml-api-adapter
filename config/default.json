@@ -16,6 +16,15 @@
       "DISABLED": false
     }
   },
+  "INSTRUMENTATION": {
+    "METRICS": {
+      "DISABLED": false,
+      "config": {
+        "timeout": 5000,
+        "prefix": "node"
+      }
+    }
+  },
   "KAFKA": {
     "TOPIC_TEMPLATES": {
       "PARTICIPANT_TOPIC_TEMPLATE": {
