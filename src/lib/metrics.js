@@ -26,6 +26,7 @@
 'use strict'
 
 const client = require('prom-client')
+const Config = require('../lib/config')
 
 let alreadySetup = false
 let histograms = []
@@ -45,7 +46,7 @@ const getHistogram = (name, help = null, labelNames = []) => {
       return histograms[name]
     }
     histograms[name] = new client.Histogram({
-      name: name,
+      name: `${Config.INSTRUMENTATION_METRICS_CONFIG.prefix}${name}`,
       help: help || `${name}_histogram`,
       labelNames: labelNames,
       buckets: [0.010, 0.050, 0.1, 0.5, 1, 2, 5] // this is in seconds - the startTimer().end() collects in seconds with ms precision
