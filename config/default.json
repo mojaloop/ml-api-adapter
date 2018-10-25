@@ -51,7 +51,7 @@
             "rdkafkaConf": {
               "client.id": "ml-con-notification-event",
               "group.id": "kafka-ml-api-adapter",
-              "metadata.broker.list": "127.0.0.1:9092",
+              "metadata.broker.list": "localhost:9092",
               "socket.blocking.max.ms": 1,
               "fetch.wait.max.ms": 1,
               "fetch.error.backoff.ms": 1,
@@ -79,7 +79,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "127.0.0.1:9092",
+              "metadata.broker.list": "localhost:9092",
               "client.id": "ml-prod-transfer-prepare",
               "event_cb": true,
               "compression.codec": "none",
@@ -102,7 +102,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "127.0.0.1:9092",
+              "metadata.broker.list": "localhost:9092",
               "client.id": "ml-prod-transfer-fulfil",
               "event_cb": true,
               "compression.codec": "none",
@@ -125,7 +125,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "127.0.0.1:9092",
+              "metadata.broker.list": "localhost:9092",
               "client.id": "ml-prod-transfer-get",
               "event_cb": true,
               "compression.codec": "none",
