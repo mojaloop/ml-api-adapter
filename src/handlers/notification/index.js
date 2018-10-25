@@ -88,7 +88,7 @@ const startConsumer = async () => {
 
 const consumeMessage = async (error, message) => {
   const histTimerEnd = Metrics.getHistogram(
-    'notification_event_ml_adapter',
+    'moja_ml_notification_event',
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success']
   ).startTimer()
