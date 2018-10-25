@@ -36,6 +36,7 @@ const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
 const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
+const Metrics = require('../../lib/metrics')
 
 /**
  * @module src/handlers/notification
@@ -86,6 +87,11 @@ const startConsumer = async () => {
 */
 
 const consumeMessage = async (error, message) => {
+  const histTimerEnd = Metrics.getHistogram(
+    'moja_ml_notification_event',
+    'Consume a notification message from the kafka topic and process it accordingly',
+    ['success']
+  ).startTimer()
   Logger.info('Notification::consumeMessage')
   try {
     if (error) {
@@ -102,8 +108,12 @@ const consumeMessage = async (error, message) => {
     if (!autoCommitEnabled) {
       notificationConsumer.commitMessageSync(message)
     }
+    // setTimeout(()=>{
+    histTimerEnd({success: true})
+    // }, 150)
     return true
   } catch (e) {
+    histTimerEnd({success: false})
     Logger.error(e)
     throw e
   }

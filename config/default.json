@@ -16,6 +16,15 @@
       "DISABLED": false
     }
   },
+  "INSTRUMENTATION": {
+    "METRICS": {
+      "DISABLED": false,
+      "config": {
+        "timeout": 5000,
+        "prefix": "node"
+      }
+    }
+  },
   "KAFKA": {
     "TOPIC_TEMPLATES": {
       "PARTICIPANT_TOPIC_TEMPLATE": {
@@ -61,7 +70,8 @@
               "enable.auto.commit": false,
               "auto.commit.interval.ms": 200,
               "socket.keepalive.enable": true,
-              "socket.max.fails": 1
+              "socket.max.fails": 1,
+              "partition.assignment.strategy": "range"
             },
             "topicConf": {
               "auto.offset.reset": "earliest"
@@ -90,7 +100,8 @@
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
-              "dr_cb": true
+              "dr_cb": true,
+              "partitioner": "random"
             }
           }
         },
@@ -112,7 +123,8 @@
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
-              "dr_cb": true
+              "dr_cb": true,
+              "partitioner": "random"
             }
           }
         },
@@ -134,7 +146,8 @@
               "queue.buffering.max.ms": 50,
               "batch.num.messages": 100,
               "api.version.request": true,
-              "dr_cb": true
+              "dr_cb": true,
+              "partitioner": "random"
             }
           }
         }
