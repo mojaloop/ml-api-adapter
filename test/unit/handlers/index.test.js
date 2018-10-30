@@ -5,7 +5,8 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
-const Plugin = require('../../../src/handlers/api/plugin')
+const HealthPlugin = require('../../../src/handlers/api/plugin')
+const MetricsPlugin = require('../../../src/api/metrics/plugin')
 
 Test('cli', async (cliTest) => {
   cliTest.beforeEach(test => {
@@ -73,7 +74,7 @@ Test('cli', async (cliTest) => {
       var initOptions = {
         service: 'handler',
         port: Config.PORT,
-        modules: [Plugin],
+        modules: [HealthPlugin, MetricsPlugin],
         handlers: modulesList,
         runHandlers: true
       }
@@ -102,7 +103,7 @@ Test('cli', async (cliTest) => {
       var initOptions = {
         service: 'handler',
         port: Config.PORT,
-        modules: [Plugin],
+        modules: [HealthPlugin, MetricsPlugin],
         handlers: modulesList,
         runHandlers: true
       }
