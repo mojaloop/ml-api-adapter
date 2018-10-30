@@ -131,12 +131,12 @@ const consumeMessage = async (error, message) => {
 
 const processMessage = async (msg) => {
   try {
-    const { metadata, from, to, content, id } = msg.value
-
-    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Notification::processMessage`)
     if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
       throw new Error('Invalid message received from kafka')
     }
+
+    const { metadata, from, to, content, id } = msg.value
+    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Notification::processMessage`)
 
     const { action, state } = metadata.event
     const status = state.status
