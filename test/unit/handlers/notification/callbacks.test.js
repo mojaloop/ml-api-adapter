@@ -28,6 +28,7 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const proxyquire = require('proxyquire')
+// const test = require('../../../../src/handlers/notification/callbacks
 
 Test('Callback Service tests', callbacksTest => {
   let sandbox, callback, request
@@ -37,7 +38,9 @@ Test('Callback Service tests', callbacksTest => {
     sandbox = Sinon.createSandbox()
     request = sandbox.stub()
     sandbox.stub(Logger)
-    callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request': request })
+
+    // callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request': request })
+    callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request-promise-native': request })
 
     t.end()
   })
@@ -93,6 +96,8 @@ Test('Callback Service tests', callbacksTest => {
       }
 
       request.withArgs(requestOptions).yields(null, { statusCode: 200 }, null)
+
+      // request.yields(null, { statusCode: 200 }, null)
 
       let result = await callback.sendCallback(url, method, headers, message)
       test.equal(result, expected)
