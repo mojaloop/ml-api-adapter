@@ -17,13 +17,20 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * ModusBox
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ - Rajiv Mothilal <rajiv.mothilal@modusbox.com>
+ - Miguel de Barros <miguel.debarros@modusbox.com>
+
  --------------
  ******/
 
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
-const request = require('request')
+// const request = require('request')
+const request = require('request-promise-native') // added to ensure that the request support async-await or promise natively
 const Transformer = require('../../domain/transfer/transformer')
 
 /**
