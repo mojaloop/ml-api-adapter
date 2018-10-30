@@ -23,7 +23,8 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
-const request = require('request')
+// const request = require('request')
+const request = require('request-promise-native') // added to ensure that the request support async-await or promise natively
 const Transformer = require('../../domain/transfer/transformer')
 
 /**

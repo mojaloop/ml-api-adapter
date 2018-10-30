@@ -131,16 +131,19 @@ const consumeMessage = async (error, message) => {
 
 const processMessage = async (msg) => {
   try {
-    Logger.info('Notification::processMessage')
+    const { metadata, from, to, content, id } = msg.value
+
+    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Notification::processMessage`)
     if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
       throw new Error('Invalid message received from kafka')
     }
-    const { metadata, from, to, content, id } = msg.value
+
     const { action, state } = metadata.event
     const status = state.status
+
     let headers
-    Logger.info('Notification::processMessage action: ' + action)
-    Logger.info('Notification::processMessage status: ' + status)
+    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Notification::processMessage action: ${action}`)
+    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Notification::processMessage status: ${status}`)
     if (action === 'prepare' && status === 'success') {
       let callbackURL = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
       return Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
@@ -182,7 +185,7 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')
-      Logger.error(`error sending notification to the callback - ${err}`)
+      Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ error sending notification to the callback - ${err}`)
       throw err
     }
   } catch (e) {
