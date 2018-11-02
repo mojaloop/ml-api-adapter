@@ -113,9 +113,13 @@ const consumeMessage = async (error, message) => {
     // }, 150)
     return true
   } catch (e) {
+    Logger.info('Committing message back to kafka')
+    if (!autoCommitEnabled) {
+      notificationConsumer.commitMessageSync(message)
+    }
     histTimerEnd({success: false})
     Logger.error(e)
-    throw e
+    // throw e
   }
 }
 
