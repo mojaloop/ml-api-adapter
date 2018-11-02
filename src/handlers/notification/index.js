@@ -111,7 +111,7 @@ const consumeMessage = async (error, message) => {
     // setTimeout(()=>{
     histTimerEnd({success: true})
     // }, 150)
-    return true
+    // return true
   } catch (e) {
     Logger.info('Committing message back to kafka')
     if (!autoCommitEnabled) {
@@ -121,6 +121,7 @@ const consumeMessage = async (error, message) => {
     Logger.error(e)
     // throw e
   }
+  return true
 }
 
 /**
