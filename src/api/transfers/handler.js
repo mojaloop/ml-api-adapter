@@ -52,6 +52,7 @@ const create = async function (request, h) {
     ['success']
   ).startTimer()
 
+  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::create::start`)
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
