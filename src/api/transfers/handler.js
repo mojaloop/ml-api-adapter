@@ -52,6 +52,7 @@ const create = async function (request, h) {
     ['success']
   ).startTimer()
 
+  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::create::prepare`)
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
@@ -87,6 +88,9 @@ const fulfilTransfer = async function (request, h) {
     'Produce a transfer fulfil message to transfer fulfil kafka topic',
     ['success']
   ).startTimer()
+
+  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::create::fulfil`)
+
   try {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
