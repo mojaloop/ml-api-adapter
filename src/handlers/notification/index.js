@@ -92,6 +92,8 @@ const consumeMessage = async (error, message) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success']
   ).startTimer()
+  const { metadata, from, to, content, id } = message[0].value
+  Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - START`)
   Logger.info('Notification::consumeMessage')
   try {
     if (error) {
@@ -109,6 +111,7 @@ const consumeMessage = async (error, message) => {
       notificationConsumer.commitMessageSync(message)
     }
     // setTimeout(()=>{
+    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
     histTimerEnd({success: true})
     // }, 150)
     // return true
@@ -117,6 +120,7 @@ const consumeMessage = async (error, message) => {
     if (!autoCommitEnabled) {
       notificationConsumer.commitMessageSync(message)
     }
+    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
     histTimerEnd({success: false})
     Logger.error(e)
     // throw e
@@ -141,7 +145,7 @@ const processMessage = async (msg) => {
     }
 
     const { metadata, from, to, content, id } = msg.value
-    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - START`)
+    // Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - START`)
 
     const { action, state } = metadata.event
     const status = state.status
@@ -154,60 +158,43 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      const result = await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from })
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to })
-      const result = await Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      const result = await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action.toLowerCase() === 'reject') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from })
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to })
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      const result = await Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
-      return result
+      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'abort') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from })
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to })
-      const result = await Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'timeout-received') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      const result = await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action === 'prepare-duplicate') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      const result = await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else if (action === 'get') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      const result = await Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
-      return result
+      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     } else {
       const err = new Error('invalid action received from kafka')
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ error sending notification to the callback - ${err}`)
-      Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
       throw err
     }
   } catch (e) {
