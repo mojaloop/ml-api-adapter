@@ -92,8 +92,8 @@ const consumeMessage = async (error, message) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success']
   ).startTimer()
-  const { metadata, from, to, content, id } = message[0].value
-  Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - START`)
+  // const { metadata, from, to, content, id } = message[0].value
+
   Logger.info('Notification::consumeMessage')
   try {
     if (error) {
@@ -104,6 +104,7 @@ const consumeMessage = async (error, message) => {
     if (Array.isArray(message)) {
       message = message[0]
     }
+    Logger.info(`[cid=${message.value.id}, fsp=${message.value.from}, source=${message.value.from}, dest=${message.value.to}] ~ Transfer::handler::notification - START`)
     Logger.info('Notification::consumeMessage::processMessage')
     await processMessage(message)
     Logger.info('Committing message back to kafka')
@@ -111,7 +112,7 @@ const consumeMessage = async (error, message) => {
       notificationConsumer.commitMessageSync(message)
     }
     // setTimeout(()=>{
-    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
+    Logger.info(`[cid=${message.value.id}, fsp=${message.value.from}, source=${message.value.from}, dest=${message.value.to}] ~ Transfer::handler::notification - END`)
     histTimerEnd({success: true})
     // }, 150)
     // return true
@@ -120,7 +121,7 @@ const consumeMessage = async (error, message) => {
     if (!autoCommitEnabled) {
       notificationConsumer.commitMessageSync(message)
     }
-    Logger.info(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ Transfer::handler::notification - END`)
+    Logger.info(`[cid=${message.value.id}, fsp=${message.value.from}, source=${message.value.from}, dest=${message.value.to}] ~ Transfer::handler::notification - ERROR`)
     histTimerEnd({success: false})
     Logger.error(e)
     // throw e

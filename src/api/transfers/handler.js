@@ -65,6 +65,7 @@ const create = async function (request, h) {
     return h.response().code(202)
   } catch (err) {
     Logger.error(err)
+    Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::api::prepare - ERROR`)
     histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
@@ -103,6 +104,7 @@ const fulfilTransfer = async function (request, h) {
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
+    Logger.info(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ Transfers::api::fulfil - ERROR`)
     histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
