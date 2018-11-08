@@ -28,6 +28,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
 const Utility = require('../../lib/utility')
 const Callback = require('./callbacks.js')
+const uuid = require('uuid4')
 
 const NOTIFICATION = 'notification'
 const EVENT = 'event'
@@ -61,6 +62,13 @@ const startConsumer = async () => {
     if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
       autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
     }
+
+    if (config.rdkafkaConf['client.id'] !== undefined) {
+      config.rdkafkaConf['client.id'] = `${config.rdkafkaConf['client.id']}-${uuid()}`
+    } else {
+      config.rdkafkaConf['client.id'] = `default-client-id-${uuid()}`
+    }
+
     notificationConsumer = new Consumer([topicName], config)
     Logger.info('Notification::startConsumer::Consumer: new')
 
