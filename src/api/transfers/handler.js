@@ -52,19 +52,20 @@ const create = async function (request, h) {
     ['success']
   ).startTimer()
 
-  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::create::prepare`)
+  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::api::prepare - START`)
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await TransferService.prepare(request.headers, request.payload)
 
     // setTimeout(()=>{
+    Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::api::prepare - END`)
     histTimerEnd({success: true})
     // }, 150)
-
     return h.response().code(202)
   } catch (err) {
     Logger.error(err)
+    Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::api::prepare - ERROR`)
     histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
@@ -89,7 +90,7 @@ const fulfilTransfer = async function (request, h) {
     ['success']
   ).startTimer()
 
-  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ Transfers::create::fulfil`)
+  Logger.info(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ Transfers::api::fulfil - START`)
 
   try {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
@@ -97,11 +98,13 @@ const fulfilTransfer = async function (request, h) {
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.fulfil(request.params.id, request.headers, request.payload)
     // setTimeout(()=>{
+    Logger.info(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ Transfers::api::fulfil - END`)
     histTimerEnd({success: true})
     // }, 150)
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
+    Logger.info(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ Transfers::api::fulfil - ERROR`)
     histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }

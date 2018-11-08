@@ -59,7 +59,7 @@
             },
             "rdkafkaConf": {
               "client.id": "ml-con-notification-event",
-              "group.id": "kafka-ml-api-adapter",
+              "group.id": "ml-group-notification-event",
               "metadata.broker.list": "localhost:9092",
               "socket.blocking.max.ms": 1,
               "fetch.wait.max.ms": 1,

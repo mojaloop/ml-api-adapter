@@ -76,8 +76,9 @@ const sendCallback = async (url, method, headers, message, cid, fsp) => {
         Logger.error(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
         throw error
       }
-      Logger.info(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback Fsuccessful with status code: ${response.statusCode}`)
+      Logger.info(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback successful with status code: ${response.statusCode}`)
       Logger.debug(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback successful with response: ${JSON.stringify(response)}`)
+
       return response.statusCode
     })
   } catch (e) {

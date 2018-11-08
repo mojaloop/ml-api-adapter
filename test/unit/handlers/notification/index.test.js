@@ -665,10 +665,12 @@ Test('Notification Service tests', notificationTest => {
       }
       try {
         await Notification.consumeMessage(null, [msg])
-        test.fail('Error should be thrown')
+        test.pass()
+        // test.fail('Error should be thrown')
         test.end()
       } catch (e) {
-        test.pass()
+        // test.pass()
+        test.fail('Error should NOT be thrown')
         test.end()
       }
     })
@@ -695,10 +697,12 @@ Test('Notification Service tests', notificationTest => {
       try {
         test.ok(await Notification.startConsumer())
         await Notification.consumeMessage(null, [msg])
-        test.fail('Error should be thrown')
+        test.pass()
+        // test.fail('Error should be thrown')
         test.end()
       } catch (e) {
-        test.pass()
+        // test.pass()
+        test.fail('Error should NOT be thrown')
         test.end()
       }
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false

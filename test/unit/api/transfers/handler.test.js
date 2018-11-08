@@ -33,6 +33,10 @@ const createRequest = (payload) => {
   const requestPayload = payload || {}
   return {
     payload: requestPayload,
+    headers: {
+      'fspiop-source': 'payer',
+      'fspiop-destination': 'payee'
+    },
     server: {
       log: () => { }
     }
@@ -44,6 +48,10 @@ const createPutRequest = (params, payload) => {
   const requestParams = params || {}
   return {
     params: requestParams,
+    headers: {
+      'fspiop-source': 'payer',
+      'fspiop-destination': 'payee'
+    },
     payload: requestPayload,
     server: {
       log: () => { }
@@ -199,7 +207,6 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
-
       Handler.fulfilTransfer(request, reply)
     })
 
