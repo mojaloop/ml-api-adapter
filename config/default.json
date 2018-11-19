@@ -102,6 +102,9 @@
               "api.version.request": true,
               "dr_cb": true,
               "partitioner": "random"
+            },
+            "topicConf": {
+              "request.required.acks": "all"
             }
           }
         },
@@ -125,6 +128,9 @@
               "api.version.request": true,
               "dr_cb": true,
               "partitioner": "random"
+            },
+            "topicConf": {
+              "request.required.acks": "all"
             }
           }
         },
@@ -148,6 +154,9 @@
               "api.version.request": true,
               "dr_cb": true,
               "partitioner": "random"
+            },
+            "topicConf": {
+              "request.required.acks": "all"
             }
           }
         }
