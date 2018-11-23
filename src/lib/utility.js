@@ -165,6 +165,7 @@ const getTransferByidTopicTemplate = () => {
     throw e
   }
 }
+
 /**
  * @method NotificationTopicTemplate
  *
@@ -304,6 +305,46 @@ const getTransferByIdTopicName = () => {
 }
 
 /**
+ * @function createParticipantTopicConfig
+ *
+ * @param {string} participantName - The participant name
+ * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
+ * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
+ * @param {number} partition - optional partition to produce to
+ * @param {*} opaqueKey - optional opaque token, which gets passed along to your delivery reports
+ *
+ * @returns {object} - Returns newly created participant topicConfig
+ */
+const createParticipantTopicConf = (participantName, functionality, action, partition = null, opaqueKey = null) => {
+  return {
+    topicName: getParticipantTopicName(participantName, functionality, action),
+    key: participantName,
+    partition,
+    opaqueKey
+  }
+}
+
+/**
+ * @function createGeneralTopicConfig
+ *
+ * @param {string} participantName - The participant name
+ * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
+ * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
+ * @param {number} partition - optional partition to produce to
+ * @param {*} opaqueKey - optional opaque token, which gets passed along to your delivery reports
+ *
+ * @returns {object} - Returns newly created general topicConfig
+ */
+const createGeneralTopicConf = (participantName, functionality, action, partition = null, opaqueKey = null) => {
+  return {
+    topicName: getFulfilTopicName(),
+    key: participantName,
+    partition,
+    opaqueKey
+  }
+}
+
+/**
  * @method GetKafkaConfig
  *
  * @param {string} flow - This is required for the config for the ML API ADAPTER. Example: 'CONSUMER' ie: note the case of text
@@ -329,3 +370,5 @@ exports.getFulfilTopicName = getFulfilTopicName
 exports.getKafkaConfig = getKafkaConfig
 exports.getNotificationTopicName = getNotificationTopicName
 exports.getTransferByIdTopicName = getTransferByIdTopicName
+exports.createParticipantTopicConf = createParticipantTopicConf
+exports.createGeneralTopicConf = createGeneralTopicConf
