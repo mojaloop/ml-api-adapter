@@ -129,7 +129,7 @@ const fulfil = async (id, headers, message) => {
     // const topicConfig = {
     //   topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
     // }
-    const topicConfig = Utility.createGeneralTopicConf(message.payerFsp, TRANSFER, FULFIL)
+    const topicConfig = Utility.createGeneralTopicConf(headers['fspiop-source'], TRANSFER, FULFIL)
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
