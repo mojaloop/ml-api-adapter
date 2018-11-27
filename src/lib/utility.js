@@ -338,7 +338,7 @@ const createParticipantTopicConf = (participantName, functionality, action, part
 const createGeneralTopicConf = (participantName, functionality, action, partition = null, opaqueKey = null) => {
   return {
     topicName: getFulfilTopicName(),
-    key: participantName,
+    key: null,
     partition,
     opaqueKey
   }
