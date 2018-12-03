@@ -23,7 +23,7 @@
  ******/
 
 'use strict'
-const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
+const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
 const Utility = require('../../lib/utility')
@@ -82,37 +82,42 @@ const startConsumer = async () => {
 * @param {object} error - the error message received form kafka in case of error
 * @param {object} message - the message received form kafka
 
-* @returns {boolean} Returns true on sucess and throws error on failure
+* @returns {boolean} Returns true on success or false on failure
 */
 
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
-  return new Promise(async (resolve, reject) => {
-    if (error) {
-      Logger.error(`Error while reading message from kafka ${error}`)
-      return reject(error)
-    }
-    Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
+  try {
+    return new Promise(async (resolve, reject) => {
+      if (error) {
+        Logger.error(`Error while reading message from kafka ${error}`)
+        return reject(error)
+      }
+      Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
 
-    message = (!Array.isArray(message) ? [message] : message)
+      message = (!Array.isArray(message) ? [message] : message)
 
-    for (let msg of message) {
-      Logger.info('Notification::consumeMessage::processMessage')
-      let res = await processMessage(msg).catch(err => {
-        Logger.error(`Error processing the kafka message - ${err}`)
+      for (let msg of message) {
+        Logger.info('Notification::consumeMessage::processMessage')
+        let res = await processMessage(msg).catch(err => {
+          Logger.error(`Error processing the kafka message - ${err}`)
+          if (!autoCommitEnabled) {
+            notificationConsumer.commitMessageSync(msg)
+          }
+          // return reject(err) // This is not handled correctly as we need to deal with the error here
+          return resolve(err) // We return 'resolved' since we have dealt with the error here
+        })
         if (!autoCommitEnabled) {
           notificationConsumer.commitMessageSync(msg)
         }
-        // return reject(err) // This is not handled correctly as we need to deal with the error here
-        return resolve(err) // We return 'resolved' since we have dealt with the error here
-      })
-      if (!autoCommitEnabled) {
-        notificationConsumer.commitMessageSync(msg)
+        Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
+        return resolve(res)
       }
-      Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
-      return resolve(res)
-    }
-  })
+    })
+  } catch (err) {
+    Logger.error(err)
+    return false
+  }
 }
 
 /**

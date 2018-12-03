@@ -2,7 +2,7 @@
 
 const Test = require('tapes')(require('tape'))
 const Utility = require('../../src/lib/utility')
-const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
 
 let kafkaProducer
 
