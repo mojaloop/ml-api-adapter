@@ -318,7 +318,7 @@ const getTransferByIdTopicName = () => {
 const createParticipantTopicConf = (participantName, functionality, action, partition = null, opaqueKey = null) => {
   return {
     topicName: getParticipantTopicName(participantName, functionality, action),
-    key: participantName,
+    key: null,
     partition,
     opaqueKey
   }
