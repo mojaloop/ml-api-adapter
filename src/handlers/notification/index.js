@@ -23,7 +23,7 @@
  ******/
 
 'use strict'
-const Consumer = require('@mojaloop/central-services-shared').Kafka.Consumer
+const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
 const Utility = require('../../lib/utility')
@@ -51,9 +51,10 @@ let autoCommitEnabled = true
 
 const startConsumer = async () => {
   Logger.info('Notification::startConsumer')
+  let topicName
   try {
-    let topicName = Utility.getNotificationTopicName()
-    Logger.info('Notification::startConsumer::topicName: ' + topicName)
+    topicName = Utility.getNotificationTopicName()
+    Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
     let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
@@ -61,15 +62,14 @@ const startConsumer = async () => {
       autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
     }
     notificationConsumer = new Consumer([topicName], config)
-    Logger.info('Notification::startConsumer::Consumer: new')
 
     await notificationConsumer.connect()
-    Logger.info('Kafka Consumer connected')
+    Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
     await notificationConsumer.consume(consumeMessage)
-    Logger.info('Kafka Consumer handler created')
+    Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
     return true
   } catch (err) {
-    Logger.error(`error consuming kafka messages- ${err}`)
+    Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
     throw err
   }
 }
@@ -82,7 +82,7 @@ const startConsumer = async () => {
 * @param {object} error - the error message received form kafka in case of error
 * @param {object} message - the message received form kafka
 
-* @returns {boolean} Returns true on sucess and throws error on failure
+* @returns {boolean} Returns true on success or false on failure
 */
 
 const consumeMessage = async (error, message) => {

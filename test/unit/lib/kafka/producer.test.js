@@ -29,7 +29,7 @@ const P = require('bluebird')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Kafka = require(`${src}/lib/kafka`)
 const rewire = require('rewire')
-const Producer = require('@mojaloop/central-services-shared').Kafka.Producer
+const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
 
 Test('Producer', producerTest => {
   let sandbox
