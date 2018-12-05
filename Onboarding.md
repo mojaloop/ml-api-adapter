@@ -78,16 +78,12 @@ export NVM_DIR="$HOME/.nvm"
 ```
 
 #### npm
-By installing *node* during *nvm* installation above, you should have the correspoding npm version installed
-
-##### Setup npm
-* run `curl -udwolla:AP6vR3LGrB6zm8WQjLvJHnQzjJp "https://modusbox.jfrog.io/modusbox/api/npm/level1-npm/auth/@mojaloop" >> ~/.npmrc`
-* run `cp ~/.npmrc .npmrc` which will allow you to run the functional tests on your machine
+By installing *node* during *nvm* installation above, you should have the corresponding npm version installed
 
 #### Installing ZenHub for GitHub
 Open Google Chrome browser and navigate to [Zenhub Extension](https://chrome.google.com/webstore/detail/zenhub-for-github/ogcgkffhplmphkaahpmffcafajaocjbd)
 
-#### Installing central_ledger
+#### Installing node pre-requisites 
 * **cd** into the ml-api-adapter project and run subsequently the following commands:
 ```
 npm install -g node-gyp
