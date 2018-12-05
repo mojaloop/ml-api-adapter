@@ -28,8 +28,8 @@
   "KAFKA": {
     "TOPIC_TEMPLATES": {
       "PARTICIPANT_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-{{participantName}}-{{functionality}}-{{action}}",
-        "REGEX": "topic-(.*)-(.*)-(.*)"
+        "TEMPLATE": "topic-{{functionality}}-{{action}}",
+        "REGEX": "topic-(.*)-(.*)"
       },
       "NOTIFICATION_TOPIC_TEMPLATE": {
         "TEMPLATE": "topic-notification-event",
