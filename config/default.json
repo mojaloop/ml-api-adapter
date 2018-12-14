@@ -52,16 +52,7 @@
               "client.id": "ml-con-notification-event",
               "group.id": "kafka-ml-api-adapter",
               "metadata.broker.list": "localhost:9092",
-              "socket.blocking.max.ms": 1,
-              "fetch.wait.max.ms": 1,
-              "fetch.error.backoff.ms": 1,
-              "queue.buffering.max.ms": 1,
-              "broker.version.fallback": "0.10.1.0",
-              "api.version.request": true,
-              "enable.auto.commit": false,
-              "auto.commit.interval.ms": 200,
-              "socket.keepalive.enable": true,
-              "socket.max.fails": 1
+              "socket.keepalive.enable": true
             },
             "topicConf": {
               "auto.offset.reset": "earliest"
@@ -81,16 +72,7 @@
               "metadata.broker.list": "localhost:9092",
               "client.id": "ml-prod-transfer-prepare",
               "event_cb": true,
-              "compression.codec": "none",
-              "retry.backoff.ms": 100,
-              "message.send.max.retries": 2,
-              "socket.keepalive.enable": true,
-              "socket.max.fails": 0,
-              "queue.buffering.max.messages": 10000,
-              "queue.buffering.max.ms": 50,
-              "batch.num.messages": 100,
-              "api.version.request": true,
-              "dr_cb": true
+              "socket.keepalive.enable": true
             }
           }
         },
@@ -103,16 +85,7 @@
               "metadata.broker.list": "localhost:9092",
               "client.id": "ml-prod-transfer-fulfil",
               "event_cb": true,
-              "compression.codec": "none",
-              "retry.backoff.ms": 100,
-              "message.send.max.retries": 2,
-              "socket.keepalive.enable": true,
-              "socket.max.fails": 0,
-              "queue.buffering.max.messages": 10000,
-              "queue.buffering.max.ms": 50,
-              "batch.num.messages": 100,
-              "api.version.request": true,
-              "dr_cb": true
+              "socket.keepalive.enable": true
             }
           }
         },
@@ -125,16 +98,7 @@
               "metadata.broker.list": "localhost:9092",
               "client.id": "ml-prod-transfer-get",
               "event_cb": true,
-              "compression.codec": "none",
-              "retry.backoff.ms": 100,
-              "message.send.max.retries": 2,
-              "socket.keepalive.enable": true,
-              "socket.max.fails": 0,
-              "queue.buffering.max.messages": 10000,
-              "queue.buffering.max.ms": 50,
-              "batch.num.messages": 100,
-              "api.version.request": true,
-              "dr_cb": true
+              "socket.keepalive.enable": true
             }
           }
         }

@@ -50,6 +50,13 @@ const prepare = async (headers, message) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
   try {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+
+    // TODO this needs to know if it is sending out of network and drops it onto the CNP's topic
+    //  getNextHop()
+    message.payeeFsp = 'moja.superremit'
+    headers['fspiop-destination'] = 'moja.superremit'
+    headers['fspiop-final-destination'] = 'moja.tz.red.tzs.pink'
+
     const messageProtocol = {
       id: message.transferId,
       to: message.payeeFsp,
@@ -124,6 +131,7 @@ const fulfil = async (id, headers, message) => {
         }
       }
     }
+    // TODO this needs to know if it is receiving from out of network and drops it onto the CNP's topic
     const topicConfig = {
       topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
     }
