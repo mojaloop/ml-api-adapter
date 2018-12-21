@@ -137,6 +137,7 @@ const processMessage = async (msg) => {
     let headers
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
+    Logger.debug('Notification::processMessage: to', to, 'from', from, 'payload', content.payload)
 
     // Successful Prepare
     if (action === 'prepare' && status === 'success') {

@@ -1,7 +1,8 @@
 {
-  "PORT": 3000,
+  "PORT": 2000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_SOURCE_URL": "http://localhost:3001/participants/{{fsp}}/endpoints",
+  "ENDPOINT_SOURCE_URL": "http://localhost:3002/participants/{{fsp}}/endpoints",
+  "ROUTING_ENDPOINT": "http://localhost:3002/nextHop",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
     "generateTimeout": 30000
