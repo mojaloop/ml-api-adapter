@@ -24,7 +24,7 @@
 
 'use strict'
 // const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
-const Stream = require('@mojaloop/central-services-stream').Stream
+const KafkaPoc = require('@mojaloop/central-services-stream').Poc
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
 const Utility = require('../../lib/utility')
@@ -69,19 +69,9 @@ const startConsumer = async () => {
       config.rdkafkaConf['client.id'] = `default-client-id-${uuid()}`
     }
 
-    // notificationConsumer = new Consumer([topicName], config)
-    notificationConsumer = new Stream.Consumer([topicName], config, consumeMessage)
+    notificationConsumer = KafkaPoc.createConsumer(topicName, config, consumeMessage)
     Logger.info('Notification::startConsumer::Consumer: new')
 
-    await notificationConsumer.connect()
-    notificationConsumer.on('ready', () => {
-      Logger.info('Notification Kafka Consumer connected')
-    })
-
-    // await notificationConsumer.connect()
-    // Logger.info('Kafka Consumer connected')
-    // await notificationConsumer.consume(consumeMessage)
-    // Logger.info('Kafka Consumer handler created')
     Logger.info('Notification::startConsumer::end - Notification Kafka Consumer handler created')
     return true
   } catch (err) {
@@ -89,6 +79,44 @@ const startConsumer = async () => {
     throw err
   }
 }
+// const startConsumer = async () => {
+//   Logger.info('Notification::startConsumer')
+//   try {
+//     let topicName = Utility.getNotificationTopicName()
+//     Logger.info('Notification::startConsumer::topicName: ' + topicName)
+//     let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
+//     config.rdkafkaConf['client.id'] = topicName
+//
+//     if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
+//       autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
+//     }
+//
+//     if (config.rdkafkaConf['client.id'] !== undefined) {
+//       config.rdkafkaConf['client.id'] = `${config.rdkafkaConf['client.id']}-${uuid()}`
+//     } else {
+//       config.rdkafkaConf['client.id'] = `default-client-id-${uuid()}`
+//     }
+//
+//     // notificationConsumer = new Consumer([topicName], config)
+//     notificationConsumer = new Stream.Consumer([topicName], config, consumeMessage)
+//     Logger.info('Notification::startConsumer::Consumer: new')
+//
+//     await notificationConsumer.connect()
+//     notificationConsumer.on('ready', () => {
+//       Logger.info('Notification Kafka Consumer connected')
+//     })
+//
+//     // await notificationConsumer.connect()
+//     // Logger.info('Kafka Consumer connected')
+//     // await notificationConsumer.consume(consumeMessage)
+//     // Logger.info('Kafka Consumer handler created')
+//     Logger.info('Notification::startConsumer::end - Notification Kafka Consumer handler created')
+//     return true
+//   } catch (err) {
+//     Logger.error(`Notification::startConsumer::end - error - ${err}`)
+//     throw err
+//   }
+// }
 // const startConsumer = async () => {
 //   Logger.info('Notification::startConsumer')
 //   try {
