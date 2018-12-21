@@ -51,20 +51,14 @@ const GET = 'get'
 const prepare = async (headers, message) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
   try {
-    console.log('preparing transfer*********')
-    console.log('preparing transfer*********')
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
-    // TODO this needs to know if it is sending out of network and drops it onto the CNP's topic
-    // check if fsp-iop-final-destination is set
-    console.log('getting next hop', 'headers before',headers)
     if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
-    console.log('getting next hop', 'headers after',headers)
     let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
-    console.log('nexthop is', response.data)
+    Logger.debug('nexthop is', response.data)
+    message.payerFsp = headers['fspiop-source']
     message.payeeFsp = response.data.destination
     headers['fspiop-destination'] = response.data.destination
-    console.log('headers', headers, 'message', message)
 
     const messageProtocol = {
       id: message.transferId,
@@ -122,8 +116,11 @@ const fulfil = async (id, headers, message) => {
     // TODO this needs to know if it is sending out of network and drops it onto the CNP's topic
 
     if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
-    let nextHop = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
-    headers['fspiop-destination'] = nextHop.data.destination
+    let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
+    Logger.debug('nexthop is', response.data)
+    message.payerFsp = headers['fspiop-source']
+    message.payeeFsp = response.data.destination
+    headers['fspiop-destination'] = response.data.destination
     Logger.debug.log('domain::transfer::fulfil headers', headers)
 
     const messageProtocol = {
