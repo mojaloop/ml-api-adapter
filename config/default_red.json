@@ -1,8 +1,8 @@
 {
-  "PORT": 3000,
+  "PORT": 2000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_SOURCE_URL": "http://localhost:3001/participants/{{fsp}}/endpoints",
-  "ROUTING_ENDPOINT": "http://localhost:3001/nextHop",
+  "ENDPOINT_SOURCE_URL": "http://localhost:3002/participants/{{fsp}}/endpoints",
+  "ROUTING_ENDPOINT": "http://localhost:3002/nextHop",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
     "generateTimeout": 30000
@@ -52,7 +52,7 @@
             "rdkafkaConf": {
               "client.id": "ml-con-notification-event",
               "group.id": "kafka-ml-api-adapter",
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "localhost:9093",
               "socket.keepalive.enable": true
             },
             "topicConf": {
@@ -70,7 +70,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "localhost:9093",
               "client.id": "ml-prod-transfer-prepare",
               "event_cb": true,
               "socket.keepalive.enable": true
@@ -83,7 +83,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "localhost:9093",
               "client.id": "ml-prod-transfer-fulfil",
               "event_cb": true,
               "socket.keepalive.enable": true
@@ -96,7 +96,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "localhost:9093",
               "client.id": "ml-prod-transfer-get",
               "event_cb": true,
               "socket.keepalive.enable": true

@@ -117,11 +117,10 @@ const fulfil = async (id, headers, message) => {
 
     if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
     let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
-    Logger.debug('nexthop is', response.data)
+
     message.payerFsp = headers['fspiop-source']
     message.payeeFsp = response.data.destination
     headers['fspiop-destination'] = response.data.destination
-    Logger.debug.log('domain::transfer::fulfil headers', headers)
 
     const messageProtocol = {
       id,
@@ -151,6 +150,7 @@ const fulfil = async (id, headers, message) => {
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
+
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
