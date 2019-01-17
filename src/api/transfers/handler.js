@@ -27,6 +27,7 @@
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
+const Metrics = require('@mojaloop/central-services-metrics')
 
 /**
  * @module src/api/transfers/handler
@@ -45,13 +46,21 @@ const Boom = require('boom')
  */
 
 const create = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfers_prepare',
+    'Produce a transfer prepare message to transfer prepare kafka topic',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await TransferService.prepare(request.headers, request.payload)
+    histTimerEnd({success: true})
     return h.response().code(202)
   } catch (err) {
     Logger.error(err)
+    histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
@@ -69,14 +78,22 @@ const create = async function (request, h) {
  */
 
 const fulfilTransfer = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfers_fulfil',
+    'Produce a transfer fulfil message to transfer fulfil kafka topic',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.fulfil(request.params.id, request.headers, request.payload)
+    histTimerEnd({success: true})
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
+    histTimerEnd({success: false})
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
