@@ -87,14 +87,14 @@ const startConsumer = async () => {
 */
 
 const consumeMessage = async (error, message) => {
-  const histTimerEnd = Metrics.getHistogram(
-    'notification_event',
-    'Consume a notification message from the kafka topic and process it accordingly',
-    ['success']
-  ).startTimer()
-
+  
   Logger.info('Notification::consumeMessage')
   return new Promise(async (resolve, reject) => {
+    const histTimerEnd = Metrics.getHistogram(
+      'notification_event',
+      'Consume a notification message from the kafka topic and process it accordingly',
+      ['success']
+    ).startTimer()
     if (error) {
       Logger.error(`Error while reading message from kafka ${error}`)
       return reject(error)
@@ -102,7 +102,7 @@ const consumeMessage = async (error, message) => {
     Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
 
     message = (!Array.isArray(message) ? [message] : message)
-
+    let combinedResult = true
     for (let msg of message) {
       Logger.info('Notification::consumeMessage::processMessage')
       let res = await processMessage(msg).catch(err => {
@@ -117,9 +117,10 @@ const consumeMessage = async (error, message) => {
         notificationConsumer.commitMessageSync(msg)
       }
       Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
-      histTimerEnd({success: true})
-      return resolve(res)
+      combinedResult = (combinedResult && res)
     }
+    histTimerEnd({success: true})
+    return resolve(combinedResult)
   })
 }
 
