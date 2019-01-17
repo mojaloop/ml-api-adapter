@@ -169,6 +169,31 @@ Test('setup', setupTest => {
       })
     })
 
+    initializeTest.test('dont initialize the instrumentation if the INSTRUMENTATION_METRICS_DISABLED is disabled', async (test) => {
+      var ConfigStub = Config
+      ConfigStub.HANDLERS_API_DISABLED = true
+      ConfigStub.INSTRUMENTATION_METRICS_DISABLED = true
+
+      Setup = Proxyquire('../../../src/shared/setup', {
+        '../handlers/register': RegisterHandlersStub,
+        './plugins': PluginsStub,
+        'hapi': HapiStub,
+        '../lib/config': ConfigStub
+      })
+
+      const service = 'handler'
+
+      sandbox.stub(Config, 'HANDLERS_API_DISABLED').returns(true)
+      Setup.initialize({ service, runHandlers: true }).then((s) => {
+        test.ok(RegisterHandlersStub.registerAllHandlers.called)
+        test.equal(s, undefined)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
     initializeTest.test('run invalid Handler if runHandlers flag enabled with handlers[] populated', async (test) => {
       const service = 'api'
 
