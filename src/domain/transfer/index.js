@@ -118,8 +118,6 @@ const fulfil = async (id, headers, message) => {
     if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
     let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
 
-    message.payerFsp = headers['fspiop-source']
-    message.payeeFsp = response.data.destination
     headers['fspiop-destination'] = response.data.destination
 
     const messageProtocol = {
