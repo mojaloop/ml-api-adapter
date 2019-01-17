@@ -29,6 +29,7 @@ const Uuid = require('uuid4')
 const Service = require('../../../../src/domain/transfer')
 const Kafka = require('../../../../src/lib/kafka')
 const Utility = require('../../../../src/lib/utility')
+const axios = require('axios')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
@@ -41,6 +42,7 @@ Test('Transfer Service tests', serviceTest => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Kafka.Producer, 'produceMessage')
     sandbox.stub(Kafka.Producer, 'disconnect').returns(P.resolve(true))
+    sandbox.stub(axios, 'get').returns(P.resolve({data: { destination: 'test' }}))
     t.end()
   })
 

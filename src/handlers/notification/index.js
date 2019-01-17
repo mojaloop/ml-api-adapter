@@ -159,16 +159,16 @@ const processMessage = async (msg) => {
     } else if (action.toLowerCase() === 'reject') { // Reject
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to }, { 'FSPIOP-Final-Destination': from })
+      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from }, { 'FSPIOP-Final-Destination': msg.value.content.headers['fspiop-final-destination'] })
+      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'abort') { // Abort
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to }, { 'FSPIOP-Final-Destination': from })
+      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from }, { 'FSPIOP-Final-Destination': msg.value.content.headers['fspiop-final-destination'] })
+      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     } else if (action.toLowerCase() === 'timeout-received') { // Timeout
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
