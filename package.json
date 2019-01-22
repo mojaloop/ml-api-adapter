@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "4.1.1",
+  "version": "4.4.1",
   "description": "Convert from ML API to/from internal Central Services messaging format.",
   "license": "Apache-2.0",
   "private": true,
@@ -75,7 +75,7 @@
     "joi-date-extensions": "1.2.0",
     "jsdoc": "3.5.5",
     "knex": "0.14.2",
-    "lodash": "4.17.4",
+    "lodash": "4.17.11",
     "mustache": "3.0.0",
     "npm": "6.4.1",
     "rc": "1.2.5",
