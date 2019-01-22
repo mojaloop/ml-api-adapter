@@ -87,7 +87,6 @@ const startConsumer = async () => {
 */
 
 const consumeMessage = async (error, message) => {
-  
   Logger.info('Notification::consumeMessage')
   return new Promise(async (resolve, reject) => {
     const histTimerEnd = Metrics.getHistogram(

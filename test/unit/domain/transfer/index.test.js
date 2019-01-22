@@ -17,6 +17,8 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
@@ -101,9 +103,7 @@ Test('Transfer Service tests', serviceTest => {
           }
         }
       }
-      const topicConfig = {
-        topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-      }
+      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 
@@ -201,9 +201,7 @@ Test('Transfer Service tests', serviceTest => {
           }
         }
       }
-      const topicConfig = {
-        topicName: Utility.getParticipantTopicName(headers['fspiop-source'], TRANSFER, FULFIL) // `topic-${message.payerFsp}-transfer-prepare`
-      }
+      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
       let result = await Service.fulfil(id, headers, message)
@@ -331,9 +329,7 @@ Test('Transfer Service tests', serviceTest => {
           }
         }
       }
-      const topicConfig = {
-        topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-      }
+      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 

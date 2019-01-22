@@ -17,6 +17,9 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+
  --------------
  ******/
 
@@ -72,9 +75,7 @@ const prepare = async (headers, message) => {
         }
       }
     }
-    const topicConfig = {
-      topicName: Utility.getParticipantTopicName(message.payerFsp, TRANSFER, PREPARE) // `topic-${message.payerFsp}-transfer-prepare`
-    }
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)

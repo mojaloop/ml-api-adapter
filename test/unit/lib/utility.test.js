@@ -17,7 +17,9 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- --------------
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+--------------
  ******/
 
 'use strict'
@@ -46,25 +48,45 @@ Test('utility', utilityTest => {
     t.end()
   })
 
-  utilityTest.test('getParticipantTopicName should', getParticipantTopicNameTest => {
-    getParticipantTopicNameTest.test('throw error on error in rendering', test => {
+  // utilityTest.test('getParticipantTopicName should', getParticipantTopicNameTest => {
+  //   getParticipantTopicNameTest.test('throw error on error in rendering', test => {
+  //     const error = new Error()
+  //     Mustache.render.withArgs(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.PARTICIPANT_TOPIC_TEMPLATE.TEMPLATE,
+  //       {
+  //         participantName: 'dfsp1',
+  //         functionality: 'transfer',
+  //         action: 'prepare'
+  //       }).throws(error)
+
+  //     try {
+  //       Utility.getParticipantTopicName('dfsp1', 'transfer', 'prepare')
+  //     } catch (e) {
+  //       test.ok(e instanceof Error)
+  //       test.end()
+  //     }
+  //   })
+
+  //   getParticipantTopicNameTest.end()
+  // })
+
+  utilityTest.test('createGeneralTopicConf should', createGeneralTopicConfTest => {
+    createGeneralTopicConfTest.test('throw error on error in rendering', test => {
       const error = new Error()
-      Mustache.render.withArgs(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.PARTICIPANT_TOPIC_TEMPLATE.TEMPLATE,
+      Mustache.render.withArgs(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE,
         {
-          participantName: 'dfsp1',
           functionality: 'transfer',
           action: 'prepare'
         }).throws(error)
 
       try {
-        Utility.getParticipantTopicName('dfsp1', 'transfer', 'prepare')
+        Utility.createGeneralTopicConf('transfer', 'prepare')
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
       }
     })
 
-    getParticipantTopicNameTest.end()
+    createGeneralTopicConfTest.end()
   })
 
   utilityTest.test('getNotificationTopicName should', getNotificationTopicNameTest => {
