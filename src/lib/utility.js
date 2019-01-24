@@ -356,10 +356,10 @@ const getKafkaConfig = (flow, functionality, action) => {
  *
  * @returns {object} - Returns newly created general topicConfig
  */
-const createGeneralTopicConf = (functionality, action, partition = null, opaqueKey = null) => {
+const createGeneralTopicConf = (functionality, action, partition = 0, opaqueKey = null, key = null) => {
   return {
     topicName: transformGeneralTopicName(functionality, action),
-    key: opaqueKey,
+    key,
     partition,
     opaqueKey
   }
