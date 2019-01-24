@@ -351,12 +351,13 @@ const getKafkaConfig = (flow, functionality, action) => {
  * @param {string} participantName - The participant name
  * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
  * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
+ * @param {*} key - optional key to be sent on the message
  * @param {number} partition - optional partition to produce to
  * @param {*} opaqueKey - optional opaque token, which gets passed along to your delivery reports
  *
  * @returns {object} - Returns newly created general topicConfig
  */
-const createGeneralTopicConf = (functionality, action, partition = 0, opaqueKey = null, key = null) => {
+const createGeneralTopicConf = (functionality, action, key = null, partition = null, opaqueKey = null) => {
   return {
     topicName: transformGeneralTopicName(functionality, action),
     key,
