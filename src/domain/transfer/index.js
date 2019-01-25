@@ -75,7 +75,7 @@ const prepare = async (headers, message) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, message.transferId)
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
@@ -125,9 +125,10 @@ const fulfil = async (id, headers, message) => {
         }
       }
     }
-    const topicConfig = {
-      topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
-    }
+    // const topicConfig = {
+    //   topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
+    // }
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL, id)
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
