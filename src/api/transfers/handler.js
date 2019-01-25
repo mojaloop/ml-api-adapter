@@ -97,7 +97,7 @@ const getTransferById = async function (request, h) {
   try {
     Logger.info('getById::id(%s)', request.params.id)
     await TransferService.getTransferById(request.params.id, request.headers)
-    return h.response().code(200)
+    return h.response().code(202)
   } catch (err) {
     Logger.error(err)
     throw Boom.boomify(err, { message: 'An error has occurred' })

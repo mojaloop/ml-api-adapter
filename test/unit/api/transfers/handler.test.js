@@ -254,7 +254,7 @@ Test('transfer handler', handlerTest => {
           response: (response) => {
             return {
               code: statusCode => {
-                test.equal(statusCode, 200)
+                test.equal(statusCode, 202)
                 test.end()
               }
             }
