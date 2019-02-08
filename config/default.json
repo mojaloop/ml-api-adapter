@@ -22,9 +22,9 @@
       "config": {
         "timeout": 5000,
         "prefix": "moja_ml_",
-        "defaultLabels": [
-          {"serviceName": "handler"}
-        ]
+        "defaultLabels": {
+          "serviceName": "ml-api-service"
+        }
       }
     }
   },
