@@ -23,7 +23,7 @@
         "timeout": 5000,
         "prefix": "moja_ml_",
         "defaultLabels": {
-          "serviceName": "ml-api-service"
+          "serviceName": "ml-service"
         }
       }
     }
