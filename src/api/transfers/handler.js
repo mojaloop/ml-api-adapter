@@ -56,11 +56,11 @@ const create = async function (request, h) {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await TransferService.prepare(request.headers, request.payload)
-    histTimerEnd({success: true})
+    histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
     Logger.error(err)
-    histTimerEnd({success: false})
+    histTimerEnd({ success: false })
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
@@ -89,11 +89,11 @@ const fulfilTransfer = async function (request, h) {
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.fulfil(request.params.id, request.headers, request.payload)
-    histTimerEnd({success: true})
+    histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
-    histTimerEnd({success: false})
+    histTimerEnd({ success: false })
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
