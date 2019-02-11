@@ -118,7 +118,7 @@ const consumeMessage = async (error, message) => {
       Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
       combinedResult = (combinedResult && res)
     }
-    histTimerEnd({success: true})
+    histTimerEnd({ success: true })
     return resolve(combinedResult)
   })
 }
