@@ -47,7 +47,7 @@ const Metrics = require('@mojaloop/central-services-metrics')
 
 const create = async function (request, h) {
   const histTimerEnd = Metrics.getHistogram(
-    'transfers_prepare',
+    'transfer_prepare',
     'Produce a transfer prepare message to transfer prepare kafka topic',
     ['success']
   ).startTimer()
@@ -79,7 +79,7 @@ const create = async function (request, h) {
 
 const fulfilTransfer = async function (request, h) {
   const histTimerEnd = Metrics.getHistogram(
-    'transfers_fulfil',
+    'transfer_fulfil',
     'Produce a transfer fulfil message to transfer fulfil kafka topic',
     ['success']
   ).startTimer()
