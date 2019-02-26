@@ -27,13 +27,13 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
   endpointTest.test('getEndpoint should', async (getEndpointTest) => {
     getEndpointTest.test('return the endpoint', async (test) => {
       const fsp = 'fsp'
-      const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
       const expected = `http://localhost:1080/transfers/${transferId}`
-      Facade.getEndpoint.withArgs(fsp, enpointType, transferId).returns(P.resolve(expected))
+      Facade.getEndpoint.withArgs(fsp, endpointType, transferId).returns(P.resolve(expected))
 
       try {
-        const result = await Service.getEndpoint(fsp, enpointType, transferId)
+        const result = await Service.getEndpoint(fsp, endpointType, transferId)
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -44,12 +44,12 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
 
     getEndpointTest.test('return the endpoint when transferId is null', async (test) => {
       const fsp = 'fsp'
-      const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_POST
+      const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_POST
       const expected = `http://localhost:1080/transfers`
-      Facade.getEndpoint.withArgs(fsp, enpointType).returns(P.resolve(expected))
+      Facade.getEndpoint.withArgs(fsp, endpointType).returns(P.resolve(expected))
 
       try {
-        const result = await Service.getEndpoint(fsp, enpointType)
+        const result = await Service.getEndpoint(fsp, endpointType)
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -60,12 +60,12 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
 
     getEndpointTest.test('throw error', async (test) => {
       const fsp = 'fsp1'
-      const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
 
       Facade.getEndpoint.withArgs(fsp).throws(new Error())
       try {
-        await Service.getEndpoint(fsp, enpointType, transferId)
+        await Service.getEndpoint(fsp, endpointType, transferId)
         test.fail('should throw error')
         test.end()
       } catch (e) {

@@ -41,14 +41,17 @@ exports.buildRequest = (options) => {
     method: options.method || 'GET',
     payload: options.payload || '',
     headers: options.headers || {},
-    credentials: {
-      username: 'admin',
-      password: 'admin'
+    auth: {
+      credentials: {
+        username: 'admin',
+        password: 'admin'
+      },
+      strategy: 'simple'
     }
   }
 }
 
-exports.assertBadRequestError = (assert, response, validationErrors) => {
+exports.assertBadRequestError = (assert, response) => {
   assert.equal(response.statusCode, 400)
 }
 

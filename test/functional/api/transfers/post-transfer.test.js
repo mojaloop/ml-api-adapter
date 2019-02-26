@@ -69,7 +69,7 @@ Test('POST /transfers', postTest => {
     }
     create(headers, transfer)
       .expect(202)
-      .then(res => {
+      .then(() => {
         test.pass()
         test.end()
       }).catch(err => {

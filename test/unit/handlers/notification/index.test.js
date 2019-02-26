@@ -664,7 +664,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        var result = await Notification.consumeMessage(null, [msg])
+        const result = await Notification.consumeMessage(null, [msg])
         test.ok(result instanceof Error)
         test.end()
       } catch (e) {
@@ -694,7 +694,7 @@ Test('Notification Service tests', notificationTest => {
       }
       try {
         test.ok(await Notification.startConsumer())
-        var result = await Notification.consumeMessage(null, [msg])
+        const result = await Notification.consumeMessage(null, [msg])
         test.ok(result instanceof Error)
         test.end()
       } catch (e) {
@@ -726,7 +726,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      var result = await Notification.consumeMessage(null, msg)
+      const result = await Notification.consumeMessage(null, msg)
       test.ok(result === true)
       test.end()
     })
