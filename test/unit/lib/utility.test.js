@@ -134,7 +134,7 @@ Test('utility', utilityTest => {
     getKafkaConfigTest.end()
   })
 
-  utilityTest.test('getTransferByidTopicName should', getKafkaConfigTest => {
+  utilityTest.test('getTransferByIdTopicName should', getKafkaConfigTest => {
     getKafkaConfigTest.test('throw error on error in rendering', test => {
       try {
         Mustache.render.withArgs(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GET_TRANSFERS_TOPIC_TEMPLATE.TEMPLATE).throws(new Error())

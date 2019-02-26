@@ -107,7 +107,7 @@ Test('Producer', producerTest => {
       Producer.prototype.connect.returns(P.resolve(true))
       Producer.prototype.disconnect.returns(P.resolve(true))
       try {
-        var topicName = 'someTopic'
+        const topicName = 'someTopic'
         test.ok(await Kafka.Producer.produceMessage({}, { topicName: topicName }, {}))
         await Kafka.Producer.disconnect(topicName)
         test.pass('Disconnect specific topic successfully')
@@ -122,7 +122,7 @@ Test('Producer', producerTest => {
       Producer.prototype.connect.returns(P.resolve(true))
       Producer.prototype.disconnect.returns(P.resolve(true))
       try {
-        var topicName = 'someTopic1'
+        let topicName = 'someTopic1'
         test.ok(await Kafka.Producer.produceMessage({}, { topicName: topicName }, {}))
         await Kafka.Producer.disconnect(topicName)
         topicName = 'someTopic2'
@@ -137,14 +137,14 @@ Test('Producer', producerTest => {
     })
 
     disconnectTest.test('throw error if failure to disconnect from kafka when disconnecting all Producers', async test => {
+      // setup stubs for getProducer method
+      let getProducerStub = sandbox.stub()
       try {
-        // setup stubs for getProducer method
-        var getProducerStub = sandbox.stub()
         getProducerStub.returns(new Producer({}))
         getProducerStub.withArgs('test2').throws(`No producer found for topic test2`)
 
         // lets rewire the producer import
-        var KafkaProducer = rewire(`${src}/lib/kafka/producer`)
+        const KafkaProducer = rewire(`${src}/lib/kafka/producer`)
         // lets override the getProducer method within the import
         KafkaProducer.__set__('getProducer', getProducerStub)
 
@@ -178,7 +178,7 @@ Test('Producer', producerTest => {
 
     disconnectTest.test('throw error when a non-string value is passed into disconnect', async (test) => {
       try {
-        var badTopicName = { }
+        const badTopicName = {}
         await Kafka.Producer.disconnect(badTopicName)
         test.fail('Error not thrown')
         test.end()

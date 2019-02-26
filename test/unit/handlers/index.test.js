@@ -49,7 +49,7 @@ Test('cli', async (cliTest) => {
     })
 
     commanderTest.test('start all Handlers up via all switches', async test => {
-      var argv = [
+      const argv = [
         'node',
         'index.js',
         'handler',
@@ -58,20 +58,20 @@ Test('cli', async (cliTest) => {
 
       process.argv = argv
 
-      var Index = Proxyquire('../../../src/handlers/index', {
+      const Index = Proxyquire('../../../src/handlers/index', {
         '../shared/setup': SetupStub
       })
 
-      var notificationHandler = {
+      const notificationHandler = {
         type: 'notification',
         enabled: true
       }
 
-      var modulesList = [
+      const modulesList = [
         notificationHandler
       ]
 
-      var initOptions = {
+      const initOptions = {
         service: 'handler',
         port: Config.PORT,
         modules: [HealthPlugin, MetricsPlugin],
@@ -85,7 +85,7 @@ Test('cli', async (cliTest) => {
     })
 
     commanderTest.test('start all prepare Handlers with no flags provided', async test => {
-      var argv = [
+      const argv = [
         'node',
         'index.js',
         'handler'
@@ -93,14 +93,13 @@ Test('cli', async (cliTest) => {
 
       process.argv = argv
 
-      var Index = Proxyquire('../../../src/handlers/index', {
+      const Index = Proxyquire('../../../src/handlers/index', {
         '../shared/setup': SetupStub
       })
 
-      var modulesList = [
-      ]
+      const modulesList = []
 
-      var initOptions = {
+      const initOptions = {
         service: 'handler',
         port: Config.PORT,
         modules: [HealthPlugin, MetricsPlugin],
@@ -117,14 +116,14 @@ Test('cli', async (cliTest) => {
       // stub process.exit
       sandbox.stub(process, 'exit')
 
-      var argv = [
+      const argv = [
         'node',
         'index.js'
       ]
 
       process.argv = argv
 
-      var Index = Proxyquire('../../../src/handlers/index', {
+      const Index = Proxyquire('../../../src/handlers/index', {
         '../shared/setup': SetupStub
       })
 

@@ -105,7 +105,7 @@ Test('transfer handler', handlerTest => {
 
       const request = createRequest(payload)
       const reply = {
-        response: (response) => {
+        response: () => {
           return {
             code: statusCode => {
               test.equal(statusCode, 202)

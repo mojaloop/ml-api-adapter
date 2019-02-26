@@ -46,7 +46,7 @@
 
 exports.plugin = {
   name: 'handler metrics routes',
-  register: function (server, options) {
+  register: function (server) {
     server.route(require('./routes'))
   }
 }

@@ -56,7 +56,7 @@ Test('metrics handler', (handlerTest) => {
   handlerTest.test('metrics should', (healthTest) => {
     healthTest.test('return thr metrics ok', async function (assert) {
       let reply = {
-        response: (response) => {
+        response: () => {
           // assert.equal(response.status, 'OK')
           return {
             code: (statusCode) => {

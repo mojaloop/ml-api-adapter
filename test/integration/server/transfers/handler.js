@@ -92,13 +92,13 @@ exports.getNotification = async function (request, h) {
   if (notifications[fsp] && notifications[fsp][operation] && notifications[fsp][operation][transferId]) {
     response = notifications[fsp][operation][transferId]
   }
-  console.log('Respose: %s', JSON.stringify(response))
+  console.log('Response: %s', JSON.stringify(response))
   return h.response(response).code(200)
 }
 
 exports.getEndpoints = async function (request, h) {
   console.log('getEndpoints::fsp(%s)', request.params.fsp)
   const fsp = request.params.fsp
-  console.log('Respose: %s', JSON.stringify(endpoints[fsp]))
+  console.log('Response: %s', JSON.stringify(endpoints[fsp]))
   return h.response(JSON.stringify(endpoints[fsp])).code(200)
 }

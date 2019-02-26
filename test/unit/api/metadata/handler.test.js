@@ -98,7 +98,7 @@ Test('metadata handler', (handlerTest) => {
         response: (response) => {
           t.equal(response.urls['path'], '/somepath/:id')
           t.equal(response.urls['manyargs'], '/somepath/:id/:path*/:test2/')
-          return { code: statusCode => { t.end() } }
+          return { code: () => { t.end() } }
         }
       }
 
