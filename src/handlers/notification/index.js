@@ -146,20 +146,23 @@ const processMessage = async (msg) => {
     const status = state.status
     let headers
 
+    const actionLower = action.toLowerCase()
+    const statusLower = status.toLowerCase()
+
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
 
-    if (action === 'prepare' && status === 'success') {
+    if (actionLower === 'prepare' && statusLower === 'success') {
       let callbackURL = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
       return Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
     }
 
-    if (action.toLowerCase() === 'prepare' && status.toLowerCase() !== 'success') {
+    if (actionLower === 'prepare' && statusLower !== 'success') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     }
 
-    if (action.toLowerCase() === 'commit' && status.toLowerCase() === 'success') {
+    if (actionLower === 'commit' && statusLower === 'success') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
@@ -168,12 +171,12 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
 
-    if (action.toLowerCase() === 'commit' && status.toLowerCase() !== 'success') {
+    if (actionLower === 'commit' && statusLower !== 'success') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     }
 
-    if (action.toLowerCase() === 'reject') {
+    if (actionLower === 'reject') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
@@ -182,7 +185,7 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
 
-    if (action.toLowerCase() === 'abort') {
+    if (actionLower === 'abort') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
@@ -191,17 +194,17 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
 
-    if (action.toLowerCase() === 'timeout-received') {
+    if (actionLower === 'timeout-received') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     }
 
-    if (action === 'prepare-duplicate') {
+    if (actionLower === 'prepare-duplicate') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     }
 
-    if (action === 'get') {
+    if (actionLower === 'get') {
       let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
     }
