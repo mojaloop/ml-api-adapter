@@ -247,7 +247,9 @@ const processMessage = async (msg) => {
  * Removes any JWS related headers from the supplied headers object
  *
  * NOTE: Assumes incoming headers keys are lowercased. This is a safe
- * assumption only if the headers parameter comes from node default http framework
+ * assumption only if the headers parameter comes from node default http framework.
+ *
+ * see https://nodejs.org/dist/latest-v10.x/docs/api/http.html#http_message_headers
  */
 const removeJwsHeaders = (headers) => {
   Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
