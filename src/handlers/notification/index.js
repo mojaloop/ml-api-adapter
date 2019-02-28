@@ -250,6 +250,8 @@ const processMessage = async (msg) => {
  * assumption only if the headers parameter comes from node default http framework.
  *
  * see https://nodejs.org/dist/latest-v10.x/docs/api/http.html#http_message_headers
+ *
+ * @param {object} headers - an object containing http header keypairs from which JWS specific headers are to be removed
  */
 const removeJwsHeaders = (headers) => {
   Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
