@@ -252,10 +252,10 @@ const removeJwsHeaders = (headers) => {
   // (O)n^2 not fantastic. look for a better way to do case insensitive header keys
 
   Object.keys(headers).forEach(key => {
-    keyLower = key.toLowerCase()
+    let keyLower = key.toLowerCase()
 
     jwsHeaders.forEach(hkey => {
-        hkeyLower = hkey.toLowerCase()
+        let hkeyLower = hkey.toLowerCase()
 
         if(keyLower === hkeyLower) {
             delete headers[key]
