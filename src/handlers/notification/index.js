@@ -41,7 +41,8 @@ let notificationConsumer = {}
 let autoCommitEnabled = true
 const Metrics = require('@mojaloop/central-services-metrics')
 
-const jwsHeaders = ['FSPIOP-Signature', 'FSPIOP-HTTP-Method', 'FSPIOP-URI'];
+// note that incoming headers shoud be lowercased by node
+const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri'];
 
 /**
  * @module src/handlers/notification
@@ -244,23 +245,15 @@ const processMessage = async (msg) => {
 
 /**
  * Removes any JWS related headers from the supplied headers object
- * Does a case insensitive match on header keys
+ *
+ * NOTE: Assumes incoming headers keys are lowercased. This is a safe
+ * assumption only if the headers parameter comes from node default http framework
  */
 const removeJwsHeaders = (headers) => {
   Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
 
-  // (O)n^2 not fantastic. look for a better way to do case insensitive header keys
-
-  Object.keys(headers).forEach(key => {
-    let keyLower = key.toLowerCase()
-
-    jwsHeaders.forEach(hkey => {
-        let hkeyLower = hkey.toLowerCase()
-
-        if(keyLower === hkeyLower) {
-            delete headers[key]
-        }
-    })
+  jwsHeaders.forEach(key => {
+    delete headers[key]
   })
 
   Logger.debug(`jws headers removed. result: ${util.inspect(headers)}`);
