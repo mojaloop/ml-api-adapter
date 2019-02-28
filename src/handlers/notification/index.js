@@ -23,6 +23,9 @@
  ******/
 
 'use strict'
+
+const util = require('util');
+
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
@@ -37,6 +40,8 @@ const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
 const Metrics = require('@mojaloop/central-services-metrics')
+
+const jwsHeaders = ['FSPIOP-Signature', 'FSPIOP-HTTP-Method', 'FSPIOP-URI'];
 
 /**
  * @module src/handlers/notification
@@ -165,8 +170,14 @@ const processMessage = async (msg) => {
     if (actionLower === 'commit' && statusLower === 'success') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
+
+      // send an extra notification back to the original sender.
+      // first remove any JWS related headers so we dont bounce them back.
+      // also set source to "switch" to make it clear this notification originates at the switch
+      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
+
+      // forward the fulfil to the destination
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
@@ -179,8 +190,14 @@ const processMessage = async (msg) => {
     if (actionLower === 'reject') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
+
+      // send an extra notification back to the original sender.
+      // first remove any JWS related headers so we dont bounce them back.
+      // also set source to "switch" to make it clear this notification originates at the switch
+      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
+
+      // forward the reject to the destination
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
@@ -188,8 +205,14 @@ const processMessage = async (msg) => {
     if (actionLower === 'abort') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': to })
+
+      // send an extra notification back to the original sender.
+      // first remove any JWS related headers so we dont bounce them back.
+      // also set source to "switch" to make it clear this notification originates at the switch
+      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
+
+      // forward the abort to the destination
       headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
@@ -217,6 +240,32 @@ const processMessage = async (msg) => {
     throw e
   }
 }
+
+
+/**
+ * Removes any JWS related headers from the supplied headers object
+ * Does a case insensitive match on header keys
+ */
+const removeJwsHeaders = (headers) => {
+  logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
+
+  // (O)n^2 not fantastic. look for a better way to do case insensitive header keys
+
+  Object.keys(headers).forEach(key => {
+    keyLower = key.toLowerCase()
+
+    jwsHeaders.forEach(hkey => {
+        hkeyLower = hkey.toLowerCase()
+
+        if(keyLower === hkeyLower) {
+            delete headers[key]
+        }
+    })
+  })
+
+  logger.debug(`jws headers removed. result: ${util.inspect(headers)}`);
+}
+
 
 module.exports = {
   startConsumer,
