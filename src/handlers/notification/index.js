@@ -261,6 +261,8 @@ const removeJwsHeaders = (headers) => {
   })
 
   Logger.debug(`jws headers removed. result: ${util.inspect(headers)}`);
+
+  return headers
 }
 
 
