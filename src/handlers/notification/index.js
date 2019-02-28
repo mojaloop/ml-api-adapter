@@ -247,7 +247,7 @@ const processMessage = async (msg) => {
  * Does a case insensitive match on header keys
  */
 const removeJwsHeaders = (headers) => {
-  logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
+  Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
 
   // (O)n^2 not fantastic. look for a better way to do case insensitive header keys
 
@@ -263,7 +263,7 @@ const removeJwsHeaders = (headers) => {
     })
   })
 
-  logger.debug(`jws headers removed. result: ${util.inspect(headers)}`);
+  Logger.debug(`jws headers removed. result: ${util.inspect(headers)}`);
 }
 
 
