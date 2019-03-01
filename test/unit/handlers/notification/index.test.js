@@ -240,6 +240,7 @@ Test('Notification Service tests', notificationTest => {
       const method = 'put'
       const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to }
       const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from }
+      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
       const message = {}
 
       const expected = 200
@@ -247,7 +248,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendCallback.withArgs(urlPayee, method, headersTo, message, msg.value.id, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(urlPayer, method, headersFrom, message, msg.value.id, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(urlPayer, method, headersNotification, message, msg.value.id, msg.value.from))
       test.ok(Callback.sendCallback.calledWith(urlPayee, method, headersTo, message, msg.value.id, msg.value.to))
       test.equal(result, expected)
       test.end()
@@ -366,6 +367,7 @@ Test('Notification Service tests', notificationTest => {
       const method = 'put'
       const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to }
       const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from }
+      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
       const message = {}
 
       const expected = 200
@@ -374,7 +376,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendCallback.withArgs(toUrl, method, headersTo, message, msg.value.id, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headersFrom, message, msg.value.id, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headersNotification, message, msg.value.id, msg.value.from))
       test.ok(Callback.sendCallback.calledWith(toUrl, method, headersTo, message, msg.value.id, msg.value.to))
       test.equal(result, expected)
       test.end()
@@ -407,6 +409,7 @@ Test('Notification Service tests', notificationTest => {
       const method = 'put'
       const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to }
       const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from }
+      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
       const message = {}
 
       const expected = 200
@@ -415,7 +418,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendCallback.withArgs(toUrl, method, headersTo, message).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headersFrom, message, msg.value.id, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headersNotification, message, msg.value.id, msg.value.from))
       test.ok(Callback.sendCallback.calledWith(toUrl, method, headersTo, message, msg.value.id, msg.value.to))
       test.equal(result, expected)
       test.end()
