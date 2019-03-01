@@ -24,7 +24,7 @@
 
 'use strict'
 
-const util = require('util');
+const util = require('util')
 
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
@@ -42,7 +42,7 @@ let autoCommitEnabled = true
 const Metrics = require('@mojaloop/central-services-metrics')
 
 // note that incoming headers shoud be lowercased by node
-const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri'];
+const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri']
 
 /**
  * @module src/handlers/notification
@@ -242,7 +242,6 @@ const processMessage = async (msg) => {
   }
 }
 
-
 /**
  * Removes any JWS related headers from the supplied headers object
  *
@@ -254,17 +253,16 @@ const processMessage = async (msg) => {
  * @param {object} headers - an object containing http header keypairs from which JWS specific headers are to be removed
  */
 const removeJwsHeaders = (headers) => {
-  Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`);
+  Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`)
 
   jwsHeaders.forEach(key => {
     delete headers[key]
   })
 
-  Logger.debug(`jws headers removed. result: ${util.inspect(headers)}`);
+  Logger.debug(`jws headers removed. result: ${util.inspect(headers)}`)
 
   return headers
 }
-
 
 module.exports = {
   startConsumer,
