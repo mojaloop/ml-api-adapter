@@ -380,5 +380,62 @@ Test('Transfer Service tests', serviceTest => {
     })
     getTransferByIdTest.end()
   })
+  serviceTest.test('transferError should', async transferErrorTest => {
+    const message = {
+      errorCode: '5001',
+      errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    }
+    const headers = {}
+    const id = '888ec534-ee48-4575-b6a9-ead2955b8930'
+    const messageProtocol = {
+      id,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/vnd.interoperability.transfers+json;version=1.0',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'fulfil',
+          action: 'abort',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    await transferErrorTest.test('execute function', async test => {
+      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+      let result = await Service.transferError(id, headers, message)
+      test.equals(result, true)
+      test.end()
+    })
+    await transferErrorTest.test('throw error', async test => {
+      const error = new Error()
+      Kafka.Producer.produceMessage.returns(P.reject(error))
+      try {
+        await Service.transferError(id, headers, message)
+        test.fail('error not thrown')
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+    transferErrorTest.end()
+  })
   serviceTest.end()
 })

@@ -61,6 +61,7 @@ Test('transfer handler', handlerTest => {
     sandbox.stub(TransferService, 'prepare')
     sandbox.stub(TransferService, 'fulfil')
     sandbox.stub(TransferService, 'getTransferById')
+    sandbox.stub(TransferService, 'transferError')
     originalHostName = Config.HOSTNAME
     Config.HOSTNAME = hostname
     t.end()
@@ -162,7 +163,7 @@ Test('transfer handler', handlerTest => {
   })
 
   handlerTest.test('fulfilTransfer should', async fulfilTransferTest => {
-    fulfilTransferTest.test('reply with status code 202 if message is sent successfully to kafka', test => {
+    fulfilTransferTest.test('reply with status code 200 if message is sent successfully to kafka', test => {
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -241,7 +242,7 @@ Test('transfer handler', handlerTest => {
 
     fulfilTransferTest.end()
     handlerTest.test('Get transfer should', async getTransferByIdTest => {
-      await getTransferByIdTest.test('reply with status code 200 if message is sent to Kafka topic', async test => {
+      await getTransferByIdTest.test('reply with status code 202 if message is sent to Kafka topic', async test => {
         const request = {
           params: {
             transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069'
@@ -289,6 +290,58 @@ Test('transfer handler', handlerTest => {
       })
       getTransferByIdTest.end()
     })
+  })
+
+  handlerTest.test('fulfilTransferError should', async fulfilTransferErrorTest => {
+    await fulfilTransferErrorTest.test('reply with status code 200 if message is sent successfully to kafka', async test => {
+      const payload = {
+        errorCode: '5001',
+        errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        extensionList: {
+          extension: [{
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }]
+        }
+      }
+      const params = {
+        id: '888ec534-ee48-4575-b6a9-ead2955b8930'
+      }
+      TransferService.transferError.returns(P.resolve(true))
+      const request = createPutRequest(params, payload)
+      const reply = {
+        response: (response) => {
+          return {
+            code: statusCode => {
+              test.equal(statusCode, 200)
+              test.end()
+            }
+          }
+        }
+      }
+      await Handler.fulfilTransferError(request, reply)
+    })
+    await fulfilTransferErrorTest.test('return error if fulfilTransfer throws', async test => {
+      const request = {
+        params: {
+          transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+        },
+        server: {
+          log: () => { }
+        }
+      }
+      TransferService.transferError.rejects(new Error())
+      try {
+        await Handler.fulfilTransferError(request)
+        test.fail('does not throw')
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, 'An error has occurred')
+        test.end()
+      }
+    })
+    fulfilTransferErrorTest.end()
   })
   handlerTest.end()
 })

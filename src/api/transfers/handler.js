@@ -121,8 +121,33 @@ const getTransferById = async function (request, h) {
   }
 }
 
+/**
+ * @function fulfilTransferError
+ * @async
+ *
+ * @description This will call error method of transfer service, which will produce a transfer error message on fulfil kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
+ */
+const fulfilTransferError = async function (request, h) {
+  try {
+    Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
+    Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
+    Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    await TransferService.transferError(request.params.id, request.headers, request.payload)
+    return h.response().code(200)
+  } catch (err) {
+    Logger.error(err)
+    throw Boom.boomify(err, { message: 'An error has occurred' })
+  }
+}
+
 module.exports = {
   create,
   fulfilTransfer,
-  getTransferById
+  getTransferById,
+  fulfilTransferError
 }
