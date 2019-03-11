@@ -59,6 +59,7 @@
     "blipp": "3.0.0",
     "bluebird": "3.5.0",
     "boom": "7.2.0",
+    "catbox": "^10.0.6",
     "commander": "2.18.0",
     "docdash": "1.0.0",
     "flat": "4.0.0",
