@@ -54,9 +54,9 @@ Test('Transfer Transformer tests', TransformerTest => {
       const headerData = Object.assign({}, headerDataExample)
       headerData[key] = val
 
-      var transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData)
 
-      for (var headerKey in headerDataExample) {
+      for (let headerKey in headerDataExample) {
         test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
       }
       test.equals(transformedHeaderData[key], undefined)
@@ -70,9 +70,9 @@ Test('Transfer Transformer tests', TransformerTest => {
       const headerData = Object.assign({}, headerDataExample)
       headerData[key] = val
 
-      var transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData)
 
-      for (var headerKey in headerDataExample) {
+      for (let headerKey in headerDataExample) {
         test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
       }
       test.equals(transformedHeaderData[key], date.toUTCString())
@@ -86,9 +86,9 @@ Test('Transfer Transformer tests', TransformerTest => {
       const headerData = Object.assign({}, headerDataExample)
       headerData[key] = val
 
-      var transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData)
 
-      for (var headerKey in headerDataExample) {
+      for (let headerKey in headerDataExample) {
         test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
       }
       test.equals(transformedHeaderData[key], val.toUTCString())
@@ -101,9 +101,9 @@ Test('Transfer Transformer tests', TransformerTest => {
       const headerData = Object.assign({}, headerDataExample)
       headerData[key] = val
 
-      var transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData)
 
-      for (var headerKey in headerDataExample) {
+      for (let headerKey in headerDataExample) {
         test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
       }
       test.equals(transformedHeaderData[key], val)

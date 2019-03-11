@@ -69,9 +69,9 @@ Test('setup', setupTest => {
 
   setupTest.test('createServer should', async (createServerTest) => {
     createServerTest.test('throw Boom error on fail', async (test) => {
-      var errorToThrow = new Error('Throw Boom error')
+      const errorToThrow = new Error('Throw Boom error')
 
-      var HapiStubThrowError = {
+      const HapiStubThrowError = {
         Server: sandbox.stub().callsFake((opt) => {
           opt.routes.validate.failAction(sandbox.stub(), sandbox.stub(), errorToThrow)
         })
@@ -146,8 +146,33 @@ Test('setup', setupTest => {
     })
 
     initializeTest.test('run Handlers if runHandlers flag enabled and DONT start API', async (test) => {
-      var ConfigStub = Config
+      const ConfigStub = Config
       ConfigStub.HANDLERS_API_DISABLED = true
+
+      Setup = Proxyquire('../../../src/shared/setup', {
+        '../handlers/register': RegisterHandlersStub,
+        './plugins': PluginsStub,
+        'hapi': HapiStub,
+        '../lib/config': ConfigStub
+      })
+
+      const service = 'handler'
+
+      sandbox.stub(Config, 'HANDLERS_API_DISABLED').returns(true)
+      Setup.initialize({ service, runHandlers: true }).then((s) => {
+        test.ok(RegisterHandlersStub.registerAllHandlers.called)
+        test.equal(s, undefined)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('dont initialize the instrumentation if the INSTRUMENTATION_METRICS_DISABLED is disabled', async (test) => {
+      const ConfigStub = Config
+      ConfigStub.HANDLERS_API_DISABLED = true
+      ConfigStub.INSTRUMENTATION_METRICS_DISABLED = true
 
       Setup = Proxyquire('../../../src/shared/setup', {
         '../handlers/register': RegisterHandlersStub,
@@ -172,17 +197,17 @@ Test('setup', setupTest => {
     initializeTest.test('run invalid Handler if runHandlers flag enabled with handlers[] populated', async (test) => {
       const service = 'api'
 
-      var notificationHandler = {
+      const notificationHandler = {
         type: 'notification',
         enabled: true
       }
 
-      var unknownHandler = {
+      const unknownHandler = {
         type: 'undefined',
         enabled: true
       }
 
-      var modulesList = [
+      const modulesList = [
         notificationHandler,
         unknownHandler
       ]
@@ -202,12 +227,12 @@ Test('setup', setupTest => {
     initializeTest.test('run Handler if runHandlers flag enabled with handlers[] populated', async (test) => {
       const service = 'api'
 
-      var notificationHandler = {
+      const notificationHandler = {
         type: 'notification',
         enabled: true
       }
 
-      var modulesList = [
+      const modulesList = [
         notificationHandler
       ]
 
@@ -224,12 +249,12 @@ Test('setup', setupTest => {
     initializeTest.test('run no Handlers if runHandlers flag enabled with handlers[] populated and the notificationHandler is disabled', async (test) => {
       const service = 'api'
 
-      var notificationHandler = {
+      const notificationHandler = {
         type: 'notification',
         enabled: false
       }
 
-      var modulesList = [
+      const modulesList = [
         notificationHandler
       ]
 
@@ -246,8 +271,7 @@ Test('setup', setupTest => {
     initializeTest.test('run all Handlers if runHandlers flag enabled with handlers[] is empty', async (test) => {
       const service = 'api'
 
-      var modulesList = [
-      ]
+      const modulesList = []
 
       Setup.initialize({ service, runHandlers: true, handlers: modulesList }).then(() => {
         test.notOk(RegisterHandlersStub.registerNotificationHandler.called)

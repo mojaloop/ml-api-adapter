@@ -103,3 +103,13 @@ npm rebuild
 ### Errors On Setup
 * sodium v1.2.3 can't compile during npm install
   - resolved by installing v2.0.3 `npm install sodium@2.0.3`
+* `
+Undefined symbols for architecture x86_64:
+  "_CRYPTO_cleanup_all_ex_data", referenced from:
+      _rd_kafka_transport_ssl_term in rdkafka_transport.o
+  "_CRYPTO_num_locks", referenced from:
+  ........
+  ld: symbol(s) not found for architecture x86_64
+clang: error: linker command failed with exit code 1 (use -v to see invocation) 
+`
+  - resolved by installing openssl `brew install openssl` and then running: `CFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib npm install --save node-rdkafka`  

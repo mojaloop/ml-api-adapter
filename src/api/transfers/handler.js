@@ -27,6 +27,7 @@
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
+const Metrics = require('@mojaloop/central-services-metrics')
 
 /**
  * @module src/api/transfers/handler
@@ -39,19 +40,27 @@ const Boom = require('boom')
  * @description This will call prepare method of transfer service, which will produce a transfer message on prepare kafka topic
  *
  * @param {object} request - the http request object, containing headers and transfer request as payload
- * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
  *
  * @returns {integer} - Returns the response code 202 on success, throws error if failure occurs
  */
 
 const create = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_prepare',
+    'Produce a transfer prepare message to transfer prepare kafka topic',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await TransferService.prepare(request.headers, request.payload)
+    histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
     Logger.error(err)
+    histTimerEnd({ success: false })
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
@@ -63,20 +72,28 @@ const create = async function (request, h) {
  * @description This will call fulfil method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
  *
  * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
- * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
  *
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 
 const fulfilTransfer = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_fulfil',
+    'Produce a transfer fulfil message to transfer fulfil kafka topic',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.fulfil(request.params.id, request.headers, request.payload)
+    histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
+    histTimerEnd({ success: false })
     throw Boom.boomify(err, { message: 'An error has occurred' })
   }
 }
@@ -88,7 +105,7 @@ const fulfilTransfer = async function (request, h) {
  * @description This will call getTransferById method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
  *
  * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
- * @param {objecct} h - the http response object, the response code will be sent using this object methods.
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
  *
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
@@ -97,7 +114,7 @@ const getTransferById = async function (request, h) {
   try {
     Logger.info('getById::id(%s)', request.params.id)
     await TransferService.getTransferById(request.params.id, request.headers)
-    return h.response().code(200)
+    return h.response().code(202)
   } catch (err) {
     Logger.error(err)
     throw Boom.boomify(err, { message: 'An error has occurred' })

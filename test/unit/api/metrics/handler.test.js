@@ -17,17 +17,60 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
-const Glob = require('glob')
+const Test = require('tapes')(require('tape'))
+const Sinon = require('sinon')
+const Handler = require('../../../../src/api/metrics/handler')
+const Metrics = require('@mojaloop/central-services-metrics')
 
-exports.plugin = {
-  name: 'api routes',
-  register: function (server) {
-    Glob.sync('**/routes.js', { cwd: __dirname, ignore: 'routes.js' })
-      .forEach(x => server.route(require('./' + x)))
+function createRequest (routes) {
+  let value = routes || []
+  return {
+    server: {
+      table: () => {
+        return [{ table: value }]
+      }
+    }
   }
 }
+
+Test('metrics handler', (handlerTest) => {
+  let sandbox
+  handlerTest.beforeEach(t => {
+    sandbox = Sinon.createSandbox()
+    sandbox.stub(Metrics)
+    t.end()
+  })
+
+  handlerTest.afterEach(t => {
+    sandbox.restore()
+    t.end()
+  })
+
+  handlerTest.test('metrics should', (healthTest) => {
+    healthTest.test('return thr metrics ok', async function (assert) {
+      let reply = {
+        response: () => {
+          // assert.equal(response.status, 'OK')
+          return {
+            code: (statusCode) => {
+              assert.equal(statusCode, 200)
+              assert.end()
+            }
+          }
+        }
+      }
+
+      Handler.metrics(createRequest(), reply)
+    })
+    healthTest.end()
+  })
+
+  handlerTest.end()
+})

@@ -17,17 +17,41 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
-const Glob = require('glob')
+const Test = require('tape')
+const Plugins = require('../../../../src/api/metrics/plugin')
 
-exports.plugin = {
-  name: 'api routes',
-  register: function (server) {
-    Glob.sync('**/routes.js', { cwd: __dirname, ignore: 'routes.js' })
-      .forEach(x => server.route(require('./' + x)))
+class Server {
+  constructor () {
+    this.registrations = []
+    this.route = () => { }
+  }
+
+  register (obj) {
+    if (obj instanceof Array) {
+      this.registrations.push(...obj)
+    } else {
+      this.registrations.push(obj)
+    }
+  }
+
+  contains (obj) {
+    return this.registrations.indexOf(obj) > -1
   }
 }
+
+Test('registerPlugins should', pluginsTest => {
+  pluginsTest.test('registers base modules', async function (test) {
+    const server = await new Server()
+    await Plugins.plugin.register(server)
+    test.pass('plugin registered')
+    test.end()
+  })
+  pluginsTest.end()
+})

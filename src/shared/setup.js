@@ -32,6 +32,7 @@ const Boom = require('boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
+const Metrics = require('@mojaloop/central-services-metrics')
 
 /**
  * @module src/shared/setup
@@ -112,6 +113,12 @@ const createHandlers = async (handlers) => {
   return registerdHandlers
 }
 
+const initializeInstrumentation = () => {
+  if (!Config.INSTRUMENTATION_METRICS_DISABLED) {
+    Metrics.setup(Config.INSTRUMENTATION_METRICS_CONFIG)
+  }
+}
+
 /**
  * @function initialize
  *
@@ -133,6 +140,7 @@ const createHandlers = async (handlers) => {
  */
 const initialize = async function ({ service, port, modules = [], runHandlers = false, handlers = [] }) {
   let server
+  initializeInstrumentation()
   switch (service) {
     case 'api':
       server = await createServer(port, modules)

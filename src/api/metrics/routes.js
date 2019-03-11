@@ -17,17 +17,27 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- --------------
+
+ - Pedro Barreto <pedrob@crosslaketech.com>
+ - Rajiv Mothilal <rajivmothilal@gmail.com>
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+--------------
  ******/
 
 'use strict'
 
-const Glob = require('glob')
+const Handler = require('./handler')
+const tags = ['api', 'metrics']
 
-exports.plugin = {
-  name: 'api routes',
-  register: function (server) {
-    Glob.sync('**/routes.js', { cwd: __dirname, ignore: 'routes.js' })
-      .forEach(x => server.route(require('./' + x)))
+module.exports = [
+  {
+    method: 'GET',
+    path: '/metrics',
+    handler: Handler.metrics,
+    config: {
+      tags: tags,
+      description: 'Prometheus metrics endpoint',
+      id: 'metrics'
+    }
   }
-}
+]

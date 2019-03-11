@@ -17,7 +17,9 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- --------------
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+--------------
  ******/
 
 'use strict'
@@ -110,29 +112,29 @@ exports.ENUMS = {
   EVENT
 }
 
-/**
- * @method ParticipantTopicTemplate
- *
- * @param {string} participantName - participant name, retrieved from database. Example: 'dfsp1'
- * @param {string} functionality - the functionality flow. Example: 'transfer'
- * @param {string} action - the action that applies to the flow. Example: 'prepare'
- *
- * Generates a participant topic name from the 3 inputs which are used in the placeholder topic template for participants found in the default.json
- *
- * @returns {string} - Returns topic name to be created, throws error if failure occurs
- */
-const participantTopicTemplate = (participantName, functionality, action) => {
-  try {
-    return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.PARTICIPANT_TOPIC_TEMPLATE.TEMPLATE, {
-      participantName,
-      functionality,
-      action
-    })
-  } catch (e) {
-    Logger.error(e)
-    throw e
-  }
-}
+// /**
+//  * @method ParticipantTopicTemplate
+//  *
+//  * @param {string} participantName - participant name, retrieved from database. Example: 'dfsp1'
+//  * @param {string} functionality - the functionality flow. Example: 'transfer'
+//  * @param {string} action - the action that applies to the flow. Example: 'prepare'
+//  *
+//  * Generates a participant topic name from the 3 inputs which are used in the placeholder topic template for participants found in the default.json
+//  *
+//  * @returns {string} - Returns topic name to be created, throws error if failure occurs
+//  */
+// const participantTopicTemplate = (participantName, functionality, action) => {
+//   try {
+//     return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.PARTICIPANT_TOPIC_TEMPLATE.TEMPLATE, {
+//       participantName,
+//       functionality,
+//       action
+//     })
+//   } catch (e) {
+//     Logger.error(e)
+//     throw e
+//   }
+// }
 
 /**
  * @method FulfilTopicTemplate
@@ -234,44 +236,63 @@ const getNotificationTopicName = () => {
 //   }
 // }
 
-// /**
-//  * @method TransformGeneralTopicName
-//  *
-//  * @param {string} functionality - the functionality flow. Example: 'transfer'
-//  * @param {string} action - the action that applies to the flow. Example: 'prepare'
-//  *
-//  * @function generalTopicTemplate called which generates a general topic name from the 2 inputs,
-//  * which are used in the placeholder general topic template found in the default.json
-//  *
-//  * @returns {string} - Returns topic name to be created, throws error if failure occurs
-//  */
-// const transformGeneralTopicName = (functionality, action) => {
-//   try {
-//     return generalTopicTemplate(functionality, action)
-//   } catch (e) {
-//     throw e
-//   }
-// }
-
 /**
- * @method GetParticipantTopicName
+ * @method TransformGeneralTopicName
  *
- * @param {string} participantName - participant name, retrieved from database. Example: 'dfsp1'
  * @param {string} functionality - the functionality flow. Example: 'transfer'
  * @param {string} action - the action that applies to the flow. Example: 'prepare'
  *
- * @description participantTopicTemplate called which generates a participant topic name from the 3 inputs,
- * which are used in the placeholder participant topic template found in the default.json
+ * @function generalTopicTemplate called which generates a general topic name from the 2 inputs,
+ * which are used in the placeholder general topic template found in the default.json
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
-const getParticipantTopicName = (participantName, functionality, action) => {
+const transformGeneralTopicName = (functionality, action) => {
   try {
-    return participantTopicTemplate(participantName, functionality, action)
+    return generalTopicTemplate(functionality, action)
   } catch (e) {
     throw e
   }
 }
+
+/**
+ * @function GeneralTopicTemplate
+ *
+ * @description Generates a general topic name from the 2 inputs, which are used in the placeholder general topic template found in the default.json
+ *
+ * @param {string} functionality - the functionality flow. Example: 'transfer'
+ * @param {string} action - the action that applies to the flow. Example: 'prepare'
+ *
+ * @returns {string} - Returns topic name to be created, throws error if failure occurs
+ */
+const generalTopicTemplate = (functionality, action) => {
+  try {
+    return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, { functionality, action })
+  } catch (e) {
+    Logger.error(e)
+    throw e
+  }
+}
+
+// /**
+//  * @method GetParticipantTopicName
+//  *
+//  * @param {string} participantName - participant name, retrieved from database. Example: 'dfsp1'
+//  * @param {string} functionality - the functionality flow. Example: 'transfer'
+//  * @param {string} action - the action that applies to the flow. Example: 'prepare'
+//  *
+//  * @description participantTopicTemplate called which generates a participant topic name from the 3 inputs,
+//  * which are used in the placeholder participant topic template found in the default.json
+//  *
+//  * @returns {string} - Returns topic name to be created, throws error if failure occurs
+//  */
+// const getParticipantTopicName = (participantName, functionality, action) => {
+//   try {
+//     return participantTopicTemplate(participantName, functionality, action)
+//   } catch (e) {
+//     throw e
+//   }
+// }
 
 /**
  * @method GetFulfilTopicName
@@ -324,8 +345,30 @@ const getKafkaConfig = (flow, functionality, action) => {
   }
 }
 
-exports.getParticipantTopicName = getParticipantTopicName
+/**
+ * @function createGeneralTopicConf
+ *
+ * @param {string} participantName - The participant name
+ * @param {string} functionality - the functionality flow. Example: 'transfer' ie: note the case of text
+ * @param {string} action - the action that applies to the flow. Example: 'prepare' ie: note the case of text
+ * @param {*} key - optional key to be sent on the message
+ * @param {number} partition - optional partition to produce to
+ * @param {*} opaqueKey - optional opaque token, which gets passed along to your delivery reports
+ *
+ * @returns {object} - Returns newly created general topicConfig
+ */
+const createGeneralTopicConf = (functionality, action, key = null, partition = null, opaqueKey = null) => {
+  return {
+    topicName: transformGeneralTopicName(functionality, action),
+    key,
+    partition,
+    opaqueKey
+  }
+}
+
+// exports.getParticipantTopicName = getParticipantTopicName
 exports.getFulfilTopicName = getFulfilTopicName
 exports.getKafkaConfig = getKafkaConfig
 exports.getNotificationTopicName = getNotificationTopicName
 exports.getTransferByIdTopicName = getTransferByIdTopicName
+exports.createGeneralTopicConf = createGeneralTopicConf

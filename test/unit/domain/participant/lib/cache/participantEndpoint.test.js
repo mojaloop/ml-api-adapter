@@ -27,7 +27,7 @@ Test('Cache Test', cacheTest => {
   cacheTest.test('getEndpoint should', async (getEndpointTest) => {
     getEndpointTest.test('return the endpoint', async (test) => {
       const fsp = 'fsp'
-      const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
 
       const endpointMap = {
         FSPIOP_CALLBACK_URL_TRANSFER_POST: 'http://localhost:1080/transfers',
@@ -41,7 +41,7 @@ Test('Cache Test', cacheTest => {
       Model.getEndpoint.withArgs(fsp).returns(P.resolve(endpointMap))
 
       try {
-        const result = await Cache.getEndpoint(fsp, enpointType)
+        const result = await Cache.getEndpoint(fsp, endpointType)
         test.equal(result, expected, 'The results match')
         await Cache.stopCache()
         test.end()
@@ -53,12 +53,12 @@ Test('Cache Test', cacheTest => {
 
     getEndpointTest.test('throw error', async (test) => {
       const fsp = 'fsp1'
-      const enpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
 
       await Cache.initializeCache()
       Model.getEndpoint.withArgs(fsp).throws(new Error())
       try {
-        await Cache.getEndpoint(fsp, enpointType)
+        await Cache.getEndpoint(fsp, endpointType)
         test.fail('should throw error')
         await Cache.stopCache()
         test.end()
