@@ -44,7 +44,7 @@ Test('Transfer Service tests', serviceTest => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Kafka.Producer, 'produceMessage')
     sandbox.stub(Kafka.Producer, 'disconnect').returns(P.resolve(true))
-    sandbox.stub(axios, 'get').returns(P.resolve({data: { destination: 'test' }}))
+    sandbox.stub(axios, 'get').returns(P.resolve({ data: { destination: 'test' } }))
     t.end()
   })
 
