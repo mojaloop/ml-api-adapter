@@ -241,7 +241,7 @@ Test('Notification Service tests', notificationTest => {
 
       const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to, 'FSPIOP-Final-Destination': msg.value.from }
       const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from, 'FSPIOP-Final-Destination': undefined }
-      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
+      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch', 'FSPIOP-Final-Destination': msg.value.from }
       const message = {}
 
       const expected = 200
