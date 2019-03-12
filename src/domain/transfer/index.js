@@ -56,12 +56,14 @@ const prepare = async (headers, message) => {
   try {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
-    if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
-    let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
-    Logger.debug('nexthop is', response.data)
-    message.payerFsp = headers['fspiop-source']
-    message.payeeFsp = response.data.destination
-    headers['fspiop-destination'] = response.data.destination
+    if (config.CROSS_NETWORK) {
+      if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
+      let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
+      Logger.debug('nexthop is', response.data)
+      message.payerFsp = headers['fspiop-source']
+      message.payeeFsp = response.data.destination
+      headers['fspiop-destination'] = response.data.destination
+    }
 
     const messageProtocol = {
       id: message.transferId,
