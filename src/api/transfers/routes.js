@@ -144,8 +144,16 @@ module.exports = [{
         id: Joi.string().required().description('path')
       },
       payload: {
-        errorDescription: Joi.string().required(),
-        errorCode: Joi.string().required().regex(/^[0-9]{4}/)
+        errorInformation: Joi.object().keys({
+          errorDescription: Joi.string().required(),
+          errorCode: Joi.string().required().regex(/^[0-9]{4}/),
+          extensionList: Joi.object().keys({
+            extension: Joi.array().items(Joi.object().keys({
+              key: Joi.string().required().min(1).max(32).description('Key').label('@ Supplied key fails to match the required format. @'),
+              value: Joi.string().required().min(1).max(128).description('Value').label('@ Supplied key value fails to match the required format. @')
+            })).required().min(1).max(16).description('extension')
+          }).optional().description('Extension list')
+        }).required().description('Error information')
       }
     }
   }
