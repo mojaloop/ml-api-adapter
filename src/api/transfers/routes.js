@@ -118,6 +118,46 @@ module.exports = [{
     }
   }
 },
+{
+  method: 'PUT',
+  path: '/transfers/{id}/error',
+  handler: Handler.fulfilTransferError,
+  options: {
+    id: 'transfer_abort',
+    tags: tags,
+    description: 'Abort a transfer',
+    payload: {
+      failAction: 'error'
+    },
+    validate: {
+      headers: Joi.object({
+        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        'x-forwarded-for': Joi.string().optional(),
+        'fspiop-source': Joi.string().required(),
+        'fspiop-destination': Joi.string().optional(),
+        'fspiop-encryption': Joi.string().optional(),
+        'fspiop-signature': Joi.string().optional(),
+        'fspiop-uri': Joi.string().optional(),
+        'fspiop-http-method': Joi.string().optional()
+      }).unknown(false).options({ stripUnknown: true }),
+      params: {
+        id: Joi.string().required().description('path')
+      },
+      payload: {
+        errorInformation: Joi.object().keys({
+          errorDescription: Joi.string().required(),
+          errorCode: Joi.string().required().regex(/^[0-9]{4}/),
+          extensionList: Joi.object().keys({
+            extension: Joi.array().items(Joi.object().keys({
+              key: Joi.string().required().min(1).max(32).description('Key').label('@ Supplied key fails to match the required format. @'),
+              value: Joi.string().required().min(1).max(128).description('Value').label('@ Supplied key value fails to match the required format. @')
+            })).required().min(1).max(16).description('extension')
+          }).optional().description('Extension list')
+        }).required().description('Error information')
+      }
+    }
+  }
+},
 
 {
   method: 'GET',

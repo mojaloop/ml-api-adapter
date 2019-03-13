@@ -246,6 +246,30 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
   assert.end()
 })
 
+Test('return error if Date Header is not according to format in RFC7231 as per Mojaloop Spec in PUT /transfers/{id}/error', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    },
+    headers: { 'date': '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
 Test('return error if transfer is not provided', async function (assert) {
   let req = Base.buildRequest({
     url: '/transfers/{id}',
@@ -260,6 +284,100 @@ Test('return error if transfer is not provided', async function (assert) {
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if FSPIOP-Source is not provided to PUT /transfers/{id}/error', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    },
+    headers: { 'date': 'Fri, 14 Sep 2018 19:10:56 GMT', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if invalid errorCode is provided to PUT /transfers/{id}/error', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '501',
+      errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    },
+    headers: { 'date': 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if errorCode is not provided to PUT /transfers/{id}/error', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    },
+    headers: { 'date': 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if errorDescription is not provided to PUT /transfers/{id}/error', async function (assert) {
+  let req = Base.buildRequest({
+    url: '/transfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    },
+    headers: { 'date': 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })

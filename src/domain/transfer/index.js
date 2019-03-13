@@ -191,8 +191,58 @@ const getTransferById = async (id, headers) => {
     throw err
   }
 }
+
+/**
+* @function transferError
+* @async
+* @description This will produce a transfer error message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
+*
+* @param {string} id - the transferId
+* @param {object} headers - the http header from the request
+* @param {object} message - the transfer fulfil message
+*
+* @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
+*/
+const transferError = async (id, headers, message) => {
+  Logger.debug('domain::transfer::abort::start(%s, %s, %s)', id, headers, message)
+  try {
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+    const messageProtocol = {
+      id,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/json',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'fulfil',
+          action: 'abort',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL, id)
+    Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
+    Logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
+    Logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    return true
+  } catch (err) {
+    Logger.error(`domain::transfer::abort::Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
+}
 module.exports = {
   prepare,
   fulfil,
-  getTransferById
+  getTransferById,
+  transferError
 }
