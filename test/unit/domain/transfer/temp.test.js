@@ -82,7 +82,7 @@ Test('Transfer Service tests', serviceTest => {
       }
 
       const headers = {
-        'fspiop-address': 'moja.dfsp2'
+        'fspiop-account': 'moja.dfsp2'
       }
 
       const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
@@ -107,13 +107,13 @@ Test('Transfer Service tests', serviceTest => {
       }
       const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
 
-      Kafka.Producer.produceMessage.withArgs(Sinon.match(messageProtocol), Sinon.match(topicConfig), Sinon.match(kafkaConfig)).returns(P.resolve(true))
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 
       let result = await Service.prepare(headers, message)
       const appliedMessage = Kafka.Producer.produceMessage.getCall(0).args[0]
-      test.same(appliedMessage.to, 'dfsp2')
-      test.same(appliedMessage.content.headers['fspiop-destination'], 'dfsp2')
-      test.same(appliedMessage.content.headers['fspiop-address'], 'moja.dfsp2')
+      test.equals(appliedMessage.to, 'dfsp2')
+      test.equals(appliedMessage.content.headers['fspiop-destination'], 'dfsp2')
+      test.equals(appliedMessage.content.headers['fspiop-account'], 'moja.dfsp2')
       test.equals(result, true)
       test.end()
     })

@@ -57,8 +57,8 @@ const prepare = async (headers, message) => {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
     // Determine who in-network to route to by consulting routing service
-    if (headers['fspiop-address']) {
-      const url = config.ROUTING_ENDPOINT + '/' + headers['fspiop-address']
+    if (headers['fspiop-account']) {
+      const url = config.ROUTING_ENDPOINT + '/' + headers['fspiop-account']
       let response = await axios.get(url)
       Logger.debug('nexthop is', response.data)
       message.payeeFsp = response.data.address
