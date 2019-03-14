@@ -175,11 +175,11 @@ const processMessage = async (msg) => {
       // send an extra notification back to the original sender.
       // first remove any JWS related headers so we dont bounce them back.
       // also set source to "switch" to make it clear this notification originates at the switch
-      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }, { 'FSPIOP-Final-Destination': from }))
+      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
       await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
 
       // forward the fulfil to the destination
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from }, { 'FSPIOP-Final-Destination': msg.value.content.headers['fspiop-final-destination'] })
+      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
       return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
     }
 

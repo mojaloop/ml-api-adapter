@@ -56,13 +56,13 @@ const prepare = async (headers, message) => {
   try {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
 
-    if (config.CROSS_NETWORK) {
-      if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
-      let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
+    // Determine who in-network to route to by consulting routing service
+    if (headers['fspiop-address']) {
+      const url = config.ROUTING_ENDPOINT + '/' + headers['fspiop-address']
+      let response = await axios.get(url)
       Logger.debug('nexthop is', response.data)
-      message.payerFsp = headers['fspiop-source']
-      message.payeeFsp = response.data.destination
-      headers['fspiop-destination'] = response.data.destination
+      message.payeeFsp = response.data.address
+      headers['fspiop-destination'] = response.data.address
     }
 
     const messageProtocol = {
@@ -115,13 +115,6 @@ const fulfil = async (id, headers, message) => {
   try {
     const action = message.transferState === 'ABORTED' ? 'reject' : 'commit'
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
-
-    // TODO this needs to know if it is sending out of network and drops it onto the CNP's topic
-
-    if (!headers['fspiop-final-destination']) headers['fspiop-final-destination'] = headers['fspiop-destination']
-    let response = await axios.get(config.ROUTING_ENDPOINT, { headers: { 'fspiop-final-destination': headers['fspiop-final-destination'] ? headers['fspiop-final-destination'] : headers['fspiop-destination'] } })
-
-    headers['fspiop-destination'] = response.data.destination
 
     const messageProtocol = {
       id,
