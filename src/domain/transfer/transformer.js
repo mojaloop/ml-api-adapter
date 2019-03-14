@@ -26,6 +26,8 @@
 
 'use strict'
 
+const ENUM = require('../../lib/enum')
+
 /**
  * @module src/domain/transfer/transformer
  */
@@ -34,19 +36,23 @@
 * @function transformHeaders
 *
 * @description This will transform the headers before sending to kafka
+* NOTE: Assumes incoming headers keys are lowercased. This is a safe
+* assumption only if the headers parameter comes from node default http framework.
+*
+* see https://nodejs.org/dist/latest-v10.x/docs/api/http.html#http_message_headers
 *
 * @param {object} headers - the http header from the request
 *
 * @returns {object} Returns the normalized headers
 */
 
-const transformHeaders = (headers) => {
+const transformHeaders = (headers, config) => {
   // Normalized headers
   var normalizedHeaders = {}
   for (var headerKey in headers) {
     var headerValue = headers[headerKey]
     switch (headerKey.toLowerCase()) {
-      case ('date'):
+      case (ENUM.headers.GENERAL.DATE.toLowerCase()):
         var tempDate = {}
         if (typeof headerValue === 'object' && headerValue instanceof Date) {
           tempDate = headerValue.toUTCString()
@@ -62,15 +68,39 @@ const transformHeaders = (headers) => {
         }
         normalizedHeaders[headerKey] = tempDate
         break
-      case ('content-length'):
+      case (ENUM.headers.GENERAL.CONTENTLENGTH.toLowerCase()):
         // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
+        break
+      case (ENUM.headers.FSPIOP.URI.toLowerCase()):
+        // Do nothing here, do not map. This will be removed from the callback request.
+        break
+      case (ENUM.headers.FSPIOP.HTTPMETHOD.toLowerCase()):
+        if (config.httpMethod.toLowerCase() === headerValue.toLowerCase()) {
+          // HTTP Methods match, and thus no change is required
+          normalizedHeaders[headerKey] = headerValue
+        } else {
+          // HTTP Methods DO NOT match, and thus a change is required for target HTTP Method
+          normalizedHeaders[headerKey] = config.httpMethod
+        }
+        break
+      case (ENUM.headers.FSPIOP.SIGNATURE.toLowerCase()):
+        // Check to see if we find a regex match the source header containing the switch name.
+        // If so we include the signature otherwise we remove it.
+        if (headers[ENUM.headers.FSPIOP.SOURCE].match(ENUM.headers.FSPIOP.SWITCH.regex) === -1) {
+          normalizedHeaders[headerKey] = headerValue
+        }
+        break
+      case (ENUM.headers.FSPIOP.SOURCE.toLowerCase()):
+        normalizedHeaders[headerKey] = config.sourceFsp
+        break
+      case (ENUM.headers.FSPIOP.DESTINATION.toLowerCase()):
+        normalizedHeaders[headerKey] = config.destinationFsp
         break
       default:
         normalizedHeaders[headerKey] = headerValue
     }
   }
   return normalizedHeaders
-  // return headers
 }
 
 module.exports = {

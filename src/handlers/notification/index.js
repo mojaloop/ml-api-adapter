@@ -24,8 +24,6 @@
 
 'use strict'
 
-const util = require('util')
-
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
@@ -40,9 +38,10 @@ const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
 const Metrics = require('@mojaloop/central-services-metrics')
+const ENUM = require('../../lib/enum')
 
 // note that incoming headers shoud be lowercased by node
-const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri']
+// const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri']
 
 /**
  * @module src/handlers/notification
@@ -150,7 +149,6 @@ const processMessage = async (msg) => {
     const { metadata, from, to, content, id } = msg.value
     const { action, state } = metadata.event
     const status = state.status
-    let headers
 
     const actionLower = action.toLowerCase()
     const statusLower = status.toLowerCase()
@@ -159,109 +157,80 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage status: ' + status)
 
     if (actionLower === 'prepare' && statusLower === 'success') {
-      let callbackURL = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
-      return Callback.sendCallback(callbackURL, 'post', content.headers, content.payload, id, to)
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
+      return Callback.sendCallback(callbackURLTo, 'post', content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === 'prepare' && statusLower !== 'success') {
-      let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from, to)
+    }
+
+    if (actionLower === 'prepare-duplicate' && statusLower === 'success') {
+      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === 'commit' && statusLower === 'success') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
 
-      // send an extra notification back to the original sender.
-      // first remove any JWS related headers so we dont bounce them back.
-      // also set source to "switch" to make it clear this notification originates at the switch
-      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
-      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
-
       // forward the fulfil to the destination
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
-      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
+      await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, from, to)
+
+      // send an extra notification back to the original sender.
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, ENUM.headers.FSPIOP.SWITCH.value, from)
     }
 
     if (actionLower === 'commit' && statusLower !== 'success') {
-      let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === 'reject') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
 
-      // send an extra notification back to the original sender.
-      // first remove any JWS related headers so we dont bounce them back.
-      // also set source to "switch" to make it clear this notification originates at the switch
-      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
-      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
-
       // forward the reject to the destination
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
-      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
+      await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, from, to)
+
+      // send an extra notification back to the original sender.
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, ENUM.headers.FSPIOP.SWITCH.value, from)
     }
 
     if (actionLower === 'abort') {
       let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
 
-      // send an extra notification back to the original sender.
-      // first remove any JWS related headers so we dont bounce them back.
-      // also set source to "switch" to make it clear this notification originates at the switch
-      headers = removeJwsHeaders(Object.assign({}, content.headers, { 'FSPIOP-Destination': from }, { 'FSPIOP-Source': 'switch' }))
-      await Callback.sendCallback(callbackURLFrom, 'put', headers, content.payload, id, from)
-
       // forward the abort to the destination
-      headers = Object.assign({}, content.headers, { 'FSPIOP-Destination': to }, { 'FSPIOP-Source': from })
-      return Callback.sendCallback(callbackURLTo, 'put', headers, content.payload, id, to)
+      await Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, from, to)
+
+      // send an extra notification back to the original sender.
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, ENUM.headers.FSPIOP.SWITCH.value, from)
     }
 
     if (actionLower === 'timeout-received') {
-      let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from, to)
     }
 
-    if (actionLower === 'prepare-duplicate') {
-      let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+    if (actionLower === 'get' && statusLower === 'success') {
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, from, to)
     }
 
-    if (actionLower === 'get') {
-      let callbackURL = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-      return Callback.sendCallback(callbackURL, 'put', content.headers, content.payload, id, from)
+    if (actionLower === 'get' && statusLower !== 'success') {
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, from, to)
     }
 
-    const err = new Error('invalid action received from kafka')
-    Logger.error(`error sending notification to the callback - ${err}`)
+    const err = new Error('Unknown action received from kafka')
+    Logger.error(`Error sending notification - ${err}`)
     throw err
   } catch (e) {
-    Logger.error(`error processing the message - ${e}`)
+    Logger.error(`Error processing the message - ${e}`)
     throw e
   }
-}
-
-/**
- * Removes any JWS related headers from the supplied headers object
- *
- * NOTE: Assumes incoming headers keys are lowercased. This is a safe
- * assumption only if the headers parameter comes from node default http framework.
- *
- * see https://nodejs.org/dist/latest-v10.x/docs/api/http.html#http_message_headers
- *
- * @param {object} headers - an object containing http header keypairs from which JWS specific headers are to be removed
- */
-const removeJwsHeaders = (headers) => {
-  Logger.debug(`Removing jws headers from: ${util.inspect(headers)}`)
-
-  jwsHeaders.forEach(key => {
-    delete headers[key]
-  })
-
-  Logger.debug(`jws headers removed. result: ${util.inspect(headers)}`)
-
-  return headers
 }
 
 module.exports = {
