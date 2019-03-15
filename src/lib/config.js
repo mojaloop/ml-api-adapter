@@ -1,6 +1,7 @@
 const RC = require('rc')('MLAPI', require('../../config/default.json'))
 
-module.exports = {
+// Set config object to be returned
+let config = {
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),
   PORT: RC.PORT,
   AMOUNT: RC.AMOUNT,
@@ -17,3 +18,10 @@ module.exports = {
   ENDPOINT_SECURITY: RC.SECURITY,
   ENDPOINT_SECURITY_TLS: RC.ENDPOINT_SECURITY.TLS
 }
+
+// Handle any defaults here
+if (!RC.hasOwnProperty('ENDPOINT_SECURITY') || !RC.hasOwnProperty('ENDPOINT_SECURITY_TLS') || !RC.ENDPOINT_SECURITY_TLS.hasOwnProperty('rejectUnauthorized')) {
+  config.rejectUnauthorized = true
+}
+
+module.exports = config

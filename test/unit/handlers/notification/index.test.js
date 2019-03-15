@@ -32,6 +32,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const P = require('bluebird')
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
+const ENUM = require('../../../../src/lib/enum')
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
@@ -214,11 +215,14 @@ Test('Notification Service tests', notificationTest => {
       }
     })
     processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+
       const msg = {
         value: {
           metadata: {
             event: {
-              type: 'commit',
+              type: 'notification',
               action: 'commit',
               state: {
                 status: 'success',
@@ -227,34 +231,39 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
             payload: {}
           },
-          to: 'dfsp2',
-          from: 'dfsp1',
+          to: payeeFsp,
+          from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+
       const urlPayer = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const urlPayee = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
-      const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to }
-      const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from }
-      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
       const message = {}
 
       const expected = 200
-      Callback.sendCallback.withArgs(urlPayer, method, headersFrom, message, msg.value.id, msg.value.from).returns(P.resolve(200))
-      Callback.sendCallback.withArgs(urlPayee, method, headersTo, message, msg.value.id, msg.value.to).returns(P.resolve(200))
+      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
+      Callback.sendCallback.withArgs(urlPayer, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
+      Callback.sendCallback.withArgs(urlPayee, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(urlPayer, method, headersNotification, message, msg.value.id, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(urlPayee, method, headersTo, message, msg.value.id, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(urlPayee, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(urlPayer, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
 
     processMessageTest.test('throw error if not able to send the notification to the sender', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
       const msg = {
         value: {
           metadata: {
@@ -268,20 +277,22 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
             payload: {}
           },
-          to: 'dfsp2',
-          from: 'dfsp1',
+          to: payeeFsp,
+          from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const url = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
-      const headers = {}
       const message = {}
 
-      Callback.sendCallback.withArgs(url, method, headers, message).throws(new Error())
+      Callback.sendCallback.withArgs(url, method, msg.value.content.headers, message).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -340,6 +351,8 @@ Test('Notification Service tests', notificationTest => {
     })
 
     processMessageTest.test('process the reject message received from kafka and send out a transfer put callback', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
       const msg = {
         value: {
           metadata: {
@@ -353,11 +366,14 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
             payload: {}
           },
-          to: 'dfsp2',
-          from: 'dfsp1',
+          to: payeeFsp,
+          from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -365,24 +381,23 @@ Test('Notification Service tests', notificationTest => {
       const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const toUrl = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
-      const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to }
-      const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from }
-      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
       const message = {}
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(fromUrl, method, headersFrom, message, msg.value.id, msg.value.from).returns(P.resolve(200))
-      Callback.sendCallback.withArgs(toUrl, method, headersTo, message, msg.value.id, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headersNotification, message, msg.value.id, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(toUrl, method, headersTo, message, msg.value.id, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
 
     processMessageTest.test('process the abort message received from kafka and send out a transfer put callback', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
       const msg = {
         value: {
           metadata: {
@@ -396,35 +411,39 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
             payload: {}
           },
-          to: 'dfsp2',
-          from: 'dfsp1',
+          to: payeeFsp,
+          from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const toUrl = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
-      const headersFrom = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': msg.value.to }
-      const headersTo = { 'FSPIOP-Destination': msg.value.to, 'FSPIOP-Source': msg.value.from }
-      const headersNotification = { 'FSPIOP-Destination': msg.value.from, 'FSPIOP-Source': 'switch' }
       const message = {}
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(fromUrl, method, headersFrom, message, msg.value.id, msg.value.from).returns(P.resolve(200))
-      Callback.sendCallback.withArgs(toUrl, method, headersTo, message).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headersNotification, message, msg.value.id, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(toUrl, method, headersTo, message, msg.value.id, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
 
     processMessageTest.test('process the timeout-received message received from kafka and send out a transfer put callback', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+
       const msg = {
         value: {
           metadata: {
@@ -438,30 +457,36 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
             payload: {}
           },
-          to: 'dfsp2',
-          from: 'dfsp1',
+          to: payeeFsp,
+          from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
       const method = 'put'
-      const headers = {}
       const message = {}
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(fromUrl, method, headers, message, msg.value.id, msg.value.from).returns(P.resolve(200))
+      console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.to}, ${msg.value.from}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.to, msg.value.from).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headers, message, msg.value.id, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.to, msg.value.from))
       test.equal(result, expected)
       test.end()
     })
 
     processMessageTest.test('process the prepare-duplicate message received from kafka and send out a transfer put callback', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+
       const msg = {
         value: {
           metadata: {
@@ -475,25 +500,28 @@ Test('Notification Service tests', notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
             payload: {}
           },
-          to: 'dfsp2',
-          from: 'dfsp1',
+          to: payeeFsp,
+          from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
       const method = 'put'
-      const headers = {}
       const message = {}
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(fromUrl, method, headers, message).returns(P.resolve(200))
+      // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, headers, message))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })

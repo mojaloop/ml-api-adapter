@@ -24,6 +24,7 @@
 
 const Logger = require('@mojaloop/central-services-shared').Logger
 const request = require('request')
+// const request = require('request-promise-native') // added to ensure that the request support async-await or promise natively
 const Transformer = require('../../domain/transfer/transformer')
 const Config = require('../../lib/config')
 
@@ -56,7 +57,7 @@ const sendCallback = async (url, method, headers, message, cid, sourceFsp, desti
     headers: transformedHeaders,
     body: JSON.stringify(message),
     agentOptions: {
-      rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized || true
+      rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
     }
   }
 

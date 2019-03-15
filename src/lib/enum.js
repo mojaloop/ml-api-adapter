@@ -46,6 +46,13 @@ const headers = {
   }
 }
 
+const methods = {
+  FSPIOP_CALLBACK_URL_TRANSFER_POST: 'post',
+  FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'put',
+  FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'put'
+}
+
 module.exports = {
-  headers
+  headers,
+  methods
 }

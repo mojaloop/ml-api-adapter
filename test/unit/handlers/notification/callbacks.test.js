@@ -28,6 +28,11 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const proxyquire = require('proxyquire')
+const Config = require('../../../../src/lib/config')
+
+const sourceFps = 'sourceFsp'
+const destinationFps = 'sourceFsp'
+const cid = '1234567890'
 
 Test('Callback Service tests', callbacksTest => {
   let sandbox, callback, request
@@ -38,7 +43,7 @@ Test('Callback Service tests', callbacksTest => {
     request = sandbox.stub()
     sandbox.stub(Logger)
     callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request': request })
-
+    // callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request-promise-native': request })
     t.end()
   })
 
@@ -79,7 +84,7 @@ Test('Callback Service tests', callbacksTest => {
       }
 
       const agentOptions = {
-        rejectUnauthorized: false
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
       }
 
       const expected = 200
@@ -92,11 +97,17 @@ Test('Callback Service tests', callbacksTest => {
         agentOptions
       }
 
-      request.withArgs(requestOptions).yields(null, { statusCode: 200 }, null)
-
-      let result = await callback.sendCallback(url, method, headers, message)
-      test.equal(result, expected)
-      test.end()
+      request.withArgs(requestOptions).yieldsAsync(null, { statusCode: 200 }, null)
+      let result = {}
+      try {
+        result = await callback.sendCallback(url, method, headers, message, cid, sourceFps, destinationFps)
+        test.equal(result, expected)
+        test.end()
+      } catch (err) {
+        Logger.error(err)
+        test.fail(`Test failed with error - ${err}`)
+        test.end()
+      }
     })
 
     sendCallbackTest.test('throw the error on error while calling the endpoint', async test => {
@@ -130,7 +141,7 @@ Test('Callback Service tests', callbacksTest => {
       }
 
       const agentOptions = {
-        rejectUnauthorized: false
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
       }
 
       const requestOptions = {

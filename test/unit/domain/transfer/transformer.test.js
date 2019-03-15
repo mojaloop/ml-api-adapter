@@ -26,12 +26,30 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 // const P = require('bluebird')
 const Transformer = require('../../../../src/domain/transfer/transformer')
+const ENUM = require('../../../../src/lib/enum')
 // const Utility = require('../../../../src/lib/utility')
 
-const headerDataExample = {
+const headerConfigExample = {
+  httpMethod: 'GET',
+  sourceFsp: 'switch',
+  destinationFsp: 'FSPDest'
+}
+
+const headerDataInputExample = {
   'Content-Type': 'application/vnd.interoperability.transfers+json;version=1.0',
-  'FSPIOP-Source': 'central-switch',
-  'FSPIOP-Destination': 'payerfsp'
+  'Content-Length': 1234,
+  'FSPIOP-Source': headerConfigExample.sourceFsp,
+  'FSPIOP-Destination': headerConfigExample.destinationFsp,
+  'FSPIOP-Method': 'PUT',
+  'FSPIOP-Signature': '{"signature":"iU4GBXSfY8twZMj1zXX1CTe3LDO8Zvgui53icrriBxCUF_wltQmnjgWLWI4ZUEueVeOeTbDPBZazpBWYvBYpl5WJSUoXi14nVlangcsmu2vYkQUPmHtjOW-yb2ng6_aPfwd7oHLWrWzcsjTF-S4dW7GZRPHEbY_qCOhEwmmMOnE1FWF1OLvP0dM0r4y7FlnrZNhmuVIFhk_pMbEC44rtQmMFv4pm4EVGqmIm3eyXz0GkX8q_O1kGBoyIeV_P6RRcZ0nL6YUVMhPFSLJo6CIhL2zPm54Qdl2nVzDFWn_shVyV0Cl5vpcMJxJ--O_Zcbmpv6lxqDdygTC782Ob3CNMvg\\",\\"protectedHeader\\":\\"eyJhbGciOiJSUzI1NiIsIkZTUElPUC1VUkkiOiIvdHJhbnNmZXJzIiwiRlNQSU9QLUhUVFAtTWV0aG9kIjoiUE9TVCIsIkZTUElPUC1Tb3VyY2UiOiJPTUwiLCJGU1BJT1AtRGVzdGluYXRpb24iOiJNVE5Nb2JpbGVNb25leSIsIkRhdGUiOiIifQ"}',
+  'FSPIOP-Uri': '/transfers'
+}
+
+const headerDataTransformedExample = {
+  'Content-Type': headerDataInputExample['Content-Type'],
+  'FSPIOP-Source': headerDataInputExample['FSPIOP-Source'],
+  'FSPIOP-Destination': headerDataInputExample['FSPIOP-Destination'],
+  'FSPIOP-Method': headerDataInputExample['FSPIOP-Method']
 }
 
 Test('Transfer Transformer tests', TransformerTest => {
@@ -48,18 +66,15 @@ Test('Transfer Transformer tests', TransformerTest => {
   })
 
   TransformerTest.test('Transformer.transformHeaders() should', transformHeadersTest => {
-    transformHeadersTest.test('Remove content-length from Header', async test => {
-      const key = 'Content-Length'
-      const val = 1234
-      const headerData = Object.assign({}, headerDataExample)
-      headerData[key] = val
+    transformHeadersTest.test('Remove all unnecessary fields from Header', async test => {
+      const headerData = Object.assign({}, headerDataInputExample)
 
-      const transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
 
-      for (let headerKey in headerDataExample) {
-        test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
-      test.equals(transformedHeaderData[key], undefined)
+      test.equals(transformedHeaderData[ENUM.headers.GENERAL.CONTENTLENGTH], undefined)
       test.end()
     })
 
@@ -67,13 +82,13 @@ Test('Transfer Transformer tests', TransformerTest => {
       const key = 'Date'
       const val = '2018-09-13T13:52:15.221Z'
       const date = new Date(val)
-      const headerData = Object.assign({}, headerDataExample)
+      const headerData = Object.assign({}, headerDataInputExample)
       headerData[key] = val
 
-      const transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
 
-      for (let headerKey in headerDataExample) {
-        test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
       test.equals(transformedHeaderData[key], date.toUTCString())
       test.end()
@@ -83,13 +98,13 @@ Test('Transfer Transformer tests', TransformerTest => {
       const key = 'Date'
       const date = '2018-09-13T13:52:15.221Z'
       const val = new Date(date)
-      const headerData = Object.assign({}, headerDataExample)
+      const headerData = Object.assign({}, headerDataInputExample)
       headerData[key] = val
 
-      const transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
 
-      for (let headerKey in headerDataExample) {
-        test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
       test.equals(transformedHeaderData[key], val.toUTCString())
       test.end()
@@ -98,13 +113,13 @@ Test('Transfer Transformer tests', TransformerTest => {
     transformHeadersTest.test('Translate Date field for badly formatted string', async test => {
       const key = 'Date'
       const val = '2018-0'
-      const headerData = Object.assign({}, headerDataExample)
+      const headerData = Object.assign({}, headerDataInputExample)
       headerData[key] = val
 
-      const transformedHeaderData = Transformer.transformHeaders(headerData)
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
 
-      for (let headerKey in headerDataExample) {
-        test.equals(transformedHeaderData[headerKey], headerDataExample[headerKey])
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
       test.equals(transformedHeaderData[key], val)
       test.end()

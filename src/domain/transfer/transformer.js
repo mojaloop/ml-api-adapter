@@ -47,6 +47,12 @@ const ENUM = require('../../lib/enum')
 */
 
 const transformHeaders = (headers, config) => {
+  // Normalized keys
+  var normalizedKeys = Object.keys(headers).reduce(
+    function (keys, k) {
+      keys[k.toLowerCase()] = k
+      return keys
+    }, {})
   // Normalized headers
   var normalizedHeaders = {}
   for (var headerKey in headers) {
@@ -86,7 +92,8 @@ const transformHeaders = (headers, config) => {
       case (ENUM.headers.FSPIOP.SIGNATURE.toLowerCase()):
         // Check to see if we find a regex match the source header containing the switch name.
         // If so we include the signature otherwise we remove it.
-        if (headers[ENUM.headers.FSPIOP.SOURCE].match(ENUM.headers.FSPIOP.SWITCH.regex) === -1) {
+
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE.toLowerCase()]].match(ENUM.headers.FSPIOP.SWITCH.regex) === -1) {
           normalizedHeaders[headerKey] = headerValue
         }
         break
