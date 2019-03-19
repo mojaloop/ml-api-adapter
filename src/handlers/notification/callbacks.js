@@ -24,7 +24,9 @@
 
 const Logger = require('@mojaloop/central-services-shared').Logger
 const request = require('request')
+// const request = require('request-promise-native') // added to ensure that the request support async-await or promise natively
 const Transformer = require('../../domain/transfer/transformer')
+const Config = require('../../lib/config')
 
 /**
  * @module src/handlers/notification/callbacks
@@ -45,9 +47,9 @@ const Transformer = require('../../domain/transfer/transformer')
 
 * @returns {Promise} Returns a promise which resolves the http status code on success or rejects the error on failure
 */
-const sendCallback = async (url, method, headers, message, cid, fsp) => {
+const sendCallback = async (url, method, headers, message, cid, sourceFsp, destinationFsp) => {
   // Transform headers into Mojaloop v1.0 Specifications
-  const transformedHeaders = Transformer.transformHeaders(headers)
+  const transformedHeaders = Transformer.transformHeaders(headers, { httpMethod: method, sourceFsp: sourceFsp, destinationFsp })
 
   const requestOptions = {
     url,
@@ -55,22 +57,22 @@ const sendCallback = async (url, method, headers, message, cid, fsp) => {
     headers: transformedHeaders,
     body: JSON.stringify(message),
     agentOptions: {
-      rejectUnauthorized: false
+      rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
     }
   }
 
-  Logger.info(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback URL: ${url}`)
-  Logger.debug(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback requestOptions: ${JSON.stringify(requestOptions)}`)
+  Logger.info(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback URL: ${url}`)
+  Logger.debug(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback requestOptions: ${JSON.stringify(requestOptions)}`)
 
   return new Promise((resolve, reject) => {
     return request(requestOptions, (error, response, body) => {
       if (error) {
         // throw error // this is not correct in the context of a Promise.
-        Logger.error(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
+        Logger.error(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
         return reject(error)
       }
-      Logger.info(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback successful with status code: ${response.statusCode}`)
-      Logger.debug(`[cid=${cid}, fsp=${fsp}] ~ NotificationHandler::sendCallback := Callback successful with response: ${JSON.stringify(response)}`)
+      Logger.info(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback successful with status code: ${response.statusCode}`)
+      Logger.debug(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback successful with response: ${JSON.stringify(response)}`)
       return resolve(response.statusCode)
     })
   })

@@ -6,6 +6,11 @@
     "expiresIn": 180000,
     "generateTimeout": 30000
   },
+  "ENDPOINT_SECURITY":{
+    "TLS": {
+      "rejectUnauthorized": false
+    }
+  },
   "AMOUNT": {
     "PRECISION": 10,
     "SCALE": 2
