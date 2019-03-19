@@ -42,7 +42,7 @@ const headers = {
   },
   GENERAL: {
     DATE: 'date',
-    CONTENTLENGTH: 'content-length'
+    CONTENT_LENGTH: 'content-length'
   }
 }
 
@@ -52,7 +52,42 @@ const methods = {
   FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'put'
 }
 
+// Code specific (non-DB) enumerations sorted alphabetically
+const transferEventType = {
+  PREPARE: 'prepare',
+  POSITION: 'position',
+  TRANSFER: 'transfer',
+  FULFIL: 'fulfil',
+  NOTIFICATION: 'notification',
+  ADMIN: 'admin',
+  GET: 'get'
+}
+
+const transferEventAction = {
+  PREPARE: 'prepare',
+  PREPARE_DUPLICATE: 'prepare-duplicate',
+  TRANSFER: 'transfer',
+  COMMIT: 'commit',
+  ABORT: 'abort',
+  TIMEOUT_RECEIVED: 'timeout-received',
+  TIMEOUT_RESERVED: 'timeout-reserved',
+  REJECT: 'reject',
+  FAIL: 'fail',
+  EVENT: 'event',
+  FULFIL: 'fulfil',
+  POSITION: 'position',
+  GET: 'get'
+}
+
+const messageStatus = {
+  SUCCESS: 'success',
+  ERROR: 'error'
+}
+
 module.exports = {
   headers,
-  methods
+  methods,
+  transferEventType,
+  transferEventAction,
+  messageStatus
 }

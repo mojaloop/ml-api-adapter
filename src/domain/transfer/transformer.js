@@ -74,7 +74,7 @@ const transformHeaders = (headers, config) => {
         }
         normalizedHeaders[headerKey] = tempDate
         break
-      case (ENUM.headers.GENERAL.CONTENTLENGTH.toLowerCase()):
+      case (ENUM.headers.GENERAL.CONTENT_LENGTH.toLowerCase()):
         // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
         break
       case (ENUM.headers.FSPIOP.URI.toLowerCase()):
