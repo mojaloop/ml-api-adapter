@@ -8,7 +8,7 @@
   },
   "ENDPOINT_SECURITY":{
     "TLS": {
-      "rejectUnauthorized": false
+      "rejectUnauthorized": true
     }
   },
   "AMOUNT": {
