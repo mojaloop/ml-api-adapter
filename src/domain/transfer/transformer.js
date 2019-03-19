@@ -58,7 +58,7 @@ const transformHeaders = (headers, config) => {
   for (var headerKey in headers) {
     var headerValue = headers[headerKey]
     switch (headerKey.toLowerCase()) {
-      case (ENUM.headers.GENERAL.DATE.toLowerCase()):
+      case (ENUM.headers.GENERAL.DATE):
         var tempDate = {}
         if (typeof headerValue === 'object' && headerValue instanceof Date) {
           tempDate = headerValue.toUTCString()
@@ -74,13 +74,13 @@ const transformHeaders = (headers, config) => {
         }
         normalizedHeaders[headerKey] = tempDate
         break
-      case (ENUM.headers.GENERAL.CONTENT_LENGTH.toLowerCase()):
+      case (ENUM.headers.GENERAL.CONTENT_LENGTH):
         // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
         break
-      case (ENUM.headers.FSPIOP.URI.toLowerCase()):
+      case (ENUM.headers.FSPIOP.URI):
         // Do nothing here, do not map. This will be removed from the callback request.
         break
-      case (ENUM.headers.FSPIOP.HTTP_METHOD.toLowerCase()):
+      case (ENUM.headers.FSPIOP.HTTP_METHOD):
         if (config.httpMethod.toLowerCase() === headerValue.toLowerCase()) {
           // HTTP Methods match, and thus no change is required
           normalizedHeaders[headerKey] = headerValue
@@ -89,18 +89,18 @@ const transformHeaders = (headers, config) => {
           normalizedHeaders[headerKey] = config.httpMethod
         }
         break
-      case (ENUM.headers.FSPIOP.SIGNATURE.toLowerCase()):
+      case (ENUM.headers.FSPIOP.SIGNATURE):
         // Check to see if we find a regex match the source header containing the switch name.
         // If so we include the signature otherwise we remove it.
 
-        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE.toLowerCase()]].match(ENUM.headers.FSPIOP.SWITCH.regex) === null) {
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) === null) {
           normalizedHeaders[headerKey] = headerValue
         }
         break
-      case (ENUM.headers.FSPIOP.SOURCE.toLowerCase()):
+      case (ENUM.headers.FSPIOP.SOURCE):
         normalizedHeaders[headerKey] = config.sourceFsp
         break
-      case (ENUM.headers.FSPIOP.DESTINATION.toLowerCase()):
+      case (ENUM.headers.FSPIOP.DESTINATION):
         normalizedHeaders[headerKey] = config.destinationFsp
         break
       default:
