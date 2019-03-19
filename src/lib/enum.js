@@ -36,7 +36,7 @@ const headers = {
     },
     SOURCE: 'fspiop-source',
     DESTINATION: 'fspiop-destination',
-    HTTPMETHOD: 'fspiop-http-method',
+    HTTP_METHOD: 'fspiop-http-method',
     SIGNATURE: 'fspiop-signature',
     URI: 'fspiop-uri'
   },

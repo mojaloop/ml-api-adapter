@@ -128,7 +128,7 @@ Test('Transfer Transformer tests', TransformerTest => {
     transformHeadersTest.test('Transform the FSPIOP-HTTP-METHOD to match the HTTP operation if header is provided and does not match incoming value', async test => {
       const headerData = Object.assign({}, headerDataInputExample)
       const headerConfig = Object.assign({}, headerConfigExample)
-      headerConfig[ENUM.headers.FSPIOP.HTTPMETHOD] = 'GET'
+      headerConfig[ENUM.headers.FSPIOP.HTTP_METHOD] = 'GET'
 
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
 

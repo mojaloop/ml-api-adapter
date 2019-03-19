@@ -80,7 +80,7 @@ const transformHeaders = (headers, config) => {
       case (ENUM.headers.FSPIOP.URI.toLowerCase()):
         // Do nothing here, do not map. This will be removed from the callback request.
         break
-      case (ENUM.headers.FSPIOP.HTTPMETHOD.toLowerCase()):
+      case (ENUM.headers.FSPIOP.HTTP_METHOD.toLowerCase()):
         if (config.httpMethod.toLowerCase() === headerValue.toLowerCase()) {
           // HTTP Methods match, and thus no change is required
           normalizedHeaders[headerKey] = headerValue
