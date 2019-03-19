@@ -93,7 +93,7 @@ const transformHeaders = (headers, config) => {
         // Check to see if we find a regex match the source header containing the switch name.
         // If so we include the signature otherwise we remove it.
 
-        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE.toLowerCase()]].match(ENUM.headers.FSPIOP.SWITCH.regex) === -1) {
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE.toLowerCase()]].match(ENUM.headers.FSPIOP.SWITCH.regex) === null) {
           normalizedHeaders[headerKey] = headerValue
         }
         break

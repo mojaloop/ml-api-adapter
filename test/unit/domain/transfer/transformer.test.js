@@ -30,7 +30,7 @@ const ENUM = require('../../../../src/lib/enum')
 // const Utility = require('../../../../src/lib/utility')
 
 const headerConfigExample = {
-  httpMethod: 'GET',
+  httpMethod: 'PUT',
   sourceFsp: 'switch',
   destinationFsp: 'FSPDest'
 }
@@ -40,7 +40,7 @@ const headerDataInputExample = {
   'Content-Length': 1234,
   'FSPIOP-Source': headerConfigExample.sourceFsp,
   'FSPIOP-Destination': headerConfigExample.destinationFsp,
-  'FSPIOP-Method': 'PUT',
+  'FSPIOP-Http-Method': 'PUT',
   'FSPIOP-Signature': '{"signature":"iU4GBXSfY8twZMj1zXX1CTe3LDO8Zvgui53icrriBxCUF_wltQmnjgWLWI4ZUEueVeOeTbDPBZazpBWYvBYpl5WJSUoXi14nVlangcsmu2vYkQUPmHtjOW-yb2ng6_aPfwd7oHLWrWzcsjTF-S4dW7GZRPHEbY_qCOhEwmmMOnE1FWF1OLvP0dM0r4y7FlnrZNhmuVIFhk_pMbEC44rtQmMFv4pm4EVGqmIm3eyXz0GkX8q_O1kGBoyIeV_P6RRcZ0nL6YUVMhPFSLJo6CIhL2zPm54Qdl2nVzDFWn_shVyV0Cl5vpcMJxJ--O_Zcbmpv6lxqDdygTC782Ob3CNMvg\\",\\"protectedHeader\\":\\"eyJhbGciOiJSUzI1NiIsIkZTUElPUC1VUkkiOiIvdHJhbnNmZXJzIiwiRlNQSU9QLUhUVFAtTWV0aG9kIjoiUE9TVCIsIkZTUElPUC1Tb3VyY2UiOiJPTUwiLCJGU1BJT1AtRGVzdGluYXRpb24iOiJNVE5Nb2JpbGVNb25leSIsIkRhdGUiOiIifQ"}',
   'FSPIOP-Uri': '/transfers'
 }
@@ -49,7 +49,7 @@ const headerDataTransformedExample = {
   'Content-Type': headerDataInputExample['Content-Type'],
   'FSPIOP-Source': headerDataInputExample['FSPIOP-Source'],
   'FSPIOP-Destination': headerDataInputExample['FSPIOP-Destination'],
-  'FSPIOP-Method': headerDataInputExample['FSPIOP-Method']
+  'FSPIOP-Http-Method': headerDataInputExample['FSPIOP-Http-Method']
 }
 
 Test('Transfer Transformer tests', TransformerTest => {
@@ -122,6 +122,34 @@ Test('Transfer Transformer tests', TransformerTest => {
         test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
       test.equals(transformedHeaderData[key], val)
+      test.end()
+    })
+
+    transformHeadersTest.test('Transform the FSPIOP-HTTP-METHOD to match the HTTP operation if header is provided and does not match incoming value', async test => {
+      const headerData = Object.assign({}, headerDataInputExample)
+      const headerConfig = Object.assign({}, headerConfigExample)
+      headerConfig[ENUM.headers.FSPIOP.HTTPMETHOD] = 'GET'
+
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
+
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
+      }
+      test.end()
+    })
+
+    transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex', async test => {
+      const headerData = Object.assign({}, headerDataInputExample)
+      const headerConfig = Object.assign({}, headerConfigExample)
+
+      headerData[ENUM.headers.FSPIOP.SOURCE] = 'randomFSP'
+
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
+
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
+      }
+      test.equals(transformedHeaderData[ENUM.headers.FSPIOP.SIGNATURE], headerDataInputExample[ENUM.headers.FSPIOP.SIGNATURE])
       test.end()
     })
 
