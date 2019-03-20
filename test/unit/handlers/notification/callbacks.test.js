@@ -29,9 +29,10 @@ const Sinon = require('sinon')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const proxyquire = require('proxyquire')
 const Config = require('../../../../src/lib/config')
+const Enum = require('../../../../src/lib/enum')
 
-const sourceFps = 'sourceFsp'
-const destinationFps = 'sourceFsp'
+const sourceFsp = 'sourceFsp'
+const destinationFsp = 'destinationFsp'
 const cid = '1234567890'
 
 Test('Callback Service tests', callbacksTest => {
@@ -74,14 +75,17 @@ Test('Callback Service tests', callbacksTest => {
 
       const method = 'post'
 
-      const headers = {
+      let headers = {
         'Content-Length': 1234,
         'Random': 'string'
       }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
 
-      const expectedHeaders = {
+      let expectedHeaders = {
         'Random': 'string'
       }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
 
       const agentOptions = {
         rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
@@ -100,7 +104,7 @@ Test('Callback Service tests', callbacksTest => {
       request.withArgs(requestOptions).yieldsAsync(null, { statusCode: 200 }, null)
       let result = {}
       try {
-        result = await callback.sendCallback(url, method, headers, message, cid, sourceFps, destinationFps)
+        result = await callback.sendCallback(url, method, headers, message, cid, sourceFsp, destinationFsp)
         test.equal(result, expected)
         test.end()
       } catch (err) {
@@ -131,14 +135,208 @@ Test('Callback Service tests', callbacksTest => {
 
       const method = 'post'
 
-      const headers = {
+      let headers = {
         'Content-Length': 1234,
         'Random': 'string'
       }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
 
-      const expectedHeaders = {
+      let expectedHeaders = {
         'Random': 'string'
       }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      const agentOptions = {
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
+      }
+
+      const requestOptions = {
+        url,
+        method,
+        headers: expectedHeaders,
+        body: JSON.stringify(message),
+        agentOptions
+      }
+
+      const error = new Error()
+
+      request.withArgs(requestOptions).yields(error, null, null)
+
+      try {
+        await callback.sendCallback(url, method, headers, message, cid, sourceFsp, destinationFsp)
+        test.fail('test failed without throwing an error')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    sendCallbackTest.test('throw the error on error when no url is provided', async test => {
+      try {
+        await callback.sendCallback()
+        test.fail('test failed without throwing an error')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+        test.end()
+      }
+    })
+
+    sendCallbackTest.test('throw the error on error when no method is provided', async test => {
+      const message = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const method = 'post'
+
+      let headers = {
+        'Content-Length': 1234,
+        'Random': 'string'
+      }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      let expectedHeaders = {
+        'Random': 'string'
+      }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      const agentOptions = {
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
+      }
+
+      const requestOptions = {
+        url,
+        method,
+        headers: expectedHeaders,
+        body: JSON.stringify(message),
+        agentOptions
+      }
+
+      const error = new Error()
+
+      request.withArgs(requestOptions).yields(error, null, null)
+
+      try {
+        await callback.sendCallback(url, method)
+        test.fail('test failed without throwing an error')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+        test.end()
+      }
+    })
+
+    sendCallbackTest.test('throw the error on error when no headers is provided', async test => {
+      const message = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const method = 'post'
+
+      let headers = {
+        'Content-Length': 1234,
+        'Random': 'string'
+      }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      let expectedHeaders = {
+        'Random': 'string'
+      }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      const agentOptions = {
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
+      }
+
+      const requestOptions = {
+        url,
+        method,
+        headers: expectedHeaders,
+        body: JSON.stringify(message),
+        agentOptions
+      }
+
+      const error = new Error()
+
+      request.withArgs(requestOptions).yields(error, null, null)
+
+      try {
+        await callback.sendCallback(url, method, headers)
+        test.fail('test failed without throwing an error')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+        test.end()
+      }
+    })
+
+    sendCallbackTest.test('throw the error on error when no cid is provided', async test => {
+      const message = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const method = 'post'
+
+      let headers = {
+        'Content-Length': 1234,
+        'Random': 'string'
+      }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      let expectedHeaders = {
+        'Random': 'string'
+      }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
 
       const agentOptions = {
         rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
@@ -158,8 +356,131 @@ Test('Callback Service tests', callbacksTest => {
 
       try {
         await callback.sendCallback(url, method, headers, message)
+        test.fail('test failed without throwing an error')
+        test.end()
       } catch (e) {
         test.ok(e instanceof Error)
+        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+        test.end()
+      }
+    })
+
+    sendCallbackTest.test('throw the error on error when no sourceFsp is provided', async test => {
+      const message = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const method = 'post'
+
+      let headers = {
+        'Content-Length': 1234,
+        'Random': 'string'
+      }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      let expectedHeaders = {
+        'Random': 'string'
+      }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      const agentOptions = {
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
+      }
+
+      const requestOptions = {
+        url,
+        method,
+        headers: expectedHeaders,
+        body: JSON.stringify(message),
+        agentOptions
+      }
+
+      const error = new Error()
+
+      request.withArgs(requestOptions).yields(error, null, null)
+
+      try {
+        await callback.sendCallback(url, method, headers, message, cid)
+        test.fail('test failed without throwing an error')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+        test.end()
+      }
+    })
+
+    sendCallbackTest.test('throw the error on error when no destinationFsp is provided', async test => {
+      const message = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              status: 'success'
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1'
+        }
+      }
+
+      const method = 'post'
+
+      let headers = {
+        'Content-Length': 1234,
+        'Random': 'string'
+      }
+      headers[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      let expectedHeaders = {
+        'Random': 'string'
+      }
+      expectedHeaders[Enum.headers.FSPIOP.DESTINATION] = destinationFsp
+      expectedHeaders[Enum.headers.FSPIOP.SOURCE] = sourceFsp
+
+      const agentOptions = {
+        rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
+      }
+
+      const requestOptions = {
+        url,
+        method,
+        headers: expectedHeaders,
+        body: JSON.stringify(message),
+        agentOptions
+      }
+
+      const error = new Error()
+
+      request.withArgs(requestOptions).yields(error, null, null)
+
+      try {
+        await callback.sendCallback(url, method, headers, message, cid, sourceFsp)
+        test.fail('test failed without throwing an error')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })
