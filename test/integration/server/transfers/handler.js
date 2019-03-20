@@ -53,7 +53,7 @@ const endpoints = {
   ]
 }
 exports.receiveNotificationPost = async function (request, h) {
-  console.log('Received message')
+  console.log('Received receiveNotificationPost message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
   const transferId = request.payload.transferId
@@ -61,6 +61,7 @@ exports.receiveNotificationPost = async function (request, h) {
   const result = path.split('/')
   const operation = 'post'
   const fsp = result[1]
+  console.log('receiveNotificationPost::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
   notifications[fsp][operation][transferId] = request.payload
@@ -68,7 +69,7 @@ exports.receiveNotificationPost = async function (request, h) {
 }
 
 exports.receiveNotificationPut = async function (request, h) {
-  console.log('Received message')
+  console.log('Received receiveNotificationPut message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
   const transferId = request.params.transferId
@@ -77,6 +78,7 @@ exports.receiveNotificationPut = async function (request, h) {
   const operation = (path.includes('error') ? 'error' : 'put')
   const fsp = result[1]
   console.log('OPERATION:: ', operation)
+  console.log('receiveNotificationPut::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
   notifications[fsp][operation][transferId] = request.payload
@@ -91,6 +93,8 @@ exports.getNotification = async function (request, h) {
   let response = null
   if (notifications[fsp] && notifications[fsp][operation] && notifications[fsp][operation][transferId]) {
     response = notifications[fsp][operation][transferId]
+  // } else {
+  //   response = notifications
   }
   console.log('Response: %s', JSON.stringify(response))
   return h.response(response).code(200)
