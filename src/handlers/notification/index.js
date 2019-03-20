@@ -171,10 +171,10 @@ const processMessage = async (msg) => {
     }
 
     if (actionLower === ENUM.transferEventAction.PREPARE_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
-      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
-      return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, content.payload, id, from, to)
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === ENUM.transferEventAction.COMMIT && statusLower === ENUM.messageStatus.SUCCESS) {
