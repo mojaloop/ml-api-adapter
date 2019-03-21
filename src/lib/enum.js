@@ -84,10 +84,15 @@ const messageStatus = {
   ERROR: 'error'
 }
 
+const errorMessages = {
+  MISSINGFUNCTIONPARAMETERS: 'Missing parameters for function'
+}
+
 module.exports = {
   headers,
   methods,
   transferEventType,
   transferEventAction,
-  messageStatus
+  messageStatus,
+  errorMessages
 }

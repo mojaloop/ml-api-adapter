@@ -27,6 +27,7 @@ const request = require('request')
 // const request = require('request-promise-native') // added to ensure that the request support async-await or promise natively
 const Transformer = require('../../domain/transfer/transformer')
 const Config = require('../../lib/config')
+const Enum = require('../../lib/enum')
 
 /**
  * @module src/handlers/notification/callbacks
@@ -48,6 +49,11 @@ const Config = require('../../lib/config')
 * @returns {Promise} Returns a promise which resolves the http status code on success or rejects the error on failure
 */
 const sendCallback = async (url, method, headers, message, cid, sourceFsp, destinationFsp) => {
+  // validate incoming request parameters are not null or undefined
+  if (!url || !method || !headers || !message || !cid || !sourceFsp || !destinationFsp) {
+    throw new Error(Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+  }
+
   // Transform headers into Mojaloop v1.0 Specifications
   const transformedHeaders = Transformer.transformHeaders(headers, { httpMethod: method, sourceFsp: sourceFsp, destinationFsp })
 

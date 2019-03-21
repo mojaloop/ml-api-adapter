@@ -53,8 +53,15 @@ const transformHeaders = (headers, config) => {
       keys[k.toLowerCase()] = k
       return keys
     }, {})
+
   // Normalized headers
   var normalizedHeaders = {}
+
+  // check to see if FSPIOP-Destination header has been left out of the initial request. If so then add it.
+  if (!normalizedKeys.hasOwnProperty(ENUM.headers.FSPIOP.DESTINATION)) {
+    headers[ENUM.headers.FSPIOP.DESTINATION] = ''
+  }
+
   for (var headerKey in headers) {
     var headerValue = headers[headerKey]
     switch (headerKey.toLowerCase()) {

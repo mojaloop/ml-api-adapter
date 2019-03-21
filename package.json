@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "description": "Convert from ML API to/from internal Central Services messaging format.",
   "license": "Apache-2.0",
   "private": true,
@@ -33,6 +33,7 @@
     "test:coverage": "istanbul cover tape -- 'test/unit/**/*.test.js'",
     "test:coverage-check": "npm run test:coverage && istanbul check-coverage",
     "test:integration": "sh ./test/integration-runner.sh ./test/integration-runner.env",
+    "test:integration:server": "node test/integration/server/index.js",
     "test:functional": "sh ./test/functional-runner.sh ./test/functional-runner.env",
     "test:spec:test-only": "sh ./test/spec-runner.sh ./test/.env",
     "test:spec": "run-s docker:build test:spec:test-only",
