@@ -66,6 +66,8 @@ const transferEventType = {
 const transferEventAction = {
   PREPARE: 'prepare',
   PREPARE_DUPLICATE: 'prepare-duplicate',
+  FULFIL_DUPLICATE: 'fulfil-duplicate',
+  ABORT_DUPLICATE: 'abort-duplicate',
   TRANSFER: 'transfer',
   COMMIT: 'commit',
   ABORT: 'abort',
