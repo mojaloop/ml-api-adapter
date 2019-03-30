@@ -100,7 +100,7 @@ module.exports = [{
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
         'fspiop-http-method': Joi.string().optional()
-      }).unknown(false),
+      }).unknown(false).options({ stripUnknown: true }),
       params: {
         id: Joi.string().required().description('path')
       },
