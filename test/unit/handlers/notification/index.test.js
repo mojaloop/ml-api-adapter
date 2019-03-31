@@ -475,10 +475,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.to}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.to, msg.value.from).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.to, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
