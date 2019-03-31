@@ -1,7 +1,7 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "5.4.1",
-  "description": "Convert from ML API to/from internal Central Services messaging format.",
+  "version": "5.5.0",
+  "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
@@ -28,6 +28,7 @@
     "pretest": "standard",
     "standard": "standard",
     "test:unit": "tape 'test/unit/**/*.test.js'",
+    "test:int": "tape 'test/integration/**/*.test.js'",
     "test:all": "run-s test test:integration test:functional test:spec",
     "test:xunit": "tape 'test/unit/**/*.test.js' | tap-xunit",
     "test:coverage": "istanbul cover tape -- 'test/unit/**/*.test.js'",
