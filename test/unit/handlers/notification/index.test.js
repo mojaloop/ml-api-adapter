@@ -214,6 +214,7 @@ Test('Notification Service tests', notificationTest => {
         test.end()
       }
     })
+
     processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
       const payerFsp = 'dfsp2'
       const payeeFsp = 'dfsp1'
@@ -440,6 +441,178 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
+    processMessageTest.test('process the fulfil-duplicate message received from kafka and send out a transfer put callback', async test => {
+      const payerFsp = 'dfsp1'
+      const payeeFsp = 'dfsp2'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'fulfil-duplicate',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': payeeFsp
+            },
+            payload: {}
+          },
+          to: payerFsp,
+          from: payeeFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const method = 'put'
+      const message = {}
+
+      const expected = 200
+
+      // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    processMessageTest.test('process the fulfil-duplicate message received from kafka and send out a transfer error callback', async test => {
+      const payerFsp = 'dfsp1'
+      const payeeFsp = 'dfsp2'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'fulfil-duplicate',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': payeeFsp
+            },
+            payload: {}
+          },
+          to: payerFsp,
+          from: payeeFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const method = 'put'
+      const message = {}
+
+      const expected = 200
+
+      // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    processMessageTest.test('process the abort-duplicate message received from kafka and send out a transfer put callback', async test => {
+      const payerFsp = 'dfsp1'
+      const payeeFsp = 'dfsp2'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'abort-duplicate',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': payeeFsp
+            },
+            payload: {}
+          },
+          to: payerFsp,
+          from: payeeFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.id)
+      const method = 'put'
+      const message = {}
+
+      const expected = 200
+
+      // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    processMessageTest.test('process the abort-duplicate message received from kafka and send out a transfer error callback', async test => {
+      const payerFsp = 'dfsp1'
+      const payeeFsp = 'dfsp2'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'abort-duplicate',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': payeeFsp
+            },
+            payload: {}
+          },
+          to: payerFsp,
+          from: payeeFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.id)
+      const method = 'put'
+      const message = {}
+
+      const expected = 200
+
+      // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+
+      let result = await Notification.processMessage(msg)
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.equal(result, expected)
+      test.end()
+    })
+
     processMessageTest.test('process the timeout-received message received from kafka and send out a transfer put callback', async test => {
       const payerFsp = 'dfsp2'
       const payeeFsp = 'dfsp1'
@@ -657,6 +830,36 @@ Test('Notification Service tests', notificationTest => {
               state: {
                 status: 'success',
                 code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      let result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
+    consumeMessageTest.test('process the message with action = get and unsuccessful message status', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'get',
+              state: {
+                status: 'error',
+                code: 1
               }
             }
           },

@@ -173,6 +173,7 @@ Test('Transfer Transformer tests', TransformerTest => {
 
     transformHeadersTest.test('Transform to include map the destinationFsp if the FSPIOP-Destination header was included in the original request but correctly mapped based on headerConfig', async test => {
       let headerData = Util.clone(headerDataInputExample)
+      headerData[ENUM.headers.FSPIOP.HTTP_METHOD] = 'INVALID'
 
       // set FSPIOP-Destination from the request
       Util.setValueByCaseInsensitiveKey(headerData, ENUM.headers.FSPIOP.DESTINATION, 'TESTDEST')
