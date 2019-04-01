@@ -43,6 +43,7 @@ const headers = {
     URI: 'fspiop-uri'
   },
   GENERAL: {
+    ACCEPT: 'accept',
     DATE: 'date',
     CONTENT_LENGTH: 'content-length'
   }
