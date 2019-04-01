@@ -158,7 +158,7 @@ is_endpoint_up() {
     fcurl "http://$ENDPOINT_HOST:$ENDPOINT_PORT?"
 }
 
-stop_docker
+clean_docker
 
 >&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
 # docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .

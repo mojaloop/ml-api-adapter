@@ -1,3 +1,29 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
+
+ --------------
+ ******/
 'use strict'
 
 const src = '../../../../src'
@@ -98,8 +124,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/json',
             'date': '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
+            'fspiop-source': 'switch',
+            'fspiop-destination': 'dfsp1'
           },
           payload: {
             errorInformation: {
@@ -108,8 +134,8 @@ Test('Notification Handler', notificationHandlerTest => {
             }
           }
         },
-        to: 'dfsp2',
-        from: 'dfsp1',
+        from: 'switch',
+        to: 'dfsp1',
         id: transferId,
         type: 'application/json'
       }
@@ -121,14 +147,14 @@ Test('Notification Handler', notificationHandlerTest => {
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
       const operation = 'error'
-      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
       let currentAttempts = 0
       while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
         sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.from, operation, transferId)
+        response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Error notification sent successfully to Payer')
+      test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Error notification sent successfully from switch to Payer')
       test.end()
     })
 
@@ -217,8 +243,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/json',
             'date': '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
+            'fspiop-source': 'dfsp2',
+            'fspiop-destination': 'dfsp1'
           },
           payload: {
             errorInformation: {
@@ -227,8 +253,8 @@ Test('Notification Handler', notificationHandlerTest => {
             }
           }
         },
-        to: 'dfsp2',
-        from: 'dfsp1',
+        from: 'dfsp2',
+        to: 'dfsp1',
         id: transferId,
         type: 'application/json'
       }
@@ -240,11 +266,11 @@ Test('Notification Handler', notificationHandlerTest => {
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
       const operation = 'error'
-      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
       let currentAttempts = 0
       while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
         sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.from, operation, transferId)
+        response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
       test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
@@ -398,8 +424,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/json',
             'date': '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'dfsp2'
           },
           payload: {
             amount: { amount: 100, currency: 'USD' },
@@ -408,13 +434,13 @@ Test('Notification Handler', notificationHandlerTest => {
             condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
             expiration: '2018-08-24T21:31:00.534+01:00',
             ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-            payeeFsp: 'dfsp1',
-            payerFsp: 'dfsp2',
+            payerFsp: 'dfsp1',
+            payeeFsp: 'dfsp2',
             transferId: transferId
           }
         },
-        to: 'dfsp2',
         from: 'dfsp1',
+        to: 'dfsp2',
         id: transferId,
         type: 'application/json'
       }
@@ -426,14 +452,14 @@ Test('Notification Handler', notificationHandlerTest => {
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
       const operation = 'error'
-      let response = await getNotifications(messageProtocol.from, operation, transferId)
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
       let currentAttempts = 0
       while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
         sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.from, operation, transferId)
+        response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payer')
+      test.equal(response, JSON.stringify(messageProtocol.content.payload), 'Notification sent successfully to Payee')
       test.end()
     })
 

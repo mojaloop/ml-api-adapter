@@ -23,10 +23,12 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Miguel de Barros <miguel.debarros@modusbox.com>
 
  --------------
  ******/
+'use strict'
 
 const headers = {
   FSPIOP: {
@@ -41,6 +43,7 @@ const headers = {
     URI: 'fspiop-uri'
   },
   GENERAL: {
+    ACCEPT: 'accept',
     DATE: 'date',
     CONTENT_LENGTH: 'content-length'
   }
@@ -66,6 +69,8 @@ const transferEventType = {
 const transferEventAction = {
   PREPARE: 'prepare',
   PREPARE_DUPLICATE: 'prepare-duplicate',
+  FULFIL_DUPLICATE: 'fulfil-duplicate',
+  ABORT_DUPLICATE: 'abort-duplicate',
   TRANSFER: 'transfer',
   COMMIT: 'commit',
   ABORT: 'abort',

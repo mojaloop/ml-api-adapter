@@ -18,10 +18,11 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+
  --------------
  ******/
-
 'use strict'
 
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
@@ -164,10 +165,10 @@ const processMessage = async (msg) => {
     }
 
     if (actionLower === ENUM.transferEventAction.PREPARE && statusLower !== ENUM.messageStatus.SUCCESS) {
-      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
       let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
-      return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, content.payload, id, from, to)
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === ENUM.transferEventAction.PREPARE_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
@@ -194,12 +195,12 @@ const processMessage = async (msg) => {
     }
 
     if (actionLower === ENUM.transferEventAction.COMMIT && statusLower !== ENUM.messageStatus.SUCCESS) {
-      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
 
       let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
 
-      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
-      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, from, to)
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, 'put', content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === ENUM.transferEventAction.REJECT) {
@@ -234,13 +235,41 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, content.payload, id, ENUM.headers.FSPIOP.SWITCH.value, from)
     }
 
+    if (actionLower === ENUM.transferEventAction.FULFIL_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+      let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
+    }
+
+    if (actionLower === ENUM.transferEventAction.FULFIL_DUPLICATE && statusLower !== ENUM.messageStatus.SUCCESS) {
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
+    }
+
+    if (actionLower === ENUM.transferEventAction.ABORT_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+      let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
+    }
+
+    if (actionLower === ENUM.transferEventAction.ABORT_DUPLICATE && statusLower !== ENUM.messageStatus.SUCCESS) {
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
+    }
+
     if (actionLower === ENUM.transferEventAction.TIMEOUT_RECEIVED) {
-      let callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
 
       let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
 
-      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${to}, ${from})`)
-      return Callback.sendCallback(callbackURLFrom, 'put', content.headers, content.payload, id, to, from)
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(content.payload)}, ${id}, ${to}, ${from})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, content.payload, id, from, to)
     }
 
     if (actionLower === ENUM.transferEventAction.GET && statusLower === ENUM.messageStatus.SUCCESS) {

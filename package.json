@@ -1,9 +1,15 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "5.4.1",
-  "description": "Convert from ML API to/from internal Central Services messaging format.",
+  "version": "5.5.0",
+  "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
+  "author": "ModusBox",
+  "contributors": [
+    "Georgi Georgiev <georgi.georgiev@modusbox.com>",
+    "Miguel de Barros <miguel.debarros@modusbox.com>",
+    "Murthy Kakarlamudi <murthy@modusbox.com>"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
@@ -28,6 +34,9 @@
     "pretest": "standard",
     "standard": "standard",
     "test:unit": "tape 'test/unit/**/*.test.js'",
+    "test:int1": "ENDPOINT_HOST=http://localhost:4545 node test/integration/server/index.js",
+    "test:int2": "MLAPI_ENDPOINT_SOURCE_URL=http://localhost:4545/participants/{{fsp}}/endpoints node src/api/index.js",
+    "test:int": "ENDPOINT_URL=http://localhost:4545/notification tape 'test/integration/**/*.test.js'",
     "test:all": "run-s test test:integration test:functional test:spec",
     "test:xunit": "tape 'test/unit/**/*.test.js' | tap-xunit",
     "test:coverage": "istanbul cover tape -- 'test/unit/**/*.test.js'",
