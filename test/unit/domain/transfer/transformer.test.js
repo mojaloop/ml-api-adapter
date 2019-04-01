@@ -17,9 +17,12 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
+
  --------------
  ******/
-
 'use strict'
 
 const Test = require('tapes')(require('tape'))

@@ -17,9 +17,13 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
+
  --------------
  ******/
-
 'use strict'
 
 const src = '../../../../src'

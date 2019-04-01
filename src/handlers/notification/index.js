@@ -18,10 +18,11 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+
  --------------
  ******/
-
 'use strict'
 
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
