@@ -71,9 +71,7 @@ Test('Transfer Transformer tests', TransformerTest => {
   TransformerTest.test('Transformer.transformHeaders() should', transformHeadersTest => {
     transformHeadersTest.test('Remove all unnecessary fields from Header', async test => {
       let headerData = Util.clone(headerDataInputExample)
-      console.log('headerData:', JSON.stringify(headerData))
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
-      console.log('transformedHeaderData:', JSON.stringify(transformedHeaderData))
       for (let headerKey in headerDataTransformedExample) {
         test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
