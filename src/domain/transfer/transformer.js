@@ -85,22 +85,32 @@ const transformHeaders = (headers, config) => {
         // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
         break
       case (ENUM.headers.FSPIOP.URI):
-        // Do nothing here, do not map. This will be removed from the callback request.
+        // Check to see if we find a regex match the source header containing the switch name.
+        // If so we include the uri otherwise we remove it.
+
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) !== null) {
+          normalizedHeaders[headerKey] = headerValue
+        }
         break
       case (ENUM.headers.FSPIOP.HTTP_METHOD):
-        if (config.httpMethod.toLowerCase() === headerValue.toLowerCase()) {
-          // HTTP Methods match, and thus no change is required
-          normalizedHeaders[headerKey] = headerValue
-        } else {
-          // HTTP Methods DO NOT match, and thus a change is required for target HTTP Method
-          normalizedHeaders[headerKey] = config.httpMethod
-        }
+        // Check to see if we find a regex match the source header containing the switch name.
+        // If so we include the method otherwise we remove it.
+
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) !== null) {
+          if (config.httpMethod.toLowerCase() === headerValue.toLowerCase()) {
+            // HTTP Methods match, and thus no change is required
+            normalizedHeaders[headerKey] = headerValue
+          } else {
+            // HTTP Methods DO NOT match, and thus a change is required for target HTTP Method
+            normalizedHeaders[headerKey] = config.httpMethod
+          }
+        }        
         break
       case (ENUM.headers.FSPIOP.SIGNATURE):
         // Check to see if we find a regex match the source header containing the switch name.
         // If so we include the signature otherwise we remove it.
 
-        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) === null) {
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) !== null) {
           normalizedHeaders[headerKey] = headerValue
         }
         break
