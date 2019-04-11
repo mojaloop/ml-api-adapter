@@ -85,7 +85,12 @@ const transformHeaders = (headers, config) => {
         // Do nothing here, do not map. This will be inserted correctly by the Hapi framework.
         break
       case (ENUM.headers.FSPIOP.URI):
-        // Do nothing here, do not map. This will be removed from the callback request.
+        // Check to see if we find a regex match the source header containing the switch name.
+        // If so we include the uri otherwise we remove it.
+
+        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) === null) {
+          normalizedHeaders[headerKey] = headerValue
+        }
         break
       case (ENUM.headers.FSPIOP.HTTP_METHOD):
         if (config.httpMethod.toLowerCase() === headerValue.toLowerCase()) {
