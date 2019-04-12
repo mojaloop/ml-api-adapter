@@ -52,8 +52,7 @@ const headerDataInputExample = {
 const headerDataTransformedExample = {
   'Content-Type': headerDataInputExample['Content-Type'],
   'FSPIOP-Source': headerDataInputExample['FSPIOP-Source'],
-  'FSPIOP-Destination': headerDataInputExample['FSPIOP-Destination'],
-  'FSPIOP-Http-Method': headerDataInputExample['FSPIOP-Http-Method']
+  'FSPIOP-Destination': headerDataInputExample['FSPIOP-Destination']
 }
 
 Test('Transfer Transformer tests', TransformerTest => {
@@ -72,9 +71,7 @@ Test('Transfer Transformer tests', TransformerTest => {
   TransformerTest.test('Transformer.transformHeaders() should', transformHeadersTest => {
     transformHeadersTest.test('Remove all unnecessary fields from Header', async test => {
       let headerData = Util.clone(headerDataInputExample)
-
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
-
       for (let headerKey in headerDataTransformedExample) {
         test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
