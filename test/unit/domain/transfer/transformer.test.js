@@ -152,7 +152,7 @@ Test('Transfer Transformer tests', TransformerTest => {
       test.end()
     })
 
-    transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex', async test => {
+    transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex with INVALID http method', async test => {
       let headerData = Util.clone(headerDataInputExample)
       let headerConfig = Util.clone(headerConfigExample)
       headerConfig.httpMethod = 'INVALID'
