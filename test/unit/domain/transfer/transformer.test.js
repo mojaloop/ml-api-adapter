@@ -142,11 +142,23 @@ Test('Transfer Transformer tests', TransformerTest => {
     transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex', async test => {
       let headerData = Util.clone(headerDataInputExample)
       let headerConfig = Util.clone(headerConfigExample)
-
       headerData[ENUM.headers.FSPIOP.SOURCE] = 'randomFSP'
 
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
+      }
+      test.equals(transformedHeaderData[ENUM.headers.FSPIOP.SIGNATURE], headerDataInputExample[ENUM.headers.FSPIOP.SIGNATURE])
+      test.end()
+    })
 
+    transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex with INVALID http method', async test => {
+      let headerData = Util.clone(headerDataInputExample)
+      let headerConfig = Util.clone(headerConfigExample)
+      headerConfig.httpMethod = 'INVALID'
+      headerData[ENUM.headers.FSPIOP.SOURCE] = 'randomFSP'
+
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
       for (let headerKey in headerDataTransformedExample) {
         test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }

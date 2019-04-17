@@ -105,14 +105,6 @@ const transformHeaders = (headers, config) => {
           }
         }
         break
-      case (ENUM.headers.FSPIOP.SIGNATURE):
-        // Check to see if we find a regex match the source header containing the switch name.
-        // If so we include the signature otherwise we remove it.
-
-        if (headers[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) === null) {
-          normalizedHeaders[headerKey] = headerValue
-        }
-        break
       case (ENUM.headers.FSPIOP.SOURCE):
         normalizedHeaders[headerKey] = config.sourceFsp
         break
@@ -122,6 +114,12 @@ const transformHeaders = (headers, config) => {
       default:
         normalizedHeaders[headerKey] = headerValue
     }
+  }
+
+  if (normalizedHeaders[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) !== null) {
+    // Check to see if we find a regex match the source header containing the switch name.
+    // If so we remove the signature added by default.
+    delete normalizedHeaders[ENUM.headers.FSPIOP.SIGNATURE]
   }
 
   if (config && config.httpMethod !== ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST) {
