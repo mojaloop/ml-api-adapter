@@ -317,7 +317,7 @@ Test('return error if invalid errorCode is provided to PUT /transfers/{id}/error
     url: '/transfers/{id}/error',
     method: 'PUT',
     payload: {
-      errorCode: '501',
+      errorCode: '5001',
       errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
       fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
       extensionList: {

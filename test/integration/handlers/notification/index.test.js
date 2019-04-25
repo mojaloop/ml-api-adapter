@@ -129,7 +129,7 @@ Test('Notification Handler', notificationHandlerTest => {
           },
           payload: {
             errorInformation: {
-              errorCode: 3100,
+              errorCode: '3100',
               errorDescription: 'Generic validation error'
             }
           }
@@ -248,7 +248,7 @@ Test('Notification Handler', notificationHandlerTest => {
           },
           payload: {
             errorInformation: {
-              errorCode: 3000,
+              errorCode: '3000',
               errorDescription: 'Generic error'
             }
           }
