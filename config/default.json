@@ -11,6 +11,7 @@
       "rejectUnauthorized": true
     }
   },
+  "COMPLETED_TIMESTAMP_MAX_LAG_SECONDS": 300,
   "AMOUNT": {
     "PRECISION": 10,
     "SCALE": 2

@@ -167,7 +167,7 @@ Test('transfer handler', handlerTest => {
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        completedTimestamp: new Date(),
         extensionList:
         {
           extension:
@@ -204,11 +204,95 @@ Test('transfer handler', handlerTest => {
       Handler.fulfilTransfer(request, reply)
     })
 
+    fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', test => {
+      let completedTimestamp = new Date((new Date().getTime() + 1000))
+      const payload = {
+        transferState: 'RECEIVED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp,
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+      const params = {
+        id: 'dfsp1'
+      }
+
+      TransferService.fulfil.returns(P.resolve(true))
+
+      const request = createPutRequest(params, payload)
+      const reply = {
+        response: (response) => {
+          return {
+            code: statusCode => {
+              test.equal(statusCode, 400)
+              test.end()
+            }
+          }
+        }
+      }
+
+      Handler.fulfilTransfer(request, reply)
+    })
+
+    fulfilTransferTest.test('reply with status code 400 if completedTimestamp is way too far in the past', test => {
+      let completedTimestamp = new Date((new Date().getTime() - 3600 * 1000))
+      const payload = {
+        transferState: 'RECEIVED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp,
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+      const params = {
+        id: 'dfsp1'
+      }
+
+      TransferService.fulfil.returns(P.resolve(true))
+
+      const request = createPutRequest(params, payload)
+      const reply = {
+        response: (response) => {
+          return {
+            code: statusCode => {
+              test.equal(statusCode, 400)
+              test.end()
+            }
+          }
+        }
+      }
+
+      Handler.fulfilTransfer(request, reply)
+    })
+
     fulfilTransferTest.test('return error if fulfilTransfer throws', async test => {
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        completedTimestamp: new Date(),
         extensionList:
         {
           extension:
