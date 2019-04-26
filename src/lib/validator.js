@@ -28,6 +28,7 @@ const Config = require('../lib/config')
 
 const BAD_REQUEST_ERROR_CODE = 400
 const BAD_REQUEST_ERROR_DESC = 'Bad Request'
+const DEFAULT_LAG_SECONDS = 300
 
 const fulfilTransfer = (request) => {
   let validationPassed = true
@@ -39,6 +40,7 @@ const fulfilTransfer = (request) => {
     }
   }
 
+  const maxLag = (Config.COMPLETED_TIMESTAMP_MAX_LAG_SECONDS || DEFAULT_LAG_SECONDS) * 1000
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
   if (completedTimestamp > now) {
@@ -47,7 +49,7 @@ const fulfilTransfer = (request) => {
       value: 'child "completedTimestamp" fails because future timestamp was provided'
     })
     validationPassed = false
-  } else if (completedTimestamp < now - Config.COMPLETED_TIMESTAMP_MAX_LAG_SECONDS * 1000) {
+  } else if (completedTimestamp < now - maxLag) {
     errorInformation.extensionList.extension.push({
       key: 'customValidationError',
       value: 'child "completedTimestamp" fails because provided timestamp is way too far in the past'
