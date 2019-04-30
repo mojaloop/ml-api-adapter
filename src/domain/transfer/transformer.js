@@ -101,7 +101,7 @@ const transformHeaders = (headers, config) => {
             normalizedHeaders[headerKey] = headerValue
           } else {
             // HTTP Methods DO NOT match, and thus a change is required for target HTTP Method
-            normalizedHeaders[headerKey] = config.httpMethod
+            normalizedHeaders[headerKey] = config.httpMethod.toUpperCase()
           }
         }
         break
@@ -119,7 +119,7 @@ const transformHeaders = (headers, config) => {
   if (normalizedHeaders[normalizedKeys[ENUM.headers.FSPIOP.SOURCE]].match(ENUM.headers.FSPIOP.SWITCH.regex) !== null) {
     // Check to see if we find a regex match the source header containing the switch name.
     // If so we remove the signature added by default.
-    delete normalizedHeaders[ENUM.headers.FSPIOP.SIGNATURE]
+    delete normalizedHeaders[normalizedKeys[ENUM.headers.FSPIOP.SIGNATURE]]
   }
 
   if (config && config.httpMethod !== ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST) {
