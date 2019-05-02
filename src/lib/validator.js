@@ -40,19 +40,19 @@ const fulfilTransfer = (request) => {
     }
   }
 
-  const maxLag = (Config.COMPLETED_TIMESTAMP_MAX_LAG_SECONDS || DEFAULT_LAG_SECONDS) * 1000
+  const maxLag = (Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS || DEFAULT_LAG_SECONDS) * 1000
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
   if (completedTimestamp > now) {
     errorInformation.extensionList.extension.push({
       key: 'customValidationError',
-      value: 'child "completedTimestamp" fails because future timestamp was provided'
+      value: 'completedTimestamp fails because future timestamp was provided'
     })
     validationPassed = false
   } else if (completedTimestamp < now - maxLag) {
     errorInformation.extensionList.extension.push({
       key: 'customValidationError',
-      value: 'child "completedTimestamp" fails because provided timestamp is way too far in the past'
+      value: 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration'
     })
     validationPassed = false
   }
