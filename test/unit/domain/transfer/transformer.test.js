@@ -85,6 +85,7 @@ Test('Transfer Transformer tests', TransformerTest => {
       const date = new Date(val)
       let headerData = Util.clone(headerDataInputExample)
       headerData[key] = val
+      // headerData
 
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
 
