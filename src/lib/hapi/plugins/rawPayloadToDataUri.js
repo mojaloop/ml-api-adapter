@@ -1,5 +1,5 @@
 const getRawBody = require('raw-body')
-const encodePayload = require('../../../../../central-services-stream/src/kafka/protocol').encodePayload
+const encodePayload = require('@mojaloop/central-services-stream/src/kafka/protocol').encodePayload
 
 const requestRawPayloadTransform = (request, payloadBuffer) => {
   try {
