@@ -102,7 +102,7 @@ Test('rawPayloadToDataUri plugin test', async (pluginTest) => {
         }
       }
       let response = await server.inject(requestOptions)
-      assert.equal(response.statusCode, 415, 'status code is correct')
+      assert.equal(response.statusCode, 400, 'status code is correct')
       await server.stop()
       assert.end()
     } catch (e) {

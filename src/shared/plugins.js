@@ -66,6 +66,10 @@ const registerPlugins = async (server) => {
     plugin: require('hapi-auth-bearer-token')
   })
 
+  await server.register({
+    plugin: require('../lib/hapi/plugins/rawPayloadToDataUri')
+  })
+
   await server.register([Inert, Vision, Blipp, ErrorHandling])
 }
 

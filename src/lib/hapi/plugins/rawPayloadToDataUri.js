@@ -45,7 +45,7 @@ module.exports.plugin = {
               request = requestRawPayloadTransform(request, rawBuffer)
               return h.continue
             }).catch(e => {
-              throw Boom.unsupportedMediaType(e.message)
+              return h.continue
             })
         }
       }, {
