@@ -43,8 +43,7 @@ module.exports = [{
     auth: null,
     description: 'Transfer API.',
     payload: {
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     },
     validate: {
       headers: Joi.object({
