@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:10.15.1
+FROM node:10.15.3-alpine
 USER root
 
 WORKDIR /opt/ml-api-adapter
