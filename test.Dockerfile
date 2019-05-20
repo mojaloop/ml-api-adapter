@@ -9,8 +9,7 @@ RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autocon
     && npm config set unsafe-perm true \
     && npm install -g node-gyp tape tap-xunit
 
-COPY package.json /opt/ml-api-adapter/
-COPY package-lock.json /opt/ml-api-adapter/
+COPY package.json package-lock.json* /opt/ml-api-adapter/
 RUN npm install
 
 RUN apk del build-dependencies
