@@ -13,6 +13,8 @@ COPY package.json package-lock.json* /opt/ml-api-adapter/
 RUN npm install --production && \
   npm uninstall -g npm
 
+RUN apk del build-dependencies
+
 COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
 
