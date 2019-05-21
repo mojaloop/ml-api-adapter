@@ -29,7 +29,7 @@ const Blipp = require('blipp')
 // const GoodWinston = require('good-winston')
 // const goodWinstonStream = new GoodWinston({winston: require('winston')})
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-
+const RawPayloadToDataUri = require('../lib/hapi/plugins/rawPayloadToDataUri')
 /**
  * @module src/shared/plugin
  */
@@ -66,11 +66,7 @@ const registerPlugins = async (server) => {
     plugin: require('hapi-auth-bearer-token')
   })
 
-  await server.register({
-    plugin: require('../lib/hapi/plugins/rawPayloadToDataUri')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling])
+  await server.register([Inert, Vision, Blipp, ErrorHandling, RawPayloadToDataUri])
 }
 
 module.exports = {
