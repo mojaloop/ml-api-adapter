@@ -17,9 +17,12 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
+
  --------------
  ******/
-
 'use strict'
 
 const Test = require('tapes')(require('tape'))
@@ -49,8 +52,7 @@ const headerDataInputExample = {
 const headerDataTransformedExample = {
   'Content-Type': headerDataInputExample['Content-Type'],
   'FSPIOP-Source': headerDataInputExample['FSPIOP-Source'],
-  'FSPIOP-Destination': headerDataInputExample['FSPIOP-Destination'],
-  'FSPIOP-Http-Method': headerDataInputExample['FSPIOP-Http-Method']
+  'FSPIOP-Destination': headerDataInputExample['FSPIOP-Destination']
 }
 
 Test('Transfer Transformer tests', TransformerTest => {
@@ -69,9 +71,7 @@ Test('Transfer Transformer tests', TransformerTest => {
   TransformerTest.test('Transformer.transformHeaders() should', transformHeadersTest => {
     transformHeadersTest.test('Remove all unnecessary fields from Header', async test => {
       let headerData = Util.clone(headerDataInputExample)
-
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
-
       for (let headerKey in headerDataTransformedExample) {
         test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
@@ -85,6 +85,7 @@ Test('Transfer Transformer tests', TransformerTest => {
       const date = new Date(val)
       let headerData = Util.clone(headerDataInputExample)
       headerData[key] = val
+      // headerData
 
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfigExample)
 
@@ -142,11 +143,23 @@ Test('Transfer Transformer tests', TransformerTest => {
     transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex', async test => {
       let headerData = Util.clone(headerDataInputExample)
       let headerConfig = Util.clone(headerConfigExample)
-
       headerData[ENUM.headers.FSPIOP.SOURCE] = 'randomFSP'
 
       const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
+      for (let headerKey in headerDataTransformedExample) {
+        test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
+      }
+      test.equals(transformedHeaderData[ENUM.headers.FSPIOP.SIGNATURE], headerDataInputExample[ENUM.headers.FSPIOP.SIGNATURE])
+      test.end()
+    })
 
+    transformHeadersTest.test('Transform to include the incoming signature when FSPIOP-Source does not match the switch regex with INVALID http method', async test => {
+      let headerData = Util.clone(headerDataInputExample)
+      let headerConfig = Util.clone(headerConfigExample)
+      headerConfig.httpMethod = 'INVALID'
+      headerData[ENUM.headers.FSPIOP.SOURCE] = 'randomFSP'
+
+      const transformedHeaderData = Transformer.transformHeaders(headerData, headerConfig)
       for (let headerKey in headerDataTransformedExample) {
         test.equals(transformedHeaderData[headerKey], headerDataTransformedExample[headerKey])
       }
@@ -173,6 +186,7 @@ Test('Transfer Transformer tests', TransformerTest => {
 
     transformHeadersTest.test('Transform to include map the destinationFsp if the FSPIOP-Destination header was included in the original request but correctly mapped based on headerConfig', async test => {
       let headerData = Util.clone(headerDataInputExample)
+      headerData[ENUM.headers.FSPIOP.HTTP_METHOD] = 'INVALID'
 
       // set FSPIOP-Destination from the request
       Util.setValueByCaseInsensitiveKey(headerData, ENUM.headers.FSPIOP.DESTINATION, 'TESTDEST')

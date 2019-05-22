@@ -17,58 +17,52 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- --------------
+
+ - Georgi Georgiev <georgi.georgiev@modusbox.com>
+--------------
  ******/
 
 'use strict'
 
-const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
-const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const RawPayloadToDataUri = require('../lib/hapi/plugins/rawPayloadToDataUri')
-/**
- * @module src/shared/plugin
- */
+const Config = require('../lib/config')
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
-      }
+const BAD_REQUEST_ERROR_CODE = 400
+const BAD_REQUEST_ERROR_DESC = 'Bad Request'
+const DEFAULT_LAG_SECONDS = 300
+
+const fulfilTransfer = (request) => {
+  let validationPassed = true
+  let errorInformation = {
+    errorCode: BAD_REQUEST_ERROR_CODE,
+    errorDescription: BAD_REQUEST_ERROR_DESC,
+    extensionList: {
+      extension: []
     }
-  })
+  }
 
-  await server.register({
-    plugin: require('good'),
-    options: {
-      ops: {
-        interval: 10000
-      }
-    }
-  })
+  const maxLag = (Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS || DEFAULT_LAG_SECONDS) * 1000
+  const completedTimestamp = new Date(request.payload.completedTimestamp)
+  const now = new Date()
+  if (completedTimestamp > now) {
+    errorInformation.extensionList.extension.push({
+      key: 'customValidationError',
+      value: 'completedTimestamp fails because future timestamp was provided'
+    })
+    validationPassed = false
+  } else if (completedTimestamp < now - maxLag) {
+    errorInformation.extensionList.extension.push({
+      key: 'customValidationError',
+      value: 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration'
+    })
+    validationPassed = false
+  }
 
-  await server.register({
-    plugin: require('hapi-auth-basic')
-  })
-
-  await server.register({
-    plugin: require('@now-ims/hapi-now-auth')
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling, RawPayloadToDataUri])
+  return {
+    validationPassed,
+    reason: errorInformation
+  }
 }
 
 module.exports = {
-  registerPlugins
+  fulfilTransfer
 }

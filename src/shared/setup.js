@@ -47,6 +47,7 @@ const Metrics = require('@mojaloop/central-services-metrics')
  * @param modules list of Modules to be registered
  * @returns {Promise<Server>} Returns the Server object
  */
+
 const createServer = async (port, modules) => {
   const server = await new Hapi.Server({
     port,
@@ -56,6 +57,10 @@ const createServer = async (port, modules) => {
         failAction: async (request, h, err) => {
           throw Boom.boomify(err)
         }
+      },
+      payload: {
+        parse: true,
+        output: 'stream'
       }
     }
   })

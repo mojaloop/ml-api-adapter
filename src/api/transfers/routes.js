@@ -17,6 +17,11 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Murthy Kakarlamudi <murthy@modusbox.com>
+
  --------------
  ******/
 'use strict'
@@ -38,8 +43,7 @@ module.exports = [{
     auth: null,
     description: 'Transfer API.',
     payload: {
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     },
     validate: {
       headers: Joi.object({
@@ -131,6 +135,7 @@ module.exports = [{
     },
     validate: {
       headers: Joi.object({
+        'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),

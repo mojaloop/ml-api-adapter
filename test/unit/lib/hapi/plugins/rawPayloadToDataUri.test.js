@@ -2,7 +2,7 @@ const Hapi = require('hapi')
 const Test = require('tapes')(require('tape'))
 const Joi = require('joi')
 const init = async (options) => {
-  const server = await new Hapi.server(options)
+  const server = await new Hapi.Server(options)
 
   await server.register([
     { plugin: require('../../../../../src/lib/hapi/plugins/rawPayloadToDataUri') }
@@ -102,7 +102,7 @@ Test('rawPayloadToDataUri plugin test', async (pluginTest) => {
         }
       }
       let response = await server.inject(requestOptions)
-      assert.equal(response.statusCode, 415, 'status code is correct')
+      assert.equal(response.statusCode, 400, 'status code is correct')
       await server.stop()
       assert.end()
     } catch (e) {

@@ -25,6 +25,7 @@
 'use strict'
 
 const TransferService = require('../../domain/transfer')
+const Validator = require('../../lib/validator')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const Metrics = require('@mojaloop/central-services-metrics')
@@ -85,6 +86,11 @@ const fulfilTransfer = async function (request, h) {
   ).startTimer()
 
   try {
+    let { validationPassed, reason } = Validator.fulfilTransfer(request)
+    if (!validationPassed) {
+      return h.response(reason).code(reason.errorCode)
+    }
+
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)

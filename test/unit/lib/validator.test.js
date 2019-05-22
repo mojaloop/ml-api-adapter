@@ -17,58 +17,35 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
-const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
-const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const RawPayloadToDataUri = require('../lib/hapi/plugins/rawPayloadToDataUri')
-/**
- * @module src/shared/plugin
- */
+const Test = require('tape')
+const rewire = require('rewire')
+const src = '../../../src'
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
+Test('validator', validatorTest => {
+  validatorTest.test('fulfilTransfer should', fulfilTransferTest => {
+    fulfilTransferTest.test('use default setting and pass validation when config is not found and current timestamp is used', test => {
+      let request = {
+        payload: {
+          completedTimestamp: new Date()
+        }
       }
-    }
+      let ModuleProxy = rewire(`${src}/lib/validator`)
+      ModuleProxy.__set__('Config', {})
+
+      let result = ModuleProxy.fulfilTransfer(request)
+      test.ok(result.validationPassed)
+      test.end()
+    })
+
+    fulfilTransferTest.end()
   })
 
-  await server.register({
-    plugin: require('good'),
-    options: {
-      ops: {
-        interval: 10000
-      }
-    }
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-basic')
-  })
-
-  await server.register({
-    plugin: require('@now-ims/hapi-now-auth')
-  })
-
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
-
-  await server.register([Inert, Vision, Blipp, ErrorHandling, RawPayloadToDataUri])
-}
-
-module.exports = {
-  registerPlugins
-}
+  validatorTest.end()
+})

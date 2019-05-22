@@ -17,38 +17,44 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
+
  --------------
  ******/
-
 'use strict'
+
 let notifications = {}
+const ENDPOINT_HOST = process.env.ENDPOINT_HOST || 'http://ml-api-adapter-endpoint:4545'
 const endpoints = {
   dfsp1: [
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
-      value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers'
+      value: `${ENDPOINT_HOST}/dfsp1/transfers`
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-      value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers/{{transferId}}'
+      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}`
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-      value: 'http://ml-api-adapter-endpoint:4545/dfsp1/transfers/{{transferId}}/error'
+      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}/error`
     }
   ],
   dfsp2: [
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
-      value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers'
+      value: `${ENDPOINT_HOST}/dfsp2/transfers`
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-      value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers/{{transferId}}'
+      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}`
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-      value: 'http://ml-api-adapter-endpoint:4545/dfsp2/transfers/{{transferId}}/error'
+      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}/error`
     }
   ]
 }

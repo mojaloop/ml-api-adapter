@@ -1,6 +1,5 @@
 const getRawBody = require('raw-body')
-const encodePayload = require('../../../../../central-services-stream/src/kafka/protocol').encodePayload
-const Boom = require('boom')
+const encodePayload = require('@mojaloop/central-services-stream/src/kafka/protocol').encodePayload
 
 const requestRawPayloadTransform = (request, payloadBuffer) => {
   try {
@@ -45,7 +44,7 @@ module.exports.plugin = {
               request = requestRawPayloadTransform(request, rawBuffer)
               return h.continue
             }).catch(e => {
-              throw Boom.unsupportedMediaType(e.message)
+              return h.continue
             })
         }
       }, {
