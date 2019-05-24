@@ -22,9 +22,9 @@
 
 'use strict'
 
-const Hapi = require('hapi')
+const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const Boom = require('boom')
+const Boom = require('@hapi/boom')
 const Routes = require('./routes')
 
 const createServer = (port, modules) => {

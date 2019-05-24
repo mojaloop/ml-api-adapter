@@ -27,7 +27,7 @@
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
+const Boom = require('@hapi/boom')
 const Metrics = require('@mojaloop/central-services-metrics')
 
 /**
