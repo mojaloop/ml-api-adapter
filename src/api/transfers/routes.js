@@ -27,11 +27,13 @@
 'use strict'
 
 const Handler = require('./handler')
-const BaseJoi = require('joi-currency-code')(require('joi'))
-const Extension = require('joi-date-extensions')
+const BaseJoi = require('joi-currency-code')(require('@hapi/joi'))
+const Extension = require('@hapi/joi-date')
 const Joi = BaseJoi.extend(Extension)
 const tags = ['api', 'transfers']
 const transferState = ['RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED', 'SETTLED']
+const regexAccept = /application\/vnd.interoperability[.]/
+const regexContentType = /application\/vnd.interoperability[.]/
 
 module.exports = [{
   method: 'POST',
@@ -47,8 +49,8 @@ module.exports = [{
     },
     validate: {
       headers: Joi.object({
-        'accept': Joi.string().optional().regex(/application\/vnd.interoperability[.]/),
-        'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
+        'accept': Joi.string().optional().regex(regexAccept),
+        'content-type': Joi.string().required().regex(regexContentType),
         'content-length': Joi.number().max(5242880),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
@@ -95,7 +97,7 @@ module.exports = [{
     },
     validate: {
       headers: Joi.object({
-        'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
+        'content-type': Joi.string().required().regex(regexContentType),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
@@ -135,7 +137,7 @@ module.exports = [{
     },
     validate: {
       headers: Joi.object({
-        'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
+        'content-type': Joi.string().required().regex(regexContentType),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
@@ -178,8 +180,8 @@ module.exports = [{
     }, */
     validate: {
       headers: Joi.object({
-        'accept': Joi.string().optional().regex(/application\/vnd.interoperability[.]/),
-        'content-type': Joi.string().required().regex(/application\/vnd.interoperability[.]/),
+        'accept': Joi.string().optional().regex(regexAccept),
+        'content-type': Joi.string().required().regex(regexContentType),
         'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),

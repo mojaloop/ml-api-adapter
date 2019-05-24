@@ -157,7 +157,8 @@ const processMessage = async (msg) => {
 
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
-    let payloadForCallback = decodePayload(content.payload, false)
+    let decodedPayload = decodePayload(content.payload, { asParsed: false })
+    let payloadForCallback = decodedPayload.body.toString()
     if (actionLower === ENUM.transferEventAction.PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
       let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST

@@ -24,7 +24,7 @@
 
 'use strict'
 
-const Hapi = require('hapi')
+const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Plugins = require('./plugins')
 const Logger = require('@mojaloop/central-services-shared').Logger

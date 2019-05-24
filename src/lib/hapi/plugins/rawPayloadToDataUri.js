@@ -47,12 +47,6 @@ module.exports.plugin = {
               return h.continue
             })
         }
-      }, {
-        type: 'onPreHandler',
-        method: async (request, h) => {
-          request.payload = request.dataUri
-          return h.continue
-        }
       }])
     }
   }
