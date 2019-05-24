@@ -7,6 +7,7 @@ const P = require('bluebird')
 const Config = require(`${src}/lib/config`)
 const Proxyquire = require('proxyquire')
 const ParticipantEndpointCache = require(`${src}/domain/participant/lib/cache/participantEndpoint`)
+const Boom = require('@hapi/boom')
 
 Test('setup', setupTest => {
   let sandbox
@@ -49,7 +50,7 @@ Test('setup', setupTest => {
     Setup = Proxyquire('../../../src/shared/setup', {
       '../handlers/register': RegisterHandlersStub,
       './plugins': PluginsStub,
-      'hapi': HapiStub,
+      '@hapi/hapi': HapiStub,
       '../lib/config': Config
     })
 
@@ -69,7 +70,7 @@ Test('setup', setupTest => {
 
   setupTest.test('createServer should', async (createServerTest) => {
     createServerTest.test('throw Boom error on fail', async (test) => {
-      const errorToThrow = new Error('Throw Boom error')
+      const errorToThrow = new Boom('Throw Boom error')
 
       const HapiStubThrowError = {
         Server: sandbox.stub().callsFake((opt) => {
@@ -80,7 +81,7 @@ Test('setup', setupTest => {
       Setup = Proxyquire('../../../src/shared/setup', {
         '../handlers/register': RegisterHandlersStub,
         './plugins': PluginsStub,
-        'hapi': HapiStubThrowError,
+        '@hapi/hapi': HapiStubThrowError,
         '../lib/config': Config
       })
 
@@ -152,7 +153,7 @@ Test('setup', setupTest => {
       Setup = Proxyquire('../../../src/shared/setup', {
         '../handlers/register': RegisterHandlersStub,
         './plugins': PluginsStub,
-        'hapi': HapiStub,
+        '@hapi/hapi': HapiStub,
         '../lib/config': ConfigStub
       })
 
@@ -177,7 +178,7 @@ Test('setup', setupTest => {
       Setup = Proxyquire('../../../src/shared/setup', {
         '../handlers/register': RegisterHandlersStub,
         './plugins': PluginsStub,
-        'hapi': HapiStub,
+        '@hapi/hapi': HapiStub,
         '../lib/config': ConfigStub
       })
 

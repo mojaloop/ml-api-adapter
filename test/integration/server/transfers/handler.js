@@ -62,7 +62,8 @@ exports.receiveNotificationPost = async function (request, h) {
   console.log('Received receiveNotificationPost message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
-  const transferId = request.payload.transferId
+  const parsedPayload = request.payload
+  const transferId = parsedPayload.transferId
   const path = request.path
   const result = path.split('/')
   const operation = 'post'
@@ -70,7 +71,10 @@ exports.receiveNotificationPost = async function (request, h) {
   console.log('receiveNotificationPost::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
-  notifications[fsp][operation][transferId] = request.payload
+  notifications[fsp][operation][transferId] = {
+    payload: request.payload,
+    dataUri: request.dataUri
+  }
   return h.response(true).code(200)
 }
 
@@ -78,6 +82,7 @@ exports.receiveNotificationPut = async function (request, h) {
   console.log('Received receiveNotificationPut message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
+
   const transferId = request.params.transferId
   const path = request.path
   const result = path.split('/')
@@ -87,7 +92,10 @@ exports.receiveNotificationPut = async function (request, h) {
   console.log('receiveNotificationPut::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
-  notifications[fsp][operation][transferId] = request.payload
+  notifications[fsp][operation][transferId] = {
+    payload: request.payload,
+    dataUri: request.dataUri
+  }
   return h.response(true).code(200)
 }
 

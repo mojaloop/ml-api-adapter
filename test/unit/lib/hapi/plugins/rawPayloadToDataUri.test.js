@@ -1,6 +1,6 @@
-const Hapi = require('hapi')
+const Hapi = require('@hapi/hapi')
 const Test = require('tapes')(require('tape'))
-const Joi = require('joi')
+const Joi = require('@hapi/joi')
 const init = async (options) => {
   const server = await new Hapi.Server(options)
 
@@ -12,7 +12,11 @@ const init = async (options) => {
     method: 'POST',
     path: '/',
     handler: (request, h) => {
-      return request.payload
+      return {
+        payload: request.payload,
+        dataUri: request.dataUri,
+        rawPayload: request.rawPayload
+      }
     },
     options: {
       validate: {
@@ -46,7 +50,6 @@ Test('rawPayloadToDataUri plugin test', async (pluginTest) => {
 
   await pluginTest.test('send request and get raw data back', async assert => {
     try {
-      let server = await init(okOptions)
       const requestOptions = {
         method: 'POST',
         url: '/',
@@ -54,9 +57,14 @@ Test('rawPayloadToDataUri plugin test', async (pluginTest) => {
           'errorInformation': { 'errorCode': '5200', 'errorDescription': 'Generic limit error, amount \u0026 payments threshold.' }
         }
       }
+
+      let server = await init(okOptions)
+
       let response = await server.inject(requestOptions)
+      let perasedPayloadRequest = JSON.parse(response.payload)
       assert.equal(response.statusCode, 200, 'status code is correct')
-      assert.equal(response.payload, 'data:application/json;base64,eyJlcnJvckluZm9ybWF0aW9uIjp7ImVycm9yQ29kZSI6IjUyMDAiLCJlcnJvckRlc2NyaXB0aW9uIjoiR2VuZXJpYyBsaW1pdCBlcnJvciwgYW1vdW50ICYgcGF5bWVudHMgdGhyZXNob2xkLiJ9fQ', 'payload is base64 encoded dataUri')
+      assert.deepEqual(perasedPayloadRequest.payload, requestOptions.payload)
+      assert.equal(perasedPayloadRequest.dataUri, 'data:application/json;base64,eyJlcnJvckluZm9ybWF0aW9uIjp7ImVycm9yQ29kZSI6IjUyMDAiLCJlcnJvckRlc2NyaXB0aW9uIjoiR2VuZXJpYyBsaW1pdCBlcnJvciwgYW1vdW50ICYgcGF5bWVudHMgdGhyZXNob2xkLiJ9fQ', 'payload is base64 encoded dataUri')
       await server.stop()
       assert.end()
     } catch (e) {
@@ -77,8 +85,9 @@ Test('rawPayloadToDataUri plugin test', async (pluginTest) => {
         }
       }
       let response = await server.inject(requestOptions)
+      let perasedPayloadRequest = JSON.parse(response.payload)
       assert.equal(response.statusCode, 200, 'status code is correct')
-      assert.equal(response.payload, JSON.stringify(requestOptions.payload), 'payload is equal')
+      assert.deepEqual(perasedPayloadRequest.payload, requestOptions.payload, 'payload is equal')
       await server.stop()
       assert.end()
     } catch (e) {
@@ -102,6 +111,7 @@ Test('rawPayloadToDataUri plugin test', async (pluginTest) => {
         }
       }
       let response = await server.inject(requestOptions)
+      // let perasedPayloadRequest = JSON.parse(response.payload)
       assert.equal(response.statusCode, 400, 'status code is correct')
       await server.stop()
       assert.end()

@@ -24,11 +24,11 @@
 
 'use strict'
 
-const Hapi = require('hapi')
+const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Plugins = require('./plugins')
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
+const Boom = require('@hapi/boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')

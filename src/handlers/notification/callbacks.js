@@ -61,7 +61,7 @@ const sendCallback = async (url, method, headers, message, cid, sourceFsp, desti
     url,
     method,
     headers: transformedHeaders,
-    body: JSON.stringify(message),
+    body: message,
     agentOptions: {
       rejectUnauthorized: Config.ENDPOINT_SECURITY_TLS.rejectUnauthorized
     }

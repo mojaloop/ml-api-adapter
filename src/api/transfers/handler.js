@@ -27,7 +27,7 @@
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
+const Boom = require('@hapi/boom')
 const Metrics = require('@mojaloop/central-services-metrics')
 
 /**
@@ -56,7 +56,7 @@ const create = async function (request, h) {
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
-    await TransferService.prepare(request.headers, request.payload)
+    await TransferService.prepare(request.headers, request.payload, request.dataUri)
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
@@ -94,7 +94,7 @@ const fulfilTransfer = async function (request, h) {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await TransferService.fulfil(request.params.id, request.headers, request.payload)
+    await TransferService.fulfil(request.params.id, request.headers, request.payload, request.dataUri)
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
@@ -143,7 +143,7 @@ const fulfilTransferError = async function (request, h) {
     Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await TransferService.transferError(request.params.id, request.headers, request.payload)
+    await TransferService.transferError(request.params.id, request.headers, request.payload, request.dataUri)
     return h.response().code(200)
   } catch (err) {
     Logger.error(err)
