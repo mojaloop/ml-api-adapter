@@ -149,7 +149,7 @@ fcurl() {
 		--network $DOCKER_NETWORK \
     --link $ENDPOINT_HOST \
 		--entrypoint curl \
-		"jlekie/curl:latest" \
+		"appropriate/curl:latest" \
         --silent --head --fail \
 		"$@"
 }
