@@ -26,6 +26,7 @@ const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Boom = require('@hapi/boom')
 const Routes = require('./routes')
+const RawPayloadToDataUriPlugin = require('../../../src/lib/hapi/plugins/rawPayloadToDataUri')
 
 const createServer = (port, modules) => {
   return (async () => {
@@ -37,6 +38,10 @@ const createServer = (port, modules) => {
           failAction: async (request, h, err) => {
             throw Boom.boomify(err)
           }
+        },
+        payload: {
+          parse: true,
+          output: 'stream'
         }
       }
     })
@@ -47,4 +52,4 @@ const createServer = (port, modules) => {
   })()
 }
 
-module.exports = createServer(4545, [Routes])
+module.exports = createServer(4545, [Routes, RawPayloadToDataUriPlugin])

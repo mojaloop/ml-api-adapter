@@ -53,9 +53,7 @@ module.exports = [{
     tags: tags,
     description: 'receive error notification for dfsp1',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -68,9 +66,7 @@ module.exports = [{
     tags: tags,
     description: 'receive error notification for dfsp2',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -83,9 +79,7 @@ module.exports = [{
     tags: tags,
     description: 'receive error notification for dfsp3',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -98,9 +92,7 @@ module.exports = [{
     tags: tags,
     description: 'receive -transfers for dfsp1',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -113,9 +105,7 @@ module.exports = [{
     tags: tags,
     description: 'receive -transfers for dfsp2',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -128,9 +118,7 @@ module.exports = [{
     tags: tags,
     description: 'receive transfers for dfsp3',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -144,8 +132,7 @@ module.exports = [{
     description: 'receive put notification for dfsp1',
     payload: {
       allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -158,9 +145,7 @@ module.exports = [{
     tags: tags,
     description: 'receive put notification for dfsp2',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },
@@ -173,9 +158,7 @@ module.exports = [{
     tags: tags,
     description: 'receive put notification for dfsp3',
     payload: {
-      allow: 'application/json',
-      failAction: 'error',
-      output: 'data'
+      failAction: 'error'
     }
   }
 },

@@ -4,7 +4,7 @@ const encodePayload = require('@mojaloop/central-services-stream/src/kafka/proto
 const requestRawPayloadTransform = (request, payloadBuffer) => {
   try {
     return Object.assign(request, {
-      payload: payloadBuffer.toString(),
+      payload: JSON.parse(payloadBuffer.toString()),
       dataUri: encodePayload(payloadBuffer, request.headers['content-type']),
       rawPayload: payloadBuffer
     })
