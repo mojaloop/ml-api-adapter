@@ -23,8 +23,8 @@
 'use strict'
 
 const Package = require('../../package')
-const Inert = require('inert')
-const Vision = require('vision')
+const Inert = require('@hapi/inert')
+const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
 // const GoodWinston = require('good-winston')
 // const goodWinstonStream = new GoodWinston({winston: require('winston')})
@@ -46,7 +46,7 @@ const registerPlugins = async (server) => {
   })
 
   await server.register({
-    plugin: require('good'),
+    plugin: require('@hapi/good'),
     options: {
       ops: {
         interval: 10000
@@ -55,7 +55,7 @@ const registerPlugins = async (server) => {
   })
 
   await server.register({
-    plugin: require('hapi-auth-basic')
+    plugin: require('@hapi/basic')
   })
 
   await server.register({
@@ -67,6 +67,7 @@ const registerPlugins = async (server) => {
   })
 
   await server.register([Inert, Vision, Blipp, ErrorHandling, RawPayloadToDataUri])
+  // await server.register([Inert, Vision, Blipp, ErrorHandling])
 }
 
 module.exports = {

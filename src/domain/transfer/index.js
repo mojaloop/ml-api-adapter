@@ -49,7 +49,7 @@ const GET = 'get'
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
 */
-const prepare = async (headers, message) => {
+const prepare = async (headers, message, dataUri) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
   try {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
@@ -60,7 +60,7 @@ const prepare = async (headers, message) => {
       type: 'application/json',
       content: {
         headers: headers,
-        payload: message
+        payload: dataUri
       },
       metadata: {
         event: {
@@ -98,7 +98,7 @@ const prepare = async (headers, message) => {
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
 */
-const fulfil = async (id, headers, message) => {
+const fulfil = async (id, headers, message, dataUri) => {
   Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', id, headers, message)
   try {
     const action = message.transferState === 'ABORTED' ? 'reject' : 'commit'
@@ -110,7 +110,7 @@ const fulfil = async (id, headers, message) => {
       type: 'application/json',
       content: {
         headers: headers,
-        payload: message
+        payload: dataUri
       },
       metadata: {
         event: {
@@ -203,7 +203,7 @@ const getTransferById = async (id, headers) => {
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
 */
-const transferError = async (id, headers, message) => {
+const transferError = async (id, headers, message, dataUri) => {
   Logger.debug('domain::transfer::abort::start(%s, %s, %s)', id, headers, message)
   try {
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
@@ -214,7 +214,7 @@ const transferError = async (id, headers, message) => {
       type: 'application/json',
       content: {
         headers: headers,
-        payload: message
+        payload: dataUri
       },
       metadata: {
         event: {

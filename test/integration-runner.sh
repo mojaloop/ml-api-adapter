@@ -106,7 +106,7 @@ fcurl_api() {
     --network $DOCKER_NETWORK \
 		--link $APP_HOST \
 		--entrypoint curl \
-		"jlekie/curl:latest" \
+		"appropriate/curl:latest" \
         --output /dev/null --silent --head --fail \
 		"$@"
 }
@@ -149,7 +149,7 @@ fcurl() {
 		--network $DOCKER_NETWORK \
     --link $ENDPOINT_HOST \
 		--entrypoint curl \
-		"jlekie/curl:latest" \
+		"appropriate/curl:latest" \
         --silent --head --fail \
 		"$@"
 }
@@ -161,8 +161,8 @@ is_endpoint_up() {
 clean_docker
 
 >&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
-# docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
-docker build -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+#docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
+docker build --cache-from $DOCKER_IMAGE:$DOCKER_TAG -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
 echo "result "$?""
 if [ "$?" != 0 ]
 then

@@ -97,7 +97,7 @@ Test('Callback Service tests', callbacksTest => {
         url,
         method,
         headers: expectedHeaders,
-        body: JSON.stringify(message),
+        body: message,
         agentOptions
       }
 
@@ -155,7 +155,7 @@ Test('Callback Service tests', callbacksTest => {
         url,
         method,
         headers: expectedHeaders,
-        body: JSON.stringify(message),
+        body: message,
         agentOptions
       }
 
@@ -286,7 +286,7 @@ Test('Callback Service tests', callbacksTest => {
         url,
         method,
         headers: expectedHeaders,
-        body: JSON.stringify(message),
+        body: message,
         agentOptions
       }
 
@@ -346,7 +346,7 @@ Test('Callback Service tests', callbacksTest => {
         url,
         method,
         headers: expectedHeaders,
-        body: JSON.stringify(message),
+        body: message,
         agentOptions
       }
 
@@ -466,7 +466,7 @@ Test('Callback Service tests', callbacksTest => {
         url,
         method,
         headers: expectedHeaders,
-        body: JSON.stringify(message),
+        body: message,
         agentOptions
       }
 
