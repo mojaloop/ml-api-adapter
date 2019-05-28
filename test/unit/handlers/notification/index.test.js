@@ -96,10 +96,10 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(url, method, headers, message))
+      test.ok(Callback.sendCallback.calledWith(url, method, headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -133,10 +133,10 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(url, method, headers, message).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(url, method, headers, message))
+      test.ok(Callback.sendCallback.calledWith(url, method, headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -168,7 +168,7 @@ Test('Notification Service tests', notificationTest => {
       const headers = {}
       const message = {}
 
-      Callback.sendCallback.withArgs(url, method, headers, message).throws(new Error())
+      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -207,7 +207,7 @@ Test('Notification Service tests', notificationTest => {
       const headers = {}
       const message = {}
 
-      Callback.sendCallback.withArgs(url, method, headers, message).throws(new Error())
+      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -255,13 +255,13 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
       // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(urlPayer, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(urlPayer, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
       // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(urlPayee, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(urlPayee, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(urlPayee, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(urlPayer, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(urlPayee, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(urlPayer, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -297,7 +297,7 @@ Test('Notification Service tests', notificationTest => {
       const method = 'put'
       const message = {}
 
-      Callback.sendCallback.withArgs(url, method, msg.value.content.headers, message).throws(new Error())
+      Callback.sendCallback.withArgs(url, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -390,12 +390,12 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
-      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -434,13 +434,13 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
       // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
+      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -480,10 +480,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -523,10 +523,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -566,10 +566,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -609,10 +609,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -652,10 +652,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.to}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })
@@ -695,10 +695,10 @@ Test('Notification Service tests', notificationTest => {
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.id}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, message, msg.value.id, msg.value.from, msg.value.to))
+      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.id, msg.value.from, msg.value.to))
       test.equal(result, expected)
       test.end()
     })

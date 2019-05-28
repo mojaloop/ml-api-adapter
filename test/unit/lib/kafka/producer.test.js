@@ -162,7 +162,7 @@ Test('Producer', producerTest => {
         test.ok(e.toString() === 'Error: The following Producers could not be disconnected: [{"topic":"test2","error":"No producer found for topic test2"}]')
         test.end()
       }
-      getProducerStub.restore()
+      getProducerStub.reset()
     })
 
     disconnectTest.test('throw error if failure to disconnect from kafka if topic does not exist', async test => {

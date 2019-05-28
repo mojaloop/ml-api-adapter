@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:10.15.1
+FROM node:10.15.3-alpine
 USER root
 
 WORKDIR /opt/ml-api-adapter
@@ -9,7 +9,7 @@ RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autocon
     && npm config set unsafe-perm true \
     && npm install -g node-gyp tape tap-xunit
 
-COPY package.json /opt/ml-api-adapter/
+COPY package.json package-lock.json* /opt/ml-api-adapter/
 RUN npm install
 
 RUN apk del build-dependencies
