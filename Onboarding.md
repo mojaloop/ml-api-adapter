@@ -68,7 +68,7 @@ While you can get the `ml-api-adapter` up and running by itself, it isn't all th
 * `central-ledger`
   * kafka
   * mysql
-* [todo: other dependencies?]
+* [todo: add other optional dependencies?]
 
 Follow the [onboarding guide](https://github.com/mojaloop/central-ledger/blob/master/Onboarding.md) for `central-ledger` to get the required local environment set up before running the following:
 
