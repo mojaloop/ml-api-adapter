@@ -3,7 +3,7 @@
 
 >*Note:* Before completing this guide, make sure you have completed the _general_ onboarding guide in the [base mojaloop repository](https://github.com/mojaloop/mojaloop/blob/master/onboarding.md#mojaloop-onboarding).
 
-##  1. <a name='Contents'></a>Contents 
+## <a name='Contents'></a>Contents 
 
 <!-- vscode-markdown-toc -->
 1. [Prerequisites](#Prerequisites)
@@ -32,10 +32,8 @@ In addition to the above cli tools, you will need to install the following to bu
 
 
 ###  1.1. <a name='macOS'></a>macOS
-[todo: none?]
 ```bash
-# # install the following libraries to be able to build #[todo: do we actually need this?]
-# brew install libtool autoconf automake
+#none - you have everything you need!
 ```
 
 ###  1.2. <a name='Linux'></a>Linux
@@ -61,7 +59,7 @@ cd ml-api-adapter
 npm install
 ```
 
-> If you run into problems installing the node modules, make sure to check out the [Common Errors/FAQs](#CommonErrorsFAQs) below.
+> If you run into problems running `npm install`, make sure to check out the [Common Errors/FAQs](#CommonErrorsFAQs) below.
 
 
 ##  3. <a name='RunningLocally'></a>Running Locally
@@ -72,7 +70,7 @@ While you can get the `ml-api-adapter` up and running by itself, it isn't all th
   * mysql
 * [todo: other dependencies?]
 
-Follow the [onboarding guide](todo: link) for the `central-ledger` to get the required local environment set up before running the following:
+Follow the [onboarding guide](https://github.com/mojaloop/central-ledger/blob/master/Onboarding.md) for `central-ledger` to get the required local environment set up before running the following:
 
 Once simply run:
 ```bash
@@ -96,7 +94,7 @@ This will do the following:
 * `docker build` based on the `Dockerfile` defined in this repo
 * run all of the containers together
 
-### Running Dependencies in `docker`, but local 
+### 4.1 Running Dependencies in `docker`, but local 
 
 This is useful for developing and debugging quickly, without having to rely on mounting `node_modules` into docker containers, while still getting a replicatable environment for the `ml-api-adapter`'s dependencies.
 
@@ -124,12 +122,12 @@ npm run test:coverage
 
 ##  6. <a name='CommonErrorsFAQs'></a>Common Errors/FAQs
 
-### Q: sodium v1.2.3 can't compile during npm install
+__`sodium v1.2.3` can't compile during npm install__
 
 Resolved by installing v2.0.3 `npm install sodium@2.0.3`
 
 
-### On macOS, `npm install` fails with the following error:
+__On macOS, `npm install` fails with the following error__
 ```
 Undefined symbols for architecture x86_64:
   "_CRYPTO_cleanup_all_ex_data", referenced from:
