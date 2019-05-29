@@ -72,11 +72,10 @@ While you can get the `ml-api-adapter` up and running by itself, it isn't all th
 
 Follow the [onboarding guide](https://github.com/mojaloop/central-ledger/blob/master/Onboarding.md) for `central-ledger` to get the required local environment set up before running the following:
 
-Once simply run:
+Once you have the `central-ledger` up and running, start the `ml-api-adapter` with:
 ```bash
 npm run start
 ```
-to start the ml-api-adapter.
 
 > Alternatively, try running the `ml-api-adapter` with `docker-compose` to make the setup a little easier: [Running Inside Docker](#RunningInsideDocker).
 
@@ -94,7 +93,27 @@ This will do the following:
 * `docker build` based on the `Dockerfile` defined in this repo
 * run all of the containers together
 
-### 4.1 Running Dependencies in `docker`, but local 
+
+### 4.1 Handy Docker Compose Tips
+
+You can run `docker-compose` in 'detached' mode as follows:
+
+```bash
+npm run dc:up -- -d
+```
+
+And then attach to the logs with:
+```bash
+docker-compose logs -f
+```
+
+When you're done, don't forget to stop your containers however:
+```bash
+docker-compose stop
+```
+
+
+### 4.2 Running Dependencies in `docker`, but local 
 
 This is useful for developing and debugging quickly, without having to rely on mounting `node_modules` into docker containers, while still getting a replicatable environment for the `ml-api-adapter`'s dependencies.
 
@@ -122,12 +141,12 @@ npm run test:coverage
 
 ##  6. <a name='CommonErrorsFAQs'></a>Common Errors/FAQs
 
-__`sodium v1.2.3` can't compile during npm install__
+#### 6.1 `sodium v1.2.3` can't compile during npm install
 
 Resolved by installing v2.0.3 `npm install sodium@2.0.3`
 
 
-__On macOS, `npm install` fails with the following error__
+#### 6.2 On macOS, `npm install` fails with the following error
 ```
 Undefined symbols for architecture x86_64:
   "_CRYPTO_cleanup_all_ex_data", referenced from:
