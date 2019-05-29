@@ -18,6 +18,9 @@ services:
       - kafka
     ports:
       - "3001:3001"
+    volumes:
+      # override the default values with our own
+       - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
     environment:
       - CLEDG_DATABASE_URI=mysql://central_ledger:password@mysql:3306/central_ledger
       - CLEDG_SIDECAR__DISABLED=true
@@ -29,7 +32,7 @@ services:
       - "3306:3306"
     volumes:
       #this fixes the permissions issue, but docker-compose up will fail on first attempt
-      - ./sql-init/:/docker-entrypoint-initdb.d/
+      - ./docker/sql-init/:/docker-entrypoint-initdb.d/
     environment:
       - MYSQL_USER=${DBUSER:-central_ledger}
       - MYSQL_PASSWORD=${DBPASS:-password}
