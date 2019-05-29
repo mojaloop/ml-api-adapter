@@ -66,9 +66,7 @@ npm install
 
 While you can get the `ml-api-adapter` up and running by itself, it isn't all that useful for testing. `ml-api-adapter` requires at a minimum:
 * `central-ledger`
-  * kafka
-  * mysql
-* [todo: add other optional dependencies?]
+* `kafka`
 
 Follow the [onboarding guide](https://github.com/mojaloop/central-ledger/blob/master/Onboarding.md) for `central-ledger` to get the required local environment set up before running the following:
 
@@ -119,6 +117,14 @@ docker-compose stop
 ### 4.2 Running Dependencies in `docker`, but local 
 
 This is useful for developing and debugging quickly, without having to rely on mounting `node_modules` into docker containers, while still getting a replicatable environment for the `ml-api-adapter`'s dependencies.
+
+```bash
+docker-compose up central-ledger mysql kafka #run in separate shell, or with -d
+npm run start
+
+# hit the health check endpoint to verify the server is up and running
+curl localhost:3000/health
+```
 
 [todo: requires some tricky work with env variables]
 
