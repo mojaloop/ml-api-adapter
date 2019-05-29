@@ -7,8 +7,9 @@ services:
       - kafka
     ports:
       - "3000:3000"
-    environment:
-      - KAFKA_HOST=kafka
+    volumes:
+      # override the default values with our own - this is because the KAFKA_HOST env variable is ignored for some reason
+       - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
     
   central-ledger:
     image: mojaloop/central-ledger:latest

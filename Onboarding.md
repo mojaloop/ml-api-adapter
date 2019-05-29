@@ -84,7 +84,10 @@ npm run start
 
 We use `docker-compose` to manage and run the `ml-api-adapter` along with its dependencies with one command.
 
+>*Note:* Before starting all of the containers however, start the `mysql` container alone, to give it some more time to set up the necessary permissions (this only needs to be done once). This is a short-term workaround because the `ml-api-adapter` doesn't retry it's connection to MySQL.
+
 ```bash
+docker-compose up mysql #first time only
 npm run dc:up
 ```
 
