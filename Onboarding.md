@@ -82,11 +82,11 @@ npm run start
 
 We use `docker-compose` to manage and run the `ml-api-adapter` along with its dependencies with one command.
 
->*Note:* Before starting all of the containers however, start the `mysql` container alone, to give it some more time to set up the necessary permissions (this only needs to be done once). This is a short-term workaround because the `ml-api-adapter` doesn't retry it's connection to MySQL.
+>*Note:* Before starting all of the containers however, start the `mysql` container alone, to give it some more time to set up the necessary permissions (this only needs to be done once). This is a short-term workaround because the `central-ledger` doesn't retry it's connection to MySQL.
 
 ```bash
-docker-compose up mysql #first time only
-npm run dc:up
+docker-compose up mysql #first time only - the initial mysql load takes a while, and if it's not up in time, the central-ledger will just crash
+npm run docker:up
 ```
 
 This will do the following:
@@ -100,7 +100,7 @@ This will do the following:
 You can run `docker-compose` in 'detached' mode as follows:
 
 ```bash
-npm run dc:up -- -d
+npm run docker:up -- -d
 ```
 
 And then attach to the logs with:
@@ -110,7 +110,7 @@ docker-compose logs -f
 
 When you're done, don't forget to stop your containers however:
 ```bash
-docker-compose stop
+npm run docker:stop
 ```
 
 
@@ -125,8 +125,6 @@ npm run start
 # hit the health check endpoint to verify the server is up and running
 curl localhost:3000/health
 ```
-
-[todo: requires some tricky work with env variables]
 
 
 ##  5. <a name='Testing'></a>Testing

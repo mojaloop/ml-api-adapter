@@ -52,11 +52,11 @@
     "docker:build:api": "docker build -f api.Dockerfile -t $npm_package_config_images_api:latest .",
     "docker:build:api1": "docker build --no-cache -f api.Dockerfile -t $npm_package_config_images_api:latest .",
     "docker:build:admin_DONOTRUN": "docker build --no-cache -f admin.Dockerfile -t $npm_package_config_images_admin:latest .",
-    "docker:stop": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml stop",
+    "docker:up": "docker-compose -f docker-compose.yml up",
+    "docker:stop": "docker-compose -f docker-compose.yml stop",
     "docker:rm": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml rm -f -v",
     "docker:clean": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml down --rmi local",
-    "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json",
-    "dc:up": "docker-compose -f docker-compose.yml up"
+    "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json"
   },
   "dependencies": {
     "@mojaloop/central-services-auth": "5.2.1",
