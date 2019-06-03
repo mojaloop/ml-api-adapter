@@ -41,6 +41,51 @@ const extractUrls = (request) => {
  * @returns {object} - Returns the object containing the OK status and 200 status code
  */
 exports.health = function (request, h) {
+  //TODO: Health check 
+
+
+
+  /* 
+
+  Health status design:
+
+  Design Goals:
+  - Clear HTTP Statuses (no need to inspect the response to know there are no issues)
+    - if response status is 200, then all good, everything is fine
+    - if status is 502, then API is good, but services maybe not. This may be the case when restarting the database, or when the api has started but not the database
+      502 is reserved for Bad Gateway, which I think kind of suits this case, but requires a bit of a loose interpretation of Gateway...
+    - if status is 503, then status is bad - the api won't be up and
+
+  example good status
+  GET /health 
+  200
+  {
+    status: 'OK',
+    uptime: number, (seconds),
+    upSince: string, (ISODate),
+    versionNumber: string, (from package.json)
+    services: [
+      {
+        name: 'kafka',
+        connectionStatus: 'OK',
+        latency: 12341 (ms)
+      },
+      {
+        name: 'mysql',
+        connectionStatus: 'OK',
+        latency: 12341 (ms)
+      }
+
+    ],
+  }
+
+  example bad status
+  503
+
+  
+
+  */
+
   return h.response({ status: 'OK' }).code(200)
 }
 
