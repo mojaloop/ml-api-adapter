@@ -264,7 +264,7 @@ jobs:
     <<: *defaults_working_directory
     <<: *defaults_docker_node
     steps:
-       - run:
+      - run:
           name: Install general dependencies
           command: *defaults_Dependencies
       - checkout
