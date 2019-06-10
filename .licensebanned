@@ -1,4 +1,7 @@
-# A list of packages that we have manually audited and are ok with the license
-#e.g.
-UNKNOWN
+# A list of licenses that we won't allow in the repo
 # will ban the MIT licence from being allowed in this repo
+
+UNKNOWN
+GPL-1.0
+GPL-2.0
+GPL-3.0
