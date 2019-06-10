@@ -297,10 +297,10 @@ jobs:
       - run:
           # This shouldn't ever fail
           name: List all found licenses
-          command: npm run licence:list -- --out ./audit/results/licenseResults.csv
+          command: npm run license:list -- --out ./audit/results/licenseResults.csv
       - run:
           name: Check for disallowed licenses
-          command: npm run licence:check
+          command: npm run license:check
       - store_artifacts:
           path: ./audit/results
           prefix: audit
