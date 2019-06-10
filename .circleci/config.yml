@@ -261,12 +261,18 @@ jobs:
           path: ./test/results
 
   test-dependencies:
-    machine: true
     <<: *defaults_working_directory
+    <<: *defaults_docker_node
     steps:
-      - run:
+       - run:
           name: Install general dependencies
           command: *defaults_Dependencies
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install tape and tap-xunit
+          command: npm install tape tap-xunit
       - run:
           name: Create dir for test results
           command: mkdir -p ./audit/results
