@@ -260,7 +260,7 @@ jobs:
       - store_test_results:
           path: ./test/results
 
-  test-dependencies:
+  audit-dependencies:
     <<: *defaults_working_directory
     <<: *defaults_docker_node
     steps:
@@ -270,13 +270,37 @@ jobs:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
-      
       - run:
           name: Create dir for test results
           command: mkdir -p ./audit/results
       - run:
           name: Check for new npm vulnerabilities
           command: npm run audit:check -- --json > ./audit/results/auditResults.json 
+      - store_artifacts:
+          path: ./audit/results
+          prefix: audit
+
+  audit-licenses:
+    <<: *defaults_working_directory
+    <<: *defaults_docker_node
+    steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_Dependencies
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      # TODO: audit the licenses here
+      - run:
+          name: Create dir for test results
+          command: mkdir -p ./audit/results
+      - run:
+          # This shouldn't ever fail
+          name: List all found licenses
+          command: npm run licence:list -- --out ./audit/results/licenseResults.csv
+      - run:
+          name: Check for disallowed licenses
+          command: npm run licence:check
       - store_artifacts:
           path: ./audit/results
           prefix: audit
@@ -587,7 +611,18 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-      - test-dependencies:
+      - audit-dependencies:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - audit-licenses:
           context: org-global
           requires:
             - setup
@@ -606,7 +641,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - test-dependencies
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-snapshot/
@@ -631,7 +667,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - test-dependencies
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-poc/
@@ -656,7 +693,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - test-dependencies
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-pocdb/
@@ -681,7 +719,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - test-dependencies
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-base/
@@ -706,7 +745,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - test-dependencies
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
