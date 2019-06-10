@@ -1,0 +1,4 @@
+# A list of packages that we have manually audited and are ok with the license
+#e.g.
+UNKNOWN
+# will ban the MIT licence from being allowed in this repo

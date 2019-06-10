@@ -37,7 +37,6 @@ defaults_awsCliDependencies: &defaults_awsCliDependencies |
     pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic
     apk -v --purge del py-pip
 
-
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
   command: |
@@ -261,53 +260,50 @@ jobs:
       - store_test_results:
           path: ./test/results
 
+  audit-dependencies:
+    <<: *defaults_working_directory
+    <<: *defaults_docker_node
+    steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_Dependencies
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Create dir for test results
+          command: mkdir -p ./audit/results
+      - run:
+          name: Check for new npm vulnerabilities
+          command: npm run audit:check -- --json > ./audit/results/auditResults.json 
+      - store_artifacts:
+          path: ./audit/results
+          prefix: audit
 
-#   test-spec:
-#     machine: true
-#     # <<: *defaults
-#     steps:
-#     #   - run:
-#     #       name: Install general dependencies
-#     #       command: *defaultDependencies
-#     #   - run:
-#     #       name: Add the Postgres 9.6 binaries to the path.
-#     #       command: apk --no-cache add postgresql-client
-#     #   - setup_remote_docker
-#     #   - run:
-#     #       name: Add docker
-#     #       command: apk --no-cache add docker
-#     #   - run:
-#     #       name: Add docker compose
-#     #       command: |
-#     #         apk --no-cache add py-pip
-#     #         pip install docker-compose
-#     #   - run:
-#     #       name: Install Docker Compose
-#     #       command: |
-#     #         curl -L https://github.com/docker/compose/releases/download/1.8.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose; chmod +x /usr/local/bin/docker-compose
-#       - run:
-#           name: Add the Postgres 9.6 binaries to the path.
-#           command: echo ‘/usr/lib/postgresql/9.6/bin/:$PATH’ >> $BASH_ENV
-#       - run:
-#           name: Install Docker Compose
-#           command: |
-#             curl -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-#             chmod +x ~/docker-compose
-#             mv ~/docker-compose /usr/local/bin/docker-compose
-#       - checkout
-#       - restore_cache:
-#           key: dependency-cache-{{ checksum "package.json" }}
-#       - run:
-#           name: Create dir for test results
-#           command: mkdir -p ./test/results
-#       - run:
-#           name: Execute unit tests
-#           command: npm -s run test:spec
-#       - store_artifacts:
-#           path: ./test/results
-#           prefix: test
-#       - store_test_results:
-#           path: ./test/results
+  audit-licenses:
+    <<: *defaults_working_directory
+    <<: *defaults_docker_node
+    steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_Dependencies
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      # TODO: audit the licenses here
+      - run:
+          name: Create dir for test results
+          command: mkdir -p ./audit/results
+      - run:
+          # This shouldn't ever fail
+          name: List all found licenses
+          command: npm run license:list -- --out ./audit/results/licenseResults.csv
+      - run:
+          name: Check for disallowed licenses
+          command: npm run license:check
+      - store_artifacts:
+          path: ./audit/results
+          prefix: audit
 
   build-snapshot:
     machine: true
@@ -615,17 +611,28 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-    #   - test-spec:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #           tags:
-    #             only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
+      - audit-dependencies:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - audit-licenses:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
       - build-snapshot:
           context: org-global
           requires:
@@ -634,7 +641,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-snapshot/
@@ -659,7 +667,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-poc/
@@ -684,7 +693,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-pocdb/
@@ -709,7 +719,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-base/
@@ -734,7 +745,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - audit-dependencies
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
