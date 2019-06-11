@@ -19,7 +19,7 @@ module.exports = {
     try {
       let indvidualTransfers = await IndividualTransferModel
         .find({ bulkTransferId: id }, '-dataUri -_id')
-        // .populate('bulkDocument', 'headers -_id') // TODO in bulk-handler first get only headers, then compose each individual transfer without population
+        .populate('bulkDocument', 'headers -_id') // TODO in bulk-handler first get only headers, then compose each individual transfer without population
       return h.response(indvidualTransfers)
     } catch (e) {
       throw e
