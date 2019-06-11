@@ -4,6 +4,7 @@ const RC = require('rc')('MLAPI', require('../../config/default.json'))
 const config = {
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),
   PORT: RC.PORT,
+  BULK: RC.BULK,
   AMOUNT: RC.AMOUNT,
   DFSP_URLS: RC.DFSP_URLS,
   HANDLERS: RC.HANDLERS,
