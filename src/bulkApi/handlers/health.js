@@ -1,19 +1,19 @@
-'use strict';
+'use strict'
 
-const Boom = require('boom');
+// const Boom = require('boom')
 
 /**
  * Operations on /health
  */
 module.exports = {
-    /**
+  /**
      * summary: Status of adapter
-     * description: 
-     * parameters: 
-     * produces: 
+     * description:
+     * parameters:
+     * produces:
      * responses: default
      */
-    get: function getHealth(request, h) {
-        return 'bla'
-    }
-};
+  get: function getHealth (request, h) {
+    return 'bla'
+  }
+}

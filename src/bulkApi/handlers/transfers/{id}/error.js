@@ -1,19 +1,19 @@
-'use strict';
+'use strict'
 
-const Boom = require('boom');
+const Boom = require('boom')
 
 /**
  * Operations on /transfers/{id}/error
  */
 module.exports = {
-    /**
+  /**
      * summary: Abort a transfer
-     * description: 
+     * description:
      * parameters: content-type, date, x-forwarded-for, fspiop-source, fspiop-destination, fspiop-encryption, fspiop-signature, fspiop-uri, fspiop-http-method, id, body
-     * produces: 
+     * produces:
      * responses: default
      */
-    put: function putTransfersIdError(request, h) {
-        return Boom.notImplemented();
-    }
-};
+  put: function putTransfersIdError (request, h) {
+    return Boom.notImplemented()
+  }
+}

@@ -1,49 +1,49 @@
-'use strict';
-var Mockgen = require('../mockgen.js');
+'use strict'
+var Mockgen = require('../mockgen.js')
 /**
  * Operations on /bulkTransfers/{id}
  */
 module.exports = {
-    /**
+  /**
      * summary: Get a transfer by Id
-     * description: 
+     * description:
      * parameters: accept, content-type, date, x-forwarded-for, fspiop-source, fspiop-destination, fspiop-encryption, fspiop-signature, fspiop-uri, fspiop-http-method, id
-     * produces: 
+     * produces:
      * responses: default
      * operationId: getBulkTransfersId
      */
-    get: {
-        default: function (req, res, callback) {
-            /**
+  get: {
+    default: function (req, res, callback) {
+      /**
              * Using mock data generator module.
              * Replace this by actual data for the api.
              */
-            Mockgen().responses({
-                path: '/bulkTransfers/{id}',
-                operation: 'get',
-                response: 'default'
-            }, callback);
-        }
-    },
-    /**
+      Mockgen().responses({
+        path: '/bulkTransfers/{id}',
+        operation: 'get',
+        response: 'default'
+      }, callback)
+    }
+  },
+  /**
      * summary: Fulfil bulkTransfer
-     * description: 
+     * description:
      * parameters: content-type, date, x-forwarded-for, fspiop-source, fspiop-destination, fspiop-encryption, fspiop-signature, fspiop-uri, fspiop-http-method, id, body
-     * produces: 
+     * produces:
      * responses: default
      * operationId: putBulkTransfersId
      */
-    put: {
-        default: function (req, res, callback) {
-            /**
+  put: {
+    default: function (req, res, callback) {
+      /**
              * Using mock data generator module.
              * Replace this by actual data for the api.
              */
-            Mockgen().responses({
-                path: '/bulkTransfers/{id}',
-                operation: 'put',
-                response: 'default'
-            }, callback);
-        }
+      Mockgen().responses({
+        path: '/bulkTransfers/{id}',
+        operation: 'put',
+        response: 'default'
+      }, callback)
     }
-};
+  }
+}
