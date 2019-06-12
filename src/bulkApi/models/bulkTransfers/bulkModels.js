@@ -1,15 +1,15 @@
 const mongoose = require('mongoose')
-// const Crypto = require('crypto')
+const Crypto = require('crypto')
 const encodePayload = require('@mojaloop/central-services-stream/src/kafka/protocol').encodePayload
 
 // TODO needs to be put in shared lib
-// const createHash = (payload) => {
-//   const hashSha256 = Crypto.createHash('sha256')
-//   let hash = JSON.stringify(payload)
-//   hash = hashSha256.update(hash)
-//   hash = hashSha256.digest(hash).toString('base64').slice(0, -1) // removing the trailing '=' as per the specification
-//   return hash
-// }
+const createHash = (payload) => {
+  const hashSha256 = Crypto.createHash('sha256')
+  let hash = JSON.stringify(payload)
+  hash = hashSha256.update(hash)
+  hash = hashSha256.digest(hash).toString('base64').slice(0, -1) // removing the trailing '=' as per the specification
+  return hash
+}
 
 // single transfer model
 
@@ -55,8 +55,8 @@ const transfer = {
 const individualTransferSchema = new mongoose.Schema(Object.assign({}, { payload: transfer },
   { bulkDocument: { type: mongoose.Schema.Types.ObjectId, ref: 'bulktransfers' },
     bulkTransferId: { type: mongoose.Schema.Types.String },
-    dataUri: { type: String, required: true }
-    // hash: { type: String, unique: true, index: true }
+    dataUri: { type: String, required: true },
+    hash: { type: String, unique: true, index: true }
   }))
 
 // schema for bulkquotes
@@ -88,19 +88,19 @@ const bulkTransferSchema = new mongoose.Schema({
     key: String,
     value: String
   }],
-  status: { type: String }
-  // hash: { type: String, unique: true, index: true }
+  status: { type: String },
+  hash: { type: String, unique: true, index: true }
 })
 
 // create document hash and if the hash is different, the validation doesn't work and the model is not created
 
-// bulkTransferSchema.pre('validate', async function () {
-//   this.hash = createHash(this)
-// })
+bulkTransferSchema.pre('validate', async function () {
+  this.hash = createHash(this)
+})
 
-// individualTransferSchema.pre('validate', async function () {
-//   this.hash = createHash(this)
-// })
+individualTransferSchema.pre('validate', async function () {
+  this.hash = createHash(this)
+})
 
 // TODO change document status post validation
 

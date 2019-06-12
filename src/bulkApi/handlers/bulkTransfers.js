@@ -24,7 +24,7 @@ module.exports = {
       let { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, status } = savedBulk
       let message = { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, status }
       await TransferService.bulkPrepare(request.headers, message, request.dataUri)
-      return h.response(message).code(202)
+      return h.response().code(202)
     } catch (err) {
       Logger.error(err)
       throw Boom.boomify(err, { message: 'An error has occurred' })

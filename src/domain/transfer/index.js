@@ -99,6 +99,7 @@ const bulkPrepare = async (headers, message) => {
       from: payerFsp,
       type: 'application/json',
       content: {
+        headers,
         payload: message
       },
       metadata: {
