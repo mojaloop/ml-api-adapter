@@ -1,6 +1,7 @@
 'use strict'
 
 const _ = require('lodash')
+const Crypto = require('crypto')
 const Config = require('./config')
 
 const omitNil = (object) => {
@@ -127,6 +128,20 @@ const setValueByCaseInsensitiveKey = (obj, key, value) => {
   }
 }
 
+/**
+ * Method to create the hash for a given payload
+ *
+ * @param payload Payload for which a hash is to be create
+ * @returns Hash for the provided payload
+ */
+const createHash = (payload) => {
+  const hashSha256 = Crypto.createHash('sha256')
+  let hash = JSON.stringify(payload)
+  hash = hashSha256.update(hash)
+  hash = hashSha256.digest(hash).toString('base64').slice(0, -1) // removing the trailing '=' as per the specification
+  return hash
+}
+
 module.exports = {
   assign,
   expand,
@@ -141,5 +156,6 @@ module.exports = {
   clone,
   deleteFieldByCaseInsensitiveKey,
   getValueByCaseInsensitiveKey,
-  setValueByCaseInsensitiveKey
+  setValueByCaseInsensitiveKey,
+  createHash
 }

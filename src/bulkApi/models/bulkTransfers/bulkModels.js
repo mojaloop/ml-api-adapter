@@ -1,29 +1,13 @@
 const mongoose = require('mongoose')
-const Crypto = require('crypto')
 const encodePayload = require('@mojaloop/central-services-stream/src/kafka/protocol').encodePayload
-
-// TODO needs to be put in shared lib
-const createHash = (payload) => {
-  const hashSha256 = Crypto.createHash('sha256')
-  let hash = JSON.stringify(payload)
-  hash = hashSha256.update(hash)
-  hash = hashSha256.digest(hash).toString('base64').slice(0, -1) // removing the trailing '=' as per the specification
-  return hash
-}
+const Util = require('../../../lib/util')
 
 // single transfer model
-
 const transfer = {
   transferId: {
     type: String, required: true, unique: true, index: true
   },
-  payerFsp: {
-    type: String, required: true
-  },
-  payeeFsp: {
-    type: String, required: true
-  },
-  amount: {
+  transferAmount: {
     currency: {
       type: String,
       required: true
@@ -40,9 +24,6 @@ const transfer = {
   condition: {
     type: String,
     required: true
-  },
-  expiration: {
-    type: Date
   },
   extensionList: [{
     key: String,
@@ -95,11 +76,11 @@ const bulkTransferSchema = new mongoose.Schema({
 // create document hash and if the hash is different, the validation doesn't work and the model is not created
 
 bulkTransferSchema.pre('validate', async function () {
-  this.hash = createHash(this)
+  this.hash = Util.createHash(this)
 })
 
 individualTransferSchema.pre('validate', async function () {
-  this.hash = createHash(this)
+  this.hash = Util.createHash(this)
 })
 
 // TODO change document status post validation
