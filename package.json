@@ -27,8 +27,9 @@
     ]
   },
   "scripts": {
-    "start": "run-p start:api",
+    "start": "run-p start:api start:bulk",
     "start:api": "node src/api/index.js",
+    "start:bulk": "node src/bulkApi/index.js",
     "dev": "npm run docker:stop && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d",
     "test": "npm run test:unit | faucet",
     "pretest": "standard",
@@ -58,6 +59,7 @@
     "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json"
   },
   "dependencies": {
+    "bulk-api": "file:src/bulkApi",
     "@mojaloop/central-services-auth": "5.2.1",
     "@mojaloop/central-services-database": "5.2.1",
     "@mojaloop/central-services-error-handling": "5.2.0",

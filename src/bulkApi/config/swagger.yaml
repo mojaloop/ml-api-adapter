@@ -1,0 +1,482 @@
+swagger: '2.0'
+host: test-ml-api-adapter.mojaloop.live
+basePath: /
+schemes:
+  - http
+info:
+  title: ml api adapter API Documentation
+  version: 6.2.1
+tags: []
+paths:
+  /health:
+    get:
+      summary: Status of adapter
+      operationId: getHealth
+      tags:
+        - health
+      responses:
+        default:
+          schema:
+            type: string
+          description: Successful
+  /metrics:
+    get:
+      summary: Prometheus metrics endpoint
+      operationId: getMetrics
+      tags:
+        - metrics
+      responses:
+        default:
+          schema:
+            type: string
+          description: Successful
+  '/bulkTransfers/{id}':
+    get:
+      summary: Get a transfer by Id
+      operationId: getBulkTransfersId
+      parameters:
+        - type: string
+          pattern: 'application\/vnd.interoperability[.]'
+          name: accept
+          in: header
+          required: false
+        - type: string
+          pattern: 'application\/vnd.interoperability[.]'
+          name: content-type
+          in: header
+          required: true
+        - type: string
+          format: date
+          name: date
+          in: header
+          required: true
+        - type: string
+          name: x-forwarded-for
+          in: header
+          required: false
+        - type: string
+          name: fspiop-source
+          in: header
+          required: true
+        - type: string
+          name: fspiop-destination
+          in: header
+          required: false
+        - type: string
+          name: fspiop-encryption
+          in: header
+          required: false
+        - type: string
+          name: fspiop-signature
+          in: header
+          required: false
+        - type: string
+          name: fspiop-uri
+          in: header
+          required: false
+        - type: string
+          name: fspiop-http-method
+          in: header
+          required: false
+        - type: string
+          description: path
+          x-format:
+            guid: true
+          name: id
+          in: path
+          required: true
+      tags:
+        - bulk-transfers
+      responses:
+        default:
+          schema:
+            type: string
+          description: Successful
+    put:
+      summary: Fulfil bulkTransfer
+      operationId: putBulkTransfersId
+      parameters:
+        - type: string
+          pattern: 'application\/vnd.interoperability[.]'
+          name: content-type
+          in: header
+          required: true
+        - type: string
+          format: date
+          name: date
+          in: header
+          required: true
+        - type: string
+          name: x-forwarded-for
+          in: header
+          required: false
+        - type: string
+          name: fspiop-source
+          in: header
+          required: true
+        - type: string
+          name: fspiop-destination
+          in: header
+          required: false
+        - type: string
+          name: fspiop-encryption
+          in: header
+          required: false
+        - type: string
+          name: fspiop-signature
+          in: header
+          required: false
+        - type: string
+          name: fspiop-uri
+          in: header
+          required: false
+        - type: string
+          name: fspiop-http-method
+          in: header
+          required: false
+        - type: string
+          description: path
+          name: id
+          in: path
+          required: true
+        - in: body
+          name: body
+          schema:
+            $ref: '#/definitions/BulkTransferFulfilment'
+      tags:
+        - bulk-transfers
+      responses:
+        default:
+          schema:
+            type: string
+          description: Successful
+  /bulkTransfers:
+    post:
+      summary: Transfer API.
+      operationId: postBulkTransfers
+      parameters:
+        - type: string
+          pattern: 'application\/vnd.interoperability[.]'
+          name: accept
+          in: header
+          required: false
+        - type: string
+          pattern: 'application\/vnd.interoperability[.]'
+          name: content-type
+          in: header
+          required: true
+        - type: number
+          maximum: 5242880
+          name: content-length
+          in: header
+        - type: string
+          format: date
+          name: date
+          in: header
+          required: true
+        - type: string
+          name: x-forwarded-for
+          in: header
+          required: false
+        - type: string
+          name: fspiop-source
+          in: header
+          required: true
+        - type: string
+          name: fspiop-destination
+          in: header
+          required: false
+        - type: string
+          name: fspiop-encryption
+          in: header
+          required: false
+        - type: string
+          name: fspiop-signature
+          in: header
+          required: false
+        - type: string
+          name: fspiop-uri
+          in: header
+          required: false
+        - type: string
+          name: fspiop-http-method
+          in: header
+          required: false
+        - in: body
+          name: body
+          schema:
+            $ref: '#/definitions/BulkTransfer'
+      tags:
+        - bulk-transfers
+      responses:
+        default:
+          schema:
+            type: string
+          description: Successful
+  '/transfers/{id}/error':
+    put:
+      summary: Abort a transfer
+      operationId: putTransfersIdError
+      parameters:
+        - type: string
+          pattern: 'application\/vnd.interoperability[.]'
+          name: content-type
+          in: header
+          required: true
+        - type: string
+          format: date
+          name: date
+          in: header
+          required: true
+        - type: string
+          name: x-forwarded-for
+          in: header
+          required: false
+        - type: string
+          name: fspiop-source
+          in: header
+          required: true
+        - type: string
+          name: fspiop-destination
+          in: header
+          required: false
+        - type: string
+          name: fspiop-encryption
+          in: header
+          required: false
+        - type: string
+          name: fspiop-signature
+          in: header
+          required: false
+        - type: string
+          name: fspiop-uri
+          in: header
+          required: false
+        - type: string
+          name: fspiop-http-method
+          in: header
+          required: false
+        - type: string
+          description: path
+          name: id
+          in: path
+          required: true
+        - in: body
+          name: body
+          schema:
+            $ref: '#/definitions/Error'
+      tags:
+        - transfers
+      responses:
+        default:
+          schema:
+            type: string
+          description: Successful
+definitions:
+  Amount:
+    type: object
+    description: Amount of the transfer
+    properties:
+      currency:
+        type: string
+        description: Currency of the transfer
+      amount:
+        type: string
+        description: Amount of the transfer
+        pattern: '^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,3}[1-9])?$'
+    required:
+      - currency
+      - amount
+  extensionModel:
+    type: object
+    properties:
+      key:
+        type: string
+        description: Key
+        minLength: 1
+        maxLength: 32
+      value:
+        type: string
+        description: Value
+        minLength: 1
+        maxLength: 128
+    required:
+      - key
+      - value
+  extension:
+    type: array
+    description: extension
+    minItems: 1
+    maxItems: 16
+    items:
+      $ref: '#/definitions/extensionModel'
+  extensionList:
+    type: object
+    description: Extension list
+    properties:
+      extension:
+        $ref: '#/definitions/extension'
+    required:
+      - extension
+  IndividualTransfer:
+    type: object
+    properties:
+      transferId:
+        type: string
+        description: Id of transfer
+        x-format:
+          guid: true
+      payeeFsp:
+        type: string
+        description: Financial Service Provider of Payee
+        minLength: 1
+        maxLength: 32
+      payerFsp:
+        type: string
+        description: Financial Service Provider of Payer
+        minLength: 1
+        maxLength: 32
+      amount:
+        $ref: '#/definitions/Amount'
+      ilpPacket:
+        type: string
+        description: ilp packet
+        minLength: 1
+        maxLength: 32768
+        pattern: '^[A-Za-z0-9-_]+[=]{0,2}$'
+      condition:
+        type: string
+        description: Condition of transfer
+        maxLength: 48
+        pattern: '^[A-Za-z0-9-_]{43}$'
+        x-convert:
+          trim: true
+      expiration:
+        type: string
+        description: When the transfer expires
+        pattern: >-
+          ^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$
+      extensionList:
+        $ref: '#/definitions/extensionList'
+    required:
+      - transferId
+      - payeeFsp
+      - payerFsp
+      - amount
+      - ilpPacket
+      - condition
+      - expiration
+  TransferFulfilment:
+    type: object
+    properties:
+      fulfilment:
+        type: string
+        description: fulfilment of the transfer
+        maxLength: 48
+        pattern: '^[A-Za-z0-9-_]{43}$'
+      completedTimestamp:
+        type: string
+        description: When the transfer was completed
+        pattern: >-
+          ^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$
+      transferState:
+        type: string
+        description: State of the transfer
+        enum:
+          - RECEIVED
+          - RESERVED
+          - COMMITTED
+          - ABORTED
+          - SETTLED
+      extensionList:
+        $ref: '#/definitions/extensionList'
+    required:
+      - transferState
+  errorInformation:
+    type: object
+    description: Error information
+    properties:
+      errorDescription:
+        type: string
+      errorCode:
+        type: string
+        pattern: '^[0-9]{4}'
+      extensionList:
+        $ref: '#/definitions/extensionList'
+    required:
+      - errorDescription
+      - errorCode
+  Error:
+    type: object
+    properties:
+      errorInformation:
+        $ref: '#/definitions/errorInformation'
+    required:
+      - errorInformation
+  BulkTransfer:
+    type: object
+    properties:
+      bulkTransferId:
+        type: string
+        description: Id of bulk transfers
+        x-format:
+          guid: true
+      bulkQuoteId:
+        type: string
+        description: Id of bulk quote
+        x-format:
+          guid: true
+      payeeFsp:
+        type: string
+        description: Financial Service Provider of Payee
+        minLength: 1
+        maxLength: 32
+      payerFsp:
+        type: string
+        description: Financial Service Provider of Payer
+        minLength: 1
+        maxLength: 32
+      extensionList:
+        $ref: '#/definitions/extensionList'
+      expiration:
+        type: string
+        description: When the transfer expires
+        pattern: >-
+          ^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$
+      individualTransfers:
+        type: array
+        description: individual transfers list
+        minItems: 1
+        items:
+          $ref: '#/definitions/IndividualTransfer'
+  BulkTransferFulfilment:
+    type: object
+    properties:
+      bulkQuoteId:
+        type: string
+        description: Id of bulk quote
+        x-format:
+          guid: true
+      payeeFsp:
+        type: string
+        description: Financial Service Provider of Payee
+        minLength: 1
+        maxLength: 32
+      payerFsp:
+        type: string
+        description: Financial Service Provider of Payer
+        minLength: 1
+        maxLength: 32
+      extensionList:
+        $ref: '#/definitions/extensionList'
+      expiration:
+        type: string
+        description: When the transfer expires
+        pattern: >-
+          ^(?:[1-9]\d{3}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[1-9]\d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-02-29)T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:(\.\d{3}))(?:Z|[+-][01]\d:[0-5]\d)$
+      individualTransfers:
+        type: array
+        description: individual transfers list
+        minItems: 1
+        items:
+          $ref: '#/definitions/TransferFulfilment'

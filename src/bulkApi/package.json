@@ -1,0 +1,38 @@
+{
+    "name": "bulk",
+    "description": "",
+    "version": "1.0.0",
+    "author": "v <v>",
+    "contributors": [],
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/v/bulk.git"
+    },
+    "bugs": "http://github.com/v/bulk/issues",
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org"
+    },
+    "dependencies": {
+        "@mojaloop/central-services-shared": "^5.2.0",
+        "boom": "^7.1.1",
+        "hapi": "^17.0.0",
+        "hapi-openapi": "^1.0.0",
+        "mongoose": "^5.5.14"
+    },
+    "devDependencies": {
+        "eslint": "^2",
+        "tape": "^4",
+        "istanbul": "~0.4.3",
+        "swagmock": "~0.0.2"
+    },
+    "scripts": {
+        "test": "tape 'tests/**/*.js'",
+        "cover": "istanbul cover tape -- 'tests/**/*.js'",
+        "lint": "eslint .",
+        "regenerate": "yo swaggerize:test --framework hapi --apiPath './config/swagger.yaml'"
+    },
+    "generator-swaggerize": {
+        "version": "4.1.0"
+    },
+    "main": "./server"
+}

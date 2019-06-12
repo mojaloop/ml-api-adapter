@@ -34,6 +34,7 @@ const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
 const GET = 'get'
+const BULK = 'bulk'
 
 /**
  * @module src/domain/transfer
@@ -76,6 +77,45 @@ const prepare = async (headers, message, dataUri) => {
       }
     }
     const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, message.transferId)
+    Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
+    Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
+    Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    return true
+  } catch (err) {
+    Logger.error(`domain::transfer::prepare::Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
+}
+
+const bulkPrepare = async (headers, message) => {
+  Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
+  try {
+    let { bulkTransferId, payerFsp, payeeFsp } = message
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, BULK.toUpperCase(), PREPARE.toUpperCase())
+    const messageProtocol = {
+      id: bulkTransferId,
+      to: payeeFsp,
+      from: payerFsp,
+      type: 'application/json',
+      content: {
+        headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'prepare',
+          action: 'prepare',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = Utility.createGeneralTopicConf(BULK, PREPARE, message.objectId)
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
@@ -244,5 +284,6 @@ module.exports = {
   prepare,
   fulfil,
   getTransferById,
-  transferError
+  transferError,
+  bulkPrepare
 }
