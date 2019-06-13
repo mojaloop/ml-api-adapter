@@ -18,11 +18,11 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
-
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Valentin Genev <valentin.genev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
-
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
@@ -34,7 +34,7 @@ const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
 const GET = 'get'
-const BULK = 'bulk'
+const BULK_TRANSFER = 'bulk-transfer'
 
 /**
  * @module src/domain/transfer
@@ -89,10 +89,10 @@ const prepare = async (headers, message, dataUri) => {
 }
 
 const bulkPrepare = async (headers, message) => {
-  Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
+  Logger.debug('domain::bulk-transfer::prepare::start(%s, %s)', headers, message)
   try {
     let { bulkTransferId, payerFsp, payeeFsp } = message
-    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, BULK.toUpperCase(), PREPARE.toUpperCase())
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, BULK_TRANSFER.toUpperCase(), PREPARE.toUpperCase())
     const messageProtocol = {
       id: bulkTransferId,
       to: payeeFsp,
@@ -105,8 +105,8 @@ const bulkPrepare = async (headers, message) => {
       metadata: {
         event: {
           id: Uuid(),
-          type: 'prepare',
-          action: 'prepare',
+          type: 'bulk-prepare',
+          action: 'bulk-prepare',
           createdAt: new Date(),
           state: {
             status: 'success',
@@ -115,7 +115,7 @@ const bulkPrepare = async (headers, message) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(BULK, PREPARE, message.objectId)
+    const topicConfig = Utility.createGeneralTopicConf(BULK_TRANSFER, PREPARE, message.objectId)
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)

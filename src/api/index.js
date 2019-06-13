@@ -34,7 +34,6 @@ const Setup = require('../shared/setup')
  * @function Initialize
  * @async
  *
- * @description This will initialize the api service by calling Setup.initialize
  *
  * @returns {object} - Returns the server object on success, throws error if failure occurs
  */

@@ -1,29 +1,41 @@
-const mongoose = require('mongoose')
-const Crypto = require('crypto')
-const encodePayload = require('@mojaloop/central-services-stream/src/kafka/protocol').encodePayload
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
-// TODO needs to be put in shared lib
-const createHash = (payload) => {
-  const hashSha256 = Crypto.createHash('sha256')
-  let hash = JSON.stringify(payload)
-  hash = hashSha256.update(hash)
-  hash = hashSha256.digest(hash).toString('base64').slice(0, -1) // removing the trailing '=' as per the specification
-  return hash
-}
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Valentin Genev <valentin.genev@modusbox.com>
+ --------------
+ ******/
+'use strict'
+
+const mongoose = require('mongoose')
 
 // single transfer model
-
 const transfer = {
   transferId: {
     type: String, required: true, unique: true, index: true
   },
-  payerFsp: {
-    type: String, required: true
-  },
-  payeeFsp: {
-    type: String, required: true
-  },
-  amount: {
+  transferAmount: {
     currency: {
       type: String,
       required: true
@@ -41,26 +53,22 @@ const transfer = {
     type: String,
     required: true
   },
-  expiration: {
-    type: Date
-  },
-  extensionList: [{
-    key: String,
-    value: String
-  }]
+  extensionList: {
+    extension: [{
+      key: String,
+      value: String
+    }]
+  }
 }
 
 // schema for individual transfer with bulkQuoteId reference
-
 const individualTransferSchema = new mongoose.Schema(Object.assign({}, { payload: transfer },
   { bulkDocument: { type: mongoose.Schema.Types.ObjectId, ref: 'bulktransfers' },
     bulkTransferId: { type: mongoose.Schema.Types.String },
-    dataUri: { type: String, required: true },
-    hash: { type: String, unique: true, index: true }
+    payload: { type: Object, required: true }
   }))
 
 // schema for bulkquotes
-
 const bulkTransferSchema = new mongoose.Schema({
   headers: {
     type: Object, required: true
@@ -83,43 +91,23 @@ const bulkTransferSchema = new mongoose.Schema({
   individualTransfers: [new mongoose.Schema(Object.assign({
     _id: false
   }, transfer))],
-  individualTransfersIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'transfers' }],
   extensionList: [{
     key: String,
     value: String
-  }],
-  status: { type: String },
-  hash: { type: String, unique: true, index: true }
+  }]
 })
-
-// create document hash and if the hash is different, the validation doesn't work and the model is not created
-
-bulkTransferSchema.pre('validate', async function () {
-  this.hash = createHash(this)
-})
-
-individualTransferSchema.pre('validate', async function () {
-  this.hash = createHash(this)
-})
-
-// TODO change document status post validation
-
-// TODO add error handling to the pre and post middleware to send callback with errors for duplicates
 
 const IndividualTransferModel = mongoose.model('transfers', individualTransferSchema)
 
 // after the bulk object is created, before its save, single transfers are created and saved in the transfers collection with the bulk reference
-// and the individualTransfersIds list is populated
-
-bulkTransferSchema.pre('save', function () { // TODO must be PRE if possible to not miss a transfer while retrieving from central-ledger !!!
+bulkTransferSchema.pre('save', function () {
   try {
     this.individualTransfers.forEach(async transfer => {
       try {
         let individualTransfer = new IndividualTransferModel({ payload: transfer._doc })
         individualTransfer.bulkDocument = this._id
         individualTransfer.bulkTransferId = this.bulkTransferId
-        this.individualTransfersIds.push(individualTransfer._id)
-        individualTransfer.dataUri = encodePayload(JSON.stringify(transfer._doc), this.headers['content-type'])
+        individualTransfer.payload = transfer._doc
         await individualTransfer.save()
       } catch (e) {
         throw e
