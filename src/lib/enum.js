@@ -25,7 +25,6 @@
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Miguel de Barros <miguel.debarros@modusbox.com>
-
  --------------
  ******/
 'use strict'
