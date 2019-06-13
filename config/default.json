@@ -81,35 +81,10 @@
             }
           }
         }
-      },
-      "BULK": {
-        "PREPARE": {
-          "config": {
-            "options": {
-              "mode": 2,
-              "batchSize": 1,
-              "pollFrequency": 10,
-              "recursiveTimeout": 100,
-              "messageCharset": "utf8",
-              "messageAsJSON": true,
-              "sync": true,
-              "consumeTimeout": 1000
-            },
-            "rdkafkaConf": {
-              "client.id": "ml-con-bulk-prepare",
-              "group.id": "ml-group-bulk-prepare",
-              "metadata.broker.list": "localhost:9092",
-              "socket.keepalive.enable": true
-            },
-            "topicConf": {
-              "auto.offset.reset": "earliest"
-            }
-          }
-        }
       }
     },
     "PRODUCER": {
-      "BULK": {
+      "BULK-TRANSFER": {
         "PREPARE": {
           "config": {
             "options": {

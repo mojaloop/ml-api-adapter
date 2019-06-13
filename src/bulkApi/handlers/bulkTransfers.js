@@ -23,9 +23,9 @@ module.exports = {
       let { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList } = request.payload
       let hash = Util.createHash(JSON.stringify(request.payload))
       let newBulk = new BulkTransferModel(Object.assign({}, { headers: request.headers }, request.payload))
-      let { status } = await newBulk.save()
-      let message = { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, hash, status }
-      await TransferService.bulkPrepare(request.headers, message, request.dataUri)
+      await newBulk.save()
+      let message = { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, hash }
+      await TransferService.bulkPrepare(request.headers, message)
       return h.response().code(202)
     } catch (err) {
       Logger.error(err)
