@@ -6,9 +6,10 @@ const Path = require('path')
 const Mongoose = require('./lib/mongodb/db').Mongoose
 const Boom = require('@hapi/boom')
 const Logger = require('@mojaloop/central-services-shared').Logger
+const Config = require('../lib/config')
 
 const connectMongoose = async () => {
-  let db = await Mongoose.connect(`mongodb://localhost:27017/bulk_transfers`, {
+  let db = await Mongoose.connect(Config.MONGODB_URI, {
     promiseLibrary: global.Promise
   })
   return db

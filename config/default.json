@@ -9,6 +9,9 @@
     "expiresIn": 180000,
     "generateTimeout": 30000
   },
+  "MONGODB": {
+    "URI": "mongodb://localhost:27017/bulk_transfers"
+  },
   "ENDPOINT_SECURITY":{
     "TLS": {
       "rejectUnauthorized": true
