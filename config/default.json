@@ -87,7 +87,7 @@
       }
     },
     "PRODUCER": {
-      "BULK-TRANSFER": {
+      "BULK": {
         "PREPARE": {
           "config": {
             "options": {

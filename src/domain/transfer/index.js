@@ -34,7 +34,7 @@ const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
 const GET = 'get'
-const BULK_TRANSFER = 'bulk-transfer'
+const BULK_TRANSFER = 'bulk'
 
 /**
  * @module src/domain/transfer
