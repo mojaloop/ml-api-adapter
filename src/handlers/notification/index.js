@@ -148,7 +148,7 @@ const processMessage = async (msg) => {
       throw new Error('Invalid message received from kafka')
     }
 
-    const { metadata, from, to, content, id } = msg.value
+    const { metadata, from, to, content } = msg.value
     const { action, state } = metadata.event
     const status = state.status
 
@@ -158,6 +158,7 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     let decodedPayload = decodePayload(content.payload, { asParsed: false })
+    const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
     let payloadForCallback = decodedPayload.body.toString()
     if (actionLower === ENUM.transferEventAction.PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)

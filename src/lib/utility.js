@@ -159,7 +159,7 @@ const fulfilTopicTemplate = () => {
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
-const getTransferByidTopicTemplate = () => {
+const getTransferByIdTopicTemplate = () => {
   try {
     return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GET_TRANSFERS_TOPIC_TEMPLATE.TEMPLATE)
   } catch (e) {
@@ -318,7 +318,7 @@ const getFulfilTopicName = () => {
  */
 const getTransferByIdTopicName = () => {
   try {
-    return getTransferByidTopicTemplate()
+    return getTransferByIdTopicTemplate()
   } catch (e) {
     throw e
   }
