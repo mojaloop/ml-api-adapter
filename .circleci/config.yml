@@ -37,6 +37,13 @@ defaults_awsCliDependencies: &defaults_awsCliDependencies |
     pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic
     apk -v --purge del py-pip
 
+defaults_license_checker: &defaults_license_checker |
+    #TODO: change this later
+    git clone https://github.com/vessels-tech/license-scanner
+    cd license-scanner
+    make build
+    cp config.ci.toml config.toml
+
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
   command: |
@@ -287,23 +294,32 @@ jobs:
       - run:
           name: Install general dependencies
           command: *defaults_Dependencies
+      - run:
+          name: Install license_checier
+          command: *defaults_license_checker
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Set up License Checker
+          command: cd ./license-scanner && make set-up
+      - run:
+          name: Run the license-scanner
+          command: cd ./license-scanner && make run
       # TODO: audit the licenses here
-      - run:
-          name: Create dir for test results
-          command: mkdir -p ./audit/results
-      - run:
-          # This shouldn't ever fail
-          name: List all found licenses
-          command: npm run license:list -- --out ./audit/results/licenseResults.csv
-      - run:
-          name: Check for disallowed licenses
-          command: npm run license:check
+      # - run:
+      #     name: Create dir for test results
+      #     command: mkdir -p ./audit/results
+      # - run:
+      #     # This shouldn't ever fail
+      #     name: List all found licenses
+      #     command: npm run license:list -- --out ./audit/results/licenseResults.csv
+      # - run:
+      #     name: Check for disallowed licenses
+      #     command: npm run license:check
       - store_artifacts:
-          path: ./audit/results
-          prefix: audit
+          path: ./license-checker/results
+          prefix: licenses
 
   build-snapshot:
     machine: true
