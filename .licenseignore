@@ -1,0 +1,7 @@
+# A list of packages that we have manually audited and are ok with the license
+#e.g.
+#z-schema@3.25.1
+# will ignore z-schema@3.25.1 in the license check
+
+#taffydb evaluates as unknown, but is actually MIT licensed
+taffydb@2.6.2

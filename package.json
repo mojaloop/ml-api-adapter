@@ -55,7 +55,11 @@
     "docker:stop": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml stop",
     "docker:rm": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml rm -f -v",
     "docker:clean": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.functional.yml down --rmi local",
-    "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json"
+    "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json",
+    "audit:resolve": "SHELL=sh resolve-audit",
+    "audit:check": "SHELL=sh check-audit",
+    "license:list": "license-checker . --excludePackages `cat .licenseignore | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'` --production --csv",
+    "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`"
   },
   "dependencies": {
     "@mojaloop/central-services-auth": "5.2.1",
@@ -102,8 +106,10 @@
     "faucet": "0.0.1",
     "istanbul": "1.1.0-alpha.1",
     "jsonpath": "1.0.1",
+    "license-checker": "25.0.1",
     "mag": "0.9.1",
     "mag-hub": "0.1.1",
+    "npm-audit-resolver": "1.5.0",
     "npm-run-all": "4.1.5",
     "pre-commit": "1.2.2",
     "proxyquire": "2.1.0",
