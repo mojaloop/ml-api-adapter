@@ -31,7 +31,7 @@
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
-const { BulkTransferModel } = require('../models/bulkTransfers/bulkModels')
+const { BulkTransferModel } = require('../../models/mongo/bulkTransfer')
 const Util = require('../../lib/util')
 
 /**

@@ -22,13 +22,14 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Valentin Genev <valentin.genev@modusbox.com>
  --------------
  ******/
 'use strict'
 
 const Boom = require('boom')
-const { IndividualTransferModel } = require('../../models/bulkTransfers/bulkModels')
+const { IndividualTransferModel } = require('../../../models/mongo/bulkTransfer')
 
 /**
  * Operations on /bulkTransfers/{id}
@@ -46,7 +47,7 @@ module.exports = {
     try {
       let indvidualTransfers = await IndividualTransferModel
         .find({ bulkTransferId: id }, '-dataUri -_id')
-        .populate('bulkDocument', 'headers -_id') // TODO in bulk-handler first get only headers, then compose each individual transfer without population
+        .populate('_id_bulkTransfers', 'headers -_id') // TODO in bulk-handler first get only headers, then compose each individual transfer without population
       return h.response(indvidualTransfers)
     } catch (e) {
       throw e
