@@ -38,11 +38,9 @@ defaults_awsCliDependencies: &defaults_awsCliDependencies |
     apk -v --purge del py-pip
 
 defaults_license_checker: &defaults_license_checker |
-    #TODO: change this later
-    git clone https://github.com/vessels-tech/license-scanner
-    cd license-scanner
-    make build
-    cp config.ci.toml config.toml
+    git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
+    cd /tmp/license-scanner
+    make build default-files
 
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
@@ -295,30 +293,19 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - run:
-          name: Install license_checier
+          name: Install license_checker
           command: *defaults_license_checker
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
           name: Set up License Checker
-          command: cd ./license-scanner && make set-up
+          command: cd /tmp/license-scanner && make set-up
       - run:
           name: Run the license-scanner
-          command: cd ./license-scanner && make run
-      # TODO: audit the licenses here
-      # - run:
-      #     name: Create dir for test results
-      #     command: mkdir -p ./audit/results
-      # - run:
-      #     # This shouldn't ever fail
-      #     name: List all found licenses
-      #     command: npm run license:list -- --out ./audit/results/licenseResults.csv
-      # - run:
-      #     name: Check for disallowed licenses
-      #     command: npm run license:check
+          command: cd /tmp/license-scanner && pathToRepo=$CIRCLE_WORKING_DIRECTORY make run
       - store_artifacts:
-          path: ./license-checker/results
+          path: /tmp/license-scanner/results
           prefix: licenses
 
   build-snapshot:
