@@ -53,9 +53,10 @@ const BULK_TRANSFER = 'bulk'
 const prepare = async (headers, message, dataUri) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
   try {
+    const messageId = Uuid()
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
     const messageProtocol = {
-      id: message.transferId,
+      id: messageId,
       to: message.payeeFsp,
       from: message.payerFsp,
       type: 'application/json',
@@ -76,7 +77,7 @@ const prepare = async (headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, message.transferId)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, messageId)
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
