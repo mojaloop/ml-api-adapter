@@ -1,0 +1,62 @@
+{
+  "755|hapi-swagger>handlebars": {
+    "ignore": 1
+  },
+  "788|hapi-swagger>json-schema-ref-parser>js-yaml": {
+    "ignore": 1
+  },
+  "788|hapi-swagger>swagger-parser>json-schema-ref-parser>js-yaml": {
+    "ignore": 1
+  },
+  "813|hapi-swagger>json-schema-ref-parser>js-yaml": {
+    "ignore": 1
+  },
+  "813|hapi-swagger>swagger-parser>json-schema-ref-parser>js-yaml": {
+    "ignore": 1
+  },
+  "788|istanbul>istanbul-api>js-yaml": {
+    "ignore": 1
+  },
+  "788|istanbul>js-yaml": {
+    "ignore": 1
+  },
+  "788|rewire>eslint>js-yaml": {
+    "ignore": 1
+  },
+  "788|standard>eslint>js-yaml": {
+    "ignore": 1
+  },
+  "788|tap-xunit>tap-parser>js-yaml": {
+    "ignore": 1
+  },
+  "813|istanbul>istanbul-api>js-yaml": {
+    "ignore": 1
+  },
+  "813|istanbul>js-yaml": {
+    "ignore": 1
+  },
+  "813|rewire>eslint>js-yaml": {
+    "ignore": 1
+  },
+  "813|standard>eslint>js-yaml": {
+    "ignore": 1
+  },
+  "813|tap-xunit>tap-parser>js-yaml": {
+    "ignore": 1
+  },
+  "755|istanbul>istanbul-api>istanbul-reports>handlebars": {
+    "ignore": 1
+  },
+  "525|async-request>tough-cookie": {
+    "ignore": 1
+  },
+  "130|async-request>tough-cookie": {
+    "ignore": 1
+  },
+  "782|async-request>lodash": {
+    "ignore": 1
+  },
+  "577|async-request>lodash": {
+    "ignore": 1
+  }
+}
