@@ -90,7 +90,6 @@
     "joi-currency-code": "2.0.2",
     "jsdoc": "3.6.2",
     "knex": "0.16.3",
-    "leaked-handles": "^5.2.0",
     "lodash": "4.17.11",
     "mustache": "3.0.1",
     "raw-body": "2.4.0",

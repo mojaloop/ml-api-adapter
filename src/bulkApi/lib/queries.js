@@ -23,7 +23,7 @@
  ******/
 'use strict'
 
-const { BulkTransferResponseModel } = require('../../../models/mongo/bulkTransfer')
+const { BulkTransferResponseModel } = require('../../schema/bulkTransfer')
 
 const getBulkResponseMessage = async (messageId, destination) => {
   let message = await BulkTransferResponseModel.findOne({ messageId, destination })

@@ -33,7 +33,7 @@ const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
 const Metrics = require('@mojaloop/central-services-metrics')
-const Mongoose = require('../bulkApi/lib/mongodb/db').Mongoose
+const Mongoose = require('../bulkApi/lib/mongodb').Mongoose
 
 /**
  * @module src/shared/setup

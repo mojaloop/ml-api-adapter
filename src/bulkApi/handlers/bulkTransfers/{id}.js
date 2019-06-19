@@ -29,7 +29,7 @@
 'use strict'
 
 const Boom = require('boom')
-const { IndividualTransferModel } = require('../../../models/mongo/bulkTransfer')
+const { IndividualTransferModel } = require('../../../schema/bulkTransfer')
 
 /**
  * Operations on /bulkTransfers/{id}

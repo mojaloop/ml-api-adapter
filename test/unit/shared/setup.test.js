@@ -58,7 +58,7 @@ Test('setup', setupTest => {
       './plugins': PluginsStub,
       '@hapi/hapi': HapiStub,
       '../lib/config': Config
-      // , '../bulkApi/lib/mongodb/db': MongooseStub
+      // , '../bulkApi/lib/mongodb': MongooseStub
     })
 
     oldHostName = Config.HOSTNAME
