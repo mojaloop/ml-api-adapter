@@ -51,7 +51,10 @@ const headers = {
 const methods = {
   FSPIOP_CALLBACK_URL_TRANSFER_POST: 'post',
   FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'put',
-  FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'put'
+  FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'put',
+  FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST: 'post',
+  FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR: 'put',
+  FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT: 'put'
 }
 
 // Code specific (non-DB) enumerations sorted alphabetically
@@ -66,6 +69,7 @@ const transferEventType = {
 }
 
 const transferEventAction = {
+  BULK_PREPARE: 'bulk-prepare',
   PREPARE: 'prepare',
   PREPARE_DUPLICATE: 'prepare-duplicate',
   FULFIL_DUPLICATE: 'fulfil-duplicate',

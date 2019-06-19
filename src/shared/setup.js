@@ -33,6 +33,7 @@ const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
 const Metrics = require('@mojaloop/central-services-metrics')
+const Mongoose = require('../bulkApi/lib/mongodb/db').Mongoose
 
 /**
  * @module src/shared/setup
@@ -47,6 +48,13 @@ const Metrics = require('@mojaloop/central-services-metrics')
  * @param modules list of Modules to be registered
  * @returns {Promise<Server>} Returns the Server object
  */
+
+const connectMongoose = async () => {
+  let db = await Mongoose.connect(Config.MONGODB_URI, {
+    promiseLibrary: global.Promise
+  })
+  return db
+}
 
 const createServer = async (port, modules) => {
   const server = await new Hapi.Server({
@@ -64,6 +72,8 @@ const createServer = async (port, modules) => {
       }
     }
   })
+
+  await connectMongoose()
 
   await Plugins.registerPlugins(server)
   await server.register(modules)
