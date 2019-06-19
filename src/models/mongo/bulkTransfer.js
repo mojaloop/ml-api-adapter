@@ -64,13 +64,14 @@ const transfer = {
 // schema for individual transfer with bulkTransfers reference
 const individualTransferSchema = new mongoose.Schema(Object.assign({}, { payload: transfer },
   { _id_bulkTransfers: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransfers' },
-    bulkTransferId: { type: mongoose.Schema.Types.String },
+    messageId: { type: String, required: true },
     payload: { type: Object, required: true }
   }))
 const IndividualTransferModel = mongoose.model('individualTransfers', individualTransferSchema, 'individualTransfers')
 
 // schema for bulk transfers
 const bulkTransferSchema = new mongoose.Schema({
+  messageId: { type: String, required: true },
   headers: {
     type: Object, required: true
   },
@@ -108,7 +109,7 @@ bulkTransferSchema.pre('save', function () {
       try {
         let individualTransfer = new IndividualTransferModel({
           _id_bulkTransfers: this._id,
-          bulkTransferId: this.bulkTransferId,
+          messageId: this.messageId,
           payload: transfer._doc
         })
         await individualTransfer.save()
@@ -122,7 +123,92 @@ bulkTransferSchema.pre('save', function () {
 })
 const BulkTransferModel = mongoose.model('bulkTransfers', bulkTransferSchema, 'bulkTransfers')
 
+// single transfer result model
+const transferResult = {
+  transferId: {
+    type: String, required: true
+  },
+  fulfilment: {
+    type: String
+  },
+  errorInformation: {
+    errorCode: String,
+    errorDescription: String
+  },
+  extensionList: {
+    extension: [{
+      _id: false,
+      key: String,
+      value: String
+    }]
+  }
+}
+// schema for individual transfer with bulkTransferResponses reference
+const individualTransferResultSchema = new mongoose.Schema(Object.assign({}, { payload: transferResult },
+  { _id_bulkTransferResponses: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransferResponses' },
+    messageId: { type: String, required: true },
+    destination: { type: String, required: true },
+    bulkTransferId: { type: String, required: true },
+    payload: { type: Object, required: true }
+  }))
+individualTransferResultSchema.index({ messageId: 1, destination: 1 }, { unique: true })
+const IndividualTransferResultModel = mongoose.model('individualTransferResults', individualTransferResultSchema, 'individualTransferResults')
+
+// schema for bulk transfer responses
+const bulkTransferResponseSchema = new mongoose.Schema({
+  messageId: { type: String, required: true },
+  destination: { type: String, required: true },
+  headers: {
+    type: Object, required: true
+  },
+  bulkTransferId: {
+    type: String, required: true, index: true
+  },
+  bulkTransferState: {
+    type: String, required: true
+  },
+  completedTimestamp: {
+    type: Date
+  },
+  individualTransferResults: [new mongoose.Schema(Object.assign({
+    _id: false
+  }, transferResult))],
+  extensionList: {
+    extension: [{
+      _id: false,
+      key: String,
+      value: String
+    }]
+  }
+})
+bulkTransferResponseSchema.index({ messageId: 1, destination: 1 }, { unique: true })
+// after the bulk object is created, before its save, single responses are
+// created and saved in the transfers collection with the bulk reference
+bulkTransferResponseSchema.pre('save', function () {
+  try {
+    this.individualTransferResults.forEach(async transfer => {
+      try {
+        let individualTransferResult = new IndividualTransferResultModel({
+          _id_bulkTransferResponses: this._id,
+          messageId: this.messageId,
+          destination: this.destination,
+          bulkTransferId: this.bulkTransferId,
+          payload: transfer._doc
+        })
+        await individualTransferResult.save()
+      } catch (e) {
+        throw e
+      }
+    })
+  } catch (e) {
+    throw (e)
+  }
+})
+const BulkTransferResponseModel = mongoose.model('bulkTransferResponses', bulkTransferResponseSchema, 'bulkTransferResponses')
+
 module.exports = {
   BulkTransferModel,
-  IndividualTransferModel
+  BulkTransferResponseModel,
+  IndividualTransferModel,
+  IndividualTransferResultModel
 }

@@ -89,12 +89,12 @@ const prepare = async (headers, message, dataUri) => {
   }
 }
 
-const bulkPrepare = async (headers, message) => {
+const bulkPrepare = async (messageId, headers, message) => {
   Logger.debug('domain::bulk-transfer::prepare::start(%s, %s)', headers, message)
   try {
-    let { bulkTransferId, payerFsp, payeeFsp } = message
+    let { payerFsp, payeeFsp } = message
     const messageProtocol = {
-      id: bulkTransferId,
+      id: messageId,
       to: payeeFsp,
       from: payerFsp,
       type: 'application/json',

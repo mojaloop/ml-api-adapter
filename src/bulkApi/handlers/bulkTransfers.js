@@ -33,6 +33,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const { BulkTransferModel } = require('../../models/mongo/bulkTransfer')
 const Util = require('../../lib/util')
+const Uuid = require('uuid4')
 
 /**
  * Operations on /bulkTransfers
@@ -48,12 +49,13 @@ module.exports = {
   post: async function postBulkTransfers (request, h) {
     try {
       Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
-      let { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList } = request.payload
-      let hash = Util.createHash(JSON.stringify(request.payload))
-      let newBulk = new BulkTransferModel(Object.assign({}, { headers: request.headers }, request.payload))
+      const { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList } = request.payload
+      const hash = Util.createHash(JSON.stringify(request.payload))
+      const messageId = Uuid()
+      const newBulk = new BulkTransferModel(Object.assign({}, { messageId, headers: request.headers }, request.payload))
       await newBulk.save()
-      let message = { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, hash }
-      await TransferService.bulkPrepare(request.headers, message)
+      const message = { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, hash }
+      await TransferService.bulkPrepare(messageId, request.headers, message)
       return h.response().code(202)
     } catch (err) {
       Logger.error(err)
