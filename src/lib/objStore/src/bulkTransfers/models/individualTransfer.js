@@ -30,7 +30,7 @@
 
 const mongoose = require('../../lib/mongodb').Mongoose
 
-const IndividualTransferSchema = require('../schema/IndividualTransfer')
+const IndividualTransferSchema = require('../schema/individualTransfer')
 
 let IndividualTransferModel = null
 
