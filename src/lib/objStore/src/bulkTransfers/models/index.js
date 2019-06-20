@@ -22,22 +22,21 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Valentin Genev <valentin.genev@modusbox.com>
  --------------
  ******/
 'use strict'
 
-const Mongoose = require('mongoose')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const mongoose = require('mongoose')
+const { IndividualTransferSchema } = require('../schema/individualTransfer')
+const { BulkTransferSchema } = require('../schema/bulkTransfer')
+const { IndividualTransferResultSchema } = require('../schema/individualTransferResult')
+const { BulkTransferResponseSchema } = require('../schema/bulkTransferResponse')
 
-Mongoose.connection.on('error', (err) => { Logger.info('connection error ', err) })
-Mongoose.connection.once('open', function callback () {
-  Logger.info('MongoDB succesfully connected')
-})
-
-Mongoose.set('useFindAndModify', false)
-Mongoose.set('useNewUrlParser', true)
-Mongoose.set('useCreateIndex', true)
-
-exports.Mongoose = Mongoose
-exports.db = Mongoose.connection
+module.exports = {
+  BulkTransferModel: mongoose.model('bulkTransfers', BulkTransferSchema, 'bulkTransfers'),
+  BulkTransferResponseModel: mongoose.model('bulkTransferResponses', BulkTransferResponseSchema, 'bulkTransferResponses'),
+  IndividualTransferModel: mongoose.model('individualTransfers', IndividualTransferSchema, 'individualTransfers'),
+  IndividualTransferResultModel: mongoose.model('individualTransferResults', IndividualTransferResultSchema, 'individualTransferResults')
+}

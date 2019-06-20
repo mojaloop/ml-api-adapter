@@ -44,7 +44,7 @@ let autoCommitEnabled = true
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('../../lib/enum')
 const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
-const ObjStoreQueries = require('../../bulkApi/lib/queries')
+const BulkTransferFacade = require('@mojaloop/central-object-store').BulkTransferFacade
 
 // note that incoming headers shoud be lowercased by node
 // const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri']
@@ -305,7 +305,7 @@ const processMessage = async (msg) => {
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST, id)
       let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-      let bulkResponseMessage = await ObjStoreQueries.getBulkResponseMessage(messageId, to)
+      let bulkResponseMessage = await BulkTransferFacade.bulkTransferResponse.getByMessageIdDestination(messageId, to)
       responsePayload.individualTransferResults = bulkResponseMessage.individualTransferResults
       return Callback.sendCallback(callbackURLTo, methodTo, content.headers, JSON.stringify(responsePayload), id, from, to)
     }

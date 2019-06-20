@@ -1,7 +1,7 @@
 {
-    "name": "@mojaloop/bulk-transfers-api-adapter",
+    "name": "central-object-store",
     "version": "0.9.0",
-    "description": "Mojaloop Bulk transfers api adapter",
+    "description": "Mojaloop library for common object store",
     "license": "Apache-2.0",
     "author": "ModusBox",
     "contributors": [
@@ -11,13 +11,12 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git://github.com/mojaloop/bulk-transfers-api.git"
+        "url": "git@github.com:mojaloop/central-object-store.git"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org"
     },
     "dependencies": {
-        "@mojaloop/central-object-store": "file:../lib/objStore",
         "@mojaloop/central-services-shared": "^5.2.0",
         "boom": "^7.1.1",
         "hapi": "^17.0.0",
@@ -30,14 +29,5 @@
         "istanbul": "~0.4.3",
         "swagmock": "~0.0.2"
     },
-    "scripts": {
-        "test": "tape 'tests/**/*.js'",
-        "cover": "istanbul cover tape -- 'tests/**/*.js'",
-        "lint": "eslint .",
-        "regenerate": "yo swaggerize:test --framework hapi --apiPath './config/swagger.yaml'"
-    },
-    "generator-swaggerize": {
-        "version": "4.1.0"
-    },
-    "main": "./server"
+    "main": "./src/index.js"
 }

@@ -28,53 +28,60 @@
  ******/
 'use strict'
 
-const Hapi = require('hapi')
-const HapiOpenAPI = require('hapi-openapi')
-const Path = require('path')
-const Boom = require('@hapi/boom')
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Mongoose = require('@mojaloop/central-object-store').Db.Mongoose
-const Config = require('../lib/config')
+const mongoose = require('mongoose')
+const { Transfer } = require('../schema/individualTransfer')
+const { IndividualTransferModel } = require('../models/index')
 
-const connectMongoose = async () => {
-  let db = await Mongoose.connect(Config.MONGODB_URI, {
-    promiseLibrary: global.Promise
-  })
-  return db
-}
-
-const init = async function (options) {
-  const { port } = options
-  const server = new Hapi.Server({
-    port,
-    routes: {
-      validate: {
-        failAction: async (request, h, err) => {
-          throw Boom.boomify(err)
-        }
+const BulkTransferSchema = new mongoose.Schema({
+  messageId: { type: String, required: true },
+  headers: {
+    type: Object, required: true
+  },
+  bulkQuoteId: {
+    type: String, required: true, unique: true
+  },
+  bulkTransferId: {
+    type: String, required: true, index: true, unique: true
+  },
+  payerFsp: {
+    type: String, required: true
+  },
+  payeeFsp: {
+    type: String, required: true
+  },
+  expiration: {
+    type: Date
+  },
+  individualTransfers: [new mongoose.Schema(Object.assign({
+    _id: false
+  }, Transfer))],
+  extensionList: {
+    extension: [{
+      _id: false,
+      key: String,
+      value: String
+    }]
+  }
+})
+BulkTransferSchema.pre('save', function () {
+  try {
+    this.individualTransfers.forEach(async transfer => {
+      try {
+        let individualTransfer = new IndividualTransferModel({
+          _id_bulkTransfers: this._id,
+          messageId: this.messageId,
+          payload: transfer._doc
+        })
+        await individualTransfer.save()
+      } catch (e) {
+        throw e
       }
-    }
-  })
-  let db = await connectMongoose()
-  server.app.db = db
-  await server.register({
-    plugin: HapiOpenAPI,
-    options: {
-      api: Path.resolve(__dirname, './config/swagger.yaml'),
-      handlers: Path.resolve(__dirname, './handlers')
-    }
-  })
-  await server.start()
-  return server
-}
+    })
+  } catch (e) {
+    throw (e)
+  }
+})
 
-const initialize = (options) => {
-  init(options).then((server) => {
-    server.plugins.openapi.setHost(server.info.host + ':' + server.info.port)
-    Logger.info(`Server running at: ${server.info.host}:${server.info.port}`)
-    server.log(['info'], `Server running at: ${server.info.host}:${server.info.port}`)
-    return server
-  })
+module.exports = {
+  BulkTransferSchema
 }
-
-module.exports = ({ initialize })

@@ -29,7 +29,7 @@
 'use strict'
 
 const Boom = require('boom')
-const { IndividualTransferModel } = require('../../../schema/bulkTransfer')
+const { IndividualTransferModel } = require('@mojaloop/central-object-store').BulkTransferModels
 
 /**
  * Operations on /bulkTransfers/{id}

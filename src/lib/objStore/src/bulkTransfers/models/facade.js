@@ -17,12 +17,21 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  --------------
  ******/
 'use strict'
 
-const Producer = require('./producer')
+const { BulkTransferResponseModel } = require('./index')
+
+const getBulkTransferResponseByMessageIdDestination = async (messageId, destination) => {
+  let message = await BulkTransferResponseModel.findOne({ messageId, destination })
+  return message.toJSON()
+}
 
 module.exports = {
-  Producer
+  bulkTransferResponse: {
+    getByMessageIdDestination: getBulkTransferResponseByMessageIdDestination
+  }
 }
