@@ -23,6 +23,7 @@
  - Name Surname <name.surname@gatesfoundation.com>
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Miguel de Barros <miguel.debarros@modusbox.com>
  * Valentin Genev <valentin.genev@modusbox.com>
  --------------
  ******/
@@ -31,7 +32,6 @@
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
-// const { BulkTransferModel } = require('@mojaloop/central-object-store').BulkTransferModels
 const BulkTransferModels = require('@mojaloop/central-object-store').Models.BulkTransfer
 const Util = require('../../lib/util')
 const Uuid = require('uuid4')
