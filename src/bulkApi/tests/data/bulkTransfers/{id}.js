@@ -31,7 +31,7 @@ module.exports = {
      * parameters: content-type, date, x-forwarded-for, fspiop-source, fspiop-destination, fspiop-encryption, fspiop-signature, fspiop-uri, fspiop-http-method, id, body
      * produces:
      * responses: default
-     * operationId: putBulkTransfersId
+     * operationId: BulkTransfersByIDPut
      */
   put: {
     default: function (req, res, callback) {

@@ -75,7 +75,7 @@ Test('/bulkTransfers/{id}', function (t) {
      * produces:
      * responses: default
      */
-  t.test('test putBulkTransfersId put operation', async function (t) {
+  t.test('test BulkTransfersByIDPut put operation', async function (t) {
     const server = new Hapi.Server()
 
     await server.register({

@@ -61,7 +61,7 @@ module.exports = {
    * produces:
    * responses: default
    */
-  put: function putBulkTransfersId (request, h) {
+  put: function BulkTransfersByIDPut (request, h) {
     return Boom.notImplemented()
   }
 }
