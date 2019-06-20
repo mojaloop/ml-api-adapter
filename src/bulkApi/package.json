@@ -21,8 +21,7 @@
         "@mojaloop/central-services-shared": "^5.2.0",
         "boom": "^7.1.1",
         "hapi": "^17.0.0",
-        "hapi-openapi": "^1.0.0",
-        "mongoose": "^5.5.14"
+        "hapi-openapi": "^1.0.0"
     },
     "devDependencies": {
         "eslint": "^2",
