@@ -66,7 +66,7 @@ const TransferResult = {
 let IndividualTransferResultSchema = null
 
 const getIndividualTransferResultSchema = () => {
-  if (!IndividualTransferResultSchema){
+  if (!IndividualTransferResultSchema) {
     IndividualTransferResultSchema = new mongoose.Schema(Object.assign({}, { payload: TransferResult },
       { _id_bulkTransferResponses: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransferResponses' },
         messageId: { type: String, required: true },

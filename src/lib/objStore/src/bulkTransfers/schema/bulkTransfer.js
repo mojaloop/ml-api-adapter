@@ -143,7 +143,6 @@ const getBulkTransferSchema = () => {
         throw (e)
       }
     })
-
   }
   return BulkTransferSchema
 }
