@@ -31,7 +31,8 @@
 const TransferService = require('../../domain/transfer')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
-const { BulkTransferModel } = require('@mojaloop/central-object-store').BulkTransferModels
+// const { BulkTransferModel } = require('@mojaloop/central-object-store').BulkTransferModels
+const BulkTransferModels = require('@mojaloop/central-object-store').Models.BulkTransfer
 const Util = require('../../lib/util')
 const Uuid = require('uuid4')
 
@@ -52,6 +53,7 @@ module.exports = {
       const { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList } = request.payload
       const hash = Util.createHash(JSON.stringify(request.payload))
       const messageId = Uuid()
+      let BulkTransferModel = BulkTransferModels.getBulkTransferModel()
       const newBulk = new BulkTransferModel(Object.assign({}, { messageId, headers: request.headers }, request.payload))
       await newBulk.save()
       const message = { bulkTransferId, bulkQuoteId, payerFsp, payeeFsp, expiration, extensionList, hash }

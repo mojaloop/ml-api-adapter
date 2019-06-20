@@ -28,7 +28,48 @@
  ******/
 'use strict'
 
-const mongoose = require('mongoose')
+const mongoose = require('../../lib/mongodb').Mongoose
+
+// const Transfer = {
+//   transferId: {
+//     type: String, required: true, unique: true, index: true
+//   },
+//   transferAmount: {
+//     currency: {
+//       type: String,
+//       required: true
+//     },
+//     amount: {
+//       type: Number,
+//       required: true
+//     }
+//   },
+//   ilpPacket: {
+//     type: String,
+//     required: true
+//   },
+//   condition: {
+//     type: String,
+//     required: true
+//   },
+//   extensionList: {
+//     extension: [{
+//       _id: false,
+//       key: String,
+//       value: String
+//     }]
+//   }
+// }
+// const IndividualTransferSchema = new mongoose.Schema(Object.assign({}, { payload: Transfer },
+//   { _id_bulkTransfers: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransfers' },
+//     messageId: { type: String, required: true },
+//     payload: { type: Object, required: true }
+//   }))
+//
+// module.exports = {
+//   IndividualTransferSchema,
+//   Transfer
+// }
 
 const Transfer = {
   transferId: {
@@ -60,13 +101,21 @@ const Transfer = {
     }]
   }
 }
-const IndividualTransferSchema = new mongoose.Schema(Object.assign({}, { payload: Transfer },
-  { _id_bulkTransfers: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransfers' },
-    messageId: { type: String, required: true },
-    payload: { type: Object, required: true }
-  }))
+
+let IndividualTransferSchema = null
+
+const getIndividualTransferSchema = () => {
+  if (!IndividualTransferSchema) {
+    IndividualTransferSchema = new mongoose.Schema(Object.assign({}, { payload: Transfer },
+      { _id_bulkTransfers: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransfers' },
+        messageId: { type: String, required: true },
+        payload: { type: Object, required: true }
+      }))
+  }
+  return IndividualTransferSchema
+}
 
 module.exports = {
-  IndividualTransferSchema,
-  Transfer
+  Transfer,
+  getIndividualTransferSchema
 }

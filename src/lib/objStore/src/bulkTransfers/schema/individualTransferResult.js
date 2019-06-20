@@ -27,7 +27,7 @@
  ******/
 'use strict'
 
-const mongoose = require('mongoose')
+const mongoose = require('../../lib/mongodb').Mongoose
 
 const TransferResult = {
   transferId: {
@@ -48,16 +48,38 @@ const TransferResult = {
     }]
   }
 }
-const IndividualTransferResultSchema = new mongoose.Schema(Object.assign({}, { payload: TransferResult },
-  { _id_bulkTransferResponses: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransferResponses' },
-    messageId: { type: String, required: true },
-    destination: { type: String, required: true },
-    bulkTransferId: { type: String, required: true },
-    payload: { type: Object, required: true }
-  }))
-IndividualTransferResultSchema.index({ messageId: 1, destination: 1 })
+
+// const IndividualTransferResultSchema = new mongoose.Schema(Object.assign({}, { payload: TransferResult },
+//   { _id_bulkTransferResponses: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransferResponses' },
+//     messageId: { type: String, required: true },
+//     destination: { type: String, required: true },
+//     bulkTransferId: { type: String, required: true },
+//     payload: { type: Object, required: true }
+//   }))
+// IndividualTransferResultSchema.index({ messageId: 1, destination: 1 })
+//
+// module.exports = {
+//   IndividualTransferResultSchema,
+//   TransferResult
+// }
+
+let IndividualTransferResultSchema = null
+
+const getIndividualTransferResultSchema = () => {
+  if (!IndividualTransferResultSchema){
+    IndividualTransferResultSchema = new mongoose.Schema(Object.assign({}, { payload: TransferResult },
+      { _id_bulkTransferResponses: { type: mongoose.Schema.Types.ObjectId, ref: 'bulkTransferResponses' },
+        messageId: { type: String, required: true },
+        destination: { type: String, required: true },
+        bulkTransferId: { type: String, required: true },
+        payload: { type: Object, required: true }
+      }))
+    IndividualTransferResultSchema.index({ messageId: 1, destination: 1 })
+  }
+  return IndividualTransferResultSchema
+}
 
 module.exports = {
-  IndividualTransferResultSchema,
-  TransferResult
+  TransferResult,
+  getIndividualTransferResultSchema
 }

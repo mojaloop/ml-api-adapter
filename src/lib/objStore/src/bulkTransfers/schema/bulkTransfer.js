@@ -28,60 +28,126 @@
  ******/
 'use strict'
 
-const mongoose = require('mongoose')
-const { Transfer } = require('../schema/individualTransfer')
-const { IndividualTransferModel } = require('../models/index')
+const mongoose = require('../../lib/mongodb').Mongoose
+// const { Transfer } = require('../schema/individualTransfer')
+// const { IndividualTransferModel } = require('../models/index')
 
-const BulkTransferSchema = new mongoose.Schema({
-  messageId: { type: String, required: true },
-  headers: {
-    type: Object, required: true
-  },
-  bulkQuoteId: {
-    type: String, required: true, unique: true
-  },
-  bulkTransferId: {
-    type: String, required: true, index: true, unique: true
-  },
-  payerFsp: {
-    type: String, required: true
-  },
-  payeeFsp: {
-    type: String, required: true
-  },
-  expiration: {
-    type: Date
-  },
-  individualTransfers: [new mongoose.Schema(Object.assign({
-    _id: false
-  }, Transfer))],
-  extensionList: {
-    extension: [{
-      _id: false,
-      key: String,
-      value: String
-    }]
-  }
-})
-BulkTransferSchema.pre('save', function () {
-  try {
-    this.individualTransfers.forEach(async transfer => {
-      try {
-        let individualTransfer = new IndividualTransferModel({
-          _id_bulkTransfers: this._id,
-          messageId: this.messageId,
-          payload: transfer._doc
-        })
-        await individualTransfer.save()
-      } catch (e) {
-        throw e
+// const BulkTransferSchema = new mongoose.Schema({
+//   messageId: { type: String, required: true },
+//   headers: {
+//     type: Object, required: true
+//   },
+//   bulkQuoteId: {
+//     type: String, required: true, unique: true
+//   },
+//   bulkTransferId: {
+//     type: String, required: true, index: true, unique: true
+//   },
+//   payerFsp: {
+//     type: String, required: true
+//   },
+//   payeeFsp: {
+//     type: String, required: true
+//   },
+//   expiration: {
+//     type: Date
+//   },
+//   individualTransfers: [new mongoose.Schema(Object.assign({
+//     _id: false
+//   }, Transfer))],
+//   extensionList: {
+//     extension: [{
+//       _id: false,
+//       key: String,
+//       value: String
+//     }]
+//   }
+// })
+// BulkTransferSchema.pre('save', function () {
+//   try {
+//     this.individualTransfers.forEach(async transfer => {
+//       try {
+//         let individualTransfer = new IndividualTransferModel({
+//           _id_bulkTransfers: this._id,
+//           messageId: this.messageId,
+//           payload: transfer._doc
+//         })
+//         await individualTransfer.save()
+//       } catch (e) {
+//         throw e
+//       }
+//     })
+//   } catch (e) {
+//     throw (e)
+//   }
+// })
+//
+// module.exports = {
+//   BulkTransferSchema
+// }
+
+const Transfer = require('../schema/individualTransfer').Transfer
+const IndividualTransferModelFactory = require('../models/individualTransfer')
+
+let BulkTransferSchema = null
+
+const getBulkTransferSchema = () => {
+  if (!BulkTransferSchema) {
+    let IndividualTransferModel = IndividualTransferModelFactory.getIndividualTransferModel()
+    BulkTransferSchema = new mongoose.Schema({
+      messageId: { type: String, required: true },
+      headers: {
+        type: Object, required: true
+      },
+      bulkQuoteId: {
+        type: String, required: true, unique: true
+      },
+      bulkTransferId: {
+        type: String, required: true, index: true, unique: true
+      },
+      payerFsp: {
+        type: String, required: true
+      },
+      payeeFsp: {
+        type: String, required: true
+      },
+      expiration: {
+        type: Date
+      },
+      individualTransfers: [new mongoose.Schema(Object.assign({
+        _id: false
+      }, Transfer))],
+      extensionList: {
+        extension: [{
+          _id: false,
+          key: String,
+          value: String
+        }]
       }
     })
-  } catch (e) {
-    throw (e)
+    BulkTransferSchema.pre('save', function () {
+      try {
+        this.individualTransfers.forEach(async transfer => {
+          try {
+            let individualTransfer = new IndividualTransferModel({
+              _id_bulkTransfers: this._id,
+              messageId: this.messageId,
+              payload: transfer._doc
+            })
+            await individualTransfer.save()
+          } catch (e) {
+            throw e
+          }
+        })
+      } catch (e) {
+        throw (e)
+      }
+    })
+
   }
-})
+  return BulkTransferSchema
+}
 
 module.exports = {
-  BulkTransferSchema
+  getBulkTransferSchema
 }

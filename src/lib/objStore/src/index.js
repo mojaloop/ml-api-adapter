@@ -27,8 +27,12 @@
  ******/
 'use strict'
 
+const Db = require('./lib/mongodb')
+const Models = {
+  BulkTransfer: require('./bulkTransfers/models/index')
+}
+
 module.exports = {
-  Db: require('./lib/mongodb'),
-  BulkTransferModels: require('./bulkTransfers/models/index'),
-  BulkTransferFacade: require('./bulkTransfers/models/facade')
+  Db,
+  Models
 }

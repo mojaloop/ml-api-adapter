@@ -29,7 +29,7 @@
 'use strict'
 
 const Boom = require('boom')
-const { IndividualTransferModel } = require('@mojaloop/central-object-store').BulkTransferModels
+const BulkTransferModels = require('@mojaloop/central-object-store').Models.BulkTransfer
 
 /**
  * Operations on /bulkTransfers/{id}
@@ -44,6 +44,7 @@ module.exports = {
    */
   get: async function getBulkTransfersId (request, h) {
     let { id } = request.params
+    let IndividualTransferModel = BulkTransferModels.getIndividualTransferModel()
     try {
       let indvidualTransfers = await IndividualTransferModel
         .find({ bulkTransferId: id }, '-dataUri -_id')

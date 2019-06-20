@@ -41,3 +41,9 @@ Mongoose.set('useCreateIndex', true)
 
 exports.Mongoose = Mongoose
 exports.db = Mongoose.connection
+
+exports.connect = (uri, func) => {
+  return Mongoose.connect(uri, {
+    promiseLibrary: global.Promise
+  })
+}
