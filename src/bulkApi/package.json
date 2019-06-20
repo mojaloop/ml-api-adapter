@@ -1,18 +1,23 @@
 {
-    "name": "bulk",
-    "description": "",
-    "version": "1.0.0",
-    "author": "v <v>",
-    "contributors": [],
+    "name": "@mojaloop/bulk-transfers-api-adapter",
+    "version": "0.9.0",
+    "description": "Mojaloop Bulk transfers api adapter",
+    "license": "Apache-2.0",
+    "author": "ModusBox",
+    "contributors": [
+        "Georgi Georgiev <georgi.georgiev@modusbox.com>",
+        "Miguel de Barros <miguel.debarros@modusbox.com>",
+        "Valentin Genev <valenting.genev@modusbox.com>"
+    ],
     "repository": {
         "type": "git",
-        "url": "git://github.com/v/bulk.git"
+        "url": "git://github.com/mojaloop/bulk-transfers-api.git"
     },
-    "bugs": "http://github.com/v/bulk/issues",
     "publishConfig": {
         "registry": "https://registry.npmjs.org"
     },
     "dependencies": {
+        "@mojaloop/central-object-store": "6.4.0-snapshot",
         "@mojaloop/central-services-shared": "^5.2.0",
         "boom": "^7.1.1",
         "hapi": "^17.0.0",

@@ -22,13 +22,14 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Valentin Genev <valentin.genev@modusbox.com>
  --------------
  ******/
 'use strict'
 
 const Boom = require('boom')
-const { IndividualTransferModel } = require('../../models/bulkTransfers/bulkModels')
+const BulkTransferModels = require('@mojaloop/central-object-store').Models.BulkTransfer
 
 /**
  * Operations on /bulkTransfers/{id}
@@ -43,10 +44,11 @@ module.exports = {
    */
   get: async function getBulkTransfersId (request, h) {
     let { id } = request.params
+    let IndividualTransferModel = BulkTransferModels.getIndividualTransferModel()
     try {
       let indvidualTransfers = await IndividualTransferModel
         .find({ bulkTransferId: id }, '-dataUri -_id')
-        .populate('bulkDocument', 'headers -_id') // TODO in bulk-handler first get only headers, then compose each individual transfer without population
+        .populate('_id_bulkTransfers', 'headers -_id') // TODO in bulk-handler first get only headers, then compose each individual transfer without population
       return h.response(indvidualTransfers)
     } catch (e) {
       throw e

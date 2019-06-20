@@ -36,11 +36,15 @@ const EVENT = 'event'
 const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
 const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
 const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
+const FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST'
+// const FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT'
+const FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('../../lib/enum')
 const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
+const BulkTransfer = require('@mojaloop/central-object-store').Models.BulkTransfer
 
 // note that incoming headers shoud be lowercased by node
 // const jwsHeaders = ['fspiop-signature', 'fspiop-http-method', 'fspiop-uri']
@@ -148,8 +152,9 @@ const processMessage = async (msg) => {
       throw new Error('Invalid message received from kafka')
     }
 
-    const { metadata, from, to, content, id } = msg.value
+    const { metadata, from, to, content } = msg.value
     const { action, state } = metadata.event
+    const messageId = msg.value.id
     const status = state.status
 
     const actionLower = action.toLowerCase()
@@ -158,7 +163,9 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     let decodedPayload = decodePayload(content.payload, { asParsed: false })
+    let id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
     let payloadForCallback = decodedPayload.body.toString()
+
     if (actionLower === ENUM.transferEventAction.PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
       let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST
@@ -290,6 +297,25 @@ const processMessage = async (msg) => {
 
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
       return Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+    }
+
+    if (actionLower === ENUM.transferEventAction.BULK_PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
+      let responsePayload = JSON.parse(payloadForCallback)
+      id = responsePayload.bulkTransferId
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST, id)
+      let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+      let bulkResponseMessage = await BulkTransfer.getBulkTransferResponseByMessageIdDestination(messageId, to)
+      responsePayload.individualTransferResults = bulkResponseMessage.individualTransferResults
+      return Callback.sendCallback(callbackURLTo, methodTo, content.headers, JSON.stringify(responsePayload), id, from, to)
+    }
+
+    if (actionLower === ENUM.transferEventAction.BULK_PREPARE && statusLower !== ENUM.messageStatus.SUCCESS) {
+      id = JSON.parse(payloadForCallback).bulkTransferId
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR, id)
+      let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
     }
 
     const err = new Error('Unknown action received from kafka')

@@ -10,7 +10,7 @@
     "generateTimeout": 30000
   },
   "MONGODB": {
-    "URI": "mongodb://localhost:27017/bulk_transfers"
+    "URI": "mongodb://localhost:27017/mlos"
   },
   "ENDPOINT_SECURITY":{
     "TLS": {
@@ -87,7 +87,7 @@
       }
     },
     "PRODUCER": {
-      "BULK-TRANSFER": {
+      "BULK": {
         "PREPARE": {
           "config": {
             "options": {
@@ -101,7 +101,7 @@
               "socket.keepalive.enable": true,
               "queue.buffering.max.messages": 10000000
             },
-            "topicConf": {
+            "topicConf": {  
               "request.required.acks": "all"
             }
           }

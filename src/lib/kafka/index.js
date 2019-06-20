@@ -19,7 +19,6 @@
  - Name Surname <name.surname@gatesfoundation.com>
  --------------
  ******/
-
 'use strict'
 
 const Producer = require('./producer')

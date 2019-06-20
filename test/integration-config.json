@@ -10,7 +10,7 @@
     "generateTimeout": 30000
   },
   "MONGODB": {
-    "URI": "mongodb://localhost:27017/bulk_transfers"
+    "URI": "mongodb://localhost:27017/mlos"
   },
   "ENDPOINT_SECURITY":{
     "TLS": {

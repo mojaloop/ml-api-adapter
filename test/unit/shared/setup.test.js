@@ -8,6 +8,7 @@ const Config = require(`${src}/lib/config`)
 const Proxyquire = require('proxyquire')
 const ParticipantEndpointCache = require(`${src}/domain/participant/lib/cache/participantEndpoint`)
 const Boom = require('@hapi/boom')
+// require('leaked-handles').set({ fullStack: true, timeout: 15000, debugSockets: true })
 
 Test('setup', setupTest => {
   let sandbox
@@ -18,6 +19,7 @@ Test('setup', setupTest => {
   let PluginsStub
   let HapiStub
   let serverStub
+  // let MongooseStub
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
@@ -47,11 +49,16 @@ Test('setup', setupTest => {
       registerNotificationHandler: sandbox.stub().returns(P.resolve())
     }
 
+    // MongooseStub = {
+    //   connect: sandbox.stub().returns(P.resolve(true))
+    // }
+
     Setup = Proxyquire('../../../src/shared/setup', {
       '../handlers/register': RegisterHandlersStub,
       './plugins': PluginsStub,
       '@hapi/hapi': HapiStub,
       '../lib/config': Config
+      // , '../bulkApi/lib/mongodb': MongooseStub
     })
 
     oldHostName = Config.HOSTNAME

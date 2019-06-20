@@ -31,13 +31,20 @@
 const Hapi = require('hapi')
 const HapiOpenAPI = require('hapi-openapi')
 const Path = require('path')
-const Mongoose = require('./lib/mongodb/db').Mongoose
 const Boom = require('@hapi/boom')
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ObjStoreDb = require('@mojaloop/central-object-store').Db
+// const Mongoose = require('@mojaloop/central-object-store').Db.Mongoose
 const Config = require('../lib/config')
 
+// const connectMongoose = async () => {
+//   let db = await Mongoose.connect(Config.MONGODB_URI, {
+//     promiseLibrary: global.Promise
+//   })
+//   return db
+// }
 const connectMongoose = async () => {
-  let db = await Mongoose.connect(Config.MONGODB_URI, {
+  let db = await ObjStoreDb.connect(Config.MONGODB_URI, {
     promiseLibrary: global.Promise
   })
   return db
