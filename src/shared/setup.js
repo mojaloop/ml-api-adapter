@@ -33,7 +33,7 @@ const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
 const Metrics = require('@mojaloop/central-services-metrics')
-const Mongoose = require('@mojaloop/central-object-store').Db.Mongoose
+const ObjStoreDb = require('@mojaloop/central-object-store').Db.Mongoose
 
 /**
  * @module src/shared/setup
@@ -51,7 +51,7 @@ const Mongoose = require('@mojaloop/central-object-store').Db.Mongoose
 
 const connectMongoose = async () => {
   try {
-    let db = await Mongoose.connect(Config.MONGODB_URI, {
+    let db = await ObjStoreDb.connect(Config.MONGODB_URI, {
       promiseLibrary: global.Promise
     })
     return db
