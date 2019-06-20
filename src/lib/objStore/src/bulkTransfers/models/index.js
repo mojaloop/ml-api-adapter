@@ -28,15 +28,10 @@
  ******/
 'use strict'
 
-const mongoose = require('mongoose')
-const { IndividualTransferSchema } = require('../schema/individualTransfer')
-const { BulkTransferSchema } = require('../schema/bulkTransfer')
-const { IndividualTransferResultSchema } = require('../schema/individualTransferResult')
-const { BulkTransferResponseSchema } = require('../schema/bulkTransferResponse')
-
 module.exports = {
-  BulkTransferModel: mongoose.model('bulkTransfers', BulkTransferSchema, 'bulkTransfers'),
-  BulkTransferResponseModel: mongoose.model('bulkTransferResponses', BulkTransferResponseSchema, 'bulkTransferResponses'),
-  IndividualTransferModel: mongoose.model('individualTransfers', IndividualTransferSchema, 'individualTransfers'),
-  IndividualTransferResultModel: mongoose.model('individualTransferResults', IndividualTransferResultSchema, 'individualTransferResults')
+  getBulkTransferModel: require('./bulkTransfer').getBulkTransferModel,
+  getBulkTransferResponseModel: require('./bulkTransferResponse').getBulkTransferResponseModel,
+  getIndividualTransferModel: require('./individualTransfer').getIndividualTransferModel,
+  getIndividualTransferResultModel: require('./individualTransferResult').getIndividualTransferResultModel,
+  getBulkTransferResponseByMessageIdDestination: require('./facade').getBulkTransferResponseByMessageIdDestination
 }

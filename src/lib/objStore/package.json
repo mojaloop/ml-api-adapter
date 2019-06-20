@@ -17,17 +17,13 @@
         "registry": "https://registry.npmjs.org"
     },
     "dependencies": {
-        "@mojaloop/central-services-shared": "^5.2.0",
-        "boom": "^7.1.1",
-        "hapi": "^17.0.0",
-        "hapi-openapi": "^1.0.0",
-        "mongoose": "^5.5.14"
+        "@mojaloop/central-services-shared": "5.2.0",
+        "mongoose": "5.6.0"
     },
     "devDependencies": {
-        "eslint": "^2",
-        "tape": "^4",
-        "istanbul": "~0.4.3",
-        "swagmock": "~0.0.2"
+        "eslint": "5.16.0",
+        "tape": "4.10.2",
+        "istanbul": "0.4.5"
     },
     "main": "./src/index.js"
 }
