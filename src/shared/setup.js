@@ -50,10 +50,15 @@ const Mongoose = require('@mojaloop/central-object-store').Db.Mongoose
  */
 
 const connectMongoose = async () => {
-  let db = await Mongoose.connect(Config.MONGODB_URI, {
-    promiseLibrary: global.Promise
-  })
-  return db
+  try {
+    let db = await Mongoose.connect(Config.MONGODB_URI, {
+      promiseLibrary: global.Promise
+    })
+    return db
+  } catch (error) {
+    Logger.error(`error - ${error}`) // TODO: ADD PROPER ERROR HANDLING HERE POST-POC
+    return null
+  }
 }
 
 const createServer = async (port, modules) => {
