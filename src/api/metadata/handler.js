@@ -77,7 +77,7 @@ const getHealth = async (request, h) => {
  *
  * @returns {object} - Returns the object containing the hostname, registered URLs and 200 status code
  */
-const metadata (request, h) => {
+const metadata = (request, h) => {
   return h.response({
     directory: Config.HOSTNAME,
     urls: extractUrls(request)

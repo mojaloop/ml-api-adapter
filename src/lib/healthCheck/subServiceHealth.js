@@ -24,11 +24,7 @@
  ******/
 'use strict'
 
-// const mongoose = require('mongoose')
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
-const Logger = require('@mojaloop/central-services-shared').Logger
-
-const MigrationLockModel = require('../../models/misc/migrationLock')
 
 /**
  * @function getSubServiceHealthBroker
@@ -39,7 +35,7 @@ const MigrationLockModel = require('../../models/misc/migrationLock')
  * @returns Promise<SubServiceHealth> The SubService health object for the broker
  */
 const getSubServiceHealthBroker = async () => {
-  //TODO: Health check for the Producer?
+  // TODO: Health check for the Producer?
   // const consumerTopics = Kafka.Consumer.getListOfTopics()
   let status = statusEnum.OK
   // try {
