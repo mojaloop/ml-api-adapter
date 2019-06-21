@@ -30,12 +30,12 @@
 
 'use strict'
 
-const Handler = require('./handler')
+const MetadataHandler = require('../../api/metadata/handler')
 
 module.exports = [
   {
     method: 'GET',
     path: '/health',
-    handler: Handler.getHealth
+    handler: MetadataHandler.getHealth
   }
 ]
