@@ -19,4 +19,4 @@ COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
 
 EXPOSE 3000
-CMD ["node src/api/index.js"]
+CMD ["node", "src/api/index.js"]
