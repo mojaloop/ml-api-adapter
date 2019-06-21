@@ -25,6 +25,9 @@
 'use strict'
 
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
+const Logger = require('@mojaloop/central-services-shared').Logger
+
+const { isConsumerConnected } = require('../../handlers/notification')
 
 /**
  * @function getSubServiceHealthBroker
@@ -38,12 +41,12 @@ const getSubServiceHealthBroker = async () => {
   // TODO: Health check for the Producer?
   // const consumerTopics = Kafka.Consumer.getListOfTopics()
   let status = statusEnum.OK
-  // try {
-  //   await Promise.all(consumerTopics.map(t => Kafka.Consumer.isConsumerConnected(t)))
-  // } catch (err) {
-  //   Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
-  //   status = statusEnum.DOWN
-  // }
+  try {
+    await isConsumerConnected()
+  } catch (err) {
+    Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
+    status = statusEnum.DOWN
+  }
 
   return {
     name: serviceName.broker,

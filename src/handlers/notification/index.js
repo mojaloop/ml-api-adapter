@@ -301,8 +301,48 @@ const processMessage = async (msg) => {
   }
 }
 
+// TODO: implement a "isConsumerConnected method here!"
+
+const getMetadataPromise = (consumer, topic) => {
+  return new Promise((resolve, reject) => {
+    const cb = (err, metadata) => {
+      if (err) {
+        return reject(new Error(`Error connecting to consumer`))
+      }
+
+      return resolve(metadata)
+    }
+
+    consumer.getMetadata({ topic, timeout: 3000 }, cb)
+  })
+}
+
+/**
+ * @function isConsumerConnected
+ *
+ *
+ * @description Use this to determine whether or not we are connected to the broker. Internally, it calls `getMetadata` to determine
+ * if the broker client is connected.
+ *
+ * @returns {true} - if connected
+ * @throws {Error} - if we can't find the topic name, or the consumer is not connected
+ */
+const isConsumerConnected = async () => {
+  const topicName = Utility.getNotificationTopicName()
+  const metadata = await getMetadataPromise(notificationConsumer, topicName)
+
+  const foundTopics = metadata.topics.map(topic => topic.name)
+  if (foundTopics.indexOf(topicName) === -1) {
+    Logger.debug(`Connected to consumer, but ${topicName} not found.`)
+    throw new Error(`Connected to consumer, but ${topicName} not found.`)
+  }
+
+  return true
+}
+
 module.exports = {
   startConsumer,
   processMessage,
-  consumeMessage
+  consumeMessage,
+  isConsumerConnected
 }
