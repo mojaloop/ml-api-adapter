@@ -76,7 +76,7 @@ const prepare = async (headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE/* , messageId */)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE)
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
@@ -115,7 +115,7 @@ const bulkPrepare = async (messageId, headers, message) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(BULK_TRANSFER, PREPARE/* , message.objectId */)
+    const topicConfig = Utility.createGeneralTopicConf(BULK_TRANSFER, PREPARE)
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, BULK_TRANSFER.toUpperCase(), PREPARE.toUpperCase())
     Logger.debug(`domain::bulkTransfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::bulkTransfer::prepare::topicConfig - ${topicConfig}`)
@@ -124,6 +124,46 @@ const bulkPrepare = async (messageId, headers, message) => {
     return true
   } catch (err) {
     Logger.error(`domain::bulkTransfer::prepare::Kafka error:: ERROR:'${err}'`)
+    throw err
+  }
+}
+
+const bulkFulfil = async (messageId, headers, message) => {
+  Logger.debug('domain::bulk-transfer::fulfil::start(%s, %s)', headers, message)
+  try {
+    const action = message.transferState === 'REJECTED' ? 'reject' : 'commit'
+    const messageProtocol = {
+      id: messageId,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/json',
+      content: {
+        headers: headers,
+        uriParams: { id: message.bulkTransferId },
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'fulfil',
+          action,
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+    const topicConfig = Utility.createGeneralTopicConf(BULK_TRANSFER, FULFIL)
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, BULK_TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+    Logger.debug(`domain::bulkTransfer::fulfil::messageProtocol - ${messageProtocol}`)
+    Logger.debug(`domain::bulkTransfer::fulfil::topicConfig - ${topicConfig}`)
+    Logger.debug(`domain::bulkTransfer::fulfil::kafkaConfig - ${kafkaConfig}`)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    return true
+  } catch (err) {
+    Logger.error(`domain::bulkTransfer::fulfil::Kafka error:: ERROR:'${err}'`)
     throw err
   }
 }
@@ -167,7 +207,7 @@ const fulfil = async (transferId, headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL/* , messageId */)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL)
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
@@ -270,7 +310,7 @@ const transferError = async (transferId, headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL/* , messageId */)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL)
     const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
@@ -284,6 +324,7 @@ const transferError = async (transferId, headers, message, dataUri) => {
 }
 module.exports = {
   bulkPrepare,
+  bulkFulfil,
   fulfil,
   getTransferById,
   prepare,

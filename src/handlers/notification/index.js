@@ -305,7 +305,7 @@ const processMessage = async (msg) => {
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST, id)
       let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-      let bulkResponseMessage = await BulkTransfer.getBulkTransferResponseByMessageIdDestination(messageId, to)
+      let bulkResponseMessage = await BulkTransfer.getBulkTransferResultByMessageIdDestination(messageId, to)
       responsePayload.individualTransferResults = bulkResponseMessage.individualTransferResults
       return Callback.sendCallback(callbackURLTo, methodTo, content.headers, JSON.stringify(responsePayload), id, from, to)
     }

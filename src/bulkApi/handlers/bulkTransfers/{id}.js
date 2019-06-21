@@ -28,8 +28,12 @@
  ******/
 'use strict'
 
+const TransferService = require('../../../domain/transfer')
+const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('boom')
 const BulkTransferModels = require('@mojaloop/central-object-store').Models.BulkTransfer
+const Util = require('../../../lib/util')
+const Uuid = require('uuid4')
 
 /**
  * Operations on /bulkTransfers/{id}
@@ -61,7 +65,22 @@ module.exports = {
    * produces:
    * responses: default
    */
-  put: function BulkTransfersByIDPut (request, h) {
-    return Boom.notImplemented()
+  put: async function BulkTransfersByIDPut (request, h) {
+    try {
+      Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
+      const bulkTransferId = request.params.id
+      const { bulkTransferState, completedTimestamp, extensionList } = request.payload
+      const hash = Util.createHash(JSON.stringify(request.payload))
+      const messageId = Uuid()
+      let BulkTransferFulfilModel = BulkTransferModels.getBulkTransferFulfilModel()
+      const doc = Object.assign({}, { messageId, headers: request.headers, bulkTransferId }, request.payload)
+      await new BulkTransferFulfilModel(doc).save()
+      const message = { bulkTransferId, bulkTransferState, completedTimestamp, extensionList, hash }
+      await TransferService.bulkPrepare(messageId, request.headers, message)
+      return h.response().code(202)
+    } catch (err) {
+      Logger.error(err)
+      throw Boom.boomify(err, { message: 'An error has occurred' })
+    }
   }
 }
