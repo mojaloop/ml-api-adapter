@@ -7,7 +7,8 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const packageJson = require('../../../package.json')
 const Config = require('../../lib/config')
 const {
-  getSubServiceHealthBroker
+  getSubServiceHealthBroker,
+  getSubServiceHealthCentralLedger
 } = require('../../lib/healthCheck/subServiceHealth.js')
 
 /**
@@ -47,8 +48,8 @@ const extractUrls = (request) => {
  */
 const getHealth = async (request, h) => {
   const healthCheck = new HealthCheck(packageJson, [
-    getSubServiceHealthBroker
-    // TODO: also check the health of central-ledger
+    getSubServiceHealthBroker,
+    getSubServiceHealthCentralLedger
   ])
 
   let responseBody

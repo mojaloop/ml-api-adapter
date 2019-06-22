@@ -99,6 +99,8 @@
     "raw-body": "2.4.0",
     "rc": "1.2.8",
     "request": "2.88.0",
+    "request-promise": "2.88.0",
+    "request-promise-native": "1.0.0",
     "urlsafe-base64": "1.0.0",
     "uuid4": "1.1.4"
   },
