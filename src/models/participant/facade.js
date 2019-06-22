@@ -43,10 +43,10 @@ const Mustache = require('mustache')
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const getEndpoint = async (fsp, enpointType, transferId = null) => {
+const getEndpoint = async (fsp, enpointType, id = null) => {
   try {
     let url = await Cache.getEndpoint(fsp, enpointType)
-    url = Mustache.render(url, { transferId: transferId })
+    url = Mustache.render(url, { id: id })
     return url
   } catch (e) {
     Logger.error(e)

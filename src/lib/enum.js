@@ -70,6 +70,7 @@ const transferEventType = {
 
 const transferEventAction = {
   BULK_PREPARE: 'bulk-prepare',
+  BULK_COMMIT: 'bulk-commit',
   PREPARE: 'prepare',
   PREPARE_DUPLICATE: 'prepare-duplicate',
   FULFIL_DUPLICATE: 'fulfil-duplicate',

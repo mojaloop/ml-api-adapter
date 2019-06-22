@@ -44,17 +44,17 @@ Test('Facade Test', facadeTest => {
       }
     })
 
-    getEndpointTest.test('return the endpoint if transferId is passed', async (test) => {
+    getEndpointTest.test('return the endpoint if id is passed', async (test) => {
       const fsp = 'fsp'
-      const transferId = Uuid()
+      const id = Uuid()
       const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT
-      const url = 'http://localhost:1080/transfers/{{transferId}}'
-      const expected = `http://localhost:1080/transfers/${transferId}`
+      const url = 'http://localhost:1080/transfers/{{id}}'
+      const expected = `http://localhost:1080/transfers/${id}`
 
       Cache.getEndpoint.withArgs(fsp, endpointType).returns(P.resolve(url))
 
       try {
-        const result = await Facade.getEndpoint(fsp, endpointType, transferId)
+        const result = await Facade.getEndpoint(fsp, endpointType, id)
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
