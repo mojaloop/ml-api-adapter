@@ -37,8 +37,8 @@ const { statusEnum, serviceName } = require('@mojaloop/central-services-shared')
 const Notification = require('../../../../src/handlers/notification/index')
 
 const {
-  getSubServiceHealthBroker,
-  //TODO: add central-ledger check
+  getSubServiceHealthBroker
+  // TODO: add central-ledger check
 } = require('../../../../src/lib/healthCheck/subServiceHealth')
 
 Test('SubServiceHealth test', subServiceHealthTest => {
@@ -57,7 +57,6 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   })
 
   subServiceHealthTest.test('getSubServiceHealthBroker', brokerTest => {
-
     brokerTest.test('broker test fails when one broker cannot connect', async test => {
       // Arrange
       Notification.isConsumerConnected.throws(new Error('Not connected!'))

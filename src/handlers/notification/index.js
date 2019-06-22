@@ -303,9 +303,9 @@ const processMessage = async (msg) => {
 
 /**
  * @function getMetadataPromise
- * 
+ *
  * @description a Promisified version of getMetadata on the kafka consumer
- * 
+ *
  * @param {Kafka.Consumer} consumer The consumer
  * @param {string} topic The topic name
  * @returns {Promise<object>} Metadata response

@@ -4,12 +4,10 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
 
-
 const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/metadata/handler')
 
 const apiTags = ['api']
-
 
 /* Helpers */
 
@@ -50,7 +48,6 @@ const unwrapResponse = async (asyncFunction) => {
   }
 }
 
-
 Test('metadata handler', (handlerTest) => {
   let originalScale
   let originalPrecision
@@ -60,7 +57,6 @@ Test('metadata handler', (handlerTest) => {
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(HealthCheck.prototype, 'getHealth').resolves()
-
 
     originalScale = Config.AMOUNT.SCALE
     originalPrecision = Config.AMOUNT.PRECISION
@@ -83,7 +79,6 @@ Test('metadata handler', (handlerTest) => {
   })
 
   handlerTest.test('/health should', healthTest => {
-
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       HealthCheck.prototype.getHealth.resolves({ status: 'OK' })
@@ -91,7 +86,6 @@ Test('metadata handler', (handlerTest) => {
 
       // Act
       const {
-        responseBody,
         responseCode
       } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
 
@@ -107,7 +101,6 @@ Test('metadata handler', (handlerTest) => {
 
       // Act
       const {
-        responseBody,
         responseCode
       } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
 
@@ -123,7 +116,6 @@ Test('metadata handler', (handlerTest) => {
 
       // Act
       const {
-        responseBody,
         responseCode
       } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
 

@@ -10,7 +10,6 @@ const {
   getSubServiceHealthBroker
 } = require('../../lib/healthCheck/subServiceHealth.js')
 
-
 /**
  * @module src/api/metadata/handler
  */

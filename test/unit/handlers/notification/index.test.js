@@ -41,7 +41,6 @@ const Participant = require(`${src}/domain/participant`)
 const ENUM = require(`${src}/lib/enum`)
 const Utility = require(`${src}/lib/utility`)
 
-
 Test('Notification Service tests', notificationTest => {
   let sandbox
   const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
@@ -993,7 +992,6 @@ Test('Notification Service tests', notificationTest => {
     consumeMessageTest.end()
   })
 
-
   notificationTest.test('isConsumerConnected', async isConsumerConnectedTest => {
     isConsumerConnectedTest.test('reject with an error if getMetadata fails', async test => {
       // Arrange
@@ -1074,7 +1072,6 @@ Test('Notification Service tests', notificationTest => {
       test.equal(result, true, 'isConsumerConnected should return true')
       test.end()
     })
-
 
     isConsumerConnectedTest.end()
   })
