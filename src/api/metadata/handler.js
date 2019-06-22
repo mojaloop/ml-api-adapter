@@ -10,9 +10,6 @@ const {
   getSubServiceHealthBroker
 } = require('../../lib/healthCheck/subServiceHealth.js')
 
-const healthCheck = new HealthCheck(packageJson, [
-  getSubServiceHealthBroker
-])
 
 /**
  * @module src/api/metadata/handler
@@ -50,6 +47,11 @@ const extractUrls = (request) => {
  * @param {*} h - the Hapi handler object
  */
 const getHealth = async (request, h) => {
+  const healthCheck = new HealthCheck(packageJson, [
+    getSubServiceHealthBroker
+    // TODO: also check the health of central-ledger
+  ])
+
   let responseBody
   let responseCode = 200
   try {
