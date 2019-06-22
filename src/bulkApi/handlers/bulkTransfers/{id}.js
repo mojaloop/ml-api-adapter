@@ -34,6 +34,7 @@ const Boom = require('boom')
 const BulkTransferModels = require('@mojaloop/central-object-store').Models.BulkTransfer
 const Util = require('../../../lib/util')
 const Uuid = require('uuid4')
+const Validator = require('../../../lib/validator')
 
 /**
  * Operations on /bulkTransfers/{id}
@@ -67,6 +68,11 @@ module.exports = {
    */
   put: async function BulkTransfersByIDPut (request, h) {
     try {
+      let { validationPassed, reason } = Validator.fulfilTransfer(request)
+      if (!validationPassed) {
+        return h.response(reason).code(reason.errorCode)
+      }
+
       Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
       const bulkTransferId = request.params.id
       const { bulkTransferState, completedTimestamp, extensionList } = request.payload
@@ -75,8 +81,9 @@ module.exports = {
       let BulkTransferFulfilModel = BulkTransferModels.getBulkTransferFulfilModel()
       const doc = Object.assign({}, { messageId, headers: request.headers, bulkTransferId }, request.payload)
       await new BulkTransferFulfilModel(doc).save()
-      const message = { bulkTransferId, bulkTransferState, completedTimestamp, extensionList, hash }
-      await TransferService.bulkPrepare(messageId, request.headers, message)
+      const count = request.payload.individualTransferResults.length
+      const message = { bulkTransferId, bulkTransferState, completedTimestamp, extensionList, count, hash }
+      await TransferService.bulkFulfil(messageId, request.headers, message)
       return h.response().code(202)
     } catch (err) {
       Logger.error(err)

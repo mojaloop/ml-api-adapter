@@ -131,22 +131,21 @@ const bulkPrepare = async (messageId, headers, message) => {
 const bulkFulfil = async (messageId, headers, message) => {
   Logger.debug('domain::bulk-transfer::fulfil::start(%s, %s)', headers, message)
   try {
-    const action = message.transferState === 'REJECTED' ? 'reject' : 'commit'
     const messageProtocol = {
       id: messageId,
       to: headers['fspiop-destination'],
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
-        headers: headers,
         uriParams: { id: message.bulkTransferId },
+        headers: headers,
         payload: message
       },
       metadata: {
         event: {
           id: Uuid(),
-          type: 'fulfil',
-          action,
+          type: 'bulk-fulfil',
+          action: 'bulk-commit',
           createdAt: new Date(),
           state: {
             status: 'success',
@@ -190,8 +189,8 @@ const fulfil = async (transferId, headers, message, dataUri) => {
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
-        headers: headers,
         uriParams: { id: transferId },
+        headers: headers,
         payload: dataUri
       },
       metadata: {
@@ -242,8 +241,8 @@ const getTransferById = async (transferId, headers) => {
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
-        headers: headers,
         uriParams: { id: transferId },
+        headers: headers,
         payload: {}
       },
       metadata: {
@@ -293,8 +292,8 @@ const transferError = async (transferId, headers, message, dataUri) => {
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
-        headers: headers,
         uriParams: { id: transferId },
+        headers: headers,
         payload: dataUri
       },
       metadata: {
