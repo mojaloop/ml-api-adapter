@@ -27,22 +27,18 @@
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 const Logger = require('@mojaloop/central-services-shared').Logger
 
-const { isConsumerConnected } = require('../../handlers/notification')
+const Notification = require('../../handlers/notification')
 
 /**
  * @function getSubServiceHealthBroker
  *
- * @description Gets the health for the broker
- * //TODO: can we actually get a healthCheck for a producer?
- * There is no getMetadata method for a producer
+ * @description Gets the health for the Notification broker
  * @returns Promise<SubServiceHealth> The SubService health object for the broker
  */
 const getSubServiceHealthBroker = async () => {
-  // TODO: Health check for the Producer?
-  // const consumerTopics = Kafka.Consumer.getListOfTopics()
   let status = statusEnum.OK
   try {
-    await isConsumerConnected()
+    await Notification.isConsumerConnected()
   } catch (err) {
     Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
     status = statusEnum.DOWN
@@ -53,6 +49,8 @@ const getSubServiceHealthBroker = async () => {
     status
   }
 }
+
+// TODO: implement getSubServiceHealthCentralLedger
 
 module.exports = {
   getSubServiceHealthBroker

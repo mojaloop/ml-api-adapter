@@ -102,7 +102,7 @@ Test('metadata handler', (handlerTest) => {
 
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
-      HealthCheck.prototype.getHealth.resolves(new Error('getHealth() failed'))
+      HealthCheck.prototype.getHealth.throws(new Error('getHealth() failed'))
       const expectedResponseCode = 502
 
       // Act
