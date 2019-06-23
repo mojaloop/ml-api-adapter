@@ -17,7 +17,7 @@
         "registry": "https://registry.npmjs.org"
     },
     "dependencies": {
-        "@mojaloop/central-object-store": "file:../../../../../npmpack/mojaloop-central-object-store-6.4.1-snapshot.tgz",
+        "@mojaloop/central-object-store": "6.4.1-snapshot",
         "@mojaloop/central-services-shared": "^5.2.0",
         "boom": "^7.1.1",
         "hapi": "^17.0.0",
