@@ -19,7 +19,7 @@ Test('setup', setupTest => {
   let PluginsStub
   let HapiStub
   let serverStub
-  // let MongooseStub
+  // let ObjStoreDbStub // TODO: object store stub to successfully run unit tests without stopping mogondb container
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
@@ -49,16 +49,11 @@ Test('setup', setupTest => {
       registerNotificationHandler: sandbox.stub().returns(P.resolve())
     }
 
-    // MongooseStub = {
-    //   connect: sandbox.stub().returns(P.resolve(true))
-    // }
-
     Setup = Proxyquire('../../../src/shared/setup', {
       '../handlers/register': RegisterHandlersStub,
       './plugins': PluginsStub,
       '@hapi/hapi': HapiStub,
       '../lib/config': Config
-      // , '../bulkApi/lib/mongodb': MongooseStub
     })
 
     oldHostName = Config.HOSTNAME

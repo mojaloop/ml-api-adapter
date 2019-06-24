@@ -36,11 +36,11 @@ const endpoints = {
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}`
+      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{id}}`
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}/error`
+      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{id}}/error`
     }
   ],
   dfsp2: [
@@ -50,11 +50,11 @@ const endpoints = {
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}`
+      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{id}}`
     },
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}/error`
+      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{id}}/error`
     }
   ]
 }

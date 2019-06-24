@@ -31,11 +31,11 @@ Test('Cache Test', cacheTest => {
 
       const endpointMap = {
         FSPIOP_CALLBACK_URL_TRANSFER_POST: 'http://localhost:1080/transfers',
-        FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://localhost:1080/transfers/{{transferId}}',
-        FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://localhost:1080/transfers/{{transferId}}/error'
+        FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://localhost:1080/transfers/{{id}}',
+        FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://localhost:1080/transfers/{{id}}/error'
 
       }
-      const expected = 'http://localhost:1080/transfers/{{transferId}}'
+      const expected = 'http://localhost:1080/transfers/{{id}}'
 
       await Cache.initializeCache()
       Model.getEndpoint.withArgs(fsp).returns(P.resolve(endpointMap))

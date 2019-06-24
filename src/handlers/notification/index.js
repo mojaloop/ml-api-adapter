@@ -37,7 +37,7 @@ const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
 const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
 const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
 const FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST'
-// const FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT'
+const FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT'
 const FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR'
 let notificationConsumer = {}
 let autoCommitEnabled = true
@@ -299,23 +299,49 @@ const processMessage = async (msg) => {
       return Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
     }
 
+    // TODO: move handling to bulkApi to avoid connecting ml-api-adapter to mongodb
     if (actionLower === ENUM.transferEventAction.BULK_PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
       let responsePayload = JSON.parse(payloadForCallback)
       id = responsePayload.bulkTransferId
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST, id)
       let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_POST
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-      let bulkResponseMessage = await BulkTransfer.getBulkTransferResponseByMessageIdDestination(messageId, to)
+      let bulkResponseMessage = await BulkTransfer.getBulkTransferResultByMessageIdDestination(messageId, to)
       responsePayload.individualTransferResults = bulkResponseMessage.individualTransferResults
       return Callback.sendCallback(callbackURLTo, methodTo, content.headers, JSON.stringify(responsePayload), id, from, to)
     }
 
+    // TODO: move handling to bulkApi to avoid connecting ml-api-adapter to mongodb
     if (actionLower === ENUM.transferEventAction.BULK_PREPARE && statusLower !== ENUM.messageStatus.SUCCESS) {
       id = JSON.parse(payloadForCallback).bulkTransferId
       let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR, id)
       let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
       return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+    }
+
+    // TODO: move handling to bulkApi to avoid connecting ml-api-adapter to mongodb
+    if (actionLower === ENUM.transferEventAction.BULK_COMMIT && statusLower === ENUM.messageStatus.SUCCESS) {
+      let responsePayload = JSON.parse(payloadForCallback)
+      id = responsePayload.bulkTransferId
+      delete responsePayload.bulkTransferId
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT, id)
+      let methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_PUT
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${JSON.stringify(responsePayload)}, ${id}, ${from}, ${to})`)
+      let bulkResponseMessage = await BulkTransfer.getBulkTransferResultByMessageIdDestination(messageId, to)
+      responsePayload.individualTransferResults = bulkResponseMessage.individualTransferResults
+      return Callback.sendCallback(callbackURLTo, methodTo, content.headers, JSON.stringify(responsePayload), id, from, to)
+    }
+
+    // TODO: move handling to bulkApi to avoid connecting ml-api-adapter to mongodb
+    if (actionLower === ENUM.transferEventAction.BULK_COMMIT && statusLower !== ENUM.messageStatus.SUCCESS) {
+      let responsePayload = JSON.parse(payloadForCallback)
+      id = responsePayload.bulkTransferId
+      delete responsePayload.bulkTransferId
+      let callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR, id)
+      let methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_BULK_TRANSFER_ERROR
+      Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${JSON.stringify(responsePayload)}, ${id}, ${from}, ${to})`)
+      return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, JSON.stringify(responsePayload), id, from, to)
     }
 
     const err = new Error('Unknown action received from kafka')

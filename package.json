@@ -1,7 +1,7 @@
 {
   "name": "@mojaloop/ml-api-adapter",
   "version": "6.4.0",
-  "description": "Convert from ML API to/from internal Central Services messaging format",
+  "description": "Convert from ML API to/from internal Central Services messaging format.",
   "license": "Apache-2.0",
   "private": true,
   "author": "ModusBox",
@@ -67,7 +67,7 @@
     "@hapi/joi": "15.0.3",
     "@hapi/joi-date": "1.3.0",
     "@hapi/vision": "5.5.2",
-    "@mojaloop/central-object-store": "6.4.0-snapshot",
+    "@mojaloop/central-object-store": "6.4.2-snapshot",
     "@mojaloop/central-services-auth": "5.2.1",
     "@mojaloop/central-services-database": "5.2.1",
     "@mojaloop/central-services-error-handling": "5.2.0",

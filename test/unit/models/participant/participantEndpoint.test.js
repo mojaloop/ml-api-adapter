@@ -40,18 +40,18 @@ Test('ParticipantEndpoint Model Test', modelTest => {
         },
         {
           type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-          value: 'http://localhost:1080/transfers/{{transferId}}'
+          value: 'http://localhost:1080/transfers/{{id}}'
         },
         {
           type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-          value: 'http://localhost:1080/transfers/{{transferId}}/error'
+          value: 'http://localhost:1080/transfers/{{id}}/error'
         }
       ]
 
       const expected = {
         FSPIOP_CALLBACK_URL_TRANSFER_POST: 'http://localhost:1080/transfers',
-        FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://localhost:1080/transfers/{{transferId}}',
-        FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://localhost:1080/transfers/{{transferId}}/error'
+        FSPIOP_CALLBACK_URL_TRANSFER_PUT: 'http://localhost:1080/transfers/{{id}}',
+        FSPIOP_CALLBACK_URL_TRANSFER_ERROR: 'http://localhost:1080/transfers/{{id}}/error'
 
       }
       request.withArgs(requestOptions).yields(null, { statusCode: 200 }, JSON.stringify(endpoints))
