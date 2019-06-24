@@ -1,6 +1,6 @@
 {
     "name": "@mojaloop/bulk-transfers-api-adapter",
-    "version": "0.9.0",
+    "version": "6.4.0",
     "description": "Mojaloop Bulk transfers api adapter",
     "license": "Apache-2.0",
     "author": "ModusBox",
@@ -17,7 +17,7 @@
         "registry": "https://registry.npmjs.org"
     },
     "dependencies": {
-        "@mojaloop/central-object-store": "6.4.1-snapshot",
+        "@mojaloop/central-object-store": "6.4.2-snapshot",
         "@mojaloop/central-services-shared": "^5.2.0",
         "boom": "^7.1.1",
         "hapi": "^17.0.0",
