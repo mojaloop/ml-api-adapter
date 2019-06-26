@@ -66,6 +66,8 @@ const getSubServiceHealthCentralLedger = async () => {
     json: true,
   }
 
+  console.log('myRequest is', request)
+
   let status = statusEnum.OK
   try {
     const response = await request(options)
@@ -73,6 +75,7 @@ const getSubServiceHealthCentralLedger = async () => {
       status = statusEnum.DOWN
     }
   } catch (err) {
+    console.log("HELLO, ", err)
     Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
     status = statusEnum.DOWN
   }

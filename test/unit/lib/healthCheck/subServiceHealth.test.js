@@ -31,22 +31,27 @@
 
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
+const proxyquire = require('proxyquire')
 
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 
 const Notification = require('../../../../src/handlers/notification/index')
+const Config = require('../../../../src/lib/config')
+
 
 const {
-  getSubServiceHealthBroker
-  // TODO: add central-ledger check
+  getSubServiceHealthBroker,
+  getSubServiceHealthCentralLedger
 } = require('../../../../src/lib/healthCheck/subServiceHealth')
 
 Test('SubServiceHealth test', subServiceHealthTest => {
   let sandbox
+  let request
 
   subServiceHealthTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Notification, 'isConsumerConnected')
+    request = sandbox.stub()
 
     t.end()
   })
@@ -84,6 +89,42 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     })
 
     brokerTest.end()
+  })
+
+
+  subServiceHealthTest.test('getSubServiceHealthCentralLedger', centralLedgerTest => {
+
+    /*
+     - is down when can't connect to the central ledger
+     - is down when the central ledger is down
+     - is up when the central ledger is up
+    */
+
+    centralLedgerTest.test('is down when can\'t connect to the central ledger', async test => {
+      // Arrange
+      // request.throws(new Error('Cannot connect'))
+      const requestOptions = {
+        url: Config.ENDPOINT_HEALTH_URL,
+        json: true
+      }
+      request.withArgs(requestOptions).yields(new Error(), null, null)
+      // request.yields(new Error(), null, null)
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
+
+      console.log('proxy function', subServiceHealthProxy)
+
+      const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
+
+      // Act
+      const result = await subServiceHealthProxy.getSubServiceHealthCentralLedger()
+      
+      // Assert
+      test.deepEqual(result, expected, 'getSubServiceHealthCentralLedger should match expected result')
+      test.end()
+    })
+
+
+    centralLedgerTest.end()
   })
 
   subServiceHealthTest.end()
