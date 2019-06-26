@@ -412,13 +412,22 @@ jobs:
       - run:
           <<: *defaults_build_docker_build
       - run:
+          name: Install license_checker
+          command: *defaults_license_checker
+      - run:
+          name: Set up License Checker
+          command: cd /tmp/license-scanner && make set-up
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
+      - run:
           name: 'Run the license scanner against the built docker image'
           command: |
             echo 'Running the license scanner...'
-      - run:
-          <<: *defaults_build_docker_publish
-      - run:
-          <<: *defaults_slack_announcement
+      # - run:
+          # <<: *defaults_build_docker_publish
+      # - run:
+          # <<: *defaults_slack_announcement
 
 
   deploy-snapshot:
@@ -793,12 +802,12 @@ workflows:
           context: org-global
           requires:
             - setup
-            # - test-unit
-            # - test-coverage
-            # - test-integration
-            # - test-functional
-            # - audit-dependencies
-            # - audit-licenses
+            - test-unit
+            - test-coverage
+            - test-integration
+            - test-functional
+            - audit-dependencies
+            - audit-licenses
 
       - deploy:
           context: org-global
