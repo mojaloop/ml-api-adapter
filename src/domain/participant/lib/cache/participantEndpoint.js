@@ -89,17 +89,16 @@ const initializeCache = async () => {
  * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
  *
  * @param {string} fsp - the id of the fsp
- * @param {string} enpointType - the type of the endpoint
+ * @param {string} endpointType - the type of the endpoint
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const getEndpoint = async (fsp, enpointType) => {
+const getEndpoint = async (fsp, endpointType) => {
   Logger.debug(`participantEndpointCache::getEndpoint::fsp - ${fsp}`)
-  Logger.debug(`participantEndpointCache::getEndpoint::enpointType - ${enpointType}`)
+  Logger.debug(`participantEndpointCache::getEndpoint::endpointType - ${endpointType}`)
   try {
     const endpoints = await policy.get(fsp)
-    const url = new Map(endpoints).get(enpointType)
-    return url
+    return new Map(endpoints).get(endpointType)
   } catch (e) {
     Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${e}'`)
     throw e
