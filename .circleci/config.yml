@@ -797,7 +797,7 @@ workflows:
             - build-tmp
           filters:
             tags:
-              only: tmp/801-add-post-docker-build-scan
+              only: /tmp*/
       - deploy:
           context: org-global
           requires:
