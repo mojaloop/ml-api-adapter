@@ -784,6 +784,10 @@ workflows:
             branches:
               ignore:
                 - /.*/
+      - test-functional:
+          context: org-global
+          requires:
+            - setup
       - build-tmp:
           context: org-global
           requires:
@@ -794,7 +798,6 @@ workflows:
             - test-functional
             - audit-dependencies
             - audit-licenses
-            - build-tmp
           # filters:
           #   branches:
           #     only: /tmp*/
