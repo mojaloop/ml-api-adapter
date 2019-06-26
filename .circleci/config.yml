@@ -40,6 +40,7 @@ defaults_awsCliDependencies: &defaults_awsCliDependencies |
 defaults_license_checker: &defaults_license_checker |
     git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
     cd /tmp/license-scanner
+    git checkout add-docker-image-scan #todo: remove this once we have this in!
     make build default-files
 
 defaults_build_docker_login: &defaults_build_docker_login
@@ -388,9 +389,36 @@ jobs:
       - run:
           <<: *defaults_build_docker_build
       - run:
+          name: 'Run the license scanner against the built docker image'
+          command: |
+            echo 'Running the license scanner!'
+      - run:
           <<: *defaults_build_docker_publish
       - run:
           <<: *defaults_slack_announcement
+
+  build-tmp:
+    machine: true
+    # <<: *default_env
+    steps:
+      - checkout
+      - run:
+          name: setup environment vars for LATEST release
+          command: |
+            echo 'export RELEASE_TAG=license_scan' >> $BASH_ENV
+      - run:
+          <<: *defaults_build_docker_login
+      - run:
+          <<: *defaults_build_docker_build
+      - run:
+          name: 'Run the license scanner against the built docker image'
+          command: |
+            echo 'Running the license scanner!'
+      - run:
+          <<: *defaults_build_docker_publish
+      - run:
+          <<: *defaults_slack_announcement
+
 
   deploy-snapshot:
     <<: *defaults_working_directory
@@ -756,6 +784,20 @@ workflows:
             branches:
               ignore:
                 - /.*/
+      - build-tmp:
+          context: org-global
+          requires:
+            - setup
+            - test-unit
+            - test-coverage
+            - test-integration
+            - test-functional
+            - audit-dependencies
+            - audit-licenses
+            - build-tmp
+          filters:
+            tags:
+              only: /feature/801-add-post-docker-build-scan
       - deploy:
           context: org-global
           requires:
