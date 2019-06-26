@@ -784,20 +784,20 @@ workflows:
             branches:
               ignore:
                 - /.*/
-      - build-tmp:
-          context: org-global
-          requires:
-            - setup
-            - test-unit
-            - test-coverage
-            - test-integration
-            - test-functional
-            - audit-dependencies
-            - audit-licenses
-            - build-tmp
-          filters:
-            tags:
-              only: /tmp*/
+      # - build-tmp:
+      #     context: org-global
+      #     requires:
+      #       - setup
+      #       - test-unit
+      #       - test-coverage
+      #       - test-integration
+      #       - test-functional
+      #       - audit-dependencies
+      #       - audit-licenses
+      #       - build-tmp
+      #     filters:
+      #       tags:
+      #         only: /tmp*/
       - deploy:
           context: org-global
           requires:
