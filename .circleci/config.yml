@@ -413,7 +413,7 @@ jobs:
       - run:
           name: 'Run the license scanner against the built docker image'
           command: |
-            echo 'Running the license scanner!'
+            echo 'Running the license scanner...'
       - run:
           <<: *defaults_build_docker_publish
       - run:
