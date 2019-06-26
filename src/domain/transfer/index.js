@@ -114,9 +114,9 @@ const fulfil = async (id, headers, message, dataUri) => {
       },
       metadata: {
         event: {
+          action,
           id: Uuid(),
           type: 'fulfil',
-          action,
           createdAt: new Date(),
           state: {
             status: 'success',
@@ -125,9 +125,6 @@ const fulfil = async (id, headers, message, dataUri) => {
         }
       }
     }
-    // const topicConfig = {
-    //   topicName: Utility.getFulfilTopicName() // `topic-${message.payerFsp}-transfer-prepare`
-    // }
     const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL, id)
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
