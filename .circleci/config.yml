@@ -406,6 +406,7 @@ jobs:
           name: setup environment vars for LATEST release
           command: |
             echo 'export RELEASE_TAG=license_scan' >> $BASH_ENV
+            echo 'export CIRCLE_TAG=license_scan' >> $BASH_ENV
       - run:
           <<: *defaults_build_docker_login
       - run:
@@ -792,15 +793,13 @@ workflows:
           context: org-global
           requires:
             - setup
-            - test-unit
-            - test-coverage
-            - test-integration
-            - test-functional
-            - audit-dependencies
-            - audit-licenses
-          # filters:
-          #   branches:
-          #     only: /tmp*/
+            # - test-unit
+            # - test-coverage
+            # - test-integration
+            # - test-functional
+            # - audit-dependencies
+            # - audit-licenses
+
       - deploy:
           context: org-global
           requires:
