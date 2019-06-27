@@ -38,6 +38,5 @@ module.exports = [
     handler: function (request, h) {
       return h.response({ status: 'OK' }).code(200)
     }
-    // options: RouteConfig.config(tags, 'Status of handler')
   }
 ]

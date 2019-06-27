@@ -89,6 +89,15 @@ const messageStatus = {
   ERROR: 'error'
 }
 
+const handlerTypes = {
+  NOTIFICATION: 'notification'
+}
+
+const serviceType = {
+  API: 'api',
+  HANDLER: 'handler'
+}
+
 const errorMessages = {
   MISSINGFUNCTIONPARAMETERS: 'Missing parameters for function'
 }
@@ -99,5 +108,7 @@ module.exports = {
   transferEventType,
   transferEventAction,
   messageStatus,
-  errorMessages
+  errorMessages,
+  handlerTypes,
+  serviceType
 }
