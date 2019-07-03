@@ -47,7 +47,7 @@ Test('route handler', (handlerTest) => {
 
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
-      Notification.isConnected.throws(new Error('Error connecting to consumer'))
+      Notification.isConnected.resolves(true)
       request.get.resolves({ status: 'OK' })
 
       const expectedResponseCode = 502

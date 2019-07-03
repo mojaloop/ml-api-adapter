@@ -51,7 +51,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   subServiceHealthTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Notification, 'isConnected')
-    request = sandbox.stub()
+    sandbox.stub(request, 'get')
 
     t.end()
   })
@@ -102,16 +102,12 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('is down when can\'t connect to the central ledger', async test => {
       // Arrange
-      // request.throws(new Error('Cannot connect'))
       const requestOptions = {
         url: Config.ENDPOINT_HEALTH_URL,
         json: true
       }
       request.withArgs(requestOptions).yields(new Error(), null, null)
-      // request.yields(new Error(), null, null)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
-
-      console.log('proxy function', subServiceHealthProxy)
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 
