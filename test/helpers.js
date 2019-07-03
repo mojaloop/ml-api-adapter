@@ -35,7 +35,6 @@ function createRequest (routes) {
   }
 }
 
-
 module.exports = {
   createRequest,
   unwrapResponse

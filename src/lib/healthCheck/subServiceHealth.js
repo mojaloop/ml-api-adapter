@@ -52,17 +52,16 @@ const getSubServiceHealthBroker = async () => {
   }
 }
 
-
 /**
  * @function getSubServiceHealthCentralLedger
- * 
+ *
  * @description Gets the health of the central-ledger service
  * @returns Promise<SubServiceHealth> The SubService health object for the central-ledger service
  */
 const getSubServiceHealthCentralLedger = async () => {
   const options = {
     url: Config.ENDPOINT_HEALTH_URL,
-    json: true,
+    json: true
   }
 
   let status = statusEnum.DOWN
@@ -72,7 +71,7 @@ const getSubServiceHealthCentralLedger = async () => {
       case statusEnum.OK:
       case statusEnum.DOWN:
         status = response.status
-        break;
+        break
       default:
         throw new Error(`getSubServiceHealthCentralLedger request failed with unknown status: ${response.status}`)
     }
@@ -87,10 +86,8 @@ const getSubServiceHealthCentralLedger = async () => {
   }
 }
 
-
-
 /*
-So in participantEndpoint.js, we hit the central-ledger to get the participant endpoints. 
+So in participantEndpoint.js, we hit the central-ledger to get the participant endpoints.
 
 We should so something similar, but hit the health check of the central-ledger to make sure it's up!
 */

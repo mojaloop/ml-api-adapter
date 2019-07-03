@@ -37,12 +37,9 @@ const request = require('request-promise-native')
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 
 const Notification = require('../../../../src/handlers/notification/index')
-const Config = require('../../../../src/lib/config')
-
 
 const {
-  getSubServiceHealthBroker,
-  getSubServiceHealthCentralLedger
+  getSubServiceHealthBroker
 } = require('../../../../src/lib/healthCheck/subServiceHealth')
 
 Test('SubServiceHealth test', subServiceHealthTest => {
@@ -91,15 +88,9 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     brokerTest.end()
   })
 
-
   subServiceHealthTest.test('getSubServiceHealthCentralLedger', centralLedgerTest => {
-
     centralLedgerTest.test('is down when can\'t connect to the central ledger', async test => {
       // Arrange
-      const requestOptions = {
-        url: Config.ENDPOINT_HEALTH_URL,
-        json: true
-      }
       request.get.throws(new Error('Error connecting to central ledger'))
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
 
@@ -107,7 +98,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
       // Act
       const result = await subServiceHealthProxy.getSubServiceHealthCentralLedger()
-      
+
       // Assert
       test.deepEqual(result, expected, 'getSubServiceHealthCentralLedger should match expected result')
       test.end()
@@ -115,10 +106,6 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('is down when the central ledger is down', async test => {
       // Arrange
-      const requestOptions = {
-        url: Config.ENDPOINT_HEALTH_URL,
-        json: true
-      }
       request.get.resolves({ status: 'DOWN' })
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
 
@@ -126,7 +113,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
       // Act
       const result = await subServiceHealthProxy.getSubServiceHealthCentralLedger()
-      
+
       // Assert
       test.deepEqual(result, expected, 'getSubServiceHealthCentralLedger should match expected result')
       test.end()
@@ -134,10 +121,6 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('is up when the central ledger is up', async test => {
       // Arrange
-      const requestOptions = {
-        url: Config.ENDPOINT_HEALTH_URL,
-        json: true
-      }
       request.get.resolves({ status: 'OK' })
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
 
@@ -145,7 +128,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
       // Act
       const result = await subServiceHealthProxy.getSubServiceHealthCentralLedger()
-      
+
       // Assert
       test.deepEqual(result, expected, 'getSubServiceHealthCentralLedger should match expected result')
       test.end()
@@ -153,10 +136,6 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('handles unknown status from the central ledger', async test => {
       // Arrange
-      const requestOptions = {
-        url: Config.ENDPOINT_HEALTH_URL,
-        json: true
-      }
       request.get.resolves({ status: 12345 })
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
 
@@ -164,7 +143,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
       // Act
       const result = await subServiceHealthProxy.getSubServiceHealthCentralLedger()
-      
+
       // Assert
       test.deepEqual(result, expected, 'getSubServiceHealthCentralLedger should match expected result')
       test.end()

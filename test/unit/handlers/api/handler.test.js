@@ -3,7 +3,6 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const request = require('request-promise-native')
-const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
 
 const Notification = require('../../../../src/handlers/notification')
 const Handler = require('../../../../src/api/metadata/handler')
@@ -17,7 +16,7 @@ Test('route handler', (handlerTest) => {
 
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
-  
+
     sandbox.stub(Notification, 'isConnected')
     sandbox.stub(request, 'get')
 
@@ -34,7 +33,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
-      request.get.resolves({status: 'OK'})
+      request.get.resolves({ status: 'OK' })
       const expectedResponseCode = 200
 
       // Act

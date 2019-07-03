@@ -1,8 +1,6 @@
 'use strict'
 
-const { statusEnum } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
-const Logger = require('@mojaloop/central-services-shared').Logger
 const { defaultHealthHandler } = require('@mojaloop/central-services-health')
 
 const packageJson = require('../../../package.json')

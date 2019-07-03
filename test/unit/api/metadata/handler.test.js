@@ -3,7 +3,6 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const request = require('request-promise-native')
-const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
 
 const Config = require('../../../../src/lib/config')
 const Notification = require('../../../../src/handlers/notification')
