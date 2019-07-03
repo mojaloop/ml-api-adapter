@@ -347,7 +347,6 @@ const isConnected = async () => {
   return true
 }
 
-
 /**
  * @function disconnect
  *

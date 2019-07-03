@@ -37,14 +37,12 @@ const {
 } = require('../../../helpers')
 
 Test('Metadata handler test', async handlerTest => {
-
   handlerTest.test('setup', async test => {
-    //TODO: perform any setup here
+    // TODO: perform any setup here
     await registerAllHandlers()
 
     test.end()
   })
-
 
   handlerTest.test('/health', async healthCheckTest => {
     healthCheckTest.test('get the health status', async test => {
@@ -64,7 +62,7 @@ Test('Metadata handler test', async handlerTest => {
 
       // Act
       const {
-         responseBody,
+        responseBody,
         responseCode
       } = await unwrapResponse((reply) => metadataHandler.getHealth(createRequest({}), reply))
 
@@ -77,13 +75,12 @@ Test('Metadata handler test', async handlerTest => {
     })
   })
 
-
   handlerTest.test('teardown', async test => {
-    //TODO: perform any teardown here
+    // TODO: perform any teardown here
 
-    //TODO: disconnect the notification consumer
+    // TODO: disconnect the notification consumer
     await NotificationHandler.disconnect()
-    
+
     test.end()
   })
 
