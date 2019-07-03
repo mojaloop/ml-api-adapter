@@ -64,10 +64,10 @@
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`"
   },
   "dependencies": {
+    "@hapi/basic": "5.1.0",
     "@hapi/boom": "7.4.2",
     "@hapi/good": "8.2.0",
     "@hapi/hapi": "18.3.1",
-    "@hapi/basic": "5.1.0",
     "@hapi/inert": "5.2.0",
     "@hapi/joi": "15.0.3",
     "@hapi/joi-date": "1.3.0",
@@ -76,7 +76,8 @@
     "@mojaloop/central-services-database": "5.2.1",
     "@mojaloop/central-services-error-handling": "5.2.0",
     "@mojaloop/central-services-metrics": "5.2.0",
-    "@mojaloop/central-services-shared": "vessels-tech/central-services-shared#876a80e7e508580bbf639195bea646462ea22a38",
+    "@mojaloop/central-services-shared": "6.4.1",
+    "@mojaloop/central-services-health": "7.0.0",
     "@mojaloop/central-services-stream": "6.2.2",
     "@mojaloop/forensic-logging-client": "5.2.0",
     "@now-ims/hapi-now-auth": "1.3.1",
@@ -99,8 +100,8 @@
     "raw-body": "2.4.0",
     "rc": "1.2.8",
     "request": "2.88.0",
-    "request-promise": "2.88.0",
-    "request-promise-native": "1.0.0",
+    "request-promise": "4.2.4",
+    "request-promise-native": "1.0.7",
     "urlsafe-base64": "1.0.0",
     "uuid4": "1.1.4"
   },

@@ -29,7 +29,6 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 
 const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
-//todo: will need to copy this from somewhere else
 const request = require('request-promise-native')
 
 /**
@@ -41,7 +40,7 @@ const request = require('request-promise-native')
 const getSubServiceHealthBroker = async () => {
   let status = statusEnum.OK
   try {
-    await Notification.isConsumerConnected()
+    await Notification.isConnected()
   } catch (err) {
     Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
     status = statusEnum.DOWN
@@ -66,8 +65,6 @@ const getSubServiceHealthCentralLedger = async () => {
     json: true,
   }
 
-  console.log('myRequest is', request)
-
   let status = statusEnum.OK
   try {
     const response = await request(options)
@@ -75,14 +72,12 @@ const getSubServiceHealthCentralLedger = async () => {
       status = statusEnum.DOWN
     }
   } catch (err) {
-    console.log("HELLO, ", err)
-    Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
+    Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN
   }
 
   return {
-    //TODO: change this to the proper enum, and double check what this enum should be
-    name: 'participantEndpointService',
+    name: serviceName.participantEndpointService,
     status
   }
 }

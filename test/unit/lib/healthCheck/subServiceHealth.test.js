@@ -50,7 +50,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
   subServiceHealthTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Notification, 'isConsumerConnected')
+    sandbox.stub(Notification, 'isConnected')
     request = sandbox.stub()
 
     t.end()
@@ -64,7 +64,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   subServiceHealthTest.test('getSubServiceHealthBroker', brokerTest => {
     brokerTest.test('broker test fails when one broker cannot connect', async test => {
       // Arrange
-      Notification.isConsumerConnected.throws(new Error('Not connected!'))
+      Notification.isConnected.throws(new Error('Not connected!'))
       const expected = { name: serviceName.broker, status: statusEnum.DOWN }
 
       // Act
@@ -77,7 +77,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     brokerTest.test('Passes when it connects', async test => {
       // Arrange
-      Notification.isConsumerConnected.returns(Promise.resolve(true))
+      Notification.isConnected.returns(Promise.resolve(true))
       const expected = { name: serviceName.broker, status: statusEnum.OK }
 
       // Act

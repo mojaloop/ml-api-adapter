@@ -992,8 +992,8 @@ Test('Notification Service tests', notificationTest => {
     consumeMessageTest.end()
   })
 
-  notificationTest.test('isConsumerConnected', async isConsumerConnectedTest => {
-    isConsumerConnectedTest.test('reject with an error if getMetadata fails', async test => {
+  notificationTest.test('isConnected', async isConnectedTest => {
+    isConnectedTest.test('reject with an error if getMetadata fails', async test => {
       // Arrange
       let NotificationProxy = rewire(`${src}/handlers/notification`)
       NotificationProxy.__set__('notificationConsumer', {
@@ -1006,7 +1006,7 @@ Test('Notification Service tests', notificationTest => {
 
       // Act
       try {
-        await NotificationProxy.isConsumerConnected()
+        await NotificationProxy.isConnected()
         test.fail('Error not thrown!')
       } catch (err) {
         // Assert
@@ -1016,7 +1016,7 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
-    isConsumerConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
+    isConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
       // Arrange
       const topicName = Utility.getNotificationTopicName()
       let NotificationProxy = rewire(`${src}/handlers/notification`)
@@ -1033,7 +1033,7 @@ Test('Notification Service tests', notificationTest => {
 
       // Act
       try {
-        await NotificationProxy.isConsumerConnected()
+        await NotificationProxy.isConnected()
         test.fail('Error not thrown!')
       } catch (err) {
         // Assert
@@ -1043,7 +1043,7 @@ Test('Notification Service tests', notificationTest => {
       test.end()
     })
 
-    isConsumerConnectedTest.test('pass if the topic can be found', async test => {
+    isConnectedTest.test('pass if the topic can be found', async test => {
       // Arrange
       const topicName = Utility.getNotificationTopicName()
       let NotificationProxy = rewire(`${src}/handlers/notification`)
@@ -1063,17 +1063,17 @@ Test('Notification Service tests', notificationTest => {
       // Act
       let result
       try {
-        result = await NotificationProxy.isConsumerConnected()
+        result = await NotificationProxy.isConnected()
       } catch (err) {
         test.fail(err.message)
       }
 
       // Assert
-      test.equal(result, true, 'isConsumerConnected should return true')
+      test.equal(result, true, 'isConnected should return true')
       test.end()
     })
 
-    isConsumerConnectedTest.end()
+    isConnectedTest.end()
   })
 
   notificationTest.end()

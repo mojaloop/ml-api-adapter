@@ -3,6 +3,7 @@
 const { statusEnum } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
 const Logger = require('@mojaloop/central-services-shared').Logger
+const { defaultHealthHandler } = require('@mojaloop/central-services-health')
 
 const packageJson = require('../../../package.json')
 const Config = require('../../lib/config')
@@ -10,6 +11,11 @@ const {
   getSubServiceHealthBroker,
   getSubServiceHealthCentralLedger
 } = require('../../lib/healthCheck/subServiceHealth.js')
+
+const healthCheck = new HealthCheck(packageJson, [
+  getSubServiceHealthBroker,
+  // getSubServiceHealthCentralLedger
+])
 
 /**
  * @module src/api/metadata/handler
@@ -46,27 +52,7 @@ const extractUrls = (request) => {
  * @param {*} request - the Hapi request object
  * @param {*} h - the Hapi handler object
  */
-const getHealth = async (request, h) => {
-  const healthCheck = new HealthCheck(packageJson, [
-    getSubServiceHealthBroker,
-    getSubServiceHealthCentralLedger
-  ])
-
-  let responseBody
-  let responseCode = 200
-  try {
-    responseBody = await healthCheck.getHealth()
-  } catch (err) {
-    Logger.error(err.message)
-  }
-
-  if (!responseBody || responseBody.status !== statusEnum.OK) {
-    // Gateway Error
-    responseCode = 502
-  }
-
-  return h.response(responseBody).code(responseCode)
-}
+const getHealth = defaultHealthHandler(healthCheck)
 
 /**
  * @function metadata

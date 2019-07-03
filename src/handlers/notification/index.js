@@ -325,7 +325,7 @@ const getMetadataPromise = (consumer, topic) => {
 }
 
 /**
- * @function isConsumerConnected
+ * @function isConnected
  *
  *
  * @description Use this to determine whether or not we are connected to the broker. Internally, it calls `getMetadata` to determine
@@ -334,7 +334,7 @@ const getMetadataPromise = (consumer, topic) => {
  * @returns {true} - if connected
  * @throws {Error} - if we can't find the topic name, or the consumer is not connected
  */
-const isConsumerConnected = async () => {
+const isConnected = async () => {
   const topicName = Utility.getNotificationTopicName()
   const metadata = await getMetadataPromise(notificationConsumer, topicName)
 
@@ -351,5 +351,5 @@ module.exports = {
   startConsumer,
   processMessage,
   consumeMessage,
-  isConsumerConnected
+  isConnected
 }
