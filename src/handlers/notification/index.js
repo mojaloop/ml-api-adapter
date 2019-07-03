@@ -314,7 +314,7 @@ const getMetadataPromise = (consumer, topic) => {
   return new Promise((resolve, reject) => {
     const cb = (err, metadata) => {
       if (err) {
-        return reject(new Error(`Error connecting to consumer`))
+        return reject(new Error(`Error connecting to consumer: ${err}`))
       }
 
       return resolve(metadata)
@@ -347,7 +347,26 @@ const isConnected = async () => {
   return true
 }
 
+
+/**
+ * @function disconnect
+ *
+ *
+ * @description Disconnect from the notificationConsumer
+ *
+ * @returns Promise<*> - Passes on the Promise from Consumer.disconnect()
+ * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
+ */
+const disconnect = async () => {
+  if (!notificationConsumer || !notificationConsumer.disconnect) {
+    throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
+  }
+
+  return notificationConsumer.disconnect()
+}
+
 module.exports = {
+  disconnect,
   startConsumer,
   processMessage,
   consumeMessage,

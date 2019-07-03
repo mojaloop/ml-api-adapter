@@ -42,7 +42,7 @@ const getSubServiceHealthBroker = async () => {
   try {
     await Notification.isConnected()
   } catch (err) {
-    Logger.debug(`getSubServiceHealthBroker failed with error ${err.message}.`)
+    Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN
   }
 

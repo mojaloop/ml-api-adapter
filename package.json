@@ -69,7 +69,6 @@
     "@hapi/good": "8.2.0",
     "@hapi/hapi": "18.3.1",
     "@hapi/inert": "5.2.0",
-    "@hapi/joi": "15.0.3",
     "@hapi/joi-date": "1.3.0",
     "@hapi/vision": "5.5.2",
     "@mojaloop/central-services-auth": "5.2.1",
@@ -106,6 +105,7 @@
     "uuid4": "1.1.4"
   },
   "devDependencies": {
+    "@hapi/joi": "^15.0.3",
     "async-request": "1.2.0",
     "aws-sdk": "2.410.0",
     "faucet": "0.0.1",

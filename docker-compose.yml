@@ -5,6 +5,7 @@ services:
     container_name: ml-api-adapter
     links:
       - kafka
+      - central-ledger
     ports:
       - "3000:3000"
     volumes:
@@ -13,7 +14,7 @@ services:
     
   central-ledger:
     image: mojaloop/central-ledger:latest
-    container_name: central-ledger
+    container_name: ml_central-ledger
     links:
       - mysql
       - kafka
@@ -28,7 +29,7 @@ services:
   
   mysql:
     image: mysql/mysql-server
-    container_name: mysql
+    container_name: ml_mysql
     ports:
       - "3306:3306"
     volumes:
@@ -42,7 +43,7 @@ services:
   
   kafka:
     image: johnnypark/kafka-zookeeper
-    container_name: kafka
+    container_name: ml_kafka
     # Disable kafka logging as it is far too verbose for debugging locally
     logging:
       driver: none
