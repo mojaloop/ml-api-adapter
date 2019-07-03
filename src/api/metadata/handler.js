@@ -14,7 +14,7 @@ const {
 
 const healthCheck = new HealthCheck(packageJson, [
   getSubServiceHealthBroker,
-  // getSubServiceHealthCentralLedger
+  getSubServiceHealthCentralLedger
 ])
 
 /**

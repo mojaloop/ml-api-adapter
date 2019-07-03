@@ -67,7 +67,7 @@ const getSubServiceHealthCentralLedger = async () => {
 
   let status = statusEnum.OK
   try {
-    const response = await request(options)
+    const response = await request.get(options)
     if (response.status === statusEnum.DOWN.toString()) {
       status = statusEnum.DOWN
     }
