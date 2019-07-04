@@ -67,7 +67,15 @@ const getSubServiceHealthCentralLedger = async () => {
   let status = statusEnum.DOWN
   try {
     /* Consider any 2XX response as healthy */
-    await request.get(options)
+    const response = await request.get(options)
+    switch (response.status) {
+      case statusEnum.OK:
+      case statusEnum.DOWN:
+        status = response.status
+        break
+      default:
+        throw new Error(`getSubServiceHealthCentralLedger request failed with unknown status: ${response.status}`)
+    }
   } catch (err) {
     Logger.debug(`getSubServiceHealthCentralLedger failed with error: ${err.message}.`)
     status = statusEnum.DOWN

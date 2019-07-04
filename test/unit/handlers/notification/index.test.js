@@ -1010,7 +1010,7 @@ Test('Notification Service tests', notificationTest => {
         test.fail('Error not thrown!')
       } catch (err) {
         // Assert
-        test.equal(err.message, 'Error connecting to consumer: test err message'', 'Error message does not match')
+        test.equal(err.message, 'Error connecting to consumer: Error: test err message', 'Error message does not match')
         test.pass('Error successfully thrown')
       }
       test.end()
