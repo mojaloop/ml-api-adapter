@@ -38,7 +38,6 @@ const {
 
 Test('Metadata handler test', async handlerTest => {
   handlerTest.test('setup', async test => {
-    // TODO: perform any setup here
     await registerAllHandlers()
 
     test.end()
@@ -76,9 +75,6 @@ Test('Metadata handler test', async handlerTest => {
   })
 
   handlerTest.test('teardown', async test => {
-    // TODO: perform any teardown here
-
-    // TODO: disconnect the notification consumer
     await NotificationHandler.disconnect()
 
     test.end()

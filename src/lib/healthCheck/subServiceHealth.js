@@ -66,7 +66,6 @@ const getSubServiceHealthCentralLedger = async () => {
 
   let status = statusEnum.DOWN
   try {
-    /* Consider any 2XX response as healthy */
     const response = await request.get(options)
     switch (response.status) {
       case statusEnum.OK:
@@ -86,12 +85,6 @@ const getSubServiceHealthCentralLedger = async () => {
     status
   }
 }
-
-/*
-So in participantEndpoint.js, we hit the central-ledger to get the participant endpoints.
-
-We should so something similar, but hit the health check of the central-ledger to make sure it's up!
-*/
 
 module.exports = {
   getSubServiceHealthBroker,

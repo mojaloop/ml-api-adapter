@@ -55,23 +55,6 @@ Running the tests:
 
 Tests include code coverage via istanbul. See the test/ folder for testing scripts.
 
-### Running Integration Tests Inside Docker
-
-If you want to run integration tests in a repetitive manner, you can startup the test containers using `docker-compose`, login to running `ml-api-adapter` container like so:
-
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.integration.yml up ml-api-adapter
-
-#in a new shell - first time only
-docker exec -it ml_central-ledger sh
-npm run migrate
-
-#in a different shell
-docker exec -it ml_ml-api-adapter sh
-npm run test:int
-```
-
-
 ## Auditing Dependencies
 
 We use `npm-audit-resolver` along with `npm audit` to check dependencies for vulnerabilities, and r

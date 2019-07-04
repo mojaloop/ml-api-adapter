@@ -113,7 +113,7 @@ fcurl_api() {
     --link $SIMULATOR_HOST \
 		--entrypoint curl \
 		"appropriate/curl:latest" \
-      --output /dev/null --silent --head --fail \
+      --silent --head --fail \
 		"$@"
 }
 
