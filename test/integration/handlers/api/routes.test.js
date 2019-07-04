@@ -27,18 +27,47 @@
 const Test = require('tape')
 const Joi = require('@hapi/joi')
 
+const Logger = require('@mojaloop/central-services-shared').Logger
+
+const Notification = require('../../../../src/handlers/notification')
 const { registerAllHandlers } = require('../../../../src/handlers/register')
 const metadataHandler = require('../../../../src/api/metadata/handler')
 const NotificationHandler = require('../../../../src/handlers/notification/index')
 
 const {
-  unwrapResponse,
-  createRequest
+  createRequest,
+  sleep,
+  unwrapResponse
 } = require('../../../helpers')
 
 Test('Handlers test', async handlerTest => {
   handlerTest.test('setup', async test => {
     await registerAllHandlers()
+
+    // Give the handlers some time to be up
+    const retries = Array.from({ length: 6 }, (x, i) => i).filter(i => i > 0).map(i => i * 2)
+    const ready = await retries.reduce(async (acc, curr, next) => {
+      const ready = await acc
+
+      if (ready) {
+        return Promise.resolve(true)
+      }
+
+      try {
+        await Notification.isConnected()
+        return Promise.resolve(true)
+      } catch (err) {
+        Logger.error(`Notification handler not ready yet. Sleeping for: ${curr} seconds.`)
+      }
+
+      return sleep(curr).then(() => false)
+    }, Promise.resolve(false))
+
+    if (!ready) {
+      test.fail(`Notification handler not ready after ${retries.reduce((acc, curr) => acc + curr, 0)} seconds.`)
+    }
+
+    Logger.debug('Connected to Notification handler')
 
     test.end()
   })

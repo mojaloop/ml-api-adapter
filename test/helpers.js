@@ -60,7 +60,20 @@ function createRequest (routes) {
   }
 }
 
+/**
+ * @function sleep
+ *
+ * @description A hacky method to sleep in JS. Please use for testing only.
+ *
+ * @param {number} seconds - The number of seconds to sleep for
+ * @returns {Promise<>}
+ */
+async function sleep (seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000))
+}
+
 module.exports = {
   createRequest,
+  sleep,
   unwrapResponse
 }
