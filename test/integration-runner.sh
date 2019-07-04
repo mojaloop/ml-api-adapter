@@ -62,6 +62,8 @@ stop_docker() {
   (docker stop $APP_HOST && docker rm $APP_HOST) > /dev/null 2>&1
   (docker stop $APP_TEST_HOST && docker rm $APP_TEST_HOST) > /dev/null 2>&1
   (docker stop $ENDPOINT_HOST && docker rm $ENDPOINT_HOST) > /dev/null 2>&1
+  >&1 echo "$SIMULATOR_HOST environment is shutting down"
+  (docker stop $SIMULATOR_HOST && docker rm $SIMULATOR_HOST) > /dev/null 2>&1
   >&1 echo "Deleting test network: $DOCKER_NETWORK"
   docker network rm integration-test-net
 }
@@ -91,10 +93,13 @@ start_ml_api_adapter()
   docker run -d -i \
    --link $KAFKA_HOST \
    --link $ENDPOINT_HOST \
+   --link $SIMULATOR_HOST \
    --network $DOCKER_NETWORK \
    --name $APP_HOST \
    --env KAFKA_HOST="$KAFKA_HOST" \
    --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
+   --env ENDPOINT_HEALTH_URL="http://${SIMULATOR_HOST}:8444/health" \
+   --env LOG_LEVEL=debug \
    -p $APP_PORT:$APP_PORT \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
@@ -105,6 +110,7 @@ fcurl_api() {
 	docker run --rm -i \
     --network $DOCKER_NETWORK \
 		--link $APP_HOST \
+    --link $SIMULATOR_HOST \
 		--entrypoint curl \
 		"appropriate/curl:latest" \
         --output /dev/null --silent --head --fail \
@@ -112,8 +118,23 @@ fcurl_api() {
 }
 
 is_api_up() {
-    fcurl_api "http://$APP_HOST:$APP_PORT/health?"
+  fcurl_api "http://$APP_HOST:$APP_PORT/health?"
 }
+
+
+# Use simulator to mock out the central-ledger health check
+start_simulator () {
+  docker run --rm -td \
+    -p 8444:8444 \
+    --network $DOCKER_NETWORK \
+    --name=$SIMULATOR_HOST \
+    $SIMULATOR_IMAGE:$SIMULATOR_IMAGE_TAG
+}
+
+is_simulator_up() {
+  fcurl_api "http://${SIMULATOR_HOST}:8444/health?"
+}
+
 
 run_test_command()
 {
@@ -205,6 +226,23 @@ until is_endpoint_up; do
   >&2 printf "."
   sleep 5
 done
+
+>&2 echo "Simulator is starting"
+start_simulator
+
+if [ "$?" != 0 ]
+then
+  >&2 echo "Starting Simulator failed...exiting"
+  clean_docker
+  exit 1
+fi
+
+>&2 echo "Waiting for Simulator to start"
+until is_simulator_up; do
+  >&2 printf "."
+  sleep 5
+done
+
 
 >&2 echo "Starting ml api adapter"
 start_ml_api_adapter

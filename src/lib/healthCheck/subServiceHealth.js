@@ -66,7 +66,7 @@ const getSubServiceHealthCentralLedger = async () => {
 
   let status = statusEnum.DOWN
   try {
-    /*Consider any 2XX response as healthy */
+    /* Consider any 2XX response as healthy */
     await request.get(options)
   } catch (err) {
     Logger.debug(`getSubServiceHealthCentralLedger failed with error: ${err.message}.`)
