@@ -19,7 +19,7 @@ const Config = require('../../lib/config')
 
 const extractUrls = (request) => {
   const urls = {}
-  request.server.table()[0].table.filter(route => {
+  request.server.table().filter(route => {
     return route.settings.id !== undefined &&
       Array.isArray(route.settings.tags) &&
       route.settings.tags.indexOf('api') >= 0
