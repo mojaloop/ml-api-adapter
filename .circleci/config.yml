@@ -49,7 +49,9 @@ defaults_build_docker_login: &defaults_build_docker_login
     docker login -u $DOCKER_USER -p $DOCKER_PASS
 defaults_build_docker_build: &defaults_build_docker_build
   name: Build Docker image
+  # TODO: remove tmp-circle
   command: |
+    export CIRCLE_TAG=tmp-circle
     docker build -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG .
 defaults_build_docker_publish: &defaults_build_docker_publish
   name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
@@ -412,7 +414,10 @@ jobs:
           <<: *defaults_license_scanner
       - run:
           name: Run the license-scanner
-          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
+          # TODO: remove tmp-circle
+          command: |
+            export CIRCLE_TAG=tmp-circle
+            cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
   
 
   deploy-snapshot:
@@ -774,9 +779,8 @@ workflows:
             - vulnerability-check
             - audit-licenses
           # TODO: add back
-          filters:
-            tags:
-              only: /test-ci/
+          # filters:
+            # tags:
               # only: /v[0-9]+(\.[0-9]+)*/
           #   branches:
           #     ignore:
