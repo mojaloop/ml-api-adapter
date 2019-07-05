@@ -294,7 +294,7 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - run:
-        <<: *defaults_license_scanner
+          <<: *defaults_license_scanner
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
