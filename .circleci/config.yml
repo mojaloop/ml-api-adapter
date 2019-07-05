@@ -756,7 +756,7 @@ workflows:
             # tags:
               # only: /v[0-9]+(\.[0-9]+)*/
             branches:
-              only: /tmp*/
+              only: /tmp*
               # ignore:
                 # - /.*/
       - test-functional:
