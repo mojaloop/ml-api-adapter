@@ -386,40 +386,18 @@ jobs:
           <<: *defaults_build_docker_login
       - run:
           <<: *defaults_build_docker_build
-      # - run:
-      #     <<: *defaults_license_scanner
-      # - run:
-      #     name: Run the license-scanner
-      #     command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
+      - run:
+          <<: *defaults_license_scanner
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
       # TODO: add back 
       # - run:
       #     <<: *defaults_build_docker_publish
       # - run:
       #     <<: *defaults_slack_announcement
 
-  audit-licenses-docker:
-    machine: true
-    # <<: *default_env
-    steps:
-      # - checkout
-      # - run:
-      #     name: setup environment vars for LATEST release
-      #     command: |
-      #       echo 'export RELEASE_TAG=$RELEASE_TAG_PROD' >> $BASH_ENV
-      # - run:
-      #     <<: *defaults_build_docker_login
-      # - run:
-      #     <<: *defaults_build_docker_build
-      - run:
-          <<: *defaults_license_scanner
-      - run:
-          name: Run the license-scanner
-          # TODO: remove tmp-circle
-          command: |
-            export CIRCLE_TAG=tmp-circle
-            cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
   
-
   deploy-snapshot:
     <<: *defaults_working_directory
     <<: *defaults_docker_helm_kube
@@ -785,17 +763,7 @@ workflows:
           #   branches:
           #     ignore:
           #       - /.*/
-      - audit-licenses-docker:
-          context: org-global
-          requires:
-            - build
-          # TODO: add back
-          # filters:
-          #   tags:
-          #     only: /v[0-9]+(\.[0-9]+)*/
-          #   branches:
-          #     ignore:
-          #       - /.*/
+     
       - test-functional:
           context: org-global
           requires:
@@ -803,7 +771,7 @@ workflows:
       - deploy:
           context: org-global
           requires:
-            - audit-licenses-docker
+            - build
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
