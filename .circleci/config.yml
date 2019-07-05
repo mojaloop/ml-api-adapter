@@ -752,13 +752,13 @@ workflows:
             - test-functional
             - vulnerability-check
             - audit-licenses
-          filters:
-            # tags:
-              # only: /v[0-9]+(\.[0-9]+)*/
-            branches:
-              only: /tmp*
-              # ignore:
-                # - /.*/
+          # TODO: add back
+          # filters:
+          #   tags:
+          #     only: /v[0-9]+(\.[0-9]+)*/
+          #   branches:
+          #     ignore:
+          #       - /.*/
       - test-functional:
           context: org-global
           requires:
