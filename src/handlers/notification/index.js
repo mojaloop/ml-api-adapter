@@ -47,15 +47,15 @@ const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protoco
  */
 
 /**
- * @function consumeMessage
- * @async
- * @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
- * processMessage - called to process the message received from kafka
- * @param {object} error - the error message received form kafka in case of error
- * @param {object} message - the message received form kafka
+* @function consumeMessage
+* @async
+* @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
+* processMessage - called to process the message received from kafka
+* @param {object} error - the error message received form kafka in case of error
+* @param {object} message - the message received form kafka
 
- * @returns {boolean} Returns true on success or false on failure
- */
+* @returns {boolean} Returns true on success or false on failure
+*/
 
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
@@ -106,7 +106,7 @@ const startConsumer = async () => {
   try {
     topicName = Utility.getNotificationTopicName()
     Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
-    const config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
+    let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
     if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
@@ -142,7 +142,7 @@ const processMessage = async (msg) => {
       throw new Error('Invalid message received from kafka')
     }
 
-    const { metadata, from, to, content, id } = msg.value
+    const { metadata, from, to, content } = msg.value
     const { action, state } = metadata.event
     const status = state.status
 
@@ -152,7 +152,9 @@ const processMessage = async (msg) => {
     Logger.info('Notification::processMessage action: ' + action)
     Logger.info('Notification::processMessage status: ' + status)
     const decodedPayload = decodePayload(content.payload, { asParsed: false })
+    const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
     const payloadForCallback = decodedPayload.body.toString()
+
     if (actionLower === ENUM.transferEventAction.PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
       const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
       const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST
@@ -177,10 +179,8 @@ const processMessage = async (msg) => {
     if (actionLower === ENUM.transferEventAction.COMMIT && statusLower === ENUM.messageStatus.SUCCESS) {
       const callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-
       const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-
       // forward the fulfil to the destination
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
       await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
@@ -202,11 +202,9 @@ const processMessage = async (msg) => {
       const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
       const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-
       // forward the reject to the destination
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
       await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
-
       // send an extra notification back to the original sender.
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
       return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
@@ -220,7 +218,6 @@ const processMessage = async (msg) => {
       // forward the abort to the destination
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
       await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
-
       // send an extra notification back to the original sender.
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
       return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
@@ -274,9 +271,8 @@ const processMessage = async (msg) => {
       Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
       return Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
     }
-    const err = new Error('Unknown action received from kafka')
-    Logger.error(`Error sending notification - ${err}`)
-    throw err
+
+    Logger.warn(`Unknown action received from kafka: ${action}`)
   } catch (e) {
     Logger.error(`Error processing the message - ${e}`)
     throw e

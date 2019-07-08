@@ -18,11 +18,10 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
-
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
-
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
@@ -52,9 +51,9 @@ const GET = 'get'
 const prepare = async (headers, message, dataUri) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, message)
   try {
-    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+    const messageId = Uuid()
     const messageProtocol = {
-      id: message.transferId,
+      id: messageId,
       to: message.payeeFsp,
       from: message.payerFsp,
       type: 'application/json',
@@ -75,7 +74,8 @@ const prepare = async (headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, message.transferId)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE)
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
@@ -92,31 +92,32 @@ const prepare = async (headers, message, dataUri) => {
 * @async
 * @description This will produce a transfer fulfil message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
 *
-* @param {string} id - the transferId
+* @param {string} transferId - transferId
 * @param {object} headers - the http header from the request
 * @param {object} message - the transfer fulfil message
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
 */
-const fulfil = async (id, headers, message, dataUri) => {
-  Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', id, headers, message)
+const fulfil = async (transferId, headers, message, dataUri) => {
+  Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', transferId, headers, message)
   try {
+    const messageId = Uuid()
     const action = message.transferState === 'ABORTED' ? 'reject' : 'commit'
-    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
     const messageProtocol = {
-      id,
+      id: messageId,
       to: headers['fspiop-destination'],
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
+        uriParams: { id: transferId },
         headers: headers,
         payload: dataUri
       },
       metadata: {
         event: {
-          action,
           id: Uuid(),
           type: 'fulfil',
+          action,
           createdAt: new Date(),
           state: {
             status: 'success',
@@ -125,7 +126,8 @@ const fulfil = async (id, headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL, id)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL)
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
@@ -149,16 +151,17 @@ const fulfil = async (id, headers, message, dataUri) => {
  *
  * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
  */
-const getTransferById = async (id, headers) => {
-  Logger.info('domain::transfer::transferById::start(%s, %s, %s)', id, headers)
+const getTransferById = async (transferId, headers) => {
+  Logger.info('domain::transfer::transferById::start(%s, %s, %s)', transferId, headers)
   try {
-    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), GET.toUpperCase())
+    const messageId = Uuid()
     const messageProtocol = {
-      id,
+      id: messageId,
       to: headers['fspiop-destination'],
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
+        uriParams: { id: transferId },
         headers: headers,
         payload: {}
       },
@@ -175,9 +178,8 @@ const getTransferById = async (id, headers) => {
         }
       }
     }
-    const topicConfig = {
-      topicName: Utility.getTransferByIdTopicName()
-    }
+    const topicConfig = { topicName: Utility.getTransferByIdTopicName() }
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), GET.toUpperCase())
     Logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
     Logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
     Logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
@@ -200,16 +202,17 @@ const getTransferById = async (id, headers) => {
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
 */
-const transferError = async (id, headers, message, dataUri) => {
-  Logger.debug('domain::transfer::abort::start(%s, %s, %s)', id, headers, message)
+const transferError = async (transferId, headers, message, dataUri) => {
+  Logger.debug('domain::transfer::abort::start(%s, %s, %s)', transferId, headers, message)
   try {
-    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+    const messageId = Uuid()
     const messageProtocol = {
-      id,
+      id: messageId,
       to: headers['fspiop-destination'],
       from: headers['fspiop-source'],
       type: 'application/json',
       content: {
+        uriParams: { id: transferId },
         headers: headers,
         payload: dataUri
       },
@@ -226,7 +229,8 @@ const transferError = async (id, headers, message, dataUri) => {
         }
       }
     }
-    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL, id)
+    const topicConfig = Utility.createGeneralTopicConf(TRANSFER, FULFIL)
+    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)
@@ -238,8 +242,8 @@ const transferError = async (id, headers, message, dataUri) => {
   }
 }
 module.exports = {
-  prepare,
   fulfil,
   getTransferById,
+  prepare,
   transferError
 }
