@@ -80,7 +80,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         to: 'dfsp2',
         from: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -134,7 +134,7 @@ Test('Notification Handler', notificationHandlerTest => {
           payload: {
             errorInformation: {
               errorCode: '3100',
-              errorDescription: 'Generic validation error~~~'
+              errorDescription: 'Generic validation error'
             }
           }
         },
