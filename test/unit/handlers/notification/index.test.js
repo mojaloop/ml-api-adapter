@@ -38,6 +38,7 @@ const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
 const ENUM = require('../../../../src/lib/enum')
 const Uuid = require('uuid4')
+const Proxyquire = require('proxyquire')
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
@@ -317,7 +318,17 @@ Test('Notification Service tests', notificationTest => {
       }
     })
 
-    processMessageTest.test('throw error if invalid action received from kafka', async test => {
+    processMessageTest.test('warn if invalid action received from kafka', async test => {
+      let CentralServicesSharedStub = {
+        Logger: {
+          error: sandbox.stub().returns(P.resolve()),
+          info: sandbox.stub().returns(P.resolve()),
+          warn: sandbox.stub().returns(P.resolve())
+        }
+      }
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '@mojaloop/central-services-shared': CentralServicesSharedStub
+      })
       const uuid = Uuid()
       const msg = {
         value: {
@@ -341,11 +352,11 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        await Notification.processMessage(msg)
-        test.fail('Was expecting an error when receiving an invalid action from Kafka')
+        await NotificationProxy.processMessage(msg)
+        test.ok(CentralServicesSharedStub.Logger.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
         test.end()
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.fail('Error thrown')
         test.end()
       }
     })
