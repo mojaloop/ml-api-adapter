@@ -2,7 +2,7 @@
 
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const request = require('request-promise-native')
+const axios = require('axios')
 
 const Notification = require('../../../../src/handlers/notification')
 const Handler = require('../../../../src/api/metadata/handler')
@@ -18,7 +18,7 @@ Test('route handler', (handlerTest) => {
     sandbox = Sinon.createSandbox()
 
     sandbox.stub(Notification, 'isConnected')
-    sandbox.stub(request, 'get')
+    sandbox.stub(axios, 'get')
 
     t.end()
   })
@@ -33,7 +33,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
-      request.get.resolves({ status: 'OK' })
+      axios.get.resolves({ status: 'OK' })
       const expectedResponseCode = 200
 
       // Act
@@ -49,7 +49,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
       Notification.isConnected.throws(new Error('Error connecting to consumer'))
-      request.get.resolves({ status: 'OK' })
+      axios.get.resolves({ status: 'OK' })
 
       const expectedResponseCode = 502
 

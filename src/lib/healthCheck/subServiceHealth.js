@@ -29,7 +29,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 
 const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
-const request = require('request-promise-native')
+const axios = require('axios')
 
 /**
  * @function getSubServiceHealthBroker
@@ -66,7 +66,7 @@ const getSubServiceHealthCentralLedger = async () => {
 
   let status = statusEnum.DOWN
   try {
-    const response = await request.get(options)
+    const response = await axios.get(options)
     switch (response.status) {
       case statusEnum.OK:
       case statusEnum.DOWN:

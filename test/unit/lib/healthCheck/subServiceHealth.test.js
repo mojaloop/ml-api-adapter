@@ -32,7 +32,7 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const proxyquire = require('proxyquire')
-const request = require('request-promise-native')
+const axios = require('axios')
 
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 
@@ -48,7 +48,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   subServiceHealthTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Notification, 'isConnected')
-    sandbox.stub(request, 'get')
+    sandbox.stub(axios, 'get')
 
     t.end()
   })
@@ -91,8 +91,8 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   subServiceHealthTest.test('getSubServiceHealthCentralLedger', centralLedgerTest => {
     centralLedgerTest.test('is down when can\'t connect to the central ledger', async test => {
       // Arrange
-      request.get.throws(new Error('Error connecting to central ledger'))
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
+      axios.get.throws(new Error('Error connecting to central ledger'))
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 
@@ -106,8 +106,8 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('is down when the central ledger is down', async test => {
       // Arrange
-      request.get.resolves({ status: 'DOWN' })
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
+      axios.get.resolves({ status: 'DOWN' })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 
@@ -121,8 +121,8 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('is up when the central ledger is up', async test => {
       // Arrange
-      request.get.resolves({ status: 'OK' })
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
+      axios.get.resolves({ status: 'OK' })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.OK }
 
@@ -136,8 +136,8 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     centralLedgerTest.test('handles unknown status from the central ledger', async test => {
       // Arrange
-      request.get.resolves({ status: 12345 })
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'request': request })
+      axios.get.resolves({ status: 12345 })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 
