@@ -44,7 +44,7 @@ Test('Facade Test', facadeTest => {
       }
     })
 
-    getEndpointTest.test('return the endpoint if transferId is passed', async (test) => {
+    getEndpointTest.test('return the endpoint if id is passed', async (test) => {
       const fsp = 'fsp'
       const transferId = Uuid()
       const endpointType = FSPIOP_CALLBACK_URL_TRANSFER_PUT

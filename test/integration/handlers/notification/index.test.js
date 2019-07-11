@@ -80,7 +80,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         to: 'dfsp2',
         from: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -128,6 +128,9 @@ Test('Notification Handler', notificationHandlerTest => {
             'fspiop-source': 'switch',
             'fspiop-destination': 'dfsp1'
           },
+          uriParams: {
+            id: transferId
+          },
           payload: {
             errorInformation: {
               errorCode: '3100',
@@ -137,7 +140,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         from: 'switch',
         to: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -198,7 +201,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         to: 'dfsp2',
         from: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -255,11 +258,14 @@ Test('Notification Handler', notificationHandlerTest => {
               errorCode: '3000',
               errorDescription: 'Generic error'
             }
+          },
+          uriParams: {
+            id: transferId
           }
         },
         from: 'dfsp2',
         to: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -320,7 +326,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         to: 'dfsp2',
         from: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -385,7 +391,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         to: 'dfsp2',
         from: 'dfsp1',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -450,7 +456,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         from: 'dfsp1',
         to: 'dfsp2',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
@@ -512,7 +518,7 @@ Test('Notification Handler', notificationHandlerTest => {
         },
         to: 'dfsp1',
         from: 'switch',
-        id: transferId,
+        id: Uuid(),
         type: 'application/json'
       }
 
