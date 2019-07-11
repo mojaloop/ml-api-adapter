@@ -33,6 +33,7 @@ const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
 const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
 const Metrics = require('@mojaloop/central-services-metrics')
+const Enums = require('../lib/enum')
 
 /**
  * @module src/shared/setup
@@ -89,7 +90,7 @@ const createServer = async (port, modules) => {
  */
 const createHandlers = async (handlers) => {
   let handlerIndex
-  let registerdHandlers = {
+  const registeredHandlers = {
     connection: {},
     register: {},
     ext: {},
@@ -99,23 +100,22 @@ const createHandlers = async (handlers) => {
   }
 
   for (handlerIndex in handlers) {
-    var handler = handlers[handlerIndex]
-    if (handler.enabled) {
-      Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
-      switch (handler.type) {
-        case 'notification':
+    if (handlers.hasOwnProperty(handlerIndex)) {
+      let handler = handlers[handlerIndex]
+      if (handler.enabled) {
+        Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
+        if (handler.type === Enums.handlerTypes.NOTIFICATION) {
           await ParticipantEndpointCache.initializeCache()
           await RegisterHandlers.registerNotificationHandler()
-          break
-        default:
-          var error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
+        } else {
+          let error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
           Logger.error(error)
           throw new Error(error)
+        }
       }
     }
   }
-
-  return registerdHandlers
+  return registeredHandlers
 }
 
 const initializeInstrumentation = () => {
@@ -147,10 +147,10 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   let server
   initializeInstrumentation()
   switch (service) {
-    case 'api':
+    case Enums.serviceType.API:
       server = await createServer(port, modules)
       break
-    case 'handler':
+    case Enums.serviceType.HANDLER:
       if (!Config.HANDLERS_API_DISABLED) {
         server = await createServer(port, modules)
       }
