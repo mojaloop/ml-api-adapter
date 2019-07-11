@@ -78,6 +78,14 @@ clean_docker() {
 fcurl() {
 	docker run --rm -i \
 		--link $APP_HOST \
+		--entrypoint curl \
+		"jlekie/curl:latest" \
+        --output /dev/null --silent --head --fail \
+		"$@"
+}
+
+fcurl_sim() {
+	docker run --rm -i \
 		--link $SIMULATOR_HOST \
 		--entrypoint curl \
 		"jlekie/curl:latest" \
@@ -93,13 +101,12 @@ is_api_up() {
 start_simulator () {
   docker run --rm -td \
     -p 8444:8444 \
-    --network $DOCKER_NETWORK \
     --name=$SIMULATOR_HOST \
-    $SIMULATOR_IMAGE:$SIMULATOR_IMAGE
+    $SIMULATOR_IMAGE:$SIMULATOR_IMAGE_TAG
 }
 
 is_simulator_up() {
-  fcurl "http://${SIMULATOR_HOST}:8444/health?"
+  fcurl_sim "http://${SIMULATOR_HOST}:8444/health?"
 }
 
 
@@ -126,6 +133,7 @@ start_ml_api_adapter()
    --name $APP_HOST \
    --env KAFKA_HOST="$KAFKA_HOST" \
    --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
+   --env MLAPI_ENDPOINT_HEALTH_URL="http://${SIMULATOR_HOST}:8444/health" \
    -p $APP_PORT:$APP_PORT \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
@@ -141,6 +149,7 @@ run_test_command()
    --env APP_HOST=$APP_HOST \
    --env HOST_IP="$APP_HOST" \
    --env KAFKA_HOST="$KAFKA_HOST" \
+   --env MLAPI_ENDPOINT_HEALTH_URL="http://${SIMULATOR_HOST}:8444/health" \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
    -c "source test/.env; $TEST_CMD"

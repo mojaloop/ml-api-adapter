@@ -98,7 +98,6 @@ start_ml_api_adapter()
    --name $APP_HOST \
    --env KAFKA_HOST="$KAFKA_HOST" \
    --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
-   --env ENDPOINT_HEALTH_URL="http://${SIMULATOR_HOST}:8444/health" \
    --env LOG_LEVEL=debug \
    -p $APP_PORT:$APP_PORT \
    $DOCKER_IMAGE:$DOCKER_TAG \
