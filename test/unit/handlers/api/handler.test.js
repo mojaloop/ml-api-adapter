@@ -33,7 +33,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
-      axios.get.resolves({ status: 'OK' })
+      axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 200
 
       // Act
@@ -49,7 +49,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
       Notification.isConnected.throws(new Error('Error connecting to consumer'))
-      axios.get.resolves({ status: 'OK' })
+      axios.get.resolves({ data: { status: 'OK' } })
 
       const expectedResponseCode = 502
 
