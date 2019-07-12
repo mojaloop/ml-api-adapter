@@ -1,59 +1,83 @@
 'use strict'
 
 const Test = require('tapes')(require('tape'))
-const Config = require('../../../../src/lib/config')
-const Handler = require('../../../../src/api/metadata/handler')
-const apiTags = ['api']
+const Sinon = require('sinon')
+const axios = require('axios')
 
-function createRequest (routes) {
-  let value = routes || []
-  return {
-    server: {
-      table: () => {
-        return [{ table: value }]
-      }
-    }
-  }
-}
+const Config = require('../../../../src/lib/config')
+const Notification = require('../../../../src/handlers/notification')
+const Handler = require('../../../../src/api/metadata/handler')
+const {
+  createRequest,
+  unwrapResponse
+} = require('../../../helpers')
+
+const apiTags = ['api']
 
 Test('metadata handler', (handlerTest) => {
   let originalScale
   let originalPrecision
   let originalHostName
+  let sandbox
 
   handlerTest.beforeEach(t => {
+    sandbox = Sinon.createSandbox()
+    sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(axios, 'get')
+
     originalScale = Config.AMOUNT.SCALE
     originalPrecision = Config.AMOUNT.PRECISION
     originalHostName = Config.HOSTNAME
     Config.AMOUNT.SCALE = 0
     Config.AMOUNT.PRECISION = 0
     Config.HOSTNAME = ''
+
     t.end()
   })
 
   handlerTest.afterEach(t => {
+    sandbox.restore()
+
     Config.AMOUNT.SCALE = originalScale
     Config.AMOUNT.PRECISION = originalPrecision
     Config.HOSTNAME = originalHostName
+
     t.end()
   })
 
-  handlerTest.test('health should', (healthTest) => {
-    healthTest.test('return status ok', async function (assert) {
-      let reply = {
-        response: (response) => {
-          assert.equal(response.status, 'OK')
-          return {
-            code: (statusCode) => {
-              assert.equal(statusCode, 200)
-              assert.end()
-            }
-          }
-        }
-      }
+  handlerTest.test('/health should', healthTest => {
+    healthTest.test('returns the correct response when the health check is up', async test => {
+      // Arrange
+      Notification.isConnected.resolves(true)
+      axios.get.resolves({ data: { status: 'OK' } })
+      const expectedResponseCode = 200
 
-      Handler.health(createRequest(), reply)
+      // Act
+      const {
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+
+      // Assert
+      test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
     })
+
+    healthTest.test('returns the correct response when the health check is down', async test => {
+      // Arrange
+      Notification.isConnected.throws(new Error('Error connecting to consumer'))
+      axios.get.resolves({ data: { status: 'OK' } })
+      const expectedResponseCode = 502
+
+      // Act
+      const {
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
+
+      // Assert
+      test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
+    })
+
     healthTest.end()
   })
 
