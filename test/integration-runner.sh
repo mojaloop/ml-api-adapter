@@ -112,12 +112,29 @@ fcurl_api() {
     --link $SIMULATOR_HOST \
 		--entrypoint curl \
 		"appropriate/curl:latest" \
-      --silent --head --fail \
+     --silent -I\
 		"$@"
 }
 
+
+# Make sure the service is alive, not necessarily healthy
+fcurl_api_alive() {
+  RESPONSE_CODE=$(fcurl_api "$@" | grep HTTP/1.1 | awk {'print $2'})
+  case ${RESPONSE_CODE} in
+    200)
+      echo 'true'
+      ;;
+    502)
+      echo 'true'
+      ;;
+    *)
+      echo 'false'
+      ;;
+  esac
+}
+
 is_api_up() {
-  fcurl_api "http://$APP_HOST:$APP_PORT/health?"
+  $(fcurl_api_alive "http://$APP_HOST:$APP_PORT/health?")
 }
 
 
@@ -133,7 +150,6 @@ start_simulator () {
 is_simulator_up() {
   fcurl_api "http://${SIMULATOR_HOST}:8444/health?"
 }
-
 
 run_test_command()
 {
@@ -242,12 +258,11 @@ until is_simulator_up; do
   sleep 5
 done
 
-
 >&2 echo "Starting ml api adapter"
 start_ml_api_adapter
 
 >&2 printf "Waiting for ml api adapter to start..."
-until is_api_up; do
+until $(is_api_up); do
   >&2 printf "."
   sleep 5
 done

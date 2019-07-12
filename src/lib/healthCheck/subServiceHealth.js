@@ -59,18 +59,16 @@ const getSubServiceHealthBroker = async () => {
  * @returns Promise<SubServiceHealth> The SubService health object for the central-ledger service
  */
 const getSubServiceHealthCentralLedger = async () => {
-  const options = {
-    url: Config.ENDPOINT_HEALTH_URL,
-    json: true
-  }
-
+  const url = Config.ENDPOINT_HEALTH_URL
   let status = statusEnum.DOWN
+
   try {
-    const response = await axios.get(options)
-    switch (response.status) {
+    const response = await axios.get(url)
+    const responseStatus = response.data && response.data.status
+    switch (responseStatus) {
       case statusEnum.OK:
       case statusEnum.DOWN:
-        status = response.status
+        status = responseStatus
         break
       default:
         throw new Error(`getSubServiceHealthCentralLedger request failed with unknown status: ${response.status}`)
