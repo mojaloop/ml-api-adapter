@@ -97,7 +97,6 @@
     "uuid4": "1.1.4"
   },
   "devDependencies": {
-    "async-request": "1.2.0",
     "aws-sdk": "2.482.0",
     "faucet": "0.0.1",
     "istanbul": "1.1.0-alpha.1",
