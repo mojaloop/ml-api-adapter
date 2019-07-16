@@ -14,12 +14,6 @@
     "type": "git",
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
   },
-  "config": {
-    "knex": "--knexfile ./config/knexfile.js",
-    "images": {
-      "api": "ml-api-adapter"
-    }
-  },
   "standard": {
     "ignore": [
       "/migrations/**",
@@ -95,7 +89,6 @@
     "immutable": "3.8.2",
     "joi-currency-code": "2.0.2",
     "jsdoc": "3.6.2",
-    "knex": "0.17.6",
     "lodash": "4.17.14",
     "mustache": "3.0.1",
     "raw-body": "2.4.1",
