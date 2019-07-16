@@ -96,7 +96,7 @@
     "joi-currency-code": "2.0.2",
     "jsdoc": "3.6.2",
     "knex": "0.17.6",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "mustache": "3.0.1",
     "raw-body": "2.4.1",
     "rc": "1.2.8",
