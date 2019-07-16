@@ -14,12 +14,6 @@
     "type": "git",
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
   },
-  "config": {
-    "knex": "--knexfile ./config/knexfile.js",
-    "images": {
-      "api": "ml-api-adapter"
-    }
-  },
   "standard": {
     "ignore": [
       "/migrations/**",
@@ -73,7 +67,6 @@
     "@hapi/joi-date": "1.3.0",
     "@hapi/vision": "5.5.2",
     "@mojaloop/central-services-auth": "5.2.1",
-    "@mojaloop/central-services-database": "5.2.1",
     "@mojaloop/central-services-error-handling": "5.2.0",
     "@mojaloop/central-services-health": "7.0.0",
     "@mojaloop/central-services-metrics": "5.2.0",
@@ -95,8 +88,7 @@
     "immutable": "3.8.2",
     "joi-currency-code": "2.0.2",
     "jsdoc": "3.6.2",
-    "knex": "0.17.6",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "mustache": "3.0.1",
     "raw-body": "2.4.1",
     "rc": "1.2.8",
@@ -105,7 +97,6 @@
     "uuid4": "1.1.4"
   },
   "devDependencies": {
-    "async-request": "1.2.0",
     "aws-sdk": "2.482.0",
     "faucet": "0.0.1",
     "istanbul": "1.1.0-alpha.1",
