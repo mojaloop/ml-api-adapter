@@ -1,7 +1,8 @@
 {
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_SOURCE_URL": "http://localhost:3001/participants/{{fsp}}/endpoints",
+  "ENDPOINT_SOURCE_URL": "http://central-ledger:3001/participants/{{fsp}}/endpoints",
+  "ENDPOINT_HEALTH_URL": "http://central-ledger:3001/health",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
     "generateTimeout": 30000

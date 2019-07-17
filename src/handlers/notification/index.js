@@ -279,8 +279,73 @@ const processMessage = async (msg) => {
   }
 }
 
+/**
+ * @function getMetadataPromise
+ *
+ * @description a Promisified version of getMetadata on the kafka consumer
+ *
+ * @param {Kafka.Consumer} consumer The consumer
+ * @param {string} topic The topic name
+ * @returns {Promise<object>} Metadata response
+ */
+const getMetadataPromise = (consumer, topic) => {
+  return new Promise((resolve, reject) => {
+    const cb = (err, metadata) => {
+      if (err) {
+        return reject(new Error(`Error connecting to consumer: ${err}`))
+      }
+
+      return resolve(metadata)
+    }
+
+    consumer.getMetadata({ topic, timeout: 3000 }, cb)
+  })
+}
+
+/**
+ * @function isConnected
+ *
+ *
+ * @description Use this to determine whether or not we are connected to the broker. Internally, it calls `getMetadata` to determine
+ * if the broker client is connected.
+ *
+ * @returns {true} - if connected
+ * @throws {Error} - if we can't find the topic name, or the consumer is not connected
+ */
+const isConnected = async () => {
+  const topicName = Utility.getNotificationTopicName()
+  const metadata = await getMetadataPromise(notificationConsumer, topicName)
+
+  const foundTopics = metadata.topics.map(topic => topic.name)
+  if (foundTopics.indexOf(topicName) === -1) {
+    Logger.debug(`Connected to consumer, but ${topicName} not found.`)
+    throw new Error(`Connected to consumer, but ${topicName} not found.`)
+  }
+
+  return true
+}
+
+/**
+ * @function disconnect
+ *
+ *
+ * @description Disconnect from the notificationConsumer
+ *
+ * @returns Promise<*> - Passes on the Promise from Consumer.disconnect()
+ * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
+ */
+const disconnect = async () => {
+  if (!notificationConsumer || !notificationConsumer.disconnect) {
+    throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
+  }
+
+  return notificationConsumer.disconnect()
+}
+
 module.exports = {
+  disconnect,
   startConsumer,
   processMessage,
-  consumeMessage
+  consumeMessage,
+  isConnected
 }

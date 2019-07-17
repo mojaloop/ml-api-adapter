@@ -29,14 +29,17 @@
 const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const Notification = require(`${src}/handlers/notification`)
-const Callback = require(`${src}/handlers/notification/callbacks`)
+const rewire = require('rewire')
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const P = require('bluebird')
+
+const Notification = require(`${src}/handlers/notification`)
+const Callback = require(`${src}/handlers/notification/callbacks`)
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
-const ENUM = require('../../../../src/lib/enum')
+const ENUM = require(`${src}/lib/enum`)
+const Utility = require(`${src}/lib/utility`)
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
 
@@ -1016,5 +1019,90 @@ Test('Notification Service tests', notificationTest => {
 
     consumeMessageTest.end()
   })
+
+  notificationTest.test('isConnected', async isConnectedTest => {
+    isConnectedTest.test('reject with an error if getMetadata fails', async test => {
+      // Arrange
+      let NotificationProxy = rewire(`${src}/handlers/notification`)
+      NotificationProxy.__set__('notificationConsumer', {
+        // Callback with error
+        getMetadata: (options, cb) => {
+          const error = new Error('test err message')
+          cb(error, null)
+        }
+      })
+
+      // Act
+      try {
+        await NotificationProxy.isConnected()
+        test.fail('Error not thrown!')
+      } catch (err) {
+        // Assert
+        test.equal(err.message, 'Error connecting to consumer: Error: test err message', 'Error message does not match')
+        test.pass('Error successfully thrown')
+      }
+      test.end()
+    })
+
+    isConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
+      // Arrange
+      const topicName = Utility.getNotificationTopicName()
+      let NotificationProxy = rewire(`${src}/handlers/notification`)
+      const metadata = {
+        orig_broker_id: 0,
+        orig_broker_name: 'kafka:9092/0',
+        topics: [],
+        brokers: [{ id: 0, host: 'kafka', port: 9092 }]
+      }
+      NotificationProxy.__set__('notificationConsumer', {
+        // Successful callback
+        getMetadata: (options, cb) => cb(null, metadata)
+      })
+
+      // Act
+      try {
+        await NotificationProxy.isConnected()
+        test.fail('Error not thrown!')
+      } catch (err) {
+        // Assert
+        test.equal(err.message, `Connected to consumer, but ${topicName} not found.`, 'Error message does not match')
+        test.pass('Error successfully thrown')
+      }
+      test.end()
+    })
+
+    isConnectedTest.test('pass if the topic can be found', async test => {
+      // Arrange
+      const topicName = Utility.getNotificationTopicName()
+      let NotificationProxy = rewire(`${src}/handlers/notification`)
+      const metadata = {
+        orig_broker_id: 0,
+        orig_broker_name: 'kafka:9092/0',
+        topics: [
+          { name: topicName, partitions: [] }
+        ],
+        brokers: [{ id: 0, host: 'kafka', port: 9092 }]
+      }
+      NotificationProxy.__set__('notificationConsumer', {
+        // Successful callback
+        getMetadata: (options, cb) => cb(null, metadata)
+      })
+
+      // Act
+      let result
+      try {
+        result = await NotificationProxy.isConnected()
+      } catch (err) {
+        test.fail(err.message)
+      }
+
+      // Assert
+      test.equal(result, true, 'isConnected should return true')
+      test.end()
+    })
+
+    isConnectedTest.end()
+  })
+
   notificationTest.end()
 })

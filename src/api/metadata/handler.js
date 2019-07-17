@@ -1,6 +1,19 @@
 'use strict'
 
+const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
+const { defaultHealthHandler } = require('@mojaloop/central-services-health')
+
+const packageJson = require('../../../package.json')
 const Config = require('../../lib/config')
+const {
+  getSubServiceHealthBroker,
+  getSubServiceHealthCentralLedger
+} = require('../../lib/healthCheck/subServiceHealth.js')
+
+const healthCheck = new HealthCheck(packageJson, [
+  getSubServiceHealthBroker,
+  getSubServiceHealthCentralLedger
+])
 
 /**
  * @module src/api/metadata/handler
@@ -30,19 +43,14 @@ const extractUrls = (request) => {
 }
 
 /**
- * @function health
- * @async
+ * @function getHealth
  *
- * @description This is the handler for /health endpoint
+ * @description Get the health of the service
  *
- * @param {object} request - the http request object
- * @param {object} h - the http response object
- *
- * @returns {object} - Returns the object containing the OK status and 200 status code
+ * @param {*} request - the Hapi request object
+ * @param {*} h - the Hapi handler object
  */
-exports.health = function (request, h) {
-  return h.response({ status: 'OK' }).code(200)
-}
+const getHealth = defaultHealthHandler(healthCheck)
 
 /**
  * @function metadata
@@ -55,9 +63,14 @@ exports.health = function (request, h) {
  *
  * @returns {object} - Returns the object containing the hostname, registered URLs and 200 status code
  */
-exports.metadata = function (request, h) {
+const metadata = (request, h) => {
   return h.response({
     directory: Config.HOSTNAME,
     urls: extractUrls(request)
   }).code(200)
+}
+
+module.exports = {
+  metadata,
+  getHealth
 }
