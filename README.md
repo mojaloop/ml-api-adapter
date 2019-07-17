@@ -55,7 +55,6 @@ Running the tests:
 
 Tests include code coverage via istanbul. See the test/ folder for testing scripts.
 
-
 ## Auditing Dependencies
 
 We use `npm-audit-resolver` along with `npm audit` to check dependencies for vulnerabilities, and r
