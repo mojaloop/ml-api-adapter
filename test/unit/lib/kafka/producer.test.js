@@ -30,6 +30,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Kafka = require(`${src}/lib/kafka`)
 const rewire = require('rewire')
 const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
+const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 
 Test('Producer', producerTest => {
   let sandbox
@@ -86,7 +87,8 @@ Test('Producer', producerTest => {
         test.ok(Kafka.Producer.getProducer('undefined'))
         test.fail('Error not thrown!')
       } catch (e) {
-        test.ok(e.toString() === 'Error: No producer found for topic undefined')
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.message, 'No producer found for topic undefined')
       }
       test.end()
     })
@@ -158,8 +160,8 @@ Test('Producer', producerTest => {
         test.fail()
         test.end()
       } catch (e) {
-        test.ok(e instanceof Error)
-        test.ok(e.toString() === 'Error: The following Producers could not be disconnected: [{"topic":"test2","error":"No producer found for topic test2"}]')
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.message, 'The following Producers could not be disconnected: [{"topic":"test2","error":"No producer found for topic test2"}]')
         test.end()
       }
       getProducerStub.reset()

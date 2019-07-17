@@ -27,6 +27,7 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Logger = require('@mojaloop/central-services-shared').Logger
+const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const proxyquire = require('proxyquire')
 const Config = require('../../../../src/lib/config')
 const Enum = require('../../../../src/lib/enum')
@@ -167,8 +168,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback(url, method, headers, message, cid, sourceFsp, destinationFsp)
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '1001')
+        test.ok(err.cause)
         test.end()
       }
     })
@@ -178,9 +181,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback()
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '2001')
+        test.equal(err.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })
@@ -238,9 +242,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback(url, method)
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '2001')
+        test.equal(err.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })
@@ -298,9 +303,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback(url, method, headers)
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '2001')
+        test.equal(err.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })
@@ -358,9 +364,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback(url, method, headers, message)
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '2001')
+        test.equal(err.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })
@@ -418,9 +425,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback(url, method, headers, message, cid)
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '2001')
+        test.equal(err.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })
@@ -478,9 +486,10 @@ Test('Callback Service tests', callbacksTest => {
         await callback.sendCallback(url, method, headers, message, cid, sourceFsp)
         test.fail('test failed without throwing an error')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.apiErrorCode.code, '2001')
+        test.equal(err.message, Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
         test.end()
       }
     })

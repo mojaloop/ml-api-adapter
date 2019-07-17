@@ -33,6 +33,7 @@ const Notification = require(`${src}/handlers/notification`)
 const Callback = require(`${src}/handlers/notification/callbacks`)
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
+const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const P = require('bluebird')
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
@@ -309,7 +310,7 @@ Test('Notification Service tests', notificationTest => {
       }
     })
 
-    processMessageTest.test('throw error if invalid action received from kafka', async test => {
+    processMessageTest.test('log a warning message if invalid action received from kafka', async test => {
       const msg = {
         value: {
           metadata: {
@@ -333,10 +334,11 @@ Test('Notification Service tests', notificationTest => {
       }
       try {
         await Notification.processMessage(msg)
-        test.fail('Was expecting an error when receiving an invalid action from Kafka')
+        test.ok(Logger.warn.calledWith('Unknown action received from kafka: invalid action'),
+          'Expected a warning message to be logged')
         test.end()
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.fail('Was expecting a warning log message instead of a failure')
         test.end()
       }
     })
@@ -348,9 +350,10 @@ Test('Notification Service tests', notificationTest => {
         await Notification.processMessage(msg)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, 'Invalid message received from kafka')
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.message, 'Invalid message received from kafka')
+        test.equal(err.apiErrorCode.code, '2001')
         test.end()
       }
     })

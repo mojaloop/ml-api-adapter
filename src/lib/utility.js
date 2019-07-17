@@ -28,6 +28,7 @@ const Config = require('./config')
 const Mustache = require('mustache')
 const KafkaConfig = Config.KAFKA_CONFIG
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 
 /**
  * @module src/lib/utility
@@ -340,8 +341,8 @@ const getKafkaConfig = (flow, functionality, action) => {
     const actionObject = functionalityObject[action]
     actionObject.config.logger = Logger
     return actionObject.config
-  } catch (e) {
-    throw new Error('No config found for those parameters')
+  } catch (err) {
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError('No kafka config found for specified paramters', err)
   }
 }
 

@@ -29,6 +29,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Uuid = require('uuid4')
 const Utility = require('../../lib/utility')
 const Kafka = require('../../lib/kafka')
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
@@ -83,7 +84,9 @@ const prepare = async (headers, message, dataUri) => {
     return true
   } catch (err) {
     Logger.error(`domain::transfer::prepare::Kafka error:: ERROR:'${err}'`)
-    throw err
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 
@@ -133,7 +136,9 @@ const fulfil = async (id, headers, message, dataUri) => {
     return true
   } catch (err) {
     Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
-    throw err
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 
@@ -185,7 +190,9 @@ const getTransferById = async (id, headers) => {
     return true
   } catch (err) {
     Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
-    throw err
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 
@@ -234,7 +241,9 @@ const transferError = async (id, headers, message, dataUri) => {
     return true
   } catch (err) {
     Logger.error(`domain::transfer::abort::Kafka error:: ERROR:'${err}'`)
-    throw err
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 module.exports = {
