@@ -392,6 +392,10 @@ jobs:
           # TODO: change back to CIRCLE_TAG
           # command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
           command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:tmp-circle make run
+      - store_artifacts:
+          path: /tmp/license-scanner/results
+          prefix: licenses
+
       # TODO: add back 
       # - run:
       #     <<: *defaults_build_docker_publish
