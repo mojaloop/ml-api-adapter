@@ -5,7 +5,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/health',
-    handler: Handler.health,
+    handler: Handler.getHealth,
     options: {
       tags: tags,
       description: 'Status of adapter',

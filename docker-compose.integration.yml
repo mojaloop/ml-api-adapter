@@ -1,0 +1,24 @@
+version: "3.7"
+services:
+  ml-api-adapter:
+    build:
+      dockerfile: test-integration.Dockerfile
+      context: .
+      cache_from: 
+        - mojaloop/ml-api-adapter:latest
+        - ml-api-adapter
+        - ml-api-adapter:test
+    container_name: ml_ml-api-adapter
+    links:
+      - kafka
+      - central-ledger
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
+      - ./test:/opt/ml-api-adapter/test
+      - ./src:/opt/ml-api-adapter/src
+    command:
+      - tail 
+      - -f 
+      - /dev/null

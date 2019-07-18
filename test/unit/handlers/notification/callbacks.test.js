@@ -44,7 +44,6 @@ Test('Callback Service tests', callbacksTest => {
     request = sandbox.stub()
     sandbox.stub(Logger)
     callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request': request })
-    // callback = proxyquire('../../../../src/handlers/notification/callbacks.js', { 'request-promise-native': request })
     t.end()
   })
 

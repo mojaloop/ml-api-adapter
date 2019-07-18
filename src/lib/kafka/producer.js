@@ -36,7 +36,25 @@
 const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
 
-let listOfProducers = {}
+const listOfProducers = {}
+
+/**
+ * @function GetProducer
+ *
+ * @param {string} topicName - the topic name to locate a specific producer
+ *
+ * @description This is used to get a producer with the topic name to send messages to a kafka topic
+ *
+ * @returns {Producer} - Returns consumer
+ * @throws {Error} - if consumer not found for topic name
+ */
+const getProducer = (topicName) => {
+  if (listOfProducers[topicName]) {
+    return listOfProducers[topicName]
+  } else {
+    throw Error(`No producer found for topic ${topicName}`)
+  }
+}
 
 /**
  * @function ProduceMessage
@@ -96,11 +114,13 @@ const disconnect = async (topicName = null) => {
 
     let tpName
     for (tpName in listOfProducers) {
-      try {
-        await getProducer(tpName).disconnect()
-      } catch (e) {
-        isError = true
-        errorTopicList.push({ topic: tpName, error: e.toString() })
+      if (listOfProducers.hasOwnProperty(tpName)) {
+        try {
+          await getProducer(tpName).disconnect()
+        } catch (e) {
+          isError = true
+          errorTopicList.push({ topic: tpName, error: e.toString() })
+        }
       }
     }
     if (isError) {
@@ -108,24 +128,6 @@ const disconnect = async (topicName = null) => {
     }
   } else {
     throw Error(`Unable to disconnect Producer: ${topicName}`)
-  }
-}
-
-/**
- * @function GetProducer
- *
- * @param {string} topicName - the topic name to locate a specific producer
- *
- * @description This is used to get a producer with the topic name to send messages to a kafka topic
- *
- * @returns {Producer} - Returns consumer
- * @throws {Error} - if consumer not found for topic name
- */
-const getProducer = (topicName) => {
-  if (listOfProducers[topicName]) {
-    return listOfProducers[topicName]
-  } else {
-    throw Error(`No producer found for topic ${topicName}`)
   }
 }
 

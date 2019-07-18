@@ -3,11 +3,8 @@
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
  The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
-
  http://www.apache.org/licenses/LICENSE-2.0
-
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
  Contributors
  --------------
  This is the official list of the Mojaloop project contributors for this file.
@@ -18,24 +15,65 @@
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
-
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- * Miguel de Barros <miguel.debarros@modusbox.com>
- - Lewis Daly <lewis@vesselstech.com>
-
+ * Lewis Daly <lewis@vesselstech.com>
  --------------
  ******/
-
 'use strict'
 
-const MetadataHandler = require('../../api/metadata/handler')
-
-module.exports = [
-  {
-    method: 'GET',
-    path: '/health',
-    handler: MetadataHandler.getHealth
+/**
+ * unwrapResponse
+ *
+ * Use this function to unwrap the innner response body and code from an async Handler
+ */
+const unwrapResponse = async (asyncFunction) => {
+  let responseBody
+  let responseCode
+  const nestedReply = {
+    response: (response) => {
+      responseBody = response
+      return {
+        code: statusCode => {
+          responseCode = statusCode
+        }
+      }
+    }
   }
-]
+  await asyncFunction(nestedReply)
+
+  return {
+    responseBody,
+    responseCode
+  }
+}
+
+function createRequest (routes) {
+  let value = routes || []
+  return {
+    server: {
+      table: () => {
+        return [{ table: value }]
+      }
+    }
+  }
+}
+
+/**
+ * @function sleep
+ *
+ * @description A hacky method to sleep in JS. Please use for testing only.
+ *
+ * @param {number} seconds - The number of seconds to sleep for
+ * @returns {Promise<>}
+ */
+async function sleep (seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000))
+}
+
+module.exports = {
+  createRequest,
+  sleep,
+  unwrapResponse
+}
