@@ -28,10 +28,8 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../lib/config')
 
-const DEFAULT_LAG_SECONDS = 300
-
 const fulfilTransfer = (request) => {
-  const maxLag = (Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS || DEFAULT_LAG_SECONDS) * 1000
+  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
   Logger.debug(`completedTimestamp: ${completedTimestamp}, now: ${now}`)

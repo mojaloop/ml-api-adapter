@@ -48,15 +48,15 @@ const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protoco
  */
 
 /**
- * @function consumeMessage
- * @async
- * @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
- * processMessage - called to process the message received from kafka
- * @param {object} error - the error message received form kafka in case of error
- * @param {object} message - the message received form kafka
+* @function consumeMessage
+* @async
+* @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
+* processMessage - called to process the message received from kafka
+* @param {object} error - the error message received form kafka in case of error
+* @param {object} message - the message received form kafka
 
- * @returns {boolean} Returns true on success or false on failure
- */
+* @returns {boolean} Returns true on success or false on failure
+*/
 
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
@@ -109,7 +109,7 @@ const startConsumer = async () => {
   try {
     topicName = Utility.getNotificationTopicName()
     Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
-    const config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
+    let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
     if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
@@ -146,7 +146,7 @@ const processMessage = async (msg) => {
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
   }
 
-  const { metadata, from, to, content, id } = msg.value
+  const { metadata, from, to, content } = msg.value
   const { action, state } = metadata.event
   const status = state.status
 
@@ -156,7 +156,9 @@ const processMessage = async (msg) => {
   Logger.info('Notification::processMessage action: ' + action)
   Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
+  const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
   const payloadForCallback = decodedPayload.body.toString()
+
   if (actionLower === ENUM.transferEventAction.PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
     const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
     const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST
@@ -181,10 +183,8 @@ const processMessage = async (msg) => {
   if (actionLower === ENUM.transferEventAction.COMMIT && statusLower === ENUM.messageStatus.SUCCESS) {
     const callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
     const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-
     const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
     const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-
     // forward the fulfil to the destination
     Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
@@ -206,11 +206,9 @@ const processMessage = async (msg) => {
     const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
     const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
     const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-
     // forward the reject to the destination
     Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
-
     // send an extra notification back to the original sender.
     Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
     return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
@@ -224,7 +222,6 @@ const processMessage = async (msg) => {
     // forward the abort to the destination
     Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
-
     // send an extra notification back to the original sender.
     Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
     return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
@@ -282,8 +279,73 @@ const processMessage = async (msg) => {
   Logger.warn(`Unknown action received from kafka: ${action}`)
 }
 
+/**
+ * @function getMetadataPromise
+ *
+ * @description a Promisified version of getMetadata on the kafka consumer
+ *
+ * @param {Kafka.Consumer} consumer The consumer
+ * @param {string} topic The topic name
+ * @returns {Promise<object>} Metadata response
+ */
+const getMetadataPromise = (consumer, topic) => {
+  return new Promise((resolve, reject) => {
+    const cb = (err, metadata) => {
+      if (err) {
+        return reject(new Error(`Error connecting to consumer: ${err}`))
+      }
+
+      return resolve(metadata)
+    }
+
+    consumer.getMetadata({ topic, timeout: 3000 }, cb)
+  })
+}
+
+/**
+ * @function isConnected
+ *
+ *
+ * @description Use this to determine whether or not we are connected to the broker. Internally, it calls `getMetadata` to determine
+ * if the broker client is connected.
+ *
+ * @returns {true} - if connected
+ * @throws {Error} - if we can't find the topic name, or the consumer is not connected
+ */
+const isConnected = async () => {
+  const topicName = Utility.getNotificationTopicName()
+  const metadata = await getMetadataPromise(notificationConsumer, topicName)
+
+  const foundTopics = metadata.topics.map(topic => topic.name)
+  if (foundTopics.indexOf(topicName) === -1) {
+    Logger.debug(`Connected to consumer, but ${topicName} not found.`)
+    throw new Error(`Connected to consumer, but ${topicName} not found.`)
+  }
+
+  return true
+}
+
+/**
+ * @function disconnect
+ *
+ *
+ * @description Disconnect from the notificationConsumer
+ *
+ * @returns Promise<*> - Passes on the Promise from Consumer.disconnect()
+ * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
+ */
+const disconnect = async () => {
+  if (!notificationConsumer || !notificationConsumer.disconnect) {
+    throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
+  }
+
+  return notificationConsumer.disconnect()
+}
+
 module.exports = {
+  disconnect,
   startConsumer,
   processMessage,
-  consumeMessage
+  consumeMessage,
+  isConnected
 }

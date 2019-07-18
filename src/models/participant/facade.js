@@ -47,7 +47,7 @@ const Mustache = require('mustache')
 const getEndpoint = async (fsp, enpointType, transferId = null) => {
   try {
     let url = await Cache.getEndpoint(fsp, enpointType)
-    url = Mustache.render(url, { transferId: transferId })
+    url = Mustache.render(url, { transferId })
     return url
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)

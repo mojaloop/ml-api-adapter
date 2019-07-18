@@ -160,7 +160,7 @@ const fulfilTopicTemplate = () => {
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
-const getTransferByidTopicTemplate = () => {
+const getTransferByIdTopicTemplate = () => {
   try {
     return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GET_TRANSFERS_TOPIC_TEMPLATE.TEMPLATE)
   } catch (e) {
@@ -319,7 +319,7 @@ const getFulfilTopicName = () => {
  */
 const getTransferByIdTopicName = () => {
   try {
-    return getTransferByidTopicTemplate()
+    return getTransferByIdTopicTemplate()
   } catch (e) {
     throw e
   }
@@ -342,7 +342,7 @@ const getKafkaConfig = (flow, functionality, action) => {
     actionObject.config.logger = Logger
     return actionObject.config
   } catch (err) {
-    throw ErrorHandler.Factory.createInternalServerFSPIOPError('No kafka config found for specified paramters', err)
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(`No config found for flow='${flow}', functionality='${functionality}', action='${action}'`, err)
   }
 }
 
