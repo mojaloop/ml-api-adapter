@@ -3,10 +3,11 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
+const proxyquire = require('proxyquire')
 
 const Config = require('../../../../src/lib/config')
 const Notification = require('../../../../src/handlers/notification')
-const Handler = require('../../../../src/api/metadata/handler')
+
 const {
   createRequest,
   unwrapResponse
@@ -19,11 +20,13 @@ Test('metadata handler', (handlerTest) => {
   let originalPrecision
   let originalHostName
   let sandbox
+  let Handler
 
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Notification, 'isConnected')
     sandbox.stub(axios, 'get')
+    Handler = proxyquire('../../../../src/api/metadata/handler', {})
 
     originalScale = Config.AMOUNT.SCALE
     originalPrecision = Config.AMOUNT.PRECISION
@@ -41,6 +44,7 @@ Test('metadata handler', (handlerTest) => {
     Config.AMOUNT.SCALE = originalScale
     Config.AMOUNT.PRECISION = originalPrecision
     Config.HOSTNAME = originalHostName
+    Config.HANDLERS_DISABLED = false
 
     t.end()
   })
@@ -49,6 +53,25 @@ Test('metadata handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
+      axios.get.resolves({ data: { status: 'OK' } })
+      const expectedResponseCode = 200
+
+      // Act
+      const {
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+
+      // Assert
+      test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
+    })
+
+    healthTest.test('returns the correct response when the health check is up in API mode only (Config.HANDLERS_DISABLED=true)', async test => {
+      // Arrange
+      Notification.isConnected.resolves(true)
+
+      Config.HANDLERS_DISABLED = true
+      Handler = proxyquire('../../../../src/api/metadata/handler', {})
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 200
 
