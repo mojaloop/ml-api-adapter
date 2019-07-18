@@ -39,8 +39,6 @@ defaults_license_scanner: &defaults_license_scanner
   name: Install and set up license-scanner
   command: |
     git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
-    # TODO: remove
-    cd /tmp/license-scanner && git fetch && git checkout add-docker-image-scan-2
     cd /tmp/license-scanner && make build default-files set-up
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
@@ -48,9 +46,7 @@ defaults_build_docker_login: &defaults_build_docker_login
     docker login -u $DOCKER_USER -p $DOCKER_PASS
 defaults_build_docker_build: &defaults_build_docker_build
   name: Build Docker image
-  # TODO: remove tmp-circle
   command: |
-    export CIRCLE_TAG=tmp-circle
     docker build -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG .
 defaults_build_docker_publish: &defaults_build_docker_publish
   name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
@@ -389,20 +385,15 @@ jobs:
           <<: *defaults_license_scanner
       - run:
           name: Run the license-scanner
-          # TODO: change back to CIRCLE_TAG
-          # command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
-          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:tmp-circle make run
+          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
       - store_artifacts:
           path: /tmp/license-scanner/results
           prefix: licenses
+      - run:
+          <<: *defaults_build_docker_publish
+      - run:
+          <<: *defaults_slack_announcement
 
-      # TODO: add back 
-      # - run:
-      #     <<: *defaults_build_docker_publish
-      # - run:
-      #     <<: *defaults_slack_announcement
-
-  
   deploy-snapshot:
     <<: *defaults_working_directory
     <<: *defaults_docker_helm_kube
@@ -761,13 +752,12 @@ workflows:
             - test-functional
             - vulnerability-check
             - audit-licenses
-          # TODO: add back
-          # filters:
-            # tags:
-              # only: /v[0-9]+(\.[0-9]+)*/
-          #   branches:
-          #     ignore:
-          #       - /.*/
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
+            branches:
+              ignore:
+                - /.*/
      
       - test-functional:
           context: org-global
