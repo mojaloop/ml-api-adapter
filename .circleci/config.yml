@@ -40,7 +40,6 @@ defaults_license_scanner: &defaults_license_scanner
   command: |
     git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
     cd /tmp/license-scanner
-    git checkout add-docker-image-scan #todo: remove this once we have this in!
     make build default-files
     cd /tmp/license-scanner && make set-up
 defaults_build_docker_login: &defaults_build_docker_login
