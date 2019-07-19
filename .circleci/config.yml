@@ -26,7 +26,6 @@ defaults_Dependencies: &defaults_Dependencies |
     apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
     npm config set unsafe-perm true
     npm install -g node-gyp
-
 defaults_awsCliDependencies: &defaults_awsCliDependencies |
     apk --no-cache add \
             python \
@@ -36,12 +35,11 @@ defaults_awsCliDependencies: &defaults_awsCliDependencies |
             mailcap
     pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic
     apk -v --purge del py-pip
-
-defaults_license_checker: &defaults_license_checker |
+defaults_license_scanner: &defaults_license_scanner
+  name: Install and set up license-scanner
+  command: |
     git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
-    cd /tmp/license-scanner
-    make build default-files
-
+    cd /tmp/license-scanner && make build default-files set-up
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
   command: |
@@ -265,7 +263,7 @@ jobs:
       - store_test_results:
           path: ./test/results
 
-  audit-dependencies:
+  vulnerability-check:
     <<: *defaults_working_directory
     <<: *defaults_docker_node
     steps:
@@ -293,14 +291,10 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - run:
-          name: Install license_checker
-          command: *defaults_license_checker
+          <<: *defaults_license_scanner
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
-      - run:
-          name: Set up License Checker
-          command: cd /tmp/license-scanner && make set-up
       - run:
           name: Run the license-scanner
           command: cd /tmp/license-scanner && pathToRepo=$CIRCLE_WORKING_DIRECTORY make run
@@ -387,6 +381,14 @@ jobs:
           <<: *defaults_build_docker_login
       - run:
           <<: *defaults_build_docker_build
+      - run:
+          <<: *defaults_license_scanner
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
+      - store_artifacts:
+          path: /tmp/license-scanner/results
+          prefix: licenses
       - run:
           <<: *defaults_build_docker_publish
       - run:
@@ -614,7 +616,7 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-      - audit-dependencies:
+      - vulnerability-check:
           context: org-global
           requires:
             - setup
@@ -644,7 +646,7 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - audit-dependencies
+            - vulnerability-check
             - audit-licenses
           filters:
             tags:
@@ -670,7 +672,7 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - audit-dependencies
+            - vulnerability-check
             - audit-licenses
           filters:
             tags:
@@ -696,7 +698,7 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - audit-dependencies
+            - vulnerability-check
             - audit-licenses
           filters:
             tags:
@@ -722,7 +724,7 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - audit-dependencies
+            - vulnerability-check
             - audit-licenses
           filters:
             tags:
@@ -748,7 +750,7 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            - audit-dependencies
+            - vulnerability-check
             - audit-licenses
           filters:
             tags:
@@ -756,6 +758,11 @@ workflows:
             branches:
               ignore:
                 - /.*/
+     
+      - test-functional:
+          context: org-global
+          requires:
+            - setup
       - deploy:
           context: org-global
           requires:

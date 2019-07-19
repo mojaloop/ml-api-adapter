@@ -25,6 +25,7 @@
 const Sinon = require('sinon')
 const Test = require('tapes')(require('tape'))
 const P = require('bluebird')
+const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
@@ -147,13 +148,13 @@ Test('transfer handler', handlerTest => {
         }
       }
 
-      const error = new Error()
+      const error = new Error('An error has occurred')
       TransferService.prepare.returns(P.reject(error))
 
       try {
         await Handler.create(createRequest(payload))
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
@@ -204,8 +205,8 @@ Test('transfer handler', handlerTest => {
       Handler.fulfilTransfer(request, reply)
     })
 
-    fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', test => {
-      let completedTimestamp = new Date((new Date().getTime() + 1000))
+    fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', async test => {
+      let completedTimestamp = new Date((new Date().getTime() + 100000))
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -232,21 +233,19 @@ Test('transfer handler', handlerTest => {
       TransferService.fulfil.returns(P.resolve(true))
 
       const request = createPutRequest(params, payload)
-      const reply = {
-        response: (response) => {
-          return {
-            code: statusCode => {
-              test.equal(statusCode, 400)
-              test.end()
-            }
-          }
-        }
-      }
 
-      Handler.fulfilTransfer(request, reply)
+      try {
+        await Handler.fulfilTransfer(request, {})
+        test.fail('Expected an error to be thrown')
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.httpStatusCode, 400)
+        test.equal(err.message, 'completedTimestamp fails because future timestamp was provided')
+      }
+      test.end()
     })
 
-    fulfilTransferTest.test('reply with status code 400 if completedTimestamp is way too far in the past', test => {
+    fulfilTransferTest.test('reply with status code 400 if completedTimestamp is way too far in the past', async test => {
       let completedTimestamp = new Date((new Date().getTime() - 3600 * 1000))
       const payload = {
         transferState: 'RECEIVED',
@@ -274,18 +273,16 @@ Test('transfer handler', handlerTest => {
       TransferService.fulfil.returns(P.resolve(true))
 
       const request = createPutRequest(params, payload)
-      const reply = {
-        response: (response) => {
-          return {
-            code: statusCode => {
-              test.equal(statusCode, 400)
-              test.end()
-            }
-          }
-        }
-      }
 
-      Handler.fulfilTransfer(request, reply)
+      try {
+        await Handler.fulfilTransfer(request, { })
+        test.fail('Expected an FSPIOPError to be thrown')
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.httpStatusCode, 400)
+        test.equal(err.message, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
+      }
+      test.end()
     })
 
     fulfilTransferTest.test('return error if fulfilTransfer throws', async test => {
@@ -312,7 +309,7 @@ Test('transfer handler', handlerTest => {
         id: 'dfsp1'
       }
 
-      const error = new Error()
+      const error = new Error('An error has occurred')
       TransferService.fulfil.returns(P.reject(error))
 
       try {
@@ -362,12 +359,12 @@ Test('transfer handler', handlerTest => {
             log: () => { }
           }
         }
-        TransferService.getTransferById.rejects(new Error())
+        TransferService.getTransferById.rejects(new Error('An error has occurred'))
         try {
           await Handler.getTransferById(request)
           test.fail('does not throw')
         } catch (e) {
-          test.ok(e instanceof Error)
+          test.ok(e instanceof FSPIOPError)
           test.equal(e.message, 'An error has occurred')
           test.end()
         }
@@ -415,12 +412,12 @@ Test('transfer handler', handlerTest => {
           log: () => { }
         }
       }
-      TransferService.transferError.rejects(new Error())
+      TransferService.transferError.rejects(new Error('An error has occurred'))
       try {
         await Handler.fulfilTransferError(request)
         test.fail('does not throw')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }

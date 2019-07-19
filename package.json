@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "7.0.0",
+  "version": "7.1.4",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -14,12 +14,6 @@
     "type": "git",
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
   },
-  "config": {
-    "knex": "--knexfile ./config/knexfile.js",
-    "images": {
-      "api": "ml-api-adapter"
-    }
-  },
   "standard": {
     "ignore": [
       "/migrations/**",
@@ -29,6 +23,7 @@
   "scripts": {
     "start": "run-p start:api",
     "start:api": "node src/api/index.js",
+    "watch:api": "nodemon src/api/index.js",
     "dev": "npm run docker:stop && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d",
     "test": "npm run test:unit | faucet",
     "pretest": "standard",
@@ -63,46 +58,44 @@
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`"
   },
   "dependencies": {
+    "@hapi/basic": "5.1.0",
+    "@hapi/good": "8.2.0",
+    "@hapi/hapi": "18.3.1",
+    "@hapi/inert": "5.2.1",
+    "@hapi/joi": "15.1.0",
+    "@hapi/joi-date": "1.3.0",
+    "@hapi/vision": "5.5.2",
     "@mojaloop/central-services-auth": "5.2.1",
-    "@mojaloop/central-services-database": "5.2.1",
-    "@mojaloop/central-services-error-handling": "5.2.0",
+    "@mojaloop/central-services-error-handling": "7.1.2",
+    "@mojaloop/central-services-health": "7.0.0",
     "@mojaloop/central-services-metrics": "5.2.0",
-    "@mojaloop/central-services-shared": "5.2.0",
+    "@mojaloop/central-services-shared": "6.4.1",
     "@mojaloop/central-services-stream": "6.2.2",
     "@mojaloop/forensic-logging-client": "5.2.0",
     "@now-ims/hapi-now-auth": "2.0.0",
+    "axios": "0.19.0",
     "blipp": "4.0.0",
     "bluebird": "3.5.5",
-    "@hapi/boom": "7.4.2",
     "catbox": "10.0.6",
     "catbox-memory": "4.0.1",
     "commander": "2.20.0",
     "docdash": "1.1.1",
     "flat": "4.1.0",
     "glob": "7.1.4",
-    "@hapi/good": "8.2.0",
-    "@hapi/hapi": "18.3.1",
-    "@hapi/basic": "5.1.0",
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "10.0.2",
     "immutable": "3.8.2",
-    "@hapi/inert": "5.2.1",
-    "@hapi/joi": "15.1.0",
     "joi-currency-code": "2.0.2",
-    "@hapi/joi-date": "1.3.0",
     "jsdoc": "3.6.2",
-    "knex": "0.17.6",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "mustache": "3.0.1",
     "raw-body": "2.4.1",
     "rc": "1.2.8",
     "request": "2.88.0",
     "urlsafe-base64": "1.0.0",
-    "uuid4": "1.1.4",
-    "@hapi/vision": "5.5.2"
+    "uuid4": "1.1.4"
   },
   "devDependencies": {
-    "async-request": "1.2.0",
     "aws-sdk": "2.482.0",
     "faucet": "0.0.1",
     "istanbul": "1.1.0-alpha.1",
@@ -110,6 +103,7 @@
     "license-checker": "25.0.1",
     "mag": "0.9.1",
     "mag-hub": "0.1.1",
+    "nodemon": "1.19.1",
     "npm-audit-resolver": "1.5.0",
     "npm-run-all": "4.1.5",
     "pre-commit": "1.2.2",

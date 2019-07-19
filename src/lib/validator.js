@@ -24,42 +24,19 @@
 
 'use strict'
 
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
+const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../lib/config')
 
-const BAD_REQUEST_ERROR_CODE = 400
-const BAD_REQUEST_ERROR_DESC = 'Bad Request'
-const DEFAULT_LAG_SECONDS = 300
-
 const fulfilTransfer = (request) => {
-  let validationPassed = true
-  let errorInformation = {
-    errorCode: BAD_REQUEST_ERROR_CODE,
-    errorDescription: BAD_REQUEST_ERROR_DESC,
-    extensionList: {
-      extension: []
-    }
-  }
-
-  const maxLag = (Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS || DEFAULT_LAG_SECONDS) * 1000
+  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
+  Logger.debug(`completedTimestamp: ${completedTimestamp}, now: ${now}`)
   if (completedTimestamp > now) {
-    errorInformation.extensionList.extension.push({
-      key: 'customValidationError',
-      value: 'completedTimestamp fails because future timestamp was provided'
-    })
-    validationPassed = false
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because future timestamp was provided')
   } else if (completedTimestamp < now - maxLag) {
-    errorInformation.extensionList.extension.push({
-      key: 'customValidationError',
-      value: 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration'
-    })
-    validationPassed = false
-  }
-
-  return {
-    validationPassed,
-    reason: errorInformation
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
   }
 }
 

@@ -28,6 +28,7 @@ const Config = require('./config')
 const Mustache = require('mustache')
 const KafkaConfig = Config.KAFKA_CONFIG
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 
 /**
  * @module src/lib/utility
@@ -159,7 +160,7 @@ const fulfilTopicTemplate = () => {
  *
  * @returns {string} - Returns topic name to be created, throws error if failure occurs
  */
-const getTransferByidTopicTemplate = () => {
+const getTransferByIdTopicTemplate = () => {
   try {
     return Mustache.render(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GET_TRANSFERS_TOPIC_TEMPLATE.TEMPLATE)
   } catch (e) {
@@ -318,7 +319,7 @@ const getFulfilTopicName = () => {
  */
 const getTransferByIdTopicName = () => {
   try {
-    return getTransferByidTopicTemplate()
+    return getTransferByIdTopicTemplate()
   } catch (e) {
     throw e
   }
@@ -340,8 +341,8 @@ const getKafkaConfig = (flow, functionality, action) => {
     const actionObject = functionalityObject[action]
     actionObject.config.logger = Logger
     return actionObject.config
-  } catch (e) {
-    throw new Error('No config found for those parameters')
+  } catch (err) {
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(`No config found for flow='${flow}', functionality='${functionality}', action='${action}'`, err)
   }
 }
 
