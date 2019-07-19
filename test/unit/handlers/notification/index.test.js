@@ -32,6 +32,7 @@ const Sinon = require('sinon')
 const rewire = require('rewire')
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
+const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const P = require('bluebird')
 
 const Notification = require(`${src}/handlers/notification`)
@@ -371,9 +372,10 @@ Test('Notification Service tests', notificationTest => {
         await Notification.processMessage(msg)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
-      } catch (e) {
-        test.ok(e instanceof Error)
-        test.equal(e.message, 'Invalid message received from kafka')
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.message, 'Invalid message received from kafka')
+        test.equal(err.apiErrorCode.code, '2001')
         test.end()
       }
     })

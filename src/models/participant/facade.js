@@ -25,6 +25,7 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Cache = require('../../domain/participant/lib/cache/participantEndpoint')
 const Mustache = require('mustache')
 
@@ -48,9 +49,10 @@ const getEndpoint = async (fsp, enpointType, transferId = null) => {
     let url = await Cache.getEndpoint(fsp, enpointType)
     url = Mustache.render(url, { transferId })
     return url
-  } catch (e) {
-    Logger.error(e)
-    throw e
+  } catch (err) {
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 

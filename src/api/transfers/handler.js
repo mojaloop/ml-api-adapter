@@ -27,8 +27,8 @@
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('@hapi/boom')
 const Metrics = require('@mojaloop/central-services-metrics')
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 
 /**
  * @module src/api/transfers/handler
@@ -60,9 +60,10 @@ const create = async function (request, h) {
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
-    Logger.error(err)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
     histTimerEnd({ success: false })
-    throw Boom.boomify(err, { message: 'An error has occurred' })
+    throw fspiopError
   }
 }
 
@@ -86,11 +87,7 @@ const fulfilTransfer = async function (request, h) {
   ).startTimer()
 
   try {
-    let { validationPassed, reason } = Validator.fulfilTransfer(request)
-    if (!validationPassed) {
-      return h.response(reason).code(reason.errorCode)
-    }
-
+    Validator.fulfilTransfer(request)
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
@@ -98,9 +95,10 @@ const fulfilTransfer = async function (request, h) {
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
-    Logger.error(err)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
     histTimerEnd({ success: false })
-    throw Boom.boomify(err, { message: 'An error has occurred' })
+    throw fspiopError
   }
 }
 
@@ -117,13 +115,22 @@ const fulfilTransfer = async function (request, h) {
  */
 
 const getTransferById = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_get',
+    'Get a transfer by Id',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.info('getById::id(%s)', request.params.id)
     await TransferService.getTransferById(request.params.id, request.headers)
+    histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
-    Logger.error(err)
-    throw Boom.boomify(err, { message: 'An error has occurred' })
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    histTimerEnd({ success: false })
+    throw fspiopError
   }
 }
 
@@ -139,15 +146,24 @@ const getTransferById = async function (request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_fulfil_error',
+    'Produce a transfer fulfil error message to transfer fulfil kafka topic',
+    ['success']
+  ).startTimer()
+
   try {
     Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await TransferService.transferError(request.params.id, request.headers, request.payload, request.dataUri)
+    histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
-    Logger.error(err)
-    throw Boom.boomify(err, { message: 'An error has occurred' })
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    histTimerEnd({ success: false })
+    throw fspiopError
   }
 }
 

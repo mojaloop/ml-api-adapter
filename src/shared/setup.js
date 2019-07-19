@@ -109,8 +109,9 @@ const createHandlers = async (handlers) => {
           await RegisterHandlers.registerNotificationHandler()
         } else {
           let error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
-          Logger.error(error)
-          throw new Error(error)
+          const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
+          Logger.error(fspiopError)
+          throw fspiopError
         }
       }
     }
@@ -156,8 +157,9 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       }
       break
     default:
-      Logger.error(`No valid service type ${service} found!`)
-      throw new Error(`No valid service type ${service} found!`)
+      const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(`No valid service type ${service} found!`)
+      Logger.error(fspiopError)
+      throw fspiopError
   }
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {

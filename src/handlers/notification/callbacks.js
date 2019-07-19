@@ -23,6 +23,7 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const request = require('request')
 const Transformer = require('../../domain/transfer/transformer')
 const Config = require('../../lib/config')
@@ -50,7 +51,7 @@ const Enum = require('../../lib/enum')
 const sendCallback = async (url, method, headers, message, cid, sourceFsp, destinationFsp) => {
   // validate incoming request parameters are not null or undefined
   if (!url || !method || !headers || !message || !cid || !sourceFsp || !destinationFsp) {
-    throw new Error(Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
   }
 
   // Transform headers into Mojaloop v1.0 Specifications
@@ -72,9 +73,15 @@ const sendCallback = async (url, method, headers, message, cid, sourceFsp, desti
   return new Promise((resolve, reject) => {
     return request(requestOptions, (error, response) => {
       if (error) {
-        // throw error // this is not correct in the context of a Promise.
         Logger.error(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
-        return reject(error)
+        const fspiopError = ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.DESTINATION_COMMUNICATION_ERROR, 'Failed to send HTTP request to host', error, sourceFsp, [
+          { key: 'url', value: url },
+          { key: 'sourceFsp', value: sourceFsp },
+          { key: 'destinationFsp', value: destinationFsp },
+          { key: 'method', value: method },
+          { key: 'request', value: JSON.stringify(requestOptions) }
+        ])
+        return reject(fspiopError)
       }
       Logger.info(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback successful with status code: ${response.statusCode}`)
       Logger.debug(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback successful with response: ${JSON.stringify(response)}`)

@@ -25,6 +25,7 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Config = require('../../lib/config')
 const Mustache = require('mustache')
 const request = require('request')
@@ -57,7 +58,12 @@ const getEndpoint = async (fsp) => {
     return request(requestOptions, (error, response, body) => {
       if (error) {
         Logger.error(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := failed with error: ${error}, response: ${JSON.stringify(response)}`)
-        return reject(error)
+        const fspiopError = ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.DESTINATION_COMMUNICATION_ERROR, 'Failed to send HTTP request to host', error, null, [
+          { key: 'url', value: url },
+          { key: 'fsp', value: fsp },
+          { key: 'request', value: JSON.stringify(requestOptions) }
+        ])
+        return reject(fspiopError)
       }
       Logger.info(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := successful with body: ${JSON.stringify(response.body)}`)
       Logger.debug(`[fsp=${fsp}] ~ Model::participantEndpoint::getEndpoint := successful with response: ${JSON.stringify(response)}`)

@@ -26,6 +26,7 @@
 
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Facade = require('../../models/participant/facade')
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 /**
  * @module src/domain/participant
  */
@@ -48,9 +49,11 @@ const getEndpoint = async (fsp, enpointType, transferId = null) => {
 
   try {
     return Facade.getEndpoint(fsp, enpointType, transferId)
-  } catch (e) {
-    Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${e}'`)
-    throw e
+  } catch (err) {
+    Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 
