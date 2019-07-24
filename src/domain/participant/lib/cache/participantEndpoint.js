@@ -42,6 +42,24 @@ let policy
  */
 
 /**
+ * @function fetchEndpoints
+ *
+ * @description This populates the cache of endpoints
+ *
+ * @param {string} id The fsp id
+ * @returns {object} endpointMap Returns the object containing the endpoints for given fsp id
+ */
+
+const fetchEndpoints = async (id) => {
+  Logger.debug(`[fsp=${id}] ~ participantEndpointCache::fetchEndpoints := Refreshing the cache for FSP: ${id}`)
+
+  const endpointMap = await Model.getEndpoint(id)
+
+  Logger.debug(`[fsp=${id}] ~ participantEndpointCache::fetchEndpoints := Returning the endpoints: ${JSON.stringify(endpointMap)}`)
+  return endpointMap
+}
+
+/**
 * @function initializeCache
 *
 * @description This initializes the cache for endpoints
@@ -66,40 +84,21 @@ const initializeCache = async () => {
 }
 
 /**
-* @function fetchEndpoints
-*
- * @description This populates the cache of endpoints
- *
- * @param {string} id The fsp id
- * @returns {object} endpointMap Returns the object containing the endpoints for given fsp id
- */
-
-const fetchEndpoints = async (id) => {
-  Logger.debug(`[fsp=${id}] ~ participantEndpointCache::fetchEndpoints := Refreshing the cache for FSP: ${id}`)
-
-  const endpointMap = await Model.getEndpoint(id)
-
-  Logger.debug(`[fsp=${id}] ~ participantEndpointCache::fetchEndpoints := Returning the endpoints: ${JSON.stringify(endpointMap)}`)
-  return endpointMap
-}
-
-/**
  * @function GetEndpoint
  *
  * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
  *
  * @param {string} fsp - the id of the fsp
- * @param {string} enpointType - the type of the endpoint
+ * @param {string} endpointType - the type of the endpoint
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const getEndpoint = async (fsp, enpointType) => {
+const getEndpoint = async (fsp, endpointType) => {
   Logger.debug(`participantEndpointCache::getEndpoint::fsp - ${fsp}`)
-  Logger.debug(`participantEndpointCache::getEndpoint::enpointType - ${enpointType}`)
+  Logger.debug(`participantEndpointCache::getEndpoint::endpointType - ${endpointType}`)
   try {
-    let endpoints = await policy.get(fsp)
-    let url = new Map(endpoints).get(enpointType)
-    return url
+    const endpoints = await policy.get(fsp)
+    return new Map(endpoints).get(endpointType)
   } catch (e) {
     Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${e}'`)
     throw e

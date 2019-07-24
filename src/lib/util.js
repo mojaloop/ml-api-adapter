@@ -116,13 +116,11 @@ const getValueByCaseInsensitiveKey = (obj, key) => {
  * @returns value from case insensitive comparison search
  */
 const setValueByCaseInsensitiveKey = (obj, key, value) => {
-  for (var objKey in obj) {
-    switch (objKey.toLowerCase()) {
-      case (key.toLowerCase()):
+  for (const objKey in obj) {
+    if (obj.hasOwnProperty(objKey)) {
+      if (objKey.toLowerCase() === key.toLowerCase()) {
         obj[objKey] = value
-        break
-      default:
-        break
+      }
     }
   }
 }

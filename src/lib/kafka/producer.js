@@ -35,8 +35,27 @@
 
 const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 
-let listOfProducers = {}
+const listOfProducers = {}
+
+/**
+ * @function GetProducer
+ *
+ * @param {string} topicName - the topic name to locate a specific producer
+ *
+ * @description This is used to get a producer with the topic name to send messages to a kafka topic
+ *
+ * @returns {Producer} - Returns consumer
+ * @throws {Error} - if consumer not found for topic name
+ */
+const getProducer = (topicName) => {
+  if (listOfProducers[topicName]) {
+    return listOfProducers[topicName]
+  } else {
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(`No producer found for topic ${topicName}`)
+  }
+}
 
 /**
  * @function ProduceMessage
@@ -67,10 +86,11 @@ const produceMessage = async (messageProtocol, topicConf, config) => {
     await producer.sendMessage(messageProtocol, topicConf)
     Logger.info('Producer::end')
     return true
-  } catch (e) {
-    Logger.error(e)
-    Logger.info('Producer error has occurred')
-    throw e
+  } catch (err) {
+    Logger.error(`Producer error has occurred: ${err}`)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
   }
 }
 
@@ -96,36 +116,20 @@ const disconnect = async (topicName = null) => {
 
     let tpName
     for (tpName in listOfProducers) {
-      try {
-        await getProducer(tpName).disconnect()
-      } catch (e) {
-        isError = true
-        errorTopicList.push({ topic: tpName, error: e.toString() })
+      if (listOfProducers.hasOwnProperty(tpName)) {
+        try {
+          await getProducer(tpName).disconnect()
+        } catch (e) {
+          isError = true
+          errorTopicList.push({ topic: tpName, error: e.toString() })
+        }
       }
     }
     if (isError) {
-      throw Error(`The following Producers could not be disconnected: ${JSON.stringify(errorTopicList)}`)
+      throw ErrorHandler.Factory.createInternalServerFSPIOPError(`The following Producers could not be disconnected: ${JSON.stringify(errorTopicList)}`)
     }
   } else {
-    throw Error(`Unable to disconnect Producer: ${topicName}`)
-  }
-}
-
-/**
- * @function GetProducer
- *
- * @param {string} topicName - the topic name to locate a specific producer
- *
- * @description This is used to get a producer with the topic name to send messages to a kafka topic
- *
- * @returns {Producer} - Returns consumer
- * @throws {Error} - if consumer not found for topic name
- */
-const getProducer = (topicName) => {
-  if (listOfProducers[topicName]) {
-    return listOfProducers[topicName]
-  } else {
-    throw Error(`No producer found for topic ${topicName}`)
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(`Unable to disconnect Producer: ${topicName}`)
   }
 }
 

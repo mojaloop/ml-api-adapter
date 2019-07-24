@@ -23,8 +23,8 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const request = require('request')
-// const request = require('request-promise-native') // added to ensure that the request support async-await or promise natively
 const Transformer = require('../../domain/transfer/transformer')
 const Config = require('../../lib/config')
 const Enum = require('../../lib/enum')
@@ -44,14 +44,14 @@ const Enum = require('../../lib/enum')
 * @param headers - the http headers to be used while sending the request
 * @param message - the message that will be sent as the body of http request
 * @param cid - the component id (transferId) for which callback is being sent, its used for logging only
-* @param fsp - the fsp id for which callback is being sent, its used for logging only
-
+* @param sourceFsp - the fsp id for which callback is being sent from, its used for logging only
+* @param destinationFsp - the fsp id for which callback is being sent, its used for logging only
 * @returns {Promise} Returns a promise which resolves the http status code on success or rejects the error on failure
 */
 const sendCallback = async (url, method, headers, message, cid, sourceFsp, destinationFsp) => {
   // validate incoming request parameters are not null or undefined
   if (!url || !method || !headers || !message || !cid || !sourceFsp || !destinationFsp) {
-    throw new Error(Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(Enum.errorMessages.MISSINGFUNCTIONPARAMETERS)
   }
 
   // Transform headers into Mojaloop v1.0 Specifications
@@ -71,11 +71,17 @@ const sendCallback = async (url, method, headers, message, cid, sourceFsp, desti
   Logger.debug(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback requestOptions: ${JSON.stringify(requestOptions)}`)
 
   return new Promise((resolve, reject) => {
-    return request(requestOptions, (error, response, body) => {
+    return request(requestOptions, (error, response) => {
       if (error) {
-        // throw error // this is not correct in the context of a Promise.
         Logger.error(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback failed with error: ${error}, response: ${JSON.stringify(response)}`)
-        return reject(error)
+        const fspiopError = ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.DESTINATION_COMMUNICATION_ERROR, 'Failed to send HTTP request to host', error, sourceFsp, [
+          { key: 'url', value: url },
+          { key: 'sourceFsp', value: sourceFsp },
+          { key: 'destinationFsp', value: destinationFsp },
+          { key: 'method', value: method },
+          { key: 'request', value: JSON.stringify(requestOptions) }
+        ])
+        return reject(fspiopError)
       }
       Logger.info(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback successful with status code: ${response.statusCode}`)
       Logger.debug(`[cid=${cid}, sourceFsp=${sourceFsp}, destinationFsp=${destinationFsp}] ~ NotificationHandler::sendCallback := Callback successful with response: ${JSON.stringify(response)}`)
