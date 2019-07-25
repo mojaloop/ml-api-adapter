@@ -21,6 +21,7 @@
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  * Miguel de Barros <miguel.debarros@modusbox.com>
+ * Rajiv Mothilal <rajiv.mothilal@modusbox.com>
 
  --------------
  ******/
@@ -36,19 +37,16 @@ const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory
 const P = require('bluebird')
 
 const Notification = require(`${src}/handlers/notification`)
-const Callback = require(`${src}/handlers/notification/callbacks`)
+const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
-const ENUM = require(`${src}/lib/enum`)
+const ENUM = require('@mojaloop/central-services-shared').Enum
 const Utility = require(`${src}/lib/utility`)
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
-  const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
-  const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
-  const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
   const url = 'http://somehost:port/'
 
   notificationTest.beforeEach(t => {
@@ -62,7 +60,7 @@ Test('Notification Service tests', notificationTest => {
     sandbox.stub(Participant, 'getEndpoint').returns(P.resolve(url))
 
     sandbox.stub(Logger)
-    sandbox.stub(Callback, 'sendCallback').returns(P.resolve(true))
+    sandbox.stub(Callback, 'sendRequest').returns(P.resolve(true))
     t.end()
   })
 
@@ -98,17 +96,17 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const url = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
       const method = 'post'
       const headers = {}
       const message = { transferId: uuid }
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(url, method, headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -136,17 +134,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const url = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const headers = {}
       const message = { transferId: uuid }
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(url, method, headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -174,12 +172,12 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
       const method = 'post'
       const headers = {}
       const message = { transferId: uuid }
 
-      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).throws(new Error())
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -214,12 +212,12 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const url = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const headers = {}
       const message = { transferId: uuid }
 
-      Callback.sendCallback.withArgs(url, method, headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).throws(new Error())
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -260,20 +258,20 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const urlPayer = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const urlPayee = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
       // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(urlPayer, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
-      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(urlPayee, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(urlPayer, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
+      Callback.sendRequest.withArgs(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(urlPayee, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(urlPayer, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(urlPayer, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -306,11 +304,11 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const url = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const url = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
-      Callback.sendCallback.withArgs(url, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).throws(new Error())
+      Callback.sendRequest.withArgs(url, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).throws(new Error())
 
       try {
         await Notification.processMessage(msg)
@@ -409,19 +407,19 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const toUrl = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
-      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -454,20 +452,20 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const toUrl = await Participant.getEndpoint(msg.value.to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
-      Callback.sendCallback.withArgs(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
-      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, ENUM.headers.FSPIOP.SWITCH.value, msg.value.from))
-      test.ok(Callback.sendCallback.calledWith(toUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -501,17 +499,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -545,17 +543,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -589,17 +587,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -633,17 +631,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -677,17 +675,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
       console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.to}, ${msg.value.from}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -721,17 +719,17 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      const fromUrl = await Participant.getEndpoint(msg.value.from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = 'put'
       const message = { transferId: uuid }
 
       const expected = 200
 
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
-      Callback.sendCallback.withArgs(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
       let result = await Notification.processMessage(msg)
-      test.ok(Callback.sendCallback.calledWith(fromUrl, method, msg.value.content.headers, JSON.stringify(message), msg.value.content.payload.transferId, msg.value.from, msg.value.to))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })

@@ -28,12 +28,13 @@
 
 const Handler = require('./handler')
 const BaseJoi = require('joi-currency-code')(require('@hapi/joi'))
+const Enum = require('@mojaloop/central-services-shared').Enum
 const Extension = require('@hapi/joi-date')
 const Joi = BaseJoi.extend(Extension)
 const tags = ['api', 'transfers']
-const transferState = ['RECEIVED', 'RESERVED', 'COMMITTED', 'ABORTED', 'SETTLED']
-const regexAccept = /application\/vnd.interoperability[.]/
-const regexContentType = /application\/vnd.interoperability[.]/
+const transferState = [Enum.Transfers.TransferState.RECEIVED, Enum.Transfers.TransferState.RESERVED, Enum.Transfers.TransferState.COMMITTED, Enum.Transfers.TransferState.ABORTED, Enum.Transfers.TransferState.SETTLED]
+const regexAccept = Enum.Http.Headers.GENERAL.ACCEPT.regex
+const regexContentType = Enum.Http.Headers.GENERAL.ACCEPT.regex
 
 module.exports = [{
   method: 'POST',

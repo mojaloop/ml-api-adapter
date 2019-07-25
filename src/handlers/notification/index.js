@@ -28,20 +28,17 @@
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Participant = require('../../domain/participant')
-const Utility = require('../../lib/utility')
-const Callback = require('./callbacks')
+const Callback = require('@mojaloop/central-services-shared').Util.Request
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 
-const NOTIFICATION = 'notification'
-const EVENT = 'event'
-const FSPIOP_CALLBACK_URL_TRANSFER_POST = 'FSPIOP_CALLBACK_URL_TRANSFER_POST'
-const FSPIOP_CALLBACK_URL_TRANSFER_PUT = 'FSPIOP_CALLBACK_URL_TRANSFER_PUT'
-const FSPIOP_CALLBACK_URL_TRANSFER_ERROR = 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR'
+const Metrics = require('@mojaloop/central-services-metrics')
+const ENUM = require('@mojaloop/central-services-shared').Enum
+const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
+const Config = require('../../lib/config')
+
 let notificationConsumer = {}
 let autoCommitEnabled = true
-const Metrics = require('@mojaloop/central-services-metrics')
-const ENUM = require('../../lib/enum')
-const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
 
 /**
  * @module src/handlers/notification
@@ -101,15 +98,16 @@ const consumeMessage = async (error, message) => {
 * @async
 * @description This will create a kafka consumer which will listen to the notification topics configured in the config
 *
-* @returns {boolean} Returns true on sucess and throws error on failure
+* @returns {boolean} Returns true on success and throws error on failure
 */
 const startConsumer = async () => {
   Logger.info('Notification::startConsumer')
   let topicName
   try {
-    topicName = Utility.getNotificationTopicName()
+    const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+    topicName = topicConfig.topicName
     Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
-    let config = Utility.getKafkaConfig(Utility.ENUMS.CONSUMER, NOTIFICATION.toUpperCase(), EVENT.toUpperCase())
+    const config = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
     if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
@@ -159,121 +157,104 @@ const processMessage = async (msg) => {
   const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
   const payloadForCallback = decodedPayload.body.toString()
 
-  if (actionLower === ENUM.transferEventAction.PREPARE && statusLower === ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
-    const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_POST
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.POST}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.POST, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.PREPARE && statusLower !== ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.PREPARE_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.PREPARE_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.COMMIT && statusLower === ENUM.messageStatus.SUCCESS) {
-    const callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-    const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+  if (actionLower === ENUM.Events.Event.Action.COMMIT && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
     // forward the fulfil to the destination
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
 
     // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.COMMIT && statusLower !== ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, 'put', content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.COMMIT && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.REJECT) {
-    const callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-    const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+  if (actionLower === ENUM.Events.Event.Action.REJECT) {
+    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
     // forward the reject to the destination
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
     // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.ABORT) {
-    const callbackURLFrom = await Participant.getEndpoint(from, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
+  if (actionLower === ENUM.Events.Event.Action.ABORT) {
+    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
     // forward the abort to the destination
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
     // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLFrom}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendCallback(callbackURLFrom, methodFrom, content.headers, payloadForCallback, id, ENUM.headers.FSPIOP.SWITCH.value, from)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.FULFIL_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.FULFIL_DUPLICATE && statusLower !== ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.FULFIL && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.ABORT_DUPLICATE && statusLower === ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.ABORT_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.ABORT_DUPLICATE && statusLower !== ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.ABORT_DUPLICATE && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.TIMEOUT_RECEIVED) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodFrom = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodFrom}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${to}, ${from})`)
-    return Callback.sendCallback(callbackURLTo, methodFrom, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.TIMEOUT_RECEIVED) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${to}, ${from})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.GET && statusLower === ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.GET && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.transferEventAction.GET && statusLower !== ENUM.messageStatus.SUCCESS) {
-    const callbackURLTo = await Participant.getEndpoint(to, FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const methodTo = ENUM.methods.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-    Logger.debug(`Notification::processMessage - Callback.sendCallback(${callbackURLTo}, ${methodTo}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendCallback(callbackURLTo, methodTo, content.headers, payloadForCallback, id, from, to)
+  if (actionLower === ENUM.Events.Event.Action.GET && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
   Logger.warn(`Unknown action received from kafka: ${action}`)
@@ -313,7 +294,8 @@ const getMetadataPromise = (consumer, topic) => {
  * @throws {Error} - if we can't find the topic name, or the consumer is not connected
  */
 const isConnected = async () => {
-  const topicName = Utility.getNotificationTopicName()
+  const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+  const topicName = topicConfig.topicName
   const metadata = await getMetadataPromise(notificationConsumer, topicName)
 
   const foundTopics = metadata.topics.map(topic => topic.name)
