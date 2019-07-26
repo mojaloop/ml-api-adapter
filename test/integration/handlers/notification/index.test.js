@@ -31,12 +31,11 @@ const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
 const Config = require(`${src}/lib/config`)
 const Kafka = require('@mojaloop/central-services-shared').Util.Kafka
-const request = require('request')
-// const Request = require('@mojaloop/central-services-shared').Util.Request
+const Request = require('@mojaloop/central-services-shared').Util.Request
 const Utility = Kafka.Utility
 const Enum = require('@mojaloop/central-services-shared').Enum
-// const Fixtures = require('../../../fixtures/index')
-// const Logger = require('@mojaloop/central-services-shared').Logger
+const Fixtures = require('../../../fixtures/index')
+const Logger = require('@mojaloop/central-services-shared').Logger
 
 const timeoutAttempts = 10
 const callbackWaitSeconds = 2
@@ -544,19 +543,11 @@ function sleep (seconds) {
 }
 
 const getNotifications = async (fsp, operation, id) => {
-  const requestOptions = {
-    url: `${getNotificationUrl}/${fsp}/${operation}/${id}`,
-    method: 'get',
-    agentOptions: {
-      rejectUnauthorized: false
-    }
+  try {
+    const response = Request.sendRequest(`${getNotificationUrl}/${fsp}/${operation}/${id}`, Fixtures.buildHeaders, Enum.Http.Headers.FSPIOP.SWITCH.value, Enum.Http.Headers.FSPIOP.SWITCH.value)
+    return response.data
+  } catch (error) {
+    Logger.error(error)
+    throw error
   }
-  return new Promise((resolve, reject) => {
-    return request(requestOptions, (error, response) => {
-      if (error) {
-        return reject(error)
-      }
-      return resolve(response.body)
-    })
-  })
 }
