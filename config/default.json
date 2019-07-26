@@ -40,10 +40,6 @@
       "GENERAL_TOPIC_TEMPLATE": {
         "TEMPLATE": "topic-{{functionality}}-{{action}}",
         "REGEX": "topic-(.*)-(.*)"
-      },
-      "NOTIFICATION_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-notification-event",
-        "REGEX": "topic-notification-event"
       }
     },
     "CONSUMER": {

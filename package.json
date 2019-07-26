@@ -106,6 +106,7 @@
     "nyc": "14.1.1",
     "pre-commit": "1.2.2",
     "proxyquire": "2.1.1",
+    "request": "2.88.0",
     "rewire": "4.0.1",
     "sinon": "7.3.2",
     "standard": "13.1.0",
