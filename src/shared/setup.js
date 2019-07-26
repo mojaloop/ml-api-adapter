@@ -100,19 +100,17 @@ const createHandlers = async (handlers) => {
   }
 
   for (handlerIndex in handlers) {
-    if (handlers.hasOwnProperty(handlerIndex)) {
-      let handler = handlers[handlerIndex]
-      if (handler.enabled) {
-        Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
-        if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
-          await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
-          await RegisterHandlers.registerNotificationHandler()
-        } else {
-          let error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
-          const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
-          Logger.error(fspiopError)
-          throw fspiopError
-        }
+    const handler = handlers[handlerIndex]
+    if (handler.enabled) {
+      Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
+      if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
+        await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+        await RegisterHandlers.registerNotificationHandler()
+      } else {
+        const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
+        const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
+        Logger.error(fspiopError)
+        throw fspiopError
       }
     }
   }

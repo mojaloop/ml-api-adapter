@@ -8,8 +8,12 @@ const Fixtures = require('../../../fixtures')
 Test('transfer service', (modelTest) => {
   modelTest.test('prepare should', (prepareTest) => {
     prepareTest.test('produce a transfer message to kafka', async (assert) => {
-      let transfer = Fixtures.buildTransfer(Fixtures.generateTransferId())
-      const result = await TransferService.prepare({}, transfer)
+      const transfer = Fixtures.buildTransfer(Fixtures.generateTransferId())
+      const request = {
+        headers: Fixtures.buildHeaders,
+        payload: transfer
+      }
+      const result = await TransferService.prepare(request)
       assert.equal(result, true)
       assert.pass()
       assert.end()

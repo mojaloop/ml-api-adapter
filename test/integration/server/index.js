@@ -26,7 +26,7 @@ const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Boom = require('@hapi/boom')
 const Routes = require('./routes')
-const RawPayloadToDataUriPlugin = require('../../../src/lib/hapi/plugins/rawPayloadToDataUri')
+const RawPayloadToDataUriPlugin = require('@mojaloop/central-services-shared').Util.Hapi.HapiRawPayload
 
 const createServer = (port, modules) => {
   return (async () => {

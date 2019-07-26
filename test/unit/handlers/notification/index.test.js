@@ -41,7 +41,7 @@ const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
 const ENUM = require('@mojaloop/central-services-shared').Enum
-const Utility = require(`${src}/lib/utility`)
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka.Utility
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
 
@@ -97,15 +97,15 @@ Test('Notification Service tests', notificationTest => {
       }
 
       const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
-      const method = 'post'
+      const method = ENUM.Http.RestMethods.POST
       const headers = {}
       const message = { transferId: uuid }
 
       const expected = 200
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
-
-      let result = await Notification.processMessage(msg)
+      // console.log(`Notification::processMessage - Callback.sendRequest(${url}, ${method}, ${JSON.stringify(headers)}, ${JSON.stringify(message)}, ${msg.value.from}, ${msg.value.to})`)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -135,7 +135,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const url = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const headers = {}
       const message = { transferId: uuid }
 
@@ -143,7 +143,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -173,7 +173,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
-      const method = 'post'
+      const method = ENUM.Http.RestMethods.POST
       const headers = {}
       const message = { transferId: uuid }
 
@@ -213,7 +213,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const url = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const headers = {}
       const message = { transferId: uuid }
 
@@ -260,7 +260,7 @@ Test('Notification Service tests', notificationTest => {
 
       const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -269,7 +269,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
       Callback.sendRequest.withArgs(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(urlPayer, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -305,7 +305,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const url = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       Callback.sendRequest.withArgs(url, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).throws(new Error())
@@ -321,7 +321,7 @@ Test('Notification Service tests', notificationTest => {
     })
 
     processMessageTest.test('warn if invalid action received from kafka', async test => {
-      let CentralServicesSharedStub = {
+      const CentralServicesSharedStub = {
         Logger: {
           error: sandbox.stub().returns(P.resolve()),
           info: sandbox.stub().returns(P.resolve()),
@@ -409,7 +409,7 @@ Test('Notification Service tests', notificationTest => {
 
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -417,7 +417,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
       Callback.sendRequest.withArgs(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -454,7 +454,7 @@ Test('Notification Service tests', notificationTest => {
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -463,7 +463,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${urlPayer}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.from}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(toUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -500,7 +500,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -508,7 +508,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -544,7 +544,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -552,7 +552,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -588,7 +588,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -596,7 +596,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -632,7 +632,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -640,7 +640,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -676,7 +676,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -684,7 +684,7 @@ Test('Notification Service tests', notificationTest => {
       console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.to}, ${msg.value.from}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -720,7 +720,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
-      const method = 'put'
+      const method = ENUM.Http.RestMethods.PUT
       const message = { transferId: uuid }
 
       const expected = 200
@@ -728,7 +728,7 @@ Test('Notification Service tests', notificationTest => {
       // console.log(`${fromUrl}, ${method}, ${JSON.stringify(msg.value.content.headers)}, ${JSON.stringify(message)}, ${msg.value.content.payload.transferId}, ${msg.value.from}, ${msg.value.to}`)
       Callback.sendRequest.withArgs(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      let result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, msg.value.content.headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
@@ -789,7 +789,7 @@ Test('Notification Service tests', notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      let result = await Notification.consumeMessage(null, [msg])
+      const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
     })
@@ -818,7 +818,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       test.ok(await Notification.startConsumer())
-      let result = await Notification.consumeMessage(null, [msg])
+      const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
@@ -848,7 +848,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       test.ok(await Notification.startConsumer())
-      let result = await Notification.consumeMessage(null, [msg])
+      const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
@@ -878,7 +878,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       test.ok(await Notification.startConsumer())
-      let result = await Notification.consumeMessage(null, [msg])
+      const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
@@ -908,7 +908,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       test.ok(await Notification.startConsumer())
-      let result = await Notification.consumeMessage(null, [msg])
+      const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
@@ -933,11 +933,11 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        const result = await Notification.consumeMessage(null, [msg])
-        test.ok(result instanceof Error)
+        await Notification.consumeMessage(null, [msg])
+        test.fail('Should not have caught an error here since it should have been dealt with')
         test.end()
       } catch (e) {
-        test.fail('Should not have caught an error here since it should have been dealt with')
+        test.pass('Error successfully thrown')
         test.end()
       }
     })
@@ -963,11 +963,11 @@ Test('Notification Service tests', notificationTest => {
       }
       try {
         test.ok(await Notification.startConsumer())
-        const result = await Notification.consumeMessage(null, [msg])
-        test.ok(result instanceof Error)
+        await Notification.consumeMessage(null, [msg])
+        test.fail('Should not have caught an error here since it should have been dealt with')
         test.end()
       } catch (e) {
-        test.fail('Should not have caught an error here since it should have been dealt with')
+        test.pass('Error successfully thrown')
         test.end()
       }
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
@@ -1023,7 +1023,7 @@ Test('Notification Service tests', notificationTest => {
   notificationTest.test('isConnected', async isConnectedTest => {
     isConnectedTest.test('reject with an error if getMetadata fails', async test => {
       // Arrange
-      let NotificationProxy = rewire(`${src}/handlers/notification`)
+      const NotificationProxy = rewire(`${src}/handlers/notification`)
       NotificationProxy.__set__('notificationConsumer', {
         // Callback with error
         getMetadata: (options, cb) => {
@@ -1046,8 +1046,9 @@ Test('Notification Service tests', notificationTest => {
 
     isConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
       // Arrange
-      const topicName = Utility.getNotificationTopicName()
-      let NotificationProxy = rewire(`${src}/handlers/notification`)
+      const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+      const topicName = topicConf.topicName
+      const NotificationProxy = rewire(`${src}/handlers/notification`)
       const metadata = {
         orig_broker_id: 0,
         orig_broker_name: 'kafka:9092/0',
@@ -1073,8 +1074,9 @@ Test('Notification Service tests', notificationTest => {
 
     isConnectedTest.test('pass if the topic can be found', async test => {
       // Arrange
-      const topicName = Utility.getNotificationTopicName()
-      let NotificationProxy = rewire(`${src}/handlers/notification`)
+      const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+      const topicName = topicConf.topicName
+      const NotificationProxy = rewire(`${src}/handlers/notification`)
       const metadata = {
         orig_broker_id: 0,
         orig_broker_name: 'kafka:9092/0',

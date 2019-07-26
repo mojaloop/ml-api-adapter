@@ -86,6 +86,14 @@ const buildTransfer = (transferId) => {
   }
 }
 
+const buildHeaders = {
+  accept: `application/vnd.interoperability.participants+json;version=1`,
+  'fspiop-destination': 'dsfp1',
+  'content-type': `application/vnd.interoperability.participants+json;version=1.0`,
+  date: '2019-05-24 08:52:19',
+  'fspiop-source': 'dfsp2'
+}
+
 // const buildUnconditionalTransfer = (transferId, debit, credit) => {
 //   return {
 //     id: `http://${hostname}/transfers/${transferId}`,
@@ -241,6 +249,7 @@ module.exports = {
   // buildCharge,
   // buildDebitOrCredit,
   buildTransfer,
+  buildHeaders,
   // buildUnconditionalTransfer,
   // buildTransferPreparedEvent,
   // buildTransferExecutedEvent,

@@ -26,7 +26,7 @@
  ******/
 'use strict'
 
-let notifications = {}
+const notifications = {}
 const ENDPOINT_HOST = process.env.ENDPOINT_HOST || 'http://ml-api-adapter-endpoint:4545'
 const endpoints = {
   dfsp1: [

@@ -48,7 +48,10 @@ const generalEnum = require('@mojaloop/central-services-shared').Enum
 const prepare = async (request) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', request.headers, request.payload)
   try {
-    const messageProtocol = KafkaUtil.Utility.generateStreamingMessageFromRequest(request, request.payload.payeeFsp, request.payload.payerFsp, generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE)
+    const headers = request.headers
+    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const metadata = KafkaUtil.Utility.createMetadata(request.payload.transferId, generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
+    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.payload.transferId, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
     const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
     const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
@@ -77,8 +80,10 @@ const fulfil = async (request) => {
   Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', request.params.is, request.headers, request.payload)
   try {
     const headers = request.headers
-    const action = request.payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : generalEnum.Events.Event.Action.REJECT
-    const messageProtocol = KafkaUtil.Utility.generateStreamingMessageFromRequest(request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], generalEnum.Events.Event.Type.FULFIL, action)
+    const action = request.payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : generalEnum.Events.Event.Action.COMMIT
+    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const metadata = KafkaUtil.Utility.createMetadata(request.params.id, generalEnum.Events.Event.Type.FULFIL, action, state)
+    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.params.id, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
     const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
     const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
@@ -108,7 +113,9 @@ const getTransferById = async (request) => {
   Logger.info('domain::transfer::transferById::start(%s, %s, %s)', request.params.id, request.headers)
   try {
     const headers = request.headers
-    const messageProtocol = KafkaUtil.Utility.generateStreamingMessageFromRequest(request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], generalEnum.Events.Event.Type.GET, generalEnum.Events.Event.Type.GET)
+    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const metadata = KafkaUtil.Utility.createMetadata(request.params.id, generalEnum.Events.Event.Type.GET, generalEnum.Events.Event.Type.GET, state)
+    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.params.id, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
     const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.GET)
     const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.GET.toUpperCase())
     Logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
@@ -137,7 +144,9 @@ const transferError = async (request) => {
   Logger.debug('domain::transfer::abort::start(%s, %s, %s)', request.params.id, request.headers, request.payload)
   try {
     const headers = request.headers
-    const messageProtocol = KafkaUtil.Utility.generateStreamingMessageFromRequest(request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], generalEnum.Events.Event.Type.FULFIL, generalEnum.Events.Event.Action.ABORT)
+    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const metadata = KafkaUtil.Utility.createMetadata(request.params.id, generalEnum.Events.Event.Type.FULFIL, generalEnum.Events.Event.Action.ABORT, state)
+    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.params.id, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
     const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
     const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)

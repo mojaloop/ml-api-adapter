@@ -50,10 +50,10 @@ module.exports = [{
     },
     validate: {
       headers: Joi.object({
-        'accept': Joi.string().optional().regex(regexAccept),
+        accept: Joi.string().optional().regex(regexAccept),
         'content-type': Joi.string().required().regex(regexContentType),
         'content-length': Joi.number().max(5242880),
-        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -98,7 +98,7 @@ module.exports = [{
     validate: {
       headers: Joi.object({
         'content-type': Joi.string().required().regex(regexContentType),
-        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -138,7 +138,7 @@ module.exports = [{
     validate: {
       headers: Joi.object({
         'content-type': Joi.string().required().regex(regexContentType),
-        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -176,9 +176,9 @@ module.exports = [{
     description: 'Get a transfer by Id',
     validate: {
       headers: Joi.object({
-        'accept': Joi.string().optional().regex(regexAccept),
+        accept: Joi.string().optional().regex(regexAccept),
         'content-type': Joi.string().required().regex(regexContentType),
-        'date': Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),

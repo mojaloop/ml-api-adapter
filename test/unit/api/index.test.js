@@ -28,7 +28,7 @@ const P = require('bluebird')
 
 const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../../../src/lib/config')
-const Routes = require('@mojaloop/central-services-shared').Util.Hapi.Routes
+const Routes = require('../../../src/api/routes')
 const Setup = require('../../../src/shared/setup')
 
 Test('Api index', indexTest => {

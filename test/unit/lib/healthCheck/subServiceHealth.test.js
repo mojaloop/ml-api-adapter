@@ -92,7 +92,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     centralLedgerTest.test('is down when can\'t connect to the central ledger', async test => {
       // Arrange
       axios.get.throws(new Error('Error connecting to central ledger'))
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { axios: axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 
@@ -107,7 +107,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     centralLedgerTest.test('is down when the central ledger is down', async test => {
       // Arrange
       axios.get.resolves({ data: { status: 'DOWN' } })
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { axios: axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 
@@ -122,7 +122,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     centralLedgerTest.test('is up when the central ledger is up', async test => {
       // Arrange
       axios.get.resolves({ data: { status: 'OK' } })
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { axios: axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.OK }
 
@@ -137,7 +137,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     centralLedgerTest.test('handles unknown status from the central ledger', async test => {
       // Arrange
       axios.get.resolves({ status: 12345 })
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { 'axios': axios })
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', { axios: axios })
 
       const expected = { name: 'participantEndpointService', status: statusEnum.DOWN }
 

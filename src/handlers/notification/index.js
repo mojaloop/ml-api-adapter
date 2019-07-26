@@ -45,28 +45,28 @@ let autoCommitEnabled = true
  */
 
 /**
-* @function consumeMessage
-* @async
-* @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
-* processMessage - called to process the message received from kafka
-* @param {object} error - the error message received form kafka in case of error
-* @param {object} message - the message received form kafka
+ * @function consumeMessage
+ * @async
+ * @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
+ * processMessage - called to process the message received from kafka
+ * @param {object} error - the error message received form kafka in case of error
+ * @param {object} message - the message received form kafka
 
-* @returns {boolean} Returns true on success or false on failure
-*/
+ * @returns {boolean} Returns true on success or false on failure
+ */
 
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
-  return new Promise(async (resolve, reject) => {
-    const histTimerEnd = Metrics.getHistogram(
-      'notification_event',
-      'Consume a notification message from the kafka topic and process it accordingly',
-      ['success']
-    ).startTimer()
+  const histTimerEnd = Metrics.getHistogram(
+    'notification_event',
+    'Consume a notification message from the kafka topic and process it accordingly',
+    ['success']
+  ).startTimer()
+  try {
     if (error) {
       const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
       Logger.error(fspiopError)
-      return reject(fspiopError)
+      throw fspiopError
     }
     Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
 
@@ -74,13 +74,13 @@ const consumeMessage = async (error, message) => {
     let combinedResult = true
     for (const msg of message) {
       Logger.info('Notification::consumeMessage::processMessage')
-      let res = await processMessage(msg).catch(err => {
+      const res = await processMessage(msg).catch(err => {
         const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError('Error processing notification message', err)
         Logger.error(fspiopError)
         if (!autoCommitEnabled) {
           notificationConsumer.commitMessageSync(msg)
         }
-        return resolve(fspiopError) // We return 'resolved' since we have dealt with the error here
+        throw fspiopError // We return 'resolved' since we have dealt with the error here
       })
       if (!autoCommitEnabled) {
         notificationConsumer.commitMessageSync(msg)
@@ -89,17 +89,22 @@ const consumeMessage = async (error, message) => {
       combinedResult = (combinedResult && res)
     }
     histTimerEnd({ success: true })
-    return resolve(combinedResult)
-  })
+    return combinedResult
+  } catch (err) {
+    histTimerEnd({ success: false })
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
+  }
 }
 
 /**
-* @function startConsumer
-* @async
-* @description This will create a kafka consumer which will listen to the notification topics configured in the config
-*
-* @returns {boolean} Returns true on success and throws error on failure
-*/
+ * @function startConsumer
+ * @async
+ * @description This will create a kafka consumer which will listen to the notification topics configured in the config
+ *
+ * @returns {boolean} Returns true on success and throws error on failure
+ */
 const startConsumer = async () => {
   Logger.info('Notification::startConsumer')
   let topicName
@@ -128,14 +133,14 @@ const startConsumer = async () => {
 }
 
 /**
-* @function processMessage
-* @async
-* @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
-* Callback.sendCallback - called to send the notification callback
-* @param {object} message - the message received form kafka
+ * @function processMessage
+ * @async
+ * @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
+ * Callback.sendCallback - called to send the notification callback
+ * @param {object} message - the message received form kafka
 
-* @returns {boolean} Returns true on sucess and throws error on failure
-*/
+ * @returns {boolean} Returns true on sucess and throws error on failure
+ */
 
 const processMessage = async (msg) => {
   Logger.info('Notification::processMessage')
@@ -221,7 +226,7 @@ const processMessage = async (msg) => {
     return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
   }
 
-  if (actionLower === ENUM.Events.Event.Action.FULFIL && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
+  if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     return Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
