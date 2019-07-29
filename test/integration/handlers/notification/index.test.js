@@ -96,8 +96,7 @@ Test('Notification Handler', notificationHandlerTest => {
         response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponse = JSON.parse(response)
-      test.deepEqual(parsedResponse.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
@@ -154,8 +153,7 @@ Test('Notification Handler', notificationHandlerTest => {
         response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponse = JSON.parse(response)
-      test.deepEqual(parsedResponse.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
       test.end()
     })
 
@@ -215,10 +213,8 @@ Test('Notification Handler', notificationHandlerTest => {
         responseTo = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponseFrom = JSON.parse(responseFrom)
-      const parsedResponseTo = JSON.parse(responseTo)
-      test.deepEqual(parsedResponseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(parsedResponseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
@@ -275,8 +271,7 @@ Test('Notification Handler', notificationHandlerTest => {
         response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponse = JSON.parse(response)
-      test.deepEqual(parsedResponse.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
 
@@ -336,10 +331,8 @@ Test('Notification Handler', notificationHandlerTest => {
         responseTo = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponseFrom = JSON.parse(responseFrom)
-      const parsedResponseTo = JSON.parse(responseTo)
-      test.deepEqual(parsedResponseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(parsedResponseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
@@ -399,10 +392,8 @@ Test('Notification Handler', notificationHandlerTest => {
         responseTo = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponseFrom = JSON.parse(responseFrom)
-      const parsedResponseTo = JSON.parse(responseTo)
-      test.deepEqual(parsedResponseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(parsedResponseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
@@ -460,8 +451,7 @@ Test('Notification Handler', notificationHandlerTest => {
         response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponse = JSON.parse(response)
-      test.deepEqual(parsedResponse.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
@@ -520,8 +510,7 @@ Test('Notification Handler', notificationHandlerTest => {
         response = await getNotifications(messageProtocol.to, operation, transferId)
         currentAttempts++
       }
-      const parsedResponse = JSON.parse(response)
-      test.deepEqual(parsedResponse.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
 
@@ -544,7 +533,7 @@ function sleep (seconds) {
 
 const getNotifications = async (fsp, operation, id) => {
   try {
-    const response = Request.sendRequest(`${getNotificationUrl}/${fsp}/${operation}/${id}`, Fixtures.buildHeaders, Enum.Http.Headers.FSPIOP.SWITCH.value, Enum.Http.Headers.FSPIOP.SWITCH.value)
+    const response = await Request.sendRequest(`${getNotificationUrl}/${fsp}/${operation}/${id}`, Fixtures.buildHeaders, Enum.Http.Headers.FSPIOP.SWITCH.value, Enum.Http.Headers.FSPIOP.SWITCH.value)
     return response.data
   } catch (error) {
     Logger.error(error)
