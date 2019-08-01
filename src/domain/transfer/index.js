@@ -28,6 +28,7 @@
 
 const Logger = require('@mojaloop/central-services-shared').Logger
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Config = require('../../lib/config')
 const generalEnum = require('@mojaloop/central-services-shared').Enum
@@ -41,19 +42,20 @@ const generalEnum = require('@mojaloop/central-services-shared').Enum
 * @async
 * @description This will produce a transfer prepare message to transfer prepare kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
 *
-* @param {object} request - the http request from HAPI server
+* @param {object} headers - the http request headers
+* @param {object} payload - the http request payload
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const prepare = async (request) => {
-  Logger.debug('domain::transfer::prepare::start(%s, %s)', request.headers, request.payload)
+const prepare = async (headers, payload) => {
+  Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, payload)
   try {
-    const headers = request.headers
-    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const metadata = KafkaUtil.Utility.createMetadata(request.payload.transferId, generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
-    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.payload.transferId, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
-    const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
+    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
+    const metadata = StreamingProtocol.createMetadata(payload.transferId, event)
+    const messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri: payload }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
@@ -72,20 +74,22 @@ const prepare = async (request) => {
 * @async
 * @description This will produce a transfer fulfil message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
 *
-* @param {object} request - the http request from HAPI
+* @param {object} headers - the http request headers
+* @param {object} payload - the http request payload
+* @param {object} params - the http request uri parameters
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const fulfil = async (request) => {
-  Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', request.params.is, request.headers, request.payload)
+const fulfil = async (headers, payload, params) => {
+  Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', params.id, headers, payload)
   try {
-    const headers = request.headers
-    const action = request.payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : generalEnum.Events.Event.Action.COMMIT
-    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const metadata = KafkaUtil.Utility.createMetadata(request.params.id, generalEnum.Events.Event.Type.FULFIL, action, state)
-    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.params.id, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
-    const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
+    const action = payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : generalEnum.Events.Event.Action.COMMIT
+    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.FULFIL, action, state)
+    const metadata = StreamingProtocol.createMetadata(params.id, event)
+    const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: payload, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
@@ -105,19 +109,20 @@ const fulfil = async (request) => {
  * @async
  * @description This will produce a transfer fulfil message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
  *
- * @param {object} request - the http request from HAPI
+ * @param {object} headers - the http request headers
+ * @param {object} params - the http request uri parameters
  *
  * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
  */
-const getTransferById = async (request) => {
-  Logger.info('domain::transfer::transferById::start(%s, %s, %s)', request.params.id, request.headers)
+const getTransferById = async (headers, params) => {
+  Logger.info('domain::transfer::transferById::start(%s, %s, %s)', params.id, headers)
   try {
-    const headers = request.headers
-    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const metadata = KafkaUtil.Utility.createMetadata(request.params.id, generalEnum.Events.Event.Type.GET, generalEnum.Events.Event.Type.GET, state)
-    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.params.id, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.GET)
-    const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.GET.toUpperCase())
+    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.GET, generalEnum.Events.Event.Type.GET, state)
+    const metadata = StreamingProtocol.createMetadata(params.id, event)
+    const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.GET)
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.GET.toUpperCase())
     Logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
     Logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
     Logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
@@ -136,19 +141,21 @@ const getTransferById = async (request) => {
 * @async
 * @description This will produce a transfer error message to transfer fulfil kafka topic. It gets the kafka configuration from config. It constructs the message and published to kafka
 *
-* @param {object} request - the http request from HAPI
+* @param {object} headers - the http request headers
+* @param {object} payload - the http request payload
+* @param {object} params - the http request uri parameters
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const transferError = async (request) => {
-  Logger.debug('domain::transfer::abort::start(%s, %s, %s)', request.params.id, request.headers, request.payload)
+const transferError = async (headers, payload, params) => {
+  Logger.debug('domain::transfer::abort::start(%s, %s, %s)', params.id, headers, payload)
   try {
-    const headers = request.headers
-    const state = KafkaUtil.Utility.createMetadataState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const metadata = KafkaUtil.Utility.createMetadata(request.params.id, generalEnum.Events.Event.Type.FULFIL, generalEnum.Events.Event.Action.ABORT, state)
-    const messageProtocol = KafkaUtil.Utility.createStreamingMessageFromRequest(request.params.id, request, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.Utility.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
-    const kafkaConfig = KafkaUtil.Utility.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
+    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
+    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.FULFIL, generalEnum.Events.Event.Action.ABORT, state)
+    const metadata = StreamingProtocol.createMetadata(params.id, event)
+    const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: payload, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
     Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)

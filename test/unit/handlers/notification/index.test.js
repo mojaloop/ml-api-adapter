@@ -41,7 +41,7 @@ const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
 const ENUM = require('@mojaloop/central-services-shared').Enum
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka.Utility
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
 

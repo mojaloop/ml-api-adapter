@@ -56,7 +56,7 @@ const create = async function (request, h) {
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
-    await TransferService.prepare(request)
+    await TransferService.prepare(request.headers, request.dataUri)
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
@@ -91,7 +91,7 @@ const fulfilTransfer = async function (request, h) {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await TransferService.fulfil(request)
+    await TransferService.fulfil(request.headers, request.dataUri, request.params)
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
@@ -123,7 +123,7 @@ const getTransferById = async function (request, h) {
 
   try {
     Logger.info('getById::id(%s)', request.params.id)
-    await TransferService.getTransferById(request)
+    await TransferService.getTransferById(request.headers, request.params)
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
@@ -156,7 +156,7 @@ const fulfilTransferError = async function (request, h) {
     Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await TransferService.transferError(request)
+    await TransferService.transferError(request.headers, request.dataUri, request.params)
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {

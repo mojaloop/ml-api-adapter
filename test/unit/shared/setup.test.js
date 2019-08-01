@@ -69,8 +69,8 @@ Test('setup', setupTest => {
   })
 
   setupTest.test('createServer should', async (createServerTest) => {
-    createServerTest.test('throw Boom error on fail', async (test) => {
-      const errorToThrow = new Boom('Throw Boom error')
+    createServerTest.test('throw error on fail', async (test) => {
+      const errorToThrow = new Boom('Throw error')
 
       const HapiStubThrowError = {
         Server: sandbox.stub().callsFake((opt) => {

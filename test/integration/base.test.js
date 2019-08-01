@@ -3,7 +3,7 @@
 const Test = require('tapes')(require('tape'))
 const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
 const Enum = require('@mojaloop/central-services-shared').Enum
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka.Utility
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Config = require('../../src/lib/config')
 
 let kafkaProducer
