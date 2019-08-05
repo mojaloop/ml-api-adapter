@@ -1,7 +1,7 @@
 {
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_SOURCE_URL": "http://localhost:3001/participants/{{fsp}}/endpoints",
+  "ENDPOINT_SOURCE_URL": "http://localhost:3001",
   "ENDPOINT_HEALTH_URL": "http://localhost:3001/health",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
@@ -40,18 +40,6 @@
       "GENERAL_TOPIC_TEMPLATE": {
         "TEMPLATE": "topic-{{functionality}}-{{action}}",
         "REGEX": "topic-(.*)-(.*)"
-      },
-      "NOTIFICATION_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-notification-event",
-        "REGEX": "topic-notification-event"
-      },
-      "FULFIL_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-transfer-fulfil",
-        "REGEX": "topic-transfer-fulfil"
-      },
-      "GET_TRANSFERS_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-transfer-get",
-        "REGEX": "topic-transfer-get"
       }
     },
     "CONSUMER": {

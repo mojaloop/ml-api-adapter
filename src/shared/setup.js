@@ -31,9 +31,9 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Boom = require('@hapi/boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Metrics = require('@mojaloop/central-services-metrics')
-const Enums = require('../lib/enum')
+const Enums = require('@mojaloop/central-services-shared').Enum
 
 /**
  * @module src/shared/setup
@@ -100,19 +100,17 @@ const createHandlers = async (handlers) => {
   }
 
   for (handlerIndex in handlers) {
-    if (handlers.hasOwnProperty(handlerIndex)) {
-      let handler = handlers[handlerIndex]
-      if (handler.enabled) {
-        Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
-        if (handler.type === Enums.handlerTypes.NOTIFICATION) {
-          await ParticipantEndpointCache.initializeCache()
-          await RegisterHandlers.registerNotificationHandler()
-        } else {
-          let error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
-          const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
-          Logger.error(fspiopError)
-          throw fspiopError
-        }
+    const handler = handlers[handlerIndex]
+    if (handler.enabled) {
+      Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
+      if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
+        await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+        await RegisterHandlers.registerNotificationHandler()
+      } else {
+        const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
+        const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
+        Logger.error(fspiopError)
+        throw fspiopError
       }
     }
   }
@@ -148,10 +146,10 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   let server
   initializeInstrumentation()
   switch (service) {
-    case Enums.serviceType.API:
+    case Enums.Http.ServiceType.API:
       server = await createServer(port, modules)
       break
-    case Enums.serviceType.HANDLER:
+    case Enums.Http.ServiceType.HANDLER:
       if (!Config.HANDLERS_API_DISABLED) {
         server = await createServer(port, modules)
       }
@@ -165,7 +163,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers)
     } else {
-      await ParticipantEndpointCache.initializeCache()
+      await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
       await RegisterHandlers.registerAllHandlers()
     }
   }

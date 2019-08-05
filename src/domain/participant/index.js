@@ -19,14 +19,16 @@
  - Name Surname <name.surname@gatesfoundation.com>
 
  - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ - Rajiv Mothilal <rajiv.mothilal@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
 const Logger = require('@mojaloop/central-services-shared').Logger
-const Facade = require('../../models/participant/facade')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const Config = require('../../lib/config')
 /**
  * @module src/domain/participant
  */
@@ -37,18 +39,18 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
  * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
  *
  * @param {string} fsp - the id of the fsp
- * @param {string} enpointType - the type of the endpoint
+ * @param {string} endpointType - the type of the endpoint
  * @param {string} transferId - optional transferId
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const getEndpoint = async (fsp, enpointType, transferId = null) => {
+const getEndpoint = async (fsp, endpointType, transferId = null) => {
   Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
-  Logger.debug(`domain::participant::getEndpoint::enpointType - ${enpointType}`)
+  Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
   Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
   try {
-    return Facade.getEndpoint(fsp, enpointType, transferId)
+    return Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
   } catch (err) {
     Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
