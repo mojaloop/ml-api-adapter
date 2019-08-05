@@ -37,6 +37,7 @@ const Config = require('../../../../src/lib/config')
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
+const dataUri = ''
 
 Test('Transfer Service tests', serviceTest => {
   let sandbox
@@ -108,7 +109,7 @@ Test('Transfer Service tests', serviceTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 
-      const result = await Service.prepare(headers, message)
+      const result = await Service.prepare(headers, dataUri, message)
       test.equals(result, true)
       test.end()
     })
@@ -145,7 +146,7 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.prepare(headers, message)
+        await Service.prepare(headers, dataUri, message)
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -205,7 +206,7 @@ Test('Transfer Service tests', serviceTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
-      const result = await Service.fulfil(headers, message, { id })
+      const result = await Service.fulfil(headers, dataUri, message, { id })
       test.equals(result, true)
       test.end()
     })
@@ -236,7 +237,7 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.fulfil(headers, message, { id })
+        await Service.fulfil(headers, dataUri, message, { id })
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -269,7 +270,7 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.fulfil(headers, message, { id })
+        await Service.fulfil(headers, dataUri, message, { id })
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -393,7 +394,7 @@ Test('Transfer Service tests', serviceTest => {
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
-      const result = await Service.transferError(headers, message, { id })
+      const result = await Service.transferError(headers, dataUri, message, { id })
       test.equals(result, true)
       test.end()
     })
@@ -402,7 +403,7 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.transferError(headers, message, { id })
+        await Service.transferError(headers, dataUri, message, { id })
         test.fail('error not thrown')
       } catch (e) {
         test.ok(e instanceof Error)
@@ -461,7 +462,7 @@ Test('Transfer Service tests', serviceTest => {
             id: message.transferId
           },
           headers,
-          payload: message
+          payload: {}
         },
         metadata: {
           correlationId: transferId,
@@ -478,7 +479,7 @@ Test('Transfer Service tests', serviceTest => {
       }
 
       // Act
-      await Service.prepare(headers, message)
+      await Service.prepare(headers, dataUri, message)
 
       // Delete non-deterministic fields
       delete resultMessageProtocol.id
@@ -509,7 +510,7 @@ Test('Transfer Service tests', serviceTest => {
             id: undefined
           },
           headers,
-          payload: message
+          payload: {}
         },
         metadata: {
           correlationId: undefined,
@@ -526,7 +527,7 @@ Test('Transfer Service tests', serviceTest => {
       }
 
       // Act
-      await Service.prepare(headers, message)
+      await Service.prepare(headers, dataUri, message)
 
       // Delete non-deterministic fields
       delete resultMessageProtocol.id
