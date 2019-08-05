@@ -46,6 +46,7 @@ const GET = 'get'
 *
 * @param {object} headers - the http header from the request
 * @param {object} message - the transfer prepare message
+* @param {object} dataUri - base64 encoded string
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on falires
 */
@@ -59,6 +60,10 @@ const prepare = async (headers, message, dataUri) => {
       from: message.payerFsp,
       type: 'application/json',
       content: {
+        // TODO: will message.transferId always exist?
+        uriParams: {
+          id: message.transferId
+        },
         headers: headers,
         payload: dataUri
       },

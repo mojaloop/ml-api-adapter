@@ -131,7 +131,7 @@ const transformHeaders = (headers, config) => {
     // Check to see if we find a regex match the source header containing the switch name.
     // If so we remove the signature added by default.
     delete normalizedHeaders[ENUM.headers.FSPIOP.SIGNATURE]
-    // Aslo remove FSPIOP-URI and make FSPIOP-HTTP-Method ALL-CAPS #737
+    // Also remove FSPIOP-URI and make FSPIOP-HTTP-Method ALL-CAPS #737
     delete normalizedHeaders[ENUM.headers.FSPIOP.URI]
   }
 
