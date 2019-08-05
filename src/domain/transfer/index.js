@@ -53,7 +53,7 @@ const prepare = async (headers, payload) => {
     const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
     const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
     const metadata = StreamingProtocol.createMetadata(payload.transferId, event)
-    const messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri: payload }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
+    const messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri: payload, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
     const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)

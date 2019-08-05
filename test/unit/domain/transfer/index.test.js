@@ -412,5 +412,134 @@ Test('Transfer Service tests', serviceTest => {
 
     transferErrorTest.end()
   })
+
+  serviceTest.test('message format tests', formatTest => {
+    /* Test Data */
+    const transferId = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+    const message = {
+      transferId,
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'USD',
+        amount: 123.45
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+      }
+    }
+    const headers = {}
+
+    formatTest.test('prepare should call `produceMessage` with the correct messageProtocol format', async test => {
+      // Arrange
+      let resultMessageProtocol = {}
+      // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+      Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+        resultMessageProtocol = messageProtocol
+      }
+
+      const expectedMessageProtocol = {
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/json',
+        content: {
+          uriParams: {
+            id: message.transferId
+          },
+          headers,
+          payload: message
+        },
+        metadata: {
+          correlationId: transferId,
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0,
+              description: 'action successful'
+            }
+          }
+        }
+      }
+
+      // Act
+      await Service.prepare(headers, message)
+
+      // Delete non-deterministic fields
+      delete resultMessageProtocol.id
+      delete resultMessageProtocol.metadata.event.id
+      delete resultMessageProtocol.metadata.event.createdAt
+
+      // Assert
+      test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+      test.end()
+    })
+
+    // TODO: I'm not sure this is a valid case
+    formatTest.test('prepare should not fail if message.transferId is undefined', async test => {
+      // Arrange
+      let resultMessageProtocol = {}
+      delete message.transferId
+      // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+      Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+        resultMessageProtocol = messageProtocol
+      }
+
+      const expectedMessageProtocol = {
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/json',
+        content: {
+          uriParams: {
+            id: undefined
+          },
+          headers,
+          payload: message
+        },
+        metadata: {
+          correlationId: undefined,
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0,
+              description: 'action successful'
+            }
+          }
+        }
+      }
+
+      // Act
+      await Service.prepare(headers, message)
+
+      // Delete non-deterministic fields
+      delete resultMessageProtocol.id
+      delete resultMessageProtocol.metadata.event.id
+      delete resultMessageProtocol.metadata.event.createdAt
+
+      // Assert
+      test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+      test.end()
+    })
+
+    formatTest.end()
+  })
+
   serviceTest.end()
 })
