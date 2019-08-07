@@ -32,7 +32,7 @@ Test('validator', validatorTest => {
   validatorTest.test('fulfilTransfer should', fulfilTransferTest => {
     fulfilTransferTest.test('use default setting and pass validation when config is not found and current timestamp is used', test => {
       try {
-        let request = {
+        const request = {
           payload: {
             completedTimestamp: new Date()
           }
@@ -46,7 +46,7 @@ Test('validator', validatorTest => {
 
     fulfilTransferTest.test('throw an FSPIOPError if the transfer date is after now', test => {
       try {
-        let request = {
+        const request = {
           payload: {
             // Set transfer date to 30 minutess from now
             completedTimestamp: new Date(new Date().getTime() + (30 * 60000))
@@ -63,7 +63,7 @@ Test('validator', validatorTest => {
 
     fulfilTransferTest.test('throw an FSPIOPError if the transfer date is older than max lag time', test => {
       try {
-        let request = {
+        const request = {
           payload: {
             // Set transfer date to 30 minutes before now
             completedTimestamp: new Date(new Date().getTime() - (30 * 60000))

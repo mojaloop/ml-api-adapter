@@ -6,13 +6,13 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Config = require(`${src}/lib/config`)
 const Proxyquire = require('proxyquire')
-const ParticipantEndpointCache = require(`${src}/domain/participant/lib/cache/participantEndpoint`)
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Boom = require('@hapi/boom')
 
 Test('setup', setupTest => {
   let sandbox
   let oldHostName
-  let hostName = 'http://test.com'
+  const hostName = 'http://test.com'
   let Setup
   let RegisterHandlersStub
   let PluginsStub
@@ -21,7 +21,7 @@ Test('setup', setupTest => {
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(ParticipantEndpointCache, 'initializeCache').returns(P.resolve(true))
+    sandbox.stub(Endpoints, 'initializeCache').returns(P.resolve(true))
 
     PluginsStub = {
       registerPlugins: sandbox.stub().returns(P.resolve())
@@ -69,8 +69,8 @@ Test('setup', setupTest => {
   })
 
   setupTest.test('createServer should', async (createServerTest) => {
-    createServerTest.test('throw Boom error on fail', async (test) => {
-      const errorToThrow = new Boom('Throw Boom error')
+    createServerTest.test('throw error on fail', async (test) => {
+      const errorToThrow = new Boom('Throw error')
 
       const HapiStubThrowError = {
         Server: sandbox.stub().callsFake((opt) => {

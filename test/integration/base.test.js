@@ -1,14 +1,16 @@
 'use strict'
 
 const Test = require('tapes')(require('tape'))
-const Utility = require('../../src/lib/utility')
 const Producer = require('@mojaloop/central-services-stream').Kafka.Producer
+const Enum = require('@mojaloop/central-services-shared').Enum
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const Config = require('../../src/lib/config')
 
 let kafkaProducer
 
 Test('setup', async setupTest => {
   setupTest.test('connect to kafka', async test => {
-    const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, 'TRANSFER', 'PREPARE')
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Kafka.Topics.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
 
     kafkaProducer = new Producer(kafkaConfig)
     const result = await kafkaProducer.connect()

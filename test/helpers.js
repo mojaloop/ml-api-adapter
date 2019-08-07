@@ -50,11 +50,11 @@ const unwrapResponse = async (asyncFunction) => {
 }
 
 function createRequest (routes) {
-  let value = routes || []
+  const value = routes || []
   return {
     server: {
       table: () => {
-        return [{ table: value }]
+        return value
       }
     }
   }

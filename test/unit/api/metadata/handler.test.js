@@ -106,7 +106,7 @@ Test('metadata handler', (handlerTest) => {
 
   handlerTest.test('metadata should', function (metadataTest) {
     metadataTest.test('return 200 httpStatus', async function (t) {
-      let reply = {
+      const reply = {
         response: () => {
           return {
             code: statusCode => {
@@ -120,13 +120,13 @@ Test('metadata handler', (handlerTest) => {
     })
 
     metadataTest.test('return urls from request.server and append hostname', t => {
-      let hostName = 'some-host-name'
+      const hostName = 'some-host-name'
       Config.HOSTNAME = hostName
-      let request = createRequest([
+      const request = createRequest([
         { settings: { id: 'first_route', tags: apiTags }, path: '/first' }
       ])
 
-      let reply = {
+      const reply = {
         response: (response) => {
           t.equal(response.urls['first_route'], `${hostName}/first`)
           return { code: statusCode => { t.end() } }
@@ -136,12 +136,12 @@ Test('metadata handler', (handlerTest) => {
     })
 
     metadataTest.test('format url parameters with colons', t => {
-      let request = createRequest([
+      const request = createRequest([
         { settings: { id: 'path', tags: apiTags }, path: '/somepath/{id}' },
         { settings: { id: 'manyargs', tags: apiTags }, path: '/somepath/{id}/{path*}/{test2}/' }
       ])
 
-      let reply = {
+      const reply = {
         response: (response) => {
           t.equal(response.urls['path'], '/somepath/:id')
           t.equal(response.urls['manyargs'], '/somepath/:id/:path*/:test2/')

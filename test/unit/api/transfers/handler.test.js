@@ -206,7 +206,7 @@ Test('transfer handler', handlerTest => {
     })
 
     fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', async test => {
-      let completedTimestamp = new Date((new Date().getTime() + 100000))
+      const completedTimestamp = new Date((new Date().getTime() + 100000))
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -246,7 +246,7 @@ Test('transfer handler', handlerTest => {
     })
 
     fulfilTransferTest.test('reply with status code 400 if completedTimestamp is way too far in the past', async test => {
-      let completedTimestamp = new Date((new Date().getTime() - 3600 * 1000))
+      const completedTimestamp = new Date((new Date().getTime() - 3600 * 1000))
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',

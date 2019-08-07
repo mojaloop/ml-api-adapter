@@ -62,9 +62,9 @@ Test('POST /transfers', postTest => {
           ]
         }
       }
-    let headers = {
+    const headers = {
       'content-type': 'application/vnd.interoperability.transfers+json;version=1',
-      'date': 'Mon, 10 Sep 2018 20:22:01 GMT',
+      date: 'Mon, 10 Sep 2018 20:22:01 GMT',
       'fspiop-source': 'test'
     }
     create(headers, transfer)

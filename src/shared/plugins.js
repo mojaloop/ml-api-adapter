@@ -27,7 +27,7 @@ const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const RawPayloadToDataUri = require('../lib/hapi/plugins/rawPayloadToDataUri')
+const RawPayloadToDataUri = require('@mojaloop/central-services-shared').Util.Hapi.HapiRawPayload
 /**
  * @module src/shared/plugin
  */
@@ -37,8 +37,8 @@ const registerPlugins = async (server) => {
     plugin: require('hapi-swagger'),
     options: {
       info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
+        title: 'ml api adapter API Documentation',
+        version: Package.version
       }
     }
   })

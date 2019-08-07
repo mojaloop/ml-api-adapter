@@ -29,12 +29,15 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Uuid = require('uuid4')
 const Service = require('../../../../src/domain/transfer')
-const Kafka = require('../../../../src/lib/kafka')
-const Utility = require('../../../../src/lib/utility')
+const Kafka = require('@mojaloop/central-services-shared').Util.Kafka
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const Enum = require('@mojaloop/central-services-shared').Enum
+const Config = require('../../../../src/lib/config')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
+const dataUri = ''
 
 Test('Transfer Service tests', serviceTest => {
   let sandbox
@@ -83,7 +86,7 @@ Test('Transfer Service tests', serviceTest => {
 
       const headers = {}
 
-      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         id: message.transferId,
         to: message.payeeFsp,
@@ -103,11 +106,10 @@ Test('Transfer Service tests', serviceTest => {
           }
         }
       }
-      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
-
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 
-      let result = await Service.prepare(headers, message)
+      const result = await Service.prepare(headers, dataUri, message)
       test.equals(result, true)
       test.end()
     })
@@ -144,7 +146,7 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.prepare(headers, message)
+        await Service.prepare(headers, dataUri, message)
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -178,7 +180,7 @@ Test('Transfer Service tests', serviceTest => {
 
       const headers = {}
       const id = 'dfsp1'
-      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
       const messageProtocol = {
         id,
         to: headers['fspiop-destination'],
@@ -201,10 +203,10 @@ Test('Transfer Service tests', serviceTest => {
           }
         }
       }
-      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
-      let result = await Service.fulfil(id, headers, message)
+      const result = await Service.fulfil(headers, dataUri, message, { id })
       test.equals(result, true)
       test.end()
     })
@@ -233,10 +235,9 @@ Test('Transfer Service tests', serviceTest => {
       const headers = {}
       const id = 'dfsp1'
       const error = new Error()
-
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.fulfil(id, headers, message)
+        await Service.fulfil(headers, dataUri, message, { id })
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -267,10 +268,9 @@ Test('Transfer Service tests', serviceTest => {
       const headers = {}
       const id = 'dfsp1'
       const error = new Error()
-
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.fulfil(id, headers, message)
+        await Service.fulfil(headers, dataUri, message, { id })
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -307,9 +307,9 @@ Test('Transfer Service tests', serviceTest => {
           ]
         }
       }
-
+      const id = message.transferId
       const headers = {}
-      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         id: message.id,
         to: message.payeeFsp,
@@ -329,48 +329,21 @@ Test('Transfer Service tests', serviceTest => {
           }
         }
       }
-      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, PREPARE, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 
-      let result = await Service.getTransferById(headers, message)
+      const result = await Service.getTransferById(headers, { id })
       test.equals(result, true)
       test.end()
     })
     await getTransferByIdTest.test('throw error', async test => {
-      const message = {
-        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
-        payeeFsp: '1234',
-        payerFsp: '5678',
-        amount: {
-          currency: 'USD',
-          amount: 123.45
-        },
-        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-        expiration: '2016-05-24T08:38:08.699-04:00',
-
-        extensionList:
-        {
-          extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
-        }
-      }
-
+      const id = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
       const headers = {}
       const error = new Error()
       Kafka.Producer.produceMessage.rejects(error)
       try {
-        await Service.getTransferById(headers, message)
+        await Service.getTransferById(headers, { id })
         test.fail('does not throw')
         test.end()
       } catch (e) {
@@ -416,26 +389,158 @@ Test('Transfer Service tests', serviceTest => {
         }
       }
     }
+
     await transferErrorTest.test('execute function', async test => {
-      const kafkaConfig = Utility.getKafkaConfig(Utility.ENUMS.PRODUCER, TRANSFER.toUpperCase(), FULFIL.toUpperCase())
-      const topicConfig = Utility.createGeneralTopicConf(TRANSFER, PREPARE, null, message.transferId)
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
-      let result = await Service.transferError(id, headers, message)
+      const result = await Service.transferError(headers, dataUri, message, { id })
       test.equals(result, true)
       test.end()
     })
+
     await transferErrorTest.test('throw error', async test => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.transferError(id, headers, message)
+        await Service.transferError(headers, dataUri, message, { id })
         test.fail('error not thrown')
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
       }
     })
+
     transferErrorTest.end()
   })
+
+  serviceTest.test('message format tests', formatTest => {
+    /* Test Data */
+    const transferId = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+    const message = {
+      transferId,
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'USD',
+        amount: 123.45
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+      }
+    }
+    const headers = {}
+
+    formatTest.test('prepare should call `produceMessage` with the correct messageProtocol format', async test => {
+      // Arrange
+      let resultMessageProtocol = {}
+      // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+      Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+        resultMessageProtocol = messageProtocol
+      }
+
+      const expectedMessageProtocol = {
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/json',
+        content: {
+          uriParams: {
+            id: message.transferId
+          },
+          headers,
+          payload: {}
+        },
+        metadata: {
+          correlationId: transferId,
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0,
+              description: 'action successful'
+            }
+          }
+        }
+      }
+
+      // Act
+      await Service.prepare(headers, dataUri, message)
+
+      // Delete non-deterministic fields
+      delete resultMessageProtocol.id
+      delete resultMessageProtocol.metadata.event.id
+      delete resultMessageProtocol.metadata.event.createdAt
+
+      // Assert
+      test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+      test.end()
+    })
+
+    // TODO: I'm not sure this is a valid case
+    formatTest.test('prepare should not fail if message.transferId is undefined', async test => {
+      // Arrange
+      let resultMessageProtocol = {}
+      delete message.transferId
+      // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+      Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+        resultMessageProtocol = messageProtocol
+      }
+
+      const expectedMessageProtocol = {
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/json',
+        content: {
+          uriParams: {
+            id: undefined
+          },
+          headers,
+          payload: {}
+        },
+        metadata: {
+          correlationId: undefined,
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0,
+              description: 'action successful'
+            }
+          }
+        }
+      }
+
+      // Act
+      await Service.prepare(headers, dataUri, message)
+
+      // Delete non-deterministic fields
+      delete resultMessageProtocol.id
+      delete resultMessageProtocol.metadata.event.id
+      delete resultMessageProtocol.metadata.event.createdAt
+
+      // Assert
+      test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+      test.end()
+    })
+
+    formatTest.end()
+  })
+
   serviceTest.end()
 })

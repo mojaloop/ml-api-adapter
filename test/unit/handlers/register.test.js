@@ -29,7 +29,7 @@ Test('handlers', handlersTest => {
     })
 
     registerAllTest.test('throw error when transfer handler throws error', async (test) => {
-      let error = new Error('Here be dragons!')
+      const error = new Error('Here be dragons!')
       try {
         Sinon.stub(NotificationHandler, 'startConsumer').throws(error)
         await Handlers.registerAllHandlers()
