@@ -32,7 +32,7 @@
     "test:unit": "tape 'test/unit/**/*.test.js'",
     "test:int1": "ENDPOINT_HOST=http://localhost:4545 node test/integration/server/index.js",
     "test:int2": "MLAPI_ENDPOINT_SOURCE_URL=http://localhost:4545/participants/{{fsp}}/endpoints node src/api/index.js",
-    "test:int": "ENDPOINT_URL=http://localhost:4545/notification tape 'test/integration/**/*.test.js'",
+    "test:int": "tape 'test/integration/**/*.test.js'",
     "test:all": "run-s test test:integration test:functional test:spec",
     "test:xunit": "tape 'test/unit/**/*.test.js' | tap-xunit",
     "test:coverage": "nyc --reporter=lcov --reporter=text-summary tapes -- 'test/unit/**/**.test.js'",
