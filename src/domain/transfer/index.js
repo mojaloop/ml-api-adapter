@@ -48,18 +48,21 @@ const generalEnum = require('@mojaloop/central-services-shared').Enum
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const prepare = async (headers, dataUri, payload) => {
+const prepare = async (headers, dataUri, payload, span) => {
   Logger.debug('domain::transfer::prepare::start(%s, %s)', headers, payload)
   try {
     const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
     const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
     const metadata = StreamingProtocol.createMetadata(payload.transferId, event)
-    const messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
+    let messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
     const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
+    if (span) {
+      messageProtocol = await span.injectContextToMessage(messageProtocol)
+    }
     await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {

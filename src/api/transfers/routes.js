@@ -29,9 +29,10 @@
 const Handler = require('./handler')
 const BaseJoi = require('joi-currency-code')(require('@hapi/joi'))
 const Enum = require('@mojaloop/central-services-shared').Enum
+const TagEnums = require('@mojaloop/central-services-shared').Util.Hapi.HapiEventPlugin.Enums
 const Extension = require('@hapi/joi-date')
 const Joi = BaseJoi.extend(Extension)
-const tags = ['api', 'transfers']
+const tags = ['api', 'transfers', TagEnums.SAMPLED_TAG]
 const transferState = [Enum.Transfers.TransferState.RECEIVED, Enum.Transfers.TransferState.RESERVED, Enum.Transfers.TransferState.COMMITTED, Enum.Transfers.TransferState.ABORTED, Enum.Transfers.TransferState.SETTLED]
 const regexAccept = Enum.Http.Headers.GENERAL.ACCEPT.regex
 const regexContentType = Enum.Http.Headers.GENERAL.ACCEPT.regex
@@ -41,7 +42,7 @@ module.exports = [{
   path: '/transfers',
   handler: Handler.create,
   config: {
-    id: 'transfers',
+    id: 'ml_transfer_prepare',
     tags: tags,
     auth: null,
     description: 'Transfer API.',
@@ -88,7 +89,7 @@ module.exports = [{
   path: '/transfers/{id}',
   handler: Handler.fulfilTransfer,
   options: {
-    id: 'transfer_fulfilment',
+    id: 'ml_transfer_fulfil',
     tags: tags,
     // auth: Auth.strategy(),
     description: 'Fulfil a transfer',
@@ -129,7 +130,7 @@ module.exports = [{
   path: '/transfers/{id}/error',
   handler: Handler.fulfilTransferError,
   options: {
-    id: 'transfer_abort',
+    id: 'ml_transfer_abort',
     tags: tags,
     description: 'Abort a transfer',
     payload: {
@@ -171,7 +172,7 @@ module.exports = [{
   path: '/transfers/{id}',
   handler: Handler.getTransferById,
   options: {
-    id: 'transfer_getById',
+    id: 'ml_transfer_getById',
     tags: tags,
     description: 'Get a transfer by Id',
     validate: {
