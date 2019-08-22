@@ -94,7 +94,7 @@
   },
   "devDependencies": {
     "@hapi/boom": "7.4.2",
-    "aws-sdk": "2.500.0",
+    "aws-sdk": "2.515.0",
     "bluebird": "3.5.5",
     "faucet": "0.0.1",
     "jsonpath": "1.0.2",
