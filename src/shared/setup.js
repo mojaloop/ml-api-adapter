@@ -146,18 +146,21 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   let server
   initializeInstrumentation()
   switch (service) {
-    case Enums.Http.ServiceType.API:
+    case Enums.Http.ServiceType.API: {
       server = await createServer(port, modules)
       break
-    case Enums.Http.ServiceType.HANDLER:
+    }
+    case Enums.Http.ServiceType.HANDLER: {
       if (!Config.HANDLERS_API_DISABLED) {
         server = await createServer(port, modules)
       }
       break
-    default:
+    }
+    default: {
       const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(`No valid service type ${service} found!`)
       Logger.error(fspiopError)
       throw fspiopError
+    }
   }
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {

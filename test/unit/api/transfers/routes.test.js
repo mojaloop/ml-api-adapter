@@ -44,7 +44,8 @@ Test('return error if required headers are missing on prepare', async function (
 })
 
 Test('return error if transferId is not a guid', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers',
+  const req = Base.buildRequest({
+    url: '/transfers',
     method: 'POST',
     payload: { transferId: 'invalid transfer id' },
     headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
@@ -57,7 +58,8 @@ Test('return error if transferId is not a guid', async function (assert) {
 })
 
 Test('return error if amount is not a valid amount', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers',
+  const req = Base.buildRequest({
+    url: '/transfers',
     method: 'POST',
     payload: {
       transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
@@ -95,7 +97,8 @@ Test('return error if amount is not a valid amount', async function (assert) {
 })
 
 Test('return error if currency is not a valid ISO 4217 currency code', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers',
+  const req = Base.buildRequest({
+    url: '/transfers',
     method: 'POST',
     payload: {
       transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
@@ -133,7 +136,8 @@ Test('return error if currency is not a valid ISO 4217 currency code', async fun
 })
 
 Test('return error if condition is not valid according to the pattern /^[A-Za-z0-9-_]{43}$/', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers',
+  const req = Base.buildRequest({
+    url: '/transfers',
     method: 'POST',
     payload: {
       transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
@@ -171,7 +175,8 @@ Test('return error if condition is not valid according to the pattern /^[A-Za-z0
 })
 
 Test('return error if Date Header is not according to format in RFC7231 as per Mojaloop Spec in POST /transfers', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers',
+  const req = Base.buildRequest({
+    url: '/transfers',
     method: 'POST',
     payload: {
       transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
@@ -209,7 +214,8 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
 })
 
 Test('return error if Date Header is not according to format in RFC7231 as per Mojaloop Spec in PUT /transfers', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers',
+  const req = Base.buildRequest({
+    url: '/transfers',
     method: 'POST',
     payload: {
       transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',

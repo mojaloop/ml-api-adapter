@@ -96,7 +96,7 @@ const putApi = (path, data, auth = {
 // const getFulfillment = (transferId) => getApi(`/transfers/${transferId}/fulfillment`)
 
 // const prepareTransfer = (transferId, transfer) => P.resolve(putApi(`/transfers/${transferId}`, transfer))
-const create = (transfer) => P.resolve(postApi(`/transfers`, transfer))
+const create = (transfer) => P.resolve(postApi('/transfers', transfer))
 
 // const fulfillTransfer = (transferId, fulfillment, auth) => putApi(`/transfers/${transferId}/fulfillment`, fulfillment, auth, 'text/plain')
 

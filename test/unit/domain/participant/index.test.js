@@ -44,7 +44,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
     getEndpointTest.test('return the endpoint when transferId is null', async (test) => {
       const fsp = 'fsp'
       const endpointType = Enum.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST
-      const expected = `http://localhost:1080/transfers`
+      const expected = 'http://localhost:1080/transfers'
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType).returns(P.resolve(expected))
 
       try {

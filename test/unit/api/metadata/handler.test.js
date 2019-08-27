@@ -128,7 +128,7 @@ Test('metadata handler', (handlerTest) => {
 
       const reply = {
         response: (response) => {
-          t.equal(response.urls['first_route'], `${hostName}/first`)
+          t.equal(response.urls.first_route, `${hostName}/first`)
           return { code: statusCode => { t.end() } }
         }
       }
@@ -143,8 +143,8 @@ Test('metadata handler', (handlerTest) => {
 
       const reply = {
         response: (response) => {
-          t.equal(response.urls['path'], '/somepath/:id')
-          t.equal(response.urls['manyargs'], '/somepath/:id/:path*/:test2/')
+          t.equal(response.urls.path, '/somepath/:id')
+          t.equal(response.urls.manyargs, '/somepath/:id/:path*/:test2/')
           return { code: () => { t.end() } }
         }
       }
