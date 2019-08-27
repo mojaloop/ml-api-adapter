@@ -71,6 +71,8 @@ In this method, we will run all of the core dependencies (`kafka`, `mysql` and `
 
 ### 3.1 Run all back-end dependencies as part of the Docker Compose
 
+> Note: mockserver below is optional. Include it if you require its use.
+
 ```bash
 # start all back-end dependencies in Docker
 docker-compose up -d mysql kafka simulator mockserver central-ledger
