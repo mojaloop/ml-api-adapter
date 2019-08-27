@@ -29,7 +29,7 @@ const Logger = require('@mojaloop/central-services-shared').Logger
 const Config = require('../lib/config')
 
 const fulfilTransfer = (request) => {
-  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000
+  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS ? Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000 : 0
   const maxCallbackTimeLagDilation = Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS ? Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS : 0
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
