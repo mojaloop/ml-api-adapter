@@ -22,6 +22,7 @@
 
 'use strict'
 
+const EventSdk = require('@mojaloop/event-sdk')
 const Sinon = require('sinon')
 const Test = require('tapes')(require('tape'))
 const P = require('bluebird')
@@ -36,7 +37,8 @@ const createRequest = (payload) => {
     payload: requestPayload,
     server: {
       log: () => { }
-    }
+    },
+    span: EventSdk.Tracer.createSpan('test_span')
   }
 }
 
@@ -48,7 +50,8 @@ const createPutRequest = (params, payload) => {
     payload: requestPayload,
     server: {
       log: () => { }
-    }
+    },
+    span: EventSdk.Tracer.createSpan('test_span')
   }
 }
 
@@ -330,7 +333,8 @@ Test('transfer handler', handlerTest => {
           },
           server: {
             log: () => { }
-          }
+          },
+          span: EventSdk.Tracer.createSpan('test_span')
         }
         const reply = {
           response: (response) => {
@@ -357,7 +361,8 @@ Test('transfer handler', handlerTest => {
           },
           server: {
             log: () => { }
-          }
+          },
+          span: EventSdk.Tracer.createSpan('test_span')
         }
         TransferService.getTransferById.rejects(new Error('An error has occurred'))
         try {
@@ -410,7 +415,8 @@ Test('transfer handler', handlerTest => {
         },
         server: {
           log: () => { }
-        }
+        },
+        span: EventSdk.Tracer.createSpan('test_span')
       }
       TransferService.transferError.rejects(new Error('An error has occurred'))
       try {

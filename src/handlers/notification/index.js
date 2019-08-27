@@ -78,7 +78,7 @@ const consumeMessage = async (error, message) => {
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const childSpan = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       try {
-        await childSpan.audit(msg)
+        await childSpan.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, childSpan).catch(err => {
           const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError('Error processing notification message', err)
           Logger.error(fspiopError)
@@ -94,7 +94,8 @@ const consumeMessage = async (error, message) => {
         combinedResult = (combinedResult && res)
       } catch (err) {
         const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-        await childSpan.error(fspiopError)
+        const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed)
+        await childSpan.error(fspiopError, state)
         throw fspiopError
       } finally {
         await childSpan.finish()
@@ -149,8 +150,9 @@ const startConsumer = async () => {
  * @async
  * @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
  * Callback.sendCallback - called to send the notification callback
- * @param {object} message - the message received form kafka
-
+ * @param {object} msg - the message received form kafka
+ * @param {object} span - the parent event span
+ *
  * @returns {boolean} Returns true on sucess and throws error on failure
  */
 

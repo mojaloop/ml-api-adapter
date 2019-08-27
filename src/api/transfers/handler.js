@@ -24,6 +24,7 @@
 
 'use strict'
 
+const EventSdk = require('@mojaloop/event-sdk')
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const Logger = require('@mojaloop/central-services-shared').Logger
@@ -55,15 +56,13 @@ const create = async function (request, h) {
 
   const span = request.span
   try {
-    // TODO Add tags to span
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
-    if (span) {
-      await span.audit({ headers: request.headers,
-        dataUri: request.dataUri,
-        payload: request.payload
-      })
-    }
+    await span.audit({ headers: request.headers,
+      dataUri: request.dataUri,
+      payload: request.payload
+    }, EventSdk.AuditEventAction.start)
+
     await TransferService.prepare(request.headers, request.dataUri, request.payload, span)
     histTimerEnd({ success: true })
     return h.response().code(202)
@@ -94,12 +93,18 @@ const fulfilTransfer = async function (request, h) {
     ['success']
   ).startTimer()
 
+  const span = request.span
   try {
     Validator.fulfilTransfer(request)
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await TransferService.fulfil(request.headers, request.dataUri, request.payload, request.params)
+    await span.audit({ headers: request.headers,
+      dataUri: request.dataUri,
+      payload: request.payload,
+      params: request.params
+    }, EventSdk.AuditEventAction.start)
+    await TransferService.fulfil(request.headers, request.dataUri, request.payload, request.params, span)
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
@@ -129,9 +134,13 @@ const getTransferById = async function (request, h) {
     ['success']
   ).startTimer()
 
+  const span = request.span
   try {
     Logger.info('getById::id(%s)', request.params.id)
-    await TransferService.getTransferById(request.headers, request.params)
+    await span.audit({ headers: request.headers,
+      params: request.params
+    }, EventSdk.AuditEventAction.start)
+    await TransferService.getTransferById(request.headers, request.params, span)
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
@@ -160,11 +169,17 @@ const fulfilTransferError = async function (request, h) {
     ['success']
   ).startTimer()
 
+  const span = request.span
   try {
     Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await TransferService.transferError(request.headers, request.dataUri, request.payload, request.params)
+    await span.audit({ headers: request.headers,
+      dataUri: request.dataUri,
+      payload: request.payload,
+      params: request.params
+    }, EventSdk.AuditEventAction.start)
+    await TransferService.transferError(request.headers, request.dataUri, request.payload, request.params, span)
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
