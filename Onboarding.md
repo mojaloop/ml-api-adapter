@@ -288,3 +288,53 @@ Resolved by installing openssl `brew install openssl` and then running:
   export LDFLAGS=-L/usr/local/opt/openssl/lib 
   npm install
   ```  
+  
+### 7.3 Docker-Compose Issues
+
+#### 7.3.1 On Linux, Simulator is unable to send callback to the ML-API-Adapter service
+
+Shutdown all docker images, and modify the following line in the docker-compose: `- TRANSFERS_ENDPOINT=http://host.docker.internal:3000`
+
+```yaml
+  simulator:
+    image: mojaloop/simulator:latest
+    container_name: ml_simulator
+    ports:
+      - "8444:8444"
+    environment:
+      - LOG_LEVEL=info
+      - TRANSFERS_ENDPOINT=http://host.docker.internal:3000
+      - TRANSFERS_FULFIL_RESPONSE_DISABLED=false
+    networks:
+      - ml-mojaloop-net
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:8444/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+```
+
+Replace `host.docker.internal` with `172.17.0.1` as per the following example:
+
+```yaml
+  simulator:
+    image: mojaloop/simulator:latest
+    container_name: ml_simulator
+    ports:
+      - "8444:8444"
+    environment:
+      - LOG_LEVEL=info
+      - TRANSFERS_ENDPOINT=http://172.17.0.1:3000
+      - TRANSFERS_FULFIL_RESPONSE_DISABLED=false
+    networks:
+      - ml-mojaloop-net
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:8444/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+```
+
+> Note: This will ensure that the simulator can send requests to the host machine. Refer to the following issue for more information or if the above ip-address is not working for you: https://github.com/docker/for-linux/issues/264.
+
+Restart all docker images.

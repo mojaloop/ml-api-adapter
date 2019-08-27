@@ -119,7 +119,9 @@ services:
       - "8444:8444"
     environment:
       - LOG_LEVEL=info
-      - TRANSFERS_ENDPOINT=http://ml-api-adapter:3000
+      - TRANSFERS_ENDPOINT=http://host.docker.internal:3000
+      - QUOTES_ENDPOINT=http://host.docker.internal:3002
+      - PARTIES_ENDPOINT=http://host.docker.internal:4002
       - TRANSFERS_FULFIL_RESPONSE_DISABLED=false
     networks:
       - ml-mojaloop-net
