@@ -57,7 +57,7 @@ Tests include code coverage via istanbul. See the test/ folder for testing scrip
 
 ## Auditing Dependencies
 
-We use `npm-audit-resolver` along with `npm audit` to check dependencies for vulnerabilities, and r
+We use `npm-audit-resolver` along with `npm audit` to check dependencies for vulnerabilities, and keep track of resolved dependencies with an `audit-resolv.json` file.
 
 To start a new resolution process, run:
 ```bash
