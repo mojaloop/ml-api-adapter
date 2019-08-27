@@ -58,7 +58,8 @@ const create = async function (request, h) {
   try {
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
-    await span.audit({ headers: request.headers,
+    await span.audit({
+      headers: request.headers,
       dataUri: request.dataUri,
       payload: request.payload
     }, EventSdk.AuditEventAction.start)
@@ -99,7 +100,8 @@ const fulfilTransfer = async function (request, h) {
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await span.audit({ headers: request.headers,
+    await span.audit({
+      headers: request.headers,
       dataUri: request.dataUri,
       payload: request.payload,
       params: request.params
@@ -137,7 +139,8 @@ const getTransferById = async function (request, h) {
   const span = request.span
   try {
     Logger.info('getById::id(%s)', request.params.id)
-    await span.audit({ headers: request.headers,
+    await span.audit({
+      headers: request.headers,
       params: request.params
     }, EventSdk.AuditEventAction.start)
     await TransferService.getTransferById(request.headers, request.params, span)
@@ -174,7 +177,8 @@ const fulfilTransferError = async function (request, h) {
     Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)
-    await span.audit({ headers: request.headers,
+    await span.audit({
+      headers: request.headers,
       dataUri: request.dataUri,
       payload: request.payload,
       params: request.params

@@ -29,7 +29,7 @@ const Fixtures = require('../../../fixtures')
 // const amount = '50.00'
 
 const create = (headers, transfer) => {
-  return Base.postApi(`/transfers`, headers, transfer)
+  return Base.postApi('/transfers', headers, transfer)
 }
 
 Test('POST /transfers', postTest => {
