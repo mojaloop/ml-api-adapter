@@ -67,6 +67,27 @@ Test('validator', validatorTest => {
       test.end()
     })
 
+    fulfilTransferTest.test('use setting with missing or undefined MAX_FULFIL_TIMEOUT_DURATION_SECONDS config', test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.MAX_FULFIL_TIMEOUT_DURATION_SECONDS = undefined
+      const ValidatorProxy = Proxyquire('../../../src/lib/validator', {
+        '../lib/config': ConfigStub
+      })
+
+      try {
+        const request = {
+          payload: {
+            // completedTimestamp: new Date(new Date().getTime() - 200)
+            completedTimestamp: new Date()
+          }
+        }
+        ValidatorProxy.fulfilTransfer(request)
+      } catch (err) {
+        test.fail('Expect validation to pass')
+      }
+      test.end()
+    })
+
     fulfilTransferTest.test('throw an FSPIOPError if the transfer date is after now', test => {
       try {
         const request = {
