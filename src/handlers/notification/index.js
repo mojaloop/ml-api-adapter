@@ -76,10 +76,10 @@ const consumeMessage = async (error, message) => {
     for (const msg of message) {
       Logger.info('Notification::consumeMessage::processMessage')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
-      const childSpan = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
+      const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       try {
-        await childSpan.audit(msg, EventSdk.AuditEventAction.start)
-        const res = await processMessage(msg, childSpan).catch(err => {
+        await span.audit(msg, EventSdk.AuditEventAction.start)
+        const res = await processMessage(msg, span).catch(err => {
           const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError('Error processing notification message', err)
           Logger.error(fspiopError)
           if (!autoCommitEnabled) {
@@ -94,11 +94,14 @@ const consumeMessage = async (error, message) => {
         combinedResult = (combinedResult && res)
       } catch (err) {
         const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-        const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed)
-        await childSpan.error(fspiopError, state)
+        const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed, fspiopError.apiErrorCode.code, fspiopError.apiErrorCode.message)
+        await span.error(fspiopError, state)
+        await span.finish(fspiopError.message, state)
         throw fspiopError
       } finally {
-        await childSpan.finish()
+        if (!span.isFinished) {
+          await span.finish()
+        }
       }
     }
     histTimerEnd({ success: true })
