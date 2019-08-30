@@ -21,6 +21,10 @@
       "/docs/**"
     ]
   },
+  "pre-commit": [
+    "dep:check",
+    "test"
+  ],
   "scripts": {
     "start": "run-p start:api",
     "start:api": "node src/api/index.js",
@@ -58,7 +62,7 @@
     "audit:check": "SHELL=sh check-audit",
     "license:list": "license-checker . --excludePackages `cat .licenseignore | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'` --production --csv",
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`",
-    "dep:check": "npx ncu",
+    "dep:check": "npx ncu -e 2",
     "dep:update": "npx ncu -u"
   },
   "dependencies": {
