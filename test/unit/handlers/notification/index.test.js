@@ -70,6 +70,65 @@ Test('Notification Service tests', notificationTest => {
   })
 
   notificationTest.test('processMessage should', async processMessageTest => {
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {
+              errorInformation: {
+                errorCode: '3100',
+                errorDescription: 'Validation error - PartyIdTypeEnum',
+                extensionList: {
+                  extension: [
+                    {
+                      key: 'cause',
+                      value: 'FSPIOPError: PartyIdTypeEnum\n    at createFSPIOPError (/Users/juancorrea/Documents/MuleSoft/Projects/ModusBox/BMGF-2/github/myfo'
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.POST
+      const headers = {}
+      const message = {
+        errorInformation: {
+          errorCode: '3100',
+          errorDescription: 'Validation error - PartyIdTypeEnum',
+          extensionList: {
+            extension: []
+          }
+        }
+      }
+
+      const expected = 200
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      // console.log(`Notification::processMessage - Callback.sendRequest(${url}, ${method}, ${JSON.stringify(headers)}, ${JSON.stringify(message)}, ${msg.value.from}, ${msg.value.to})`)
+      const result = await Notification.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
     processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
       const uuid = Uuid()
       const msg = {

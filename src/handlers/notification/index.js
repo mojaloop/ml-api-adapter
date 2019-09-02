@@ -160,7 +160,15 @@ const processMessage = async (msg) => {
   Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
   const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
-  const payloadForCallback = decodedPayload.body.toString()
+  const parsedPayload = JSON.parse(decodedPayload.body)
+  let payloadForCallback
+  if (parsedPayload.errorInformation) {
+    const options = { includeCauseExtension: Config.ERROR_HANDLING_INCLUDE_CAUSE_EXTENSION, truncateCause: Config.ERROR_HANDLING_TRUNCATE_CAUSE }
+    parsedPayload.errorInformation = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation, null, null).toApiErrorObject(options)
+    payloadForCallback = JSON.stringify(parsedPayload)
+  } else {
+    payloadForCallback = decodedPayload.body.toString()
+  }
 
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
