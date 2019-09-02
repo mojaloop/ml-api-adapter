@@ -61,6 +61,11 @@ const prepare = async (headers, dataUri, payload, span) => {
     Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::prepare::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::prepare::kafkaConfig - ${kafkaConfig}`)
+    await span.debug({
+      messageProtocol,
+      topicName: topicConfig.topicName,
+      clientId: kafkaConfig.rdkafkaConf['client.id']
+    })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
@@ -98,6 +103,11 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
     Logger.debug(`domain::transfer::fulfil::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::fulfil::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${kafkaConfig}`)
+    await span.debug({
+      messageProtocol,
+      topicName: topicConfig.topicName,
+      clientId: kafkaConfig.rdkafkaConf['client.id']
+    })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
@@ -132,6 +142,11 @@ const getTransferById = async (headers, params, span) => {
     Logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
     Logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
     Logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
+    await span.debug({
+      messageProtocol,
+      topicName: topicConfig.topicName,
+      clientId: kafkaConfig.rdkafkaConf['client.id']
+    })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
@@ -168,6 +183,11 @@ const transferError = async (headers, dataUri, payload, params, span) => {
     Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
     Logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
     Logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)
+    await span.debug({
+      messageProtocol,
+      topicName: topicConfig.topicName,
+      clientId: kafkaConfig.rdkafkaConf['client.id']
+    })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
