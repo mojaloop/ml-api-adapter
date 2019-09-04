@@ -160,14 +160,15 @@ const processMessage = async (msg) => {
   Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
   const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
-  const parsedPayload = JSON.parse(decodedPayload.body)
   let payloadForCallback
-  if (parsedPayload.errorInformation) {
-    const options = { includeCauseExtension: Config.ERROR_HANDLING_INCLUDE_CAUSE_EXTENSION, truncateCause: Config.ERROR_HANDLING_TRUNCATE_CAUSE }
-    parsedPayload.errorInformation = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation, null, null).toApiErrorObject(options)
-    payloadForCallback = JSON.stringify(parsedPayload)
-  } else {
+  if (isDataUri(content.payload)) {
     payloadForCallback = decodedPayload.body.toString()
+  } else {
+    const parsedPayload = JSON.parse(decodedPayload.body)
+    if (parsedPayload.errorInformation) {
+      const options = { includeCauseExtension: Config.ERROR_HANDLING_INCLUDE_CAUSE_EXTENSION, truncateCause: Config.ERROR_HANDLING_TRUNCATE_CAUSE }
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation, null, null).toApiErrorObject(options))
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
