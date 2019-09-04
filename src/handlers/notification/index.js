@@ -166,8 +166,7 @@ const processMessage = async (msg) => {
   } else {
     const parsedPayload = JSON.parse(decodedPayload.body)
     if (parsedPayload.errorInformation) {
-      const options = { includeCauseExtension: Config.ERROR_HANDLING_INCLUDE_CAUSE_EXTENSION, truncateCause: Config.ERROR_HANDLING_TRUNCATE_CAUSE }
-      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation, null, null).toApiErrorObject(options))
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation, null, null).toApiErrorObject(Config.ERROR_HANDLING))
     }
   }
 
