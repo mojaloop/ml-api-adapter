@@ -35,6 +35,7 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('@mojaloop/central-services-shared').Enum
 const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
+const isDataUri = require('@mojaloop/central-services-stream').Kafka.Protocol.isDataUri
 const Config = require('../../lib/config')
 
 let notificationConsumer = {}
@@ -160,7 +161,17 @@ const processMessage = async (msg) => {
   Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
   const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
-  const payloadForCallback = decodedPayload.body.toString()
+  let payloadForCallback
+  if (isDataUri(content.payload)) {
+    payloadForCallback = decodedPayload.body.toString()
+  } else {
+    const parsedPayload = JSON.parse(decodedPayload.body)
+    if (parsedPayload.errorInformation) {
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation).toApiErrorObject(Config.ERROR_HANDLING))
+    } else {
+      payloadForCallback = decodedPayload.body.toString()
+    }
+  }
 
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id)

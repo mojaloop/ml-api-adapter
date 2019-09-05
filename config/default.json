@@ -14,6 +14,10 @@
   },
   "MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS": 200,
   "MAX_FULFIL_TIMEOUT_DURATION_SECONDS": 300,
+  "ERROR_HANDLING": {
+    "includeCauseExtension": false,
+    "truncateCause": true
+  },
   "AMOUNT": {
     "PRECISION": 10,
     "SCALE": 2
