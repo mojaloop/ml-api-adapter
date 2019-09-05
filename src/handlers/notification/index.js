@@ -167,7 +167,9 @@ const processMessage = async (msg) => {
   } else {
     const parsedPayload = JSON.parse(decodedPayload.body)
     if (parsedPayload.errorInformation) {
-      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation, null, null).toApiErrorObject(Config.ERROR_HANDLING))
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation).toApiErrorObject(Config.ERROR_HANDLING))
+    } else {
+      payloadForCallback = decodedPayload.body.toString()
     }
   }
 
