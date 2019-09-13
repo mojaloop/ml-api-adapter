@@ -22,6 +22,7 @@
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  * Miguel de Barros <miguel.debarros@modusbox.com>
  * Rajiv Mothilal <rajiv.mothilal@modusbox.com>
+ * Steven Oderayi <steven.oderayi@modusbox.com>
 
  --------------
  ******/
@@ -419,6 +420,62 @@ Test('Notification Service tests', notificationTest => {
         test.ok(e instanceof Error)
         test.end()
       }
+    })
+
+    processMessageTest.test('should not send notification to sender if "SEND_TRANSFER_CONFIRMATION_TO_PAYEE" is disabled', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const message = { transferId: uuid }
+
+      Callback.sendRequest.withArgs(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+
+      const previousConfigValue = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+
+      // test for "commit" action and "success" status
+      await Notification.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      // test for "reject" action
+      msg.value.metadata.event.action = 'reject'
+      await Notification.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      // test for "abort" action
+      msg.value.metadata.event.action = 'abort'
+      await Notification.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = previousConfigValue
+      test.end()
     })
 
     processMessageTest.test('warn if invalid action received from kafka', async test => {
