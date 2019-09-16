@@ -40,6 +40,7 @@ const P = require('bluebird')
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
 
 const Notification = require(`${src}/handlers/notification`)
+const Util = require('@mojaloop/central-services-shared').Util
 const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
@@ -423,6 +424,11 @@ Test('Notification Service tests', notificationTest => {
     })
 
     processMessageTest.test('should not send notification to sender if "SEND_TRANSFER_CONFIRMATION_TO_PAYEE" is disabled', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
       const payerFsp = 'dfsp2'
       const payeeFsp = 'dfsp1'
       const uuid = Uuid()
@@ -457,24 +463,20 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
 
-      const previousConfigValue = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
-      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
-
       // test for "commit" action and "success" status
-      await Notification.processMessage(msg)
+      await NotificationProxy.processMessage(msg)
       test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
 
       // test for "reject" action
       msg.value.metadata.event.action = 'reject'
-      await Notification.processMessage(msg)
+      await NotificationProxy.processMessage(msg)
       test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
 
       // test for "abort" action
       msg.value.metadata.event.action = 'abort'
-      await Notification.processMessage(msg)
+      await NotificationProxy.processMessage(msg)
       test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
 
-      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = previousConfigValue
       test.end()
     })
 
