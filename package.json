@@ -69,7 +69,7 @@
   "dependencies": {
     "@hapi/basic": "5.1.1",
     "@hapi/good": "8.2.1",
-    "@hapi/hapi": "18.3.2",
+    "@hapi/hapi": "18.4.0",
     "@hapi/inert": "5.2.1",
     "@hapi/joi": "15.1.1",
     "@hapi/joi-date": "1.3.0",
