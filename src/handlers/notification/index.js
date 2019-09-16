@@ -20,6 +20,7 @@
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Steven Oderayi <steven.oderayi@modusbox.com>
 
  --------------
  ******/
@@ -46,6 +47,40 @@ let autoCommitEnabled = true
  */
 
 /**
+ * @function startConsumer
+ * @async
+ * @description This will create a kafka consumer which will listen to the notification topics configured in the config
+ *
+ * @returns {boolean} Returns true on success and throws error on failure
+ */
+const startConsumer = async () => {
+  Logger.info('Notification::startConsumer')
+  let topicName
+  try {
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+    topicName = topicConfig.topicName
+    Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
+    const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
+    config.rdkafkaConf['client.id'] = topicName
+
+    if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
+      autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
+    }
+    notificationConsumer = new Consumer([topicName], config)
+    await notificationConsumer.connect()
+    Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
+    await notificationConsumer.consume(consumeMessage)
+    Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
+    return true
+  } catch (err) {
+    Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
+  }
+}
+
+/**
  * @function consumeMessage
  * @async
  * @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
@@ -55,7 +90,6 @@ let autoCommitEnabled = true
 
  * @returns {boolean} Returns true on success or false on failure
  */
-
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
   const histTimerEnd = Metrics.getHistogram(
@@ -93,40 +127,6 @@ const consumeMessage = async (error, message) => {
     return combinedResult
   } catch (err) {
     histTimerEnd({ success: false })
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
-    throw fspiopError
-  }
-}
-
-/**
- * @function startConsumer
- * @async
- * @description This will create a kafka consumer which will listen to the notification topics configured in the config
- *
- * @returns {boolean} Returns true on success and throws error on failure
- */
-const startConsumer = async () => {
-  Logger.info('Notification::startConsumer')
-  let topicName
-  try {
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-    topicName = topicConfig.topicName
-    Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
-    const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
-    config.rdkafkaConf['client.id'] = topicName
-
-    if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
-      autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
-    }
-    notificationConsumer = new Consumer([topicName], config)
-    await notificationConsumer.connect()
-    Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
-    await notificationConsumer.consume(consumeMessage)
-    Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
-    return true
-  } catch (err) {
-    Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
     throw fspiopError
@@ -198,9 +198,13 @@ const processMessage = async (msg) => {
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
 
-    // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    // send an extra notification back to the original sender (if enabled in config)
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    } else {
+      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.COMMIT && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
@@ -215,9 +219,14 @@ const processMessage = async (msg) => {
     // forward the reject to the destination
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
-    // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+
+    // send an extra notification back to the original sender (if enabled in config)
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    } else {
+      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT) {
@@ -226,9 +235,14 @@ const processMessage = async (msg) => {
     // forward the abort to the destination
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
-    // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+
+    // send an extra notification back to the original sender (if enabled in config)
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    } else {
+      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {

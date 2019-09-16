@@ -22,6 +22,7 @@
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  * Miguel de Barros <miguel.debarros@modusbox.com>
  * Rajiv Mothilal <rajiv.mothilal@modusbox.com>
+ * Steven Oderayi <steven.oderayi@modusbox.com>
 
  --------------
  ******/
@@ -39,6 +40,7 @@ const P = require('bluebird')
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
 
 const Notification = require(`${src}/handlers/notification`)
+const Util = require('@mojaloop/central-services-shared').Util
 const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
@@ -419,6 +421,63 @@ Test('Notification Service tests', notificationTest => {
         test.ok(e instanceof Error)
         test.end()
       }
+    })
+
+    processMessageTest.test('should not send notification to sender if "SEND_TRANSFER_CONFIRMATION_TO_PAYEE" is disabled', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const message = { transferId: uuid }
+
+      Callback.sendRequest.withArgs(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+
+      // test for "commit" action and "success" status
+      await NotificationProxy.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      // test for "reject" action
+      msg.value.metadata.event.action = 'reject'
+      await NotificationProxy.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      // test for "abort" action
+      msg.value.metadata.event.action = 'abort'
+      await NotificationProxy.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      test.end()
     })
 
     processMessageTest.test('warn if invalid action received from kafka', async test => {
