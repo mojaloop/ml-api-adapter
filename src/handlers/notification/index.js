@@ -20,13 +20,14 @@
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ * Steven Oderayi <steven.oderayi@modusbox.com>
 
  --------------
  ******/
 'use strict'
 
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const EventSdk = require('@mojaloop/event-sdk')
 const Participant = require('../../domain/participant')
 const Callback = require('@mojaloop/central-services-shared').Util.Request
@@ -36,6 +37,7 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('@mojaloop/central-services-shared').Enum
 const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
+const isDataUri = require('@mojaloop/central-services-stream').Kafka.Protocol.isDataUri
 const Config = require('../../lib/config')
 
 let notificationConsumer = {}
@@ -44,6 +46,40 @@ let autoCommitEnabled = true
 /**
  * @module src/handlers/notification
  */
+
+/**
+ * @function startConsumer
+ * @async
+ * @description This will create a kafka consumer which will listen to the notification topics configured in the config
+ *
+ * @returns {boolean} Returns true on success and throws error on failure
+ */
+const startConsumer = async () => {
+  Logger.info('Notification::startConsumer')
+  let topicName
+  try {
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+    topicName = topicConfig.topicName
+    Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
+    const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
+    config.rdkafkaConf['client.id'] = topicName
+
+    if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
+      autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
+    }
+    notificationConsumer = new Consumer([topicName], config)
+    await notificationConsumer.connect()
+    Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
+    await notificationConsumer.consume(consumeMessage)
+    Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
+    return true
+  } catch (err) {
+    Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
+  }
+}
 
 /**
  * @function consumeMessage
@@ -55,7 +91,6 @@ let autoCommitEnabled = true
 
  * @returns {boolean} Returns true on success or false on failure
  */
-
 const consumeMessage = async (error, message) => {
   Logger.info('Notification::consumeMessage')
   const histTimerEnd = Metrics.getHistogram(
@@ -115,40 +150,6 @@ const consumeMessage = async (error, message) => {
 }
 
 /**
- * @function startConsumer
- * @async
- * @description This will create a kafka consumer which will listen to the notification topics configured in the config
- *
- * @returns {boolean} Returns true on success and throws error on failure
- */
-const startConsumer = async () => {
-  Logger.info('Notification::startConsumer')
-  let topicName
-  try {
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-    topicName = topicConfig.topicName
-    Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
-    const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
-    config.rdkafkaConf['client.id'] = topicName
-
-    if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
-      autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
-    }
-    notificationConsumer = new Consumer([topicName], config)
-    await notificationConsumer.connect()
-    Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
-    await notificationConsumer.consume(consumeMessage)
-    Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
-    return true
-  } catch (err) {
-    Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
-    throw fspiopError
-  }
-}
-
-/**
  * @function processMessage
  * @async
  * @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
@@ -177,7 +178,17 @@ const processMessage = async (msg, span) => {
   Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
   const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
-  const payloadForCallback = decodedPayload.body.toString()
+  let payloadForCallback
+  if (isDataUri(content.payload)) {
+    payloadForCallback = decodedPayload.body.toString()
+  } else {
+    const parsedPayload = JSON.parse(decodedPayload.body)
+    if (parsedPayload.errorInformation) {
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation).toApiErrorObject(Config.ERROR_HANDLING))
+    } else {
+      payloadForCallback = decodedPayload.body.toString()
+    }
+  }
 
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
@@ -204,9 +215,13 @@ const processMessage = async (msg, span) => {
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
 
-    // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    // send an extra notification back to the original sender (if enabled in config)
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    } else {
+      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.COMMIT && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
@@ -220,10 +235,15 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
     // forward the reject to the destination
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
-    // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
+
+    // send an extra notification back to the original sender (if enabled in config)
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    } else {
+      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT) {
@@ -231,10 +251,15 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
     // forward the abort to the destination
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
-    // send an extra notification back to the original sender.
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    await Callback.sendRequest(callbackURLTo, content.headers, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback)
+
+    // send an extra notification back to the original sender (if enabled in config)
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      return Callback.sendRequest(callbackURLFrom, content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback)
+    } else {
+      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+    }
   }
 
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
@@ -280,6 +305,7 @@ const processMessage = async (msg, span) => {
   }
 
   Logger.warn(`Unknown action received from kafka: ${action}`)
+  return false
 }
 
 /**

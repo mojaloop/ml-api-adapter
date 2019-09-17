@@ -24,7 +24,7 @@
 
 const ServerSetup = require('../../src/shared/setup')
 const ApiRoutes = require('../../src/api/routes')
-// const Logger = require('@mojaloop/central-services-shared').Logger
+// const Logger = require('@mojaloop/central-services-logger')
 
 const setupServer = async () => {
   const server = await ServerSetup.createServer(3000, [ApiRoutes])

@@ -24,6 +24,10 @@
     "DISABLED": true,
     "URI": "mongodb://objstore:27017/mlos"
   },
+  "ERROR_HANDLING": {
+    "includeCauseExtension": false,
+    "truncateCause": true
+  },
   "HANDLERS": {
     "DISABLED": false,
     "API": {

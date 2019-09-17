@@ -22,6 +22,7 @@
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  * Miguel de Barros <miguel.debarros@modusbox.com>
  * Rajiv Mothilal <rajiv.mothilal@modusbox.com>
+ * Steven Oderayi <steven.oderayi@modusbox.com>
 
  --------------
  ******/
@@ -32,11 +33,14 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const rewire = require('rewire')
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
-const Logger = require('@mojaloop/central-services-shared').Logger
+const EncodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.encodePayload
+const Logger = require('@mojaloop/central-services-logger')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const P = require('bluebird')
+const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
 
 const Notification = require(`${src}/handlers/notification`)
+const Util = require('@mojaloop/central-services-shared').Util
 const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
@@ -70,6 +74,65 @@ Test('Notification Service tests', notificationTest => {
   })
 
   notificationTest.test('processMessage should', async processMessageTest => {
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {
+              errorInformation: {
+                errorCode: '3100',
+                errorDescription: 'Validation error - PartyIdTypeEnum',
+                extensionList: {
+                  extension: [
+                    {
+                      key: ErrorHandlingEnums.FSPIOPError.ExtensionsKeys.cause,
+                      value: 'FSPIOPError: PartyIdTypeEnum\n    at createFSPIOPError (/Users/juancorrea/Documents/MuleSoft/Projects/ModusBox/BMGF-2/github/myfo'
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.POST
+      const headers = {}
+      const message = {
+        errorInformation: {
+          errorCode: '3100',
+          errorDescription: 'Validation error - PartyIdTypeEnum',
+          extensionList: {
+            extension: []
+          }
+        }
+      }
+
+      const expected = 200
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      // console.log(`Notification::processMessage - Callback.sendRequest(${url}, ${method}, ${JSON.stringify(headers)}, ${JSON.stringify(message)}, ${msg.value.from}, ${msg.value.to})`)
+      const result = await Notification.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
     processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
       const uuid = Uuid()
       const msg = {
@@ -100,6 +163,46 @@ Test('Notification Service tests', notificationTest => {
       const method = ENUM.Http.RestMethods.POST
       const headers = {}
       const message = { transferId: uuid }
+
+      const expected = 200
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      // console.log(`Notification::processMessage - Callback.sendRequest(${url}, ${method}, ${JSON.stringify(headers)}, ${JSON.stringify(message)}, ${msg.value.from}, ${msg.value.to})`)
+      const result = await Notification.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback and base64 encode the payload', async test => {
+      const uuid = Uuid()
+      const message = { transferId: uuid }
+      const encodedPayload = EncodePayload(JSON.stringify(message), 'application/json')
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: encodedPayload
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.POST
+      const headers = {}
 
       const expected = 200
 
@@ -320,16 +423,71 @@ Test('Notification Service tests', notificationTest => {
       }
     })
 
-    processMessageTest.test('warn if invalid action received from kafka', async test => {
-      const CentralServicesSharedStub = {
-        Logger: {
-          error: sandbox.stub().returns(P.resolve()),
-          info: sandbox.stub().returns(P.resolve()),
-          warn: sandbox.stub().returns(P.resolve())
+    processMessageTest.test('should not send notification to sender if "SEND_TRANSFER_CONFIRMATION_TO_PAYEE" is disabled', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const message = { transferId: uuid }
+
+      Callback.sendRequest.withArgs(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+
+      // test for "commit" action and "success" status
+      await NotificationProxy.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      // test for "reject" action
+      msg.value.metadata.event.action = 'reject'
+      await NotificationProxy.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      // test for "abort" action
+      msg.value.metadata.event.action = 'abort'
+      await NotificationProxy.processMessage(msg)
+      test.notok(Callback.sendRequest.calledWith(urlPayee, msg.value.content.headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+
+      test.end()
+    })
+
+    processMessageTest.test('warn if invalid action received from kafka', async test => {
+      const CentralServicesLoggerStub = {
+        error: sandbox.stub().returns(P.resolve()),
+        info: sandbox.stub().returns(P.resolve()),
+        warn: sandbox.stub().returns(P.resolve())
+      }
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
-        '@mojaloop/central-services-shared': CentralServicesSharedStub
+        '@mojaloop/central-services-logger': CentralServicesLoggerStub
       })
       const uuid = Uuid()
       const msg = {
@@ -354,8 +512,9 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        await NotificationProxy.processMessage(msg)
-        test.ok(CentralServicesSharedStub.Logger.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
+        const result = await NotificationProxy.processMessage(msg)
+        test.ok(!result, 'processMessage should have returned false signalling that no action was taken')
+        test.ok(CentralServicesLoggerStub.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
         test.end()
       } catch (e) {
         test.fail('Error thrown')

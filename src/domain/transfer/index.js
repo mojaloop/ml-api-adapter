@@ -26,7 +26,7 @@
  ******/
 'use strict'
 
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 const ErrorHandler = require('@mojaloop/central-services-error-handling')

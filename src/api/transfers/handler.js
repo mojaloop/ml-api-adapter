@@ -27,7 +27,7 @@
 const EventSdk = require('@mojaloop/event-sdk')
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 
