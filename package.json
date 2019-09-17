@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "7.4.2",
+  "version": "8.1.0",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -107,6 +107,7 @@
     "@hapi/boom": "7.4.3",
     "bluebird": "3.5.5",
     "faucet": "0.0.1",
+    "get-port": "5.0.0",
     "jsonpath": "1.0.2",
     "license-checker": "25.0.1",
     "mag": "0.9.1",
