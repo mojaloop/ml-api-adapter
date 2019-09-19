@@ -25,7 +25,7 @@
 'use strict'
 
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../lib/config')
 
 const fulfilTransfer = (request) => {
