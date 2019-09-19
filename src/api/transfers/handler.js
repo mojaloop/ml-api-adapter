@@ -117,7 +117,7 @@ const fulfilTransfer = async function (request, h) {
 
   const span = request.span
   try {
-    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.COMMIT))
+    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
     Validator.fulfilTransfer(request)
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
@@ -160,7 +160,7 @@ const getTransferById = async function (request, h) {
 
   const span = request.span
   try {
-    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PROCESSING))
+    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
     Logger.info('getById::id(%s)', request.params.id)
     await span.audit({
       headers: request.headers,
