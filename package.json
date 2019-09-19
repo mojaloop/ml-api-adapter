@@ -92,7 +92,7 @@
     "flat": "4.1.0",
     "glob": "7.1.4",
     "hapi-auth-bearer-token": "6.2.1",
-    "hapi-swagger": "10.1.1",
+    "hapi-swagger": "10.1.2",
     "immutable": "3.8.2",
     "joi-currency-code": "2.0.2",
     "jsdoc": "3.6.3",
