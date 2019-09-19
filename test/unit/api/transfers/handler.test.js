@@ -30,10 +30,15 @@ const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory
 const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
+const Enum = require('@mojaloop/central-services-shared').Enum
 
 const createRequest = (payload) => {
   const requestPayload = payload || {}
+  const headers = {}
+  headers[Enum.Http.Headers.FSPIOP.SOURCE] = payload.payerFsp
+  headers[Enum.Http.Headers.FSPIOP.DESTINATION] = payload.payeeFsp
   return {
+    headers,
     payload: requestPayload,
     server: {
       log: () => { }
@@ -45,7 +50,11 @@ const createRequest = (payload) => {
 const createPutRequest = (params, payload) => {
   const requestPayload = payload || {}
   const requestParams = params || {}
+  const headers = {}
+  headers[Enum.Http.Headers.FSPIOP.SOURCE] = payload.payerFsp
+  headers[Enum.Http.Headers.FSPIOP.DESTINATION] = payload.payeeFsp
   return {
+    headers,
     params: requestParams,
     payload: requestPayload,
     server: {
@@ -93,16 +102,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
 
@@ -138,16 +147,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
 
@@ -175,16 +184,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -217,16 +226,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -257,16 +266,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -278,7 +287,7 @@ Test('transfer handler', handlerTest => {
       const request = createPutRequest(params, payload)
 
       try {
-        await Handler.fulfilTransfer(request, { })
+        await Handler.fulfilTransfer(request, {})
         test.fail('Expected an FSPIOPError to be thrown')
       } catch (err) {
         test.ok(err instanceof FSPIOPError)
@@ -296,16 +305,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -327,10 +336,17 @@ Test('transfer handler', handlerTest => {
     fulfilTransferTest.end()
     handlerTest.test('Get transfer should', async getTransferByIdTest => {
       await getTransferByIdTest.test('reply with status code 202 if message is sent to Kafka topic', async test => {
+        const headers = {}
+        headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
+        headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
         const request = {
           params: {
-            transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
           },
+          payload: {
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+          },
+          headers,
           server: {
             log: () => { }
           },
@@ -355,10 +371,17 @@ Test('transfer handler', handlerTest => {
         }
       })
       await getTransferByIdTest.test('return error if getTransferById throws', async test => {
+        const headers = {}
+        headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
+        headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
         const request = {
           params: {
             transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
           },
+          payload: {
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+          },
+          headers,
           server: {
             log: () => { }
           },
@@ -409,10 +432,17 @@ Test('transfer handler', handlerTest => {
       await Handler.fulfilTransferError(request, reply)
     })
     await fulfilTransferErrorTest.test('return error if fulfilTransfer throws', async test => {
+      const headers = {}
+      headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
+      headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
       const request = {
         params: {
           transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
         },
+        payload: {
+          transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+        },
+        headers,
         server: {
           log: () => { }
         },
