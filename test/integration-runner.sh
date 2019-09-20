@@ -267,25 +267,25 @@ until $(is_api_up); do
   sleep 5
 done
 
->&2 echo "Integration tests are starting"
-run_test_command
-test_exit_code=$?
->&2 echo "Test result.... $test_exit_code ..."
+# >&2 echo "Integration tests are starting"
+# run_test_command
+# test_exit_code=$?
+# >&2 echo "Test result.... $test_exit_code ..."
 
-# >&2 echo "Displaying test logs"
-# docker logs $APP_TEST_HOST
+# # >&2 echo "Displaying test logs"
+# # docker logs $APP_TEST_HOST
 
-# >&2 echo "Displaying endpoint logs"
-# docker logs $ENDPOINT_HOST
+# # >&2 echo "Displaying endpoint logs"
+# # docker logs $ENDPOINT_HOST
 
->&2 echo "Copy results to local directory"
-docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
+# >&2 echo "Copy results to local directory"
+# docker cp $APP_TEST_HOST:$DOCKER_WORKING_DIR/$APP_DIR_TEST_RESULTS test
 
-if [ "$test_exit_code" != 0 ]
-then
- >&2 echo "Integration tests failed...exiting"
- >&2 echo "Test environment logs..."
-fi
+# if [ "$test_exit_code" != 0 ]
+# then
+#  >&2 echo "Integration tests failed...exiting"
+#  >&2 echo "Test environment logs..."
+# fi
 
-clean_docker
-exit "$test_exit_code"
+# clean_docker
+# exit "$test_exit_code"

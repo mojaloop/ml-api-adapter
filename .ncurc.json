@@ -1,6 +1,9 @@
 {
   "reject": [
     "@hapi/joi",
-    "@hapi/joi-date"
+    "@hapi/joi-date",
+    "@mojaloop/central-services-health",
+    "@mojaloop/central-services-shared",
+    "@mojaloop/central-services-stream"
   ]
 }

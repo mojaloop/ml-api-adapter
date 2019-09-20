@@ -30,6 +30,7 @@ const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
 const Config = require(`${src}/lib/config`)
+const Clone = require('@mojaloop/central-services-shared').Util.clone
 const Kafka = require('@mojaloop/central-services-shared').Util.Kafka
 const Request = require('@mojaloop/central-services-shared').Util.Request
 const Enum = require('@mojaloop/central-services-shared').Enum
@@ -214,6 +215,89 @@ Test('Notification Handler', notificationHandlerTest => {
       }
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a COMMIT message and send PUT callback based on PAYEE callback notification config', async test => {
+      const ConfigStub = Clone(Config)
+      const transferId = Uuid()
+      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: 'commit',
+            action: 'commit',
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/json',
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-destination': 'dfsp2',
+            'fspiop-source': 'dfsp1'
+          },
+          payload: {
+            amount: { amount: 100, currency: 'USD' },
+            transferState: 'COMMITTED',
+            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+            condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+            expiration: '2018-08-24T21:31:00.534+01:00',
+            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+            payeeFsp: 'dfsp1',
+            payerFsp: 'dfsp2',
+            transferId
+          }
+        },
+        to: 'dfsp2',
+        from: 'dfsp1',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+
+      // notification callback to payee should not be called
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const operation = 'put'
+      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+      let currentAttempts = 0
+      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      console.dir('responseTo.payload: ', responseTo.payload)
+      test.equal(responseTo.payload, undefined, 'Notification not sent to Payee, as expected')
+
+      // notification callback to payee should be called
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = true
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+      responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+      currentAttempts = 0
+      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
+        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.equal(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
