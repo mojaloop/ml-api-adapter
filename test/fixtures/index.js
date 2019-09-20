@@ -22,6 +22,7 @@
 
 'use strict'
 
+const EventSdk = require('@mojaloop/event-sdk')
 const Uuid = require('uuid4')
 // const Moment = require('moment')
 
@@ -32,6 +33,10 @@ const Uuid = require('uuid4')
 
 const generateTransferId = () => {
   return Uuid()
+}
+
+const generateParentTestSpan = () => {
+  return EventSdk.Tracer.createSpan('test_span')
 }
 
 // const generateAccountName = () => {
@@ -258,7 +263,8 @@ module.exports = {
   // findAccountPositions,
   // generateRandomName,
   // generateAccountName,
-  generateTransferId
+  generateTransferId,
+  generateParentTestSpan
   // getMomentToExpire,
   // getCurrentUTCTimeInMilliseconds,
   // rejectionMessage

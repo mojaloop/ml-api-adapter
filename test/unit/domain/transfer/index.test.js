@@ -24,6 +24,7 @@
 
 'use strict'
 
+const EventSdk = require('@mojaloop/event-sdk')
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const P = require('bluebird')
@@ -109,7 +110,9 @@ Test('Transfer Service tests', serviceTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
 
-      const result = await Service.prepare(headers, dataUri, message)
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const result = await Service.prepare(headers, dataUri, message, span)
       test.equals(result, true)
       test.end()
     })
@@ -146,7 +149,8 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.prepare(headers, dataUri, message)
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.prepare(headers, dataUri, message, span)
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -206,7 +210,8 @@ Test('Transfer Service tests', serviceTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
-      const result = await Service.fulfil(headers, dataUri, message, { id })
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.fulfil(headers, dataUri, message, { id }, span)
       test.equals(result, true)
       test.end()
     })
@@ -237,7 +242,8 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.fulfil(headers, dataUri, message, { id })
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.fulfil(headers, dataUri, message, { id }, span)
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -270,7 +276,8 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.fulfil(headers, dataUri, message, { id })
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.fulfil(headers, dataUri, message, { id }, span)
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
@@ -332,8 +339,9 @@ Test('Transfer Service tests', serviceTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, PREPARE, null, message.transferId)
 
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
 
-      const result = await Service.getTransferById(headers, { id })
+      const result = await Service.getTransferById(headers, { id }, span)
       test.equals(result, true)
       test.end()
     })
@@ -394,7 +402,8 @@ Test('Transfer Service tests', serviceTest => {
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
-      const result = await Service.transferError(headers, dataUri, message, { id })
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.transferError(headers, dataUri, message, { id }, span)
       test.equals(result, true)
       test.end()
     })
@@ -403,7 +412,8 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(P.reject(error))
       try {
-        await Service.transferError(headers, dataUri, message, { id })
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.transferError(headers, dataUri, message, { id }, span)
         test.fail('error not thrown')
       } catch (e) {
         test.ok(e instanceof Error)
@@ -478,13 +488,18 @@ Test('Transfer Service tests', serviceTest => {
         }
       }
 
+      const span = EventSdk.Tracer.createSpan('test_span')
+
       // Act
-      await Service.prepare(headers, dataUri, message)
+      await Service.prepare(headers, dataUri, message, span)
+
+      test.equal(resultMessageProtocol.metadata.trace.service, 'test_span')
 
       // Delete non-deterministic fields
       delete resultMessageProtocol.id
       delete resultMessageProtocol.metadata.event.id
       delete resultMessageProtocol.metadata.event.createdAt
+      delete resultMessageProtocol.metadata.trace
 
       // Assert
       test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
@@ -526,13 +541,18 @@ Test('Transfer Service tests', serviceTest => {
         }
       }
 
+      const span = EventSdk.Tracer.createSpan('test_span')
+
       // Act
-      await Service.prepare(headers, dataUri, message)
+      await Service.prepare(headers, dataUri, message, span)
+
+      test.equal(resultMessageProtocol.metadata.trace.service, 'test_span')
 
       // Delete non-deterministic fields
       delete resultMessageProtocol.id
       delete resultMessageProtocol.metadata.event.id
       delete resultMessageProtocol.metadata.event.createdAt
+      delete resultMessageProtocol.metadata.trace
 
       // Assert
       test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
