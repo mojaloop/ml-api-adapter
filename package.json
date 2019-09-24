@@ -96,7 +96,7 @@
     "rc": "1.2.8"
   },
   "devDependencies": {
-    "@hapi/boom": "7.4.3",
+    "@hapi/boom": "7.4.10",
     "bluebird": "3.5.5",
     "faucet": "0.0.1",
     "get-port": "5.0.0",
