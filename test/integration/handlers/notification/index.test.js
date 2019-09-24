@@ -34,7 +34,7 @@ const Kafka = require('@mojaloop/central-services-shared').Util.Kafka
 const Request = require('@mojaloop/central-services-shared').Util.Request
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Fixtures = require('../../../fixtures/index')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 
 const timeoutAttempts = 10
 const callbackWaitSeconds = 2
