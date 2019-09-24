@@ -165,8 +165,8 @@ module.exports = [{
       }
     },
     pre: [
-      { method: onPreHandler },
-    ],
+      { method: onPreHandler }
+    ]
   }
 },
 
