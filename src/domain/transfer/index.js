@@ -27,6 +27,7 @@
 'use strict'
 
 const Logger = require('@mojaloop/central-services-logger')
+const Kafka = require('@mojaloop/central-services-stream').Util
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
@@ -68,7 +69,7 @@ const prepare = async (headers, dataUri, payload, span) => {
     //   clientId: kafkaConfig.rdkafkaConf['client.id']
     // })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
-    await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
     Logger.error(`domain::transfer::prepare::Kafka error:: ERROR:'${err}'`)
@@ -110,7 +111,7 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
       clientId: kafkaConfig.rdkafkaConf['client.id']
     })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
-    await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
     Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
@@ -150,7 +151,7 @@ const getTransferById = async (headers, params, span) => {
     //   clientId: kafkaConfig.rdkafkaConf['client.id']
     // })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
-    await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
     Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
@@ -192,7 +193,7 @@ const transferError = async (headers, dataUri, payload, params, span) => {
     //   clientId: kafkaConfig.rdkafkaConf['client.id']
     // })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
-    await KafkaUtil.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+    await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
     Logger.error(`domain::transfer::abort::Kafka error:: ERROR:'${err}'`)

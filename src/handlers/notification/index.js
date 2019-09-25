@@ -36,8 +36,8 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('@mojaloop/central-services-shared').Enum
-const decodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.decodePayload
-const isDataUri = require('@mojaloop/central-services-stream').Kafka.Protocol.isDataUri
+const decodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.decodePayload
+const isDataUri = require('@mojaloop/central-services-shared').Util.StreamingProtocol.isDataUri
 const Config = require('../../lib/config')
 
 let notificationConsumer = {}
