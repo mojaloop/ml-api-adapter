@@ -93,13 +93,13 @@
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "10.1.2",
     "joi-currency-code": "2.0.2",
-    "jsdoc": "3.6.3",
     "rc": "1.2.8"
   },
   "devDependencies": {
     "bluebird": "3.5.5",
     "faucet": "0.0.1",
     "get-port": "5.0.0",
+    "jsdoc": "3.6.3",
     "jsonpath": "1.0.2",
     "license-checker": "25.0.1",
     "nodemon": "1.19.2",
