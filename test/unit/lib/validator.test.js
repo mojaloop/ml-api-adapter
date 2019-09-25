@@ -27,6 +27,9 @@
 const Test = require('tape')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const Validator = require('../../../src/lib/validator')
+const Proxyquire = require('proxyquire')
+const Config = require('../../../src/lib/config')
+const Util = require('@mojaloop/central-services-shared').Util
 
 Test('validator', validatorTest => {
   validatorTest.test('fulfilTransfer should', fulfilTransferTest => {
@@ -38,6 +41,47 @@ Test('validator', validatorTest => {
           }
         }
         Validator.fulfilTransfer(request)
+      } catch (err) {
+        test.fail('Expect validation to pass')
+      }
+      test.end()
+    })
+
+    fulfilTransferTest.test('use setting with missing or undefined MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS config', test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS = undefined
+      const ValidatorProxy = Proxyquire('../../../src/lib/validator', {
+        '../lib/config': ConfigStub
+      })
+
+      try {
+        const request = {
+          payload: {
+            completedTimestamp: new Date()
+          }
+        }
+        ValidatorProxy.fulfilTransfer(request)
+      } catch (err) {
+        test.fail('Expect validation to pass')
+      }
+      test.end()
+    })
+
+    fulfilTransferTest.test('use setting with missing or undefined MAX_FULFIL_TIMEOUT_DURATION_SECONDS config', test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.MAX_FULFIL_TIMEOUT_DURATION_SECONDS = undefined
+      const ValidatorProxy = Proxyquire('../../../src/lib/validator', {
+        '../lib/config': ConfigStub
+      })
+
+      try {
+        const request = {
+          payload: {
+            // completedTimestamp: new Date(new Date().getTime() - 200)
+            completedTimestamp: new Date()
+          }
+        }
+        ValidatorProxy.fulfilTransfer(request)
       } catch (err) {
         test.fail('Expect validation to pass')
       }

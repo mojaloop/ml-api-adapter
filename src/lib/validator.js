@@ -25,17 +25,18 @@
 'use strict'
 
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../lib/config')
 
 const fulfilTransfer = (request) => {
-  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000
+  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS ? Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000 : 0
+  const maxCallbackTimeLagDilation = Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS ? Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS : 0
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
-  Logger.debug(`completedTimestamp: ${completedTimestamp}, now: ${now}`)
-  if (completedTimestamp > now) {
+  Logger.debug(`completedTimestamp: ${completedTimestamp.toISOString()}, now: ${now.toISOString()}, maxLag: ${maxLag}, maxCallbackTimeLagDilation: ${maxCallbackTimeLagDilation}`)
+  if (completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation) {
     throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because future timestamp was provided')
-  } else if (completedTimestamp < now - maxLag) {
+  } else if (completedTimestamp.getTime() < now.getTime() - maxLag) {
     throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
   }
 }

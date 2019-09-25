@@ -1,7 +1,7 @@
 {
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_SOURCE_URL": "http://central-ledger:3001/participants/{{fsp}}/endpoints",
+  "ENDPOINT_SOURCE_URL": "http://central-ledger:3001",
   "ENDPOINT_HEALTH_URL": "http://central-ledger:3001/health",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
@@ -12,7 +12,11 @@
       "rejectUnauthorized": true
     }
   },
+  "MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS": 200,
   "MAX_FULFIL_TIMEOUT_DURATION_SECONDS": 300,
+  "TRANSFERS": {
+    "SEND_TRANSFER_CONFIRMATION_TO_PAYEE": true
+  },
   "AMOUNT": {
     "PRECISION": 10,
     "SCALE": 2
@@ -71,7 +75,7 @@
             "rdkafkaConf": {
               "client.id": "ml-con-notification-event",
               "group.id": "ml-group-notification-event",
-              "metadata.broker.list": "kafka:9092",
+              "metadata.broker.list": "kafka:29092",
               "socket.keepalive.enable": true
             },
             "topicConf": {
@@ -89,7 +93,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "kafka:9092",
+              "metadata.broker.list": "kafka:29092",
               "client.id": "ml-prod-transfer-prepare",
               "event_cb": true,
               "dr_cb": true,
@@ -107,7 +111,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "kafka:9092",
+              "metadata.broker.list": "kafka:29092",
               "client.id": "ml-prod-transfer-fulfil",
               "event_cb": true,
               "dr_cb": true,
@@ -125,7 +129,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "kafka:9092",
+              "metadata.broker.list": "kafka:29092",
               "client.id": "ml-prod-transfer-get",
               "event_cb": true,
               "dr_cb": true,

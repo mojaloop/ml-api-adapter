@@ -27,7 +27,7 @@
 const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Plugins = require('./plugins')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const Boom = require('@hapi/boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
@@ -146,18 +146,21 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   let server
   initializeInstrumentation()
   switch (service) {
-    case Enums.Http.ServiceType.API:
+    case Enums.Http.ServiceType.API: {
       server = await createServer(port, modules)
       break
-    case Enums.Http.ServiceType.HANDLER:
+    }
+    case Enums.Http.ServiceType.HANDLER: {
       if (!Config.HANDLERS_API_DISABLED) {
         server = await createServer(port, modules)
       }
       break
-    default:
+    }
+    default: {
       const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(`No valid service type ${service} found!`)
       Logger.error(fspiopError)
       throw fspiopError
+    }
   }
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
