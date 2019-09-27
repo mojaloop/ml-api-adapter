@@ -4,7 +4,7 @@ const src = '../../../../src'
 const Test = require('tape')
 const TransferService = require(`${src}/domain/transfer`)
 const Fixtures = require('../../../fixtures')
-const encodePayload = require('@mojaloop/central-services-stream/src/kafka/protocol').encodePayload
+const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 
 Test('transfer service', (modelTest) => {
   modelTest.test('prepare should', (prepareTest) => {

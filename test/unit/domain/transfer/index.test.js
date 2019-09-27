@@ -30,8 +30,8 @@ const Sinon = require('sinon')
 const P = require('bluebird')
 const Uuid = require('uuid4')
 const Service = require('../../../../src/domain/transfer')
-const Kafka = require('@mojaloop/central-services-shared').Util.Kafka
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const Kafka = require('@mojaloop/central-services-stream').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Config = require('../../../../src/lib/config')
 

@@ -30,7 +30,8 @@ const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
 const Config = require(`${src}/lib/config`)
-const Kafka = require('@mojaloop/central-services-shared').Util.Kafka
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const Kafka = require('@mojaloop/central-services-stream').Util
 const Request = require('@mojaloop/central-services-shared').Util.Request
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Fixtures = require('../../../fixtures/index')
@@ -45,7 +46,7 @@ Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
     notificationTest.test('consume a PREPARE message and send POST callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
@@ -83,7 +84,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -100,7 +101,7 @@ Test('Notification Handler', notificationHandlerTest => {
     })
 
     notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const transferId = Uuid()
       const messageProtocol = {
         metadata: {
@@ -140,7 +141,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -158,7 +159,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
     notificationTest.test('consume a COMMIT message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
@@ -198,7 +199,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -218,7 +219,7 @@ Test('Notification Handler', notificationHandlerTest => {
     })
 
     notificationTest.test('consume a COMMIT message and send PUT callback on error', async test => {
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const transferId = Uuid()
       const messageProtocol = {
         metadata: {
@@ -258,7 +259,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -276,7 +277,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
     notificationTest.test('consume a REJECT message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
@@ -316,7 +317,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -337,7 +338,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
     notificationTest.test('consume a ABORT message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
@@ -377,7 +378,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -398,7 +399,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
     notificationTest.test('consume a TIMEOUT-RECEIVED message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
@@ -438,7 +439,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
@@ -456,7 +457,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
     notificationTest.test('consume a PREPARE-DUPLICATE message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
@@ -497,7 +498,7 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
