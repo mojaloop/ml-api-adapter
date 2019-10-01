@@ -74,7 +74,7 @@
     "@hapi/hapi": "18.4.0",
     "@hapi/inert": "5.2.2",
     "@hapi/joi": "15.1.1",
-    "@hapi/joi-date": "1.3.0",
+    "@hapi/joi-date": "2.0.0",
     "@hapi/vision": "5.5.4",
     "@mojaloop/central-services-auth": "5.2.1",
     "@mojaloop/central-services-error-handling": "8.2.0",
