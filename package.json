@@ -69,7 +69,7 @@
   },
   "dependencies": {
     "@hapi/basic": "5.1.1",
-    "@hapi/boom": "8.0.1",
+    "@hapi/boom": "7.4.10",
     "@hapi/good": "8.2.3",
     "@hapi/hapi": "18.4.0",
     "@hapi/inert": "5.2.2",
@@ -93,7 +93,7 @@
     "glob": "7.1.4",
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "10.1.2",
-    "joi-currency-code": "3.0.0",
+    "joi-currency-code": "2.0.2",
     "rc": "1.2.8"
   },
   "devDependencies": {
