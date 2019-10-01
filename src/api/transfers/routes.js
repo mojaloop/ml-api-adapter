@@ -29,7 +29,7 @@
 const Handler = require('./handler')
 const BaseJoi = require('joi-currency-code')(require('@hapi/joi'))
 const Enum = require('@mojaloop/central-services-shared').Enum
-const onPreHandler = require('@mojaloop/central-services-error-handling').Handler.onPreHandler
+const validateIncomingErrorCode = require('@mojaloop/central-services-error-handling').Handler.validateIncomingErrorCode
 const Extension = require('@hapi/joi-date')
 const Joi = BaseJoi.extend(Extension)
 const tags = ['api', 'transfers', Enum.Tags.RouteTags.SAMPLED]
@@ -165,7 +165,7 @@ module.exports = [{
       })
     },
     pre: [
-      { method: onPreHandler }
+      { method: validateIncomingErrorCode }
     ]
   }
 },
