@@ -26,7 +26,8 @@ const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Boom = require('@hapi/boom')
 const Routes = require('./routes')
-const RawPayloadToDataUriPlugin = require('../../../src/lib/hapi/plugins/rawPayloadToDataUri')
+const RawPayloadToDataUriPlugin = require('@mojaloop/central-services-shared').Util.Hapi.HapiRawPayload
+const Logger = require('@mojaloop/central-services-logger')
 
 const createServer = (port, modules) => {
   return (async () => {
@@ -46,8 +47,16 @@ const createServer = (port, modules) => {
       }
     })
     await server.register(modules)
+    await server.register({
+      plugin: require('@hapi/good'),
+      options: {
+        ops: {
+          interval: 10000
+        }
+      }
+    })
     await server.start()
-    console.log('Test Server started')
+    Logger.info(`Test Server started at ${server.info.uri}`)
     return server
   })()
 }

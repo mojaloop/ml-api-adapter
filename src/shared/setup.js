@@ -27,12 +27,13 @@
 const Hapi = require('@hapi/hapi')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const Plugins = require('./plugins')
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const Boom = require('@hapi/boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-const ParticipantEndpointCache = require('../domain/participant/lib/cache/participantEndpoint')
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Metrics = require('@mojaloop/central-services-metrics')
+const Enums = require('@mojaloop/central-services-shared').Enum
 
 /**
  * @module src/shared/setup
@@ -89,7 +90,7 @@ const createServer = async (port, modules) => {
  */
 const createHandlers = async (handlers) => {
   let handlerIndex
-  let registerdHandlers = {
+  const registeredHandlers = {
     connection: {},
     register: {},
     ext: {},
@@ -99,23 +100,21 @@ const createHandlers = async (handlers) => {
   }
 
   for (handlerIndex in handlers) {
-    var handler = handlers[handlerIndex]
+    const handler = handlers[handlerIndex]
     if (handler.enabled) {
       Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
-      switch (handler.type) {
-        case 'notification':
-          await ParticipantEndpointCache.initializeCache()
-          await RegisterHandlers.registerNotificationHandler()
-          break
-        default:
-          var error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
-          Logger.error(error)
-          throw new Error(error)
+      if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
+        await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+        await RegisterHandlers.registerNotificationHandler()
+      } else {
+        const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
+        const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
+        Logger.error(fspiopError)
+        throw fspiopError
       }
     }
   }
-
-  return registerdHandlers
+  return registeredHandlers
 }
 
 const initializeInstrumentation = () => {
@@ -147,23 +146,27 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   let server
   initializeInstrumentation()
   switch (service) {
-    case 'api':
+    case Enums.Http.ServiceType.API: {
       server = await createServer(port, modules)
       break
-    case 'handler':
+    }
+    case Enums.Http.ServiceType.HANDLER: {
       if (!Config.HANDLERS_API_DISABLED) {
         server = await createServer(port, modules)
       }
       break
-    default:
-      Logger.error(`No valid service type ${service} found!`)
-      throw new Error(`No valid service type ${service} found!`)
+    }
+    default: {
+      const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(`No valid service type ${service} found!`)
+      Logger.error(fspiopError)
+      throw fspiopError
+    }
   }
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers)
     } else {
-      await ParticipantEndpointCache.initializeCache()
+      await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
       await RegisterHandlers.registerAllHandlers()
     }
   }

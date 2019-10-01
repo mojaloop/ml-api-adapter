@@ -17,6 +17,9 @@ if [ $# -ne 1 ]; then
     echo " - APP_PORT: Application port"
     echo " - APP_TEST_HOST: Application test host"
     echo " - APP_DIR_TEST_RESULTS: Location of test results relative to the working directory"
+    echo " - SIMULATOR_HOST: name to give the simulator container"
+    echo " - SIMULATOR_IMAGE: docker image name of the simulator"
+    echo " - SIMULATOR_IMAGE_TAG: Tag of the docker image"
     echo " - TEST_CMD: Interation test command to be executed"
     echo ""
     echo " * IMPORTANT: Ensure you have the required env in the test/.env to execute the application"
@@ -60,6 +63,8 @@ stop_docker() {
   >&2 echo "$APP_HOST environment is shutting down"
   (docker stop $APP_HOST && docker rm $APP_HOST) > /dev/null 2>&1
   (docker stop $APP_TEST_HOST && docker rm $APP_TEST_HOST) > /dev/null 2>&1
+  >&1 echo "$SIMULATOR_HOST environment is shutting down"
+  (docker stop $SIMULATOR_HOST && docker rm $SIMULATOR_HOST) > /dev/null 2>&1
 }
 
 clean_docker() {
@@ -79,9 +84,31 @@ fcurl() {
 		"$@"
 }
 
+fcurl_sim() {
+	docker run --rm -i \
+		--link $SIMULATOR_HOST \
+		--entrypoint curl \
+		"jlekie/curl:latest" \
+        --output /dev/null --silent --head --fail \
+		"$@"
+}
+
 is_api_up() {
     fcurl "http://$APP_HOST:$APP_PORT/health?"
 }
+
+# Use simulator to mock out the central-ledger health check
+start_simulator () {
+  docker run --rm -td \
+    -p 8444:8444 \
+    --name=$SIMULATOR_HOST \
+    $SIMULATOR_IMAGE:$SIMULATOR_IMAGE_TAG
+}
+
+is_simulator_up() {
+  fcurl_sim "http://${SIMULATOR_HOST}:8444/health?"
+}
+
 
 start_kafka()
 {
@@ -102,9 +129,11 @@ start_ml_api_adapter()
 {
  docker run -d -i \
    --link $KAFKA_HOST \
+   --link $SIMULATOR_HOST \
    --name $APP_HOST \
    --env KAFKA_HOST="$KAFKA_HOST" \
    --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
+   --env MLAPI_ENDPOINT_HEALTH_URL="http://${SIMULATOR_HOST}:8444/health" \
    -p $APP_PORT:$APP_PORT \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
@@ -120,6 +149,7 @@ run_test_command()
    --env APP_HOST=$APP_HOST \
    --env HOST_IP="$APP_HOST" \
    --env KAFKA_HOST="$KAFKA_HOST" \
+   --env MLAPI_ENDPOINT_HEALTH_URL="http://${SIMULATOR_HOST}:8444/health" \
    $DOCKER_IMAGE:$DOCKER_TAG \
    /bin/sh \
    -c "source test/.env; $TEST_CMD"
@@ -128,7 +158,6 @@ run_test_command()
 stop_docker
 
 >&2 echo "Building Docker Image $DOCKER_IMAGE:$DOCKER_TAG with $DOCKER_FILE"
-# docker build --no-cache -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
 docker build --cache-from $DOCKER_IMAGE:$DOCKER_TAG -t $DOCKER_IMAGE:$DOCKER_TAG -f $DOCKER_FILE .
 echo "result "$?""
 if [ "$?" != 0 ]
@@ -150,6 +179,22 @@ fi
 
 >&2 echo "Waiting for Kafka to start"
 until is_kafka_up; do
+  >&2 printf "."
+  sleep 5
+done
+
+>&2 echo "Simulator is starting"
+start_simulator
+
+if [ "$?" != 0 ]
+then
+  >&2 echo "Starting Simulator failed...exiting"
+  clean_docker
+  exit 1
+fi
+
+>&2 echo "Waiting for Simulator to start"
+until is_simulator_up; do
   >&2 printf "."
   sleep 5
 done

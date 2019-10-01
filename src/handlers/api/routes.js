@@ -23,21 +23,19 @@
  - Name Surname <name.surname@gatesfoundation.com>
 
  * Miguel de Barros <miguel.debarros@modusbox.com>
+ - Lewis Daly <lewis@vesselstech.com>
 
  --------------
  ******/
 
 'use strict'
 
-// const tags = ['api', 'root']
+const MetadataHandler = require('../../api/metadata/handler')
 
 module.exports = [
   {
     method: 'GET',
     path: '/health',
-    handler: function (request, h) {
-      return h.response({ status: 'OK' }).code(200)
-    }
-    // options: RouteConfig.config(tags, 'Status of handler')
+    handler: MetadataHandler.getHealth
   }
 ]

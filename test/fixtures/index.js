@@ -22,6 +22,7 @@
 
 'use strict'
 
+const EventSdk = require('@mojaloop/event-sdk')
 const Uuid = require('uuid4')
 // const Moment = require('moment')
 
@@ -32,6 +33,10 @@ const Uuid = require('uuid4')
 
 const generateTransferId = () => {
   return Uuid()
+}
+
+const generateParentTestSpan = () => {
+  return EventSdk.Tracer.createSpan('test_span')
 }
 
 // const generateAccountName = () => {
@@ -84,6 +89,14 @@ const buildTransfer = (transferId) => {
       ]
     }
   }
+}
+
+const buildHeaders = {
+  accept: 'application/vnd.interoperability.participants+json;version=1',
+  'fspiop-destination': 'dsfp1',
+  'content-type': 'application/vnd.interoperability.participants+json;version=1.0',
+  date: '2019-05-24 08:52:19',
+  'fspiop-source': 'dfsp2'
 }
 
 // const buildUnconditionalTransfer = (transferId, debit, credit) => {
@@ -241,6 +254,7 @@ module.exports = {
   // buildCharge,
   // buildDebitOrCredit,
   buildTransfer,
+  buildHeaders,
   // buildUnconditionalTransfer,
   // buildTransferPreparedEvent,
   // buildTransferExecutedEvent,
@@ -249,7 +263,8 @@ module.exports = {
   // findAccountPositions,
   // generateRandomName,
   // generateAccountName,
-  generateTransferId
+  generateTransferId,
+  generateParentTestSpan
   // getMomentToExpire,
   // getCurrentUTCTimeInMilliseconds,
   // rejectionMessage

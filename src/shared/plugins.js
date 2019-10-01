@@ -26,10 +26,8 @@ const Package = require('../../package')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
-// const GoodWinston = require('good-winston')
-// const goodWinstonStream = new GoodWinston({winston: require('winston')})
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const RawPayloadToDataUri = require('../lib/hapi/plugins/rawPayloadToDataUri')
+const CentralServices = require('@mojaloop/central-services-shared')
 /**
  * @module src/shared/plugin
  */
@@ -39,8 +37,8 @@ const registerPlugins = async (server) => {
     plugin: require('hapi-swagger'),
     options: {
       info: {
-        'title': 'ml api adapter API Documentation',
-        'version': Package.version
+        title: 'ml api adapter API Documentation',
+        version: Package.version
       }
     }
   })
@@ -66,8 +64,14 @@ const registerPlugins = async (server) => {
     plugin: require('hapi-auth-bearer-token')
   })
 
-  await server.register([Inert, Vision, Blipp, ErrorHandling, RawPayloadToDataUri])
-  // await server.register([Inert, Vision, Blipp, ErrorHandling])
+  await server.register([
+    Inert,
+    Vision,
+    Blipp,
+    ErrorHandling,
+    CentralServices.Util.Hapi.HapiRawPayload,
+    CentralServices.Util.Hapi.HapiEventPlugin
+  ])
 }
 
 module.exports = {

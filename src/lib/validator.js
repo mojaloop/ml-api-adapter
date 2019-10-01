@@ -24,42 +24,20 @@
 
 'use strict'
 
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
+const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../lib/config')
 
-const BAD_REQUEST_ERROR_CODE = 400
-const BAD_REQUEST_ERROR_DESC = 'Bad Request'
-const DEFAULT_LAG_SECONDS = 300
-
 const fulfilTransfer = (request) => {
-  let validationPassed = true
-  let errorInformation = {
-    errorCode: BAD_REQUEST_ERROR_CODE,
-    errorDescription: BAD_REQUEST_ERROR_DESC,
-    extensionList: {
-      extension: []
-    }
-  }
-
-  const maxLag = (Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS || DEFAULT_LAG_SECONDS) * 1000
+  const maxLag = Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS ? Config.MAX_FULFIL_TIMEOUT_DURATION_SECONDS * 1000 : 0
+  const maxCallbackTimeLagDilation = Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS ? Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS : 0
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
-  if (completedTimestamp > now) {
-    errorInformation.extensionList.extension.push({
-      key: 'customValidationError',
-      value: 'completedTimestamp fails because future timestamp was provided'
-    })
-    validationPassed = false
-  } else if (completedTimestamp < now - maxLag) {
-    errorInformation.extensionList.extension.push({
-      key: 'customValidationError',
-      value: 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration'
-    })
-    validationPassed = false
-  }
-
-  return {
-    validationPassed,
-    reason: errorInformation
+  Logger.debug(`completedTimestamp: ${completedTimestamp.toISOString()}, now: ${now.toISOString()}, maxLag: ${maxLag}, maxCallbackTimeLagDilation: ${maxCallbackTimeLagDilation}`)
+  if (completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation) {
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because future timestamp was provided')
+  } else if (completedTimestamp.getTime() < now.getTime() - maxLag) {
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
   }
 }
 

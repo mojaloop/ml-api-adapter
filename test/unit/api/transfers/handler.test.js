@@ -22,32 +22,45 @@
 
 'use strict'
 
+const EventSdk = require('@mojaloop/event-sdk')
 const Sinon = require('sinon')
 const Test = require('tapes')(require('tape'))
 const P = require('bluebird')
+const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
+const Enum = require('@mojaloop/central-services-shared').Enum
 
 const createRequest = (payload) => {
   const requestPayload = payload || {}
+  const headers = {}
+  headers[Enum.Http.Headers.FSPIOP.SOURCE] = payload.payerFsp
+  headers[Enum.Http.Headers.FSPIOP.DESTINATION] = payload.payeeFsp
   return {
+    headers,
     payload: requestPayload,
     server: {
       log: () => { }
-    }
+    },
+    span: EventSdk.Tracer.createSpan('test_span')
   }
 }
 
 const createPutRequest = (params, payload) => {
   const requestPayload = payload || {}
   const requestParams = params || {}
+  const headers = {}
+  headers[Enum.Http.Headers.FSPIOP.SOURCE] = payload.payerFsp
+  headers[Enum.Http.Headers.FSPIOP.DESTINATION] = payload.payeeFsp
   return {
+    headers,
     params: requestParams,
     payload: requestPayload,
     server: {
       log: () => { }
-    }
+    },
+    span: EventSdk.Tracer.createSpan('test_span')
   }
 }
 
@@ -89,16 +102,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
 
@@ -134,26 +147,26 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
 
-      const error = new Error()
+      const error = new Error('An error has occurred')
       TransferService.prepare.returns(P.reject(error))
 
       try {
         await Handler.create(createRequest(payload))
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
@@ -171,16 +184,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -204,8 +217,8 @@ Test('transfer handler', handlerTest => {
       Handler.fulfilTransfer(request, reply)
     })
 
-    fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', test => {
-      let completedTimestamp = new Date((new Date().getTime() + 1000))
+    fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', async test => {
+      const completedTimestamp = new Date((new Date().getTime() + 100000))
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -213,16 +226,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -232,22 +245,20 @@ Test('transfer handler', handlerTest => {
       TransferService.fulfil.returns(P.resolve(true))
 
       const request = createPutRequest(params, payload)
-      const reply = {
-        response: (response) => {
-          return {
-            code: statusCode => {
-              test.equal(statusCode, 400)
-              test.end()
-            }
-          }
-        }
-      }
 
-      Handler.fulfilTransfer(request, reply)
+      try {
+        await Handler.fulfilTransfer(request, {})
+        test.fail('Expected an error to be thrown')
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.httpStatusCode, 400)
+        test.equal(err.message, 'completedTimestamp fails because future timestamp was provided')
+      }
+      test.end()
     })
 
-    fulfilTransferTest.test('reply with status code 400 if completedTimestamp is way too far in the past', test => {
-      let completedTimestamp = new Date((new Date().getTime() - 3600 * 1000))
+    fulfilTransferTest.test('reply with status code 400 if completedTimestamp is way too far in the past', async test => {
+      const completedTimestamp = new Date((new Date().getTime() - 3600 * 1000))
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -255,16 +266,16 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
@@ -274,18 +285,16 @@ Test('transfer handler', handlerTest => {
       TransferService.fulfil.returns(P.resolve(true))
 
       const request = createPutRequest(params, payload)
-      const reply = {
-        response: (response) => {
-          return {
-            code: statusCode => {
-              test.equal(statusCode, 400)
-              test.end()
-            }
-          }
-        }
-      }
 
-      Handler.fulfilTransfer(request, reply)
+      try {
+        await Handler.fulfilTransfer(request, {})
+        test.fail('Expected an FSPIOPError to be thrown')
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.httpStatusCode, 400)
+        test.equal(err.message, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
+      }
+      test.end()
     })
 
     fulfilTransferTest.test('return error if fulfilTransfer throws', async test => {
@@ -296,23 +305,23 @@ Test('transfer handler', handlerTest => {
         extensionList:
         {
           extension:
-          [
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            },
-            {
-              key: 'errorDescription',
-              value: 'This is a more detailed error description'
-            }
-          ]
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
         }
       }
       const params = {
         id: 'dfsp1'
       }
 
-      const error = new Error()
+      const error = new Error('An error has occurred')
       TransferService.fulfil.returns(P.reject(error))
 
       try {
@@ -327,13 +336,21 @@ Test('transfer handler', handlerTest => {
     fulfilTransferTest.end()
     handlerTest.test('Get transfer should', async getTransferByIdTest => {
       await getTransferByIdTest.test('reply with status code 202 if message is sent to Kafka topic', async test => {
+        const headers = {}
+        headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
+        headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
         const request = {
           params: {
-            transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
           },
+          payload: {
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+          },
+          headers,
           server: {
             log: () => { }
-          }
+          },
+          span: EventSdk.Tracer.createSpan('test_span')
         }
         const reply = {
           response: (response) => {
@@ -354,20 +371,28 @@ Test('transfer handler', handlerTest => {
         }
       })
       await getTransferByIdTest.test('return error if getTransferById throws', async test => {
+        const headers = {}
+        headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
+        headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
         const request = {
           params: {
             transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
           },
+          payload: {
+            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+          },
+          headers,
           server: {
             log: () => { }
-          }
+          },
+          span: EventSdk.Tracer.createSpan('test_span')
         }
-        TransferService.getTransferById.rejects(new Error())
+        TransferService.getTransferById.rejects(new Error('An error has occurred'))
         try {
           await Handler.getTransferById(request)
           test.fail('does not throw')
         } catch (e) {
-          test.ok(e instanceof Error)
+          test.ok(e instanceof FSPIOPError)
           test.equal(e.message, 'An error has occurred')
           test.end()
         }
@@ -407,20 +432,28 @@ Test('transfer handler', handlerTest => {
       await Handler.fulfilTransferError(request, reply)
     })
     await fulfilTransferErrorTest.test('return error if fulfilTransfer throws', async test => {
+      const headers = {}
+      headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
+      headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
       const request = {
         params: {
           transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
         },
+        payload: {
+          transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+        },
+        headers,
         server: {
           log: () => { }
-        }
+        },
+        span: EventSdk.Tracer.createSpan('test_span')
       }
-      TransferService.transferError.rejects(new Error())
+      TransferService.transferError.rejects(new Error('An error has occurred'))
       try {
         await Handler.fulfilTransferError(request)
         test.fail('does not throw')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }

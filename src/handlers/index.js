@@ -33,7 +33,7 @@
  * @module Handlers CLI Startup
  */
 
-const Logger = require('@mojaloop/central-services-shared').Logger
+const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../lib/config')
 const Setup = require('../shared/setup')
 const PJson = require('../../package.json')
@@ -51,19 +51,16 @@ Program.command('handler') // sub-command name, coffeeType = type, required
   .alias('h') // alternative sub-command is `h`
   .description('Start a specified Handler') // command description
   .option('--notification', 'Start the Notification Handler')
-  // function to execute when command is uses
   .action(async (args) => {
-    let handlerList = []
+    const handlerList = []
     if (args.notification && typeof args.notification === 'boolean') {
-      Logger.debug(`CLI: Executing --notification`)
-      let handler = {
+      Logger.debug('CLI: Executing --notification')
+      const handler = {
         type: 'notification',
         enabled: true
       }
       handlerList.push(handler)
     }
-
-    // if (Array.isArray(handlerList) && handlerList.length > 0) {
     module.exports = Setup.initialize({
       service: 'handler',
       port: Config.PORT,
@@ -71,9 +68,6 @@ Program.command('handler') // sub-command name, coffeeType = type, required
       handlers: handlerList,
       runHandlers: true
     })
-    // } else {
-    //   Program.help()
-    // }
   })
 
 if (Array.isArray(process.argv) && process.argv.length > 2) {

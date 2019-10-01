@@ -1,7 +1,8 @@
 {
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
-  "ENDPOINT_SOURCE_URL": "http://ml-api-adapter-endpoint:4545/participants/{{fsp}}/endpoints",
+  "ENDPOINT_SOURCE_URL": "http://ml-api-adapter-endpoint:4545",
+  "ENDPOINT_HEALTH_URL": "http://ml-api-adapter-sim:8444/health",
   "ENDPOINT_CACHE_CONFIG": {
     "expiresIn": 180000,
     "generateTimeout": 30000
@@ -11,9 +12,18 @@
       "rejectUnauthorized": false
     }
   },
+  "MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS": 200,
+  "MAX_FULFIL_TIMEOUT_DURATION_SECONDS": 300,
+  "TRANSFERS": {
+    "SEND_TRANSFER_CONFIRMATION_TO_PAYEE": true
+  },
   "AMOUNT": {
     "PRECISION": 10,
     "SCALE": 2
+  },
+  "ERROR_HANDLING": {
+    "includeCauseExtension": false,
+    "truncateCause": true
   },
   "HANDLERS": {
     "DISABLED": false,
@@ -35,18 +45,6 @@
       "GENERAL_TOPIC_TEMPLATE": {
         "TEMPLATE": "topic-{{functionality}}-{{action}}",
         "REGEX": "topic-(.*)-(.*)"
-      },
-      "NOTIFICATION_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-notification-event",
-        "REGEX": "topic-notification-event"
-      },
-      "FULFIL_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-transfer-fulfil",
-        "REGEX": "topic-transfer-fulfil"
-      },
-      "GET_TRANSFERS_TOPIC_TEMPLATE": {
-        "TEMPLATE": "topic-transfer-get",
-        "REGEX": "topic-transfer-get"
       }
     },
     "CONSUMER": {

@@ -26,7 +26,6 @@ defaults_Dependencies: &defaults_Dependencies |
     apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
     npm config set unsafe-perm true
     npm install -g node-gyp
-
 defaults_awsCliDependencies: &defaults_awsCliDependencies |
     apk --no-cache add \
             python \
@@ -36,8 +35,11 @@ defaults_awsCliDependencies: &defaults_awsCliDependencies |
             mailcap
     pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic
     apk -v --purge del py-pip
-
-
+defaults_license_scanner: &defaults_license_scanner
+  name: Install and set up license-scanner
+  command: |
+    git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
+    cd /tmp/license-scanner && make build default-files set-up
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
   command: |
@@ -261,53 +263,47 @@ jobs:
       - store_test_results:
           path: ./test/results
 
+  vulnerability-check:
+    <<: *defaults_working_directory
+    <<: *defaults_docker_node
+    steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_Dependencies
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Create dir for test results
+          command: mkdir -p ./audit/results
+      - run:
+          name: Check for new npm vulnerabilities
+          command: npm run audit:check --silent -- --json > ./audit/results/auditResults.json 
+      - store_artifacts:
+          path: ./audit/results
+          prefix: audit
 
-#   test-spec:
-#     machine: true
-#     # <<: *defaults
-#     steps:
-#     #   - run:
-#     #       name: Install general dependencies
-#     #       command: *defaultDependencies
-#     #   - run:
-#     #       name: Add the Postgres 9.6 binaries to the path.
-#     #       command: apk --no-cache add postgresql-client
-#     #   - setup_remote_docker
-#     #   - run:
-#     #       name: Add docker
-#     #       command: apk --no-cache add docker
-#     #   - run:
-#     #       name: Add docker compose
-#     #       command: |
-#     #         apk --no-cache add py-pip
-#     #         pip install docker-compose
-#     #   - run:
-#     #       name: Install Docker Compose
-#     #       command: |
-#     #         curl -L https://github.com/docker/compose/releases/download/1.8.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose; chmod +x /usr/local/bin/docker-compose
-#       - run:
-#           name: Add the Postgres 9.6 binaries to the path.
-#           command: echo ‘/usr/lib/postgresql/9.6/bin/:$PATH’ >> $BASH_ENV
-#       - run:
-#           name: Install Docker Compose
-#           command: |
-#             curl -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-#             chmod +x ~/docker-compose
-#             mv ~/docker-compose /usr/local/bin/docker-compose
-#       - checkout
-#       - restore_cache:
-#           key: dependency-cache-{{ checksum "package.json" }}
-#       - run:
-#           name: Create dir for test results
-#           command: mkdir -p ./test/results
-#       - run:
-#           name: Execute unit tests
-#           command: npm -s run test:spec
-#       - store_artifacts:
-#           path: ./test/results
-#           prefix: test
-#       - store_test_results:
-#           path: ./test/results
+  audit-licenses:
+    <<: *defaults_working_directory
+    <<: *defaults_docker_node
+    steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_Dependencies
+      - run:
+          <<: *defaults_license_scanner
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Prune non-production packages before running license-scanner
+          command: npm prune --production
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && pathToRepo=$CIRCLE_WORKING_DIRECTORY make run
+      - store_artifacts:
+          path: /tmp/license-scanner/results
+          prefix: licenses
 
   build-snapshot:
     machine: true
@@ -388,6 +384,14 @@ jobs:
           <<: *defaults_build_docker_login
       - run:
           <<: *defaults_build_docker_build
+      - run:
+          <<: *defaults_license_scanner
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && mode=docker dockerImage=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
+      - store_artifacts:
+          path: /tmp/license-scanner/results
+          prefix: licenses
       - run:
           <<: *defaults_build_docker_publish
       - run:
@@ -615,17 +619,28 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-    #   - test-spec:
-    #       context: org-global
-    #       requires:
-    #         - setup
-    #       filters:
-    #           tags:
-    #             only: /.*/
-    #         branches:
-    #           ignore:
-    #             - /feature*/
-    #             - /bugfix*/
+      - vulnerability-check:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - audit-licenses:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
       - build-snapshot:
           context: org-global
           requires:
@@ -634,7 +649,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - vulnerability-check
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-snapshot/
@@ -659,7 +675,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - vulnerability-check
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-poc/
@@ -684,7 +701,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - vulnerability-check
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-pocdb/
@@ -709,7 +727,8 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - vulnerability-check
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-base/
@@ -734,13 +753,19 @@ workflows:
             - test-coverage
             - test-integration
             - test-functional
-            # - test-spec
+            - vulnerability-check
+            - audit-licenses
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
             branches:
               ignore:
                 - /.*/
+     
+      - test-functional:
+          context: org-global
+          requires:
+            - setup
       - deploy:
           context: org-global
           requires:
