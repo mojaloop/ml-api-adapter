@@ -32,15 +32,15 @@ const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Enum = require('@mojaloop/central-services-shared').Enum
 
-const getSpanTags = ({ payload, headers }, transactionType, transactionAction) => {
+const getSpanTags = ({ payload, headers, params }, transactionType, transactionAction) => {
   const tags = {
     transactionType,
     transactionAction,
-    transactionId: payload.transferId,
+    transactionId: (payload && payload.transferId) || (params && params.id),
     source: headers[Enum.Http.Headers.FSPIOP.SOURCE],
     destination: headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   }
-  if (payload.payerFsp && payload.payeeFsp) {
+  if (payload && payload.payerFsp && payload.payeeFsp) {
     return {
       ...tags,
       payerFsp: payload.payerFsp,
@@ -161,7 +161,7 @@ const getTransferById = async function (request, h) {
   const span = request.span
   try {
     span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    Logger.info('getById::id(%s)', request.params.id)
+    Logger.info(`getById::id(${request.params.id})`)
     await span.audit({
       headers: request.headers,
       params: request.params
