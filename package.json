@@ -90,7 +90,7 @@
     "blipp": "4.0.1",
     "commander": "3.0.2",
     "docdash": "1.1.1",
-    "glob": "7.1.4",
+    "glob": "7.1.5",
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "10.2.0",
     "joi-currency-code": "2.0.2",
