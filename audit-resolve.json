@@ -1,0 +1,16 @@
+{
+  "decisions": {
+    "1184|npm-check-updates>pacote>make-fetch-happen>https-proxy-agent": {
+      "decision": "ignore",
+      "madeAt": 1571649864997,
+      "expiresAt": 1572254601268
+    },
+    "1184|npm-check-updates>pacote>npm-registry-fetch>make-fetch-happen>https-proxy-agent": {
+      "decision": "ignore",
+      "madeAt": 1571649864997,
+      "expiresAt": 1572254601268
+    }
+  },
+  "rules": {},
+  "version": 1
+}

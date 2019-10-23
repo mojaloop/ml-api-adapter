@@ -33,8 +33,8 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const rewire = require('rewire')
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
-const EncodePayload = require('@mojaloop/central-services-stream').Kafka.Protocol.encodePayload
-const Logger = require('@mojaloop/central-services-shared').Logger
+const EncodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
+const Logger = require('@mojaloop/central-services-logger')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const P = require('bluebird')
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
@@ -481,15 +481,13 @@ Test('Notification Service tests', notificationTest => {
     })
 
     processMessageTest.test('warn if invalid action received from kafka', async test => {
-      const CentralServicesSharedStub = {
-        Logger: {
-          error: sandbox.stub().returns(P.resolve()),
-          info: sandbox.stub().returns(P.resolve()),
-          warn: sandbox.stub().returns(P.resolve())
-        }
+      const CentralServicesLoggerStub = {
+        error: sandbox.stub().returns(P.resolve()),
+        info: sandbox.stub().returns(P.resolve()),
+        warn: sandbox.stub().returns(P.resolve())
       }
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
-        '@mojaloop/central-services-shared': CentralServicesSharedStub
+        '@mojaloop/central-services-logger': CentralServicesLoggerStub
       })
       const uuid = Uuid()
       const msg = {
@@ -514,8 +512,9 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        await NotificationProxy.processMessage(msg)
-        test.ok(CentralServicesSharedStub.Logger.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
+        const result = await NotificationProxy.processMessage(msg)
+        test.ok(!result, 'processMessage should have returned false signalling that no action was taken')
+        test.ok(CentralServicesLoggerStub.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
         test.end()
       } catch (e) {
         test.fail('Error thrown')
