@@ -167,12 +167,14 @@ npm run docker:stop
 
 We use `npm` scripts as a common entrypoint for running the tests.
 
+> Note: Ensure that you stop all Docker services (`docker-compose stop`) prior to running the below commands.
+
 ```bash
 # unit tests:
 npm run test:unit
 
 # integration tests
-npm run test:int
+npm run test:integration
 
 # functional tests
 npm run test:functional
@@ -180,7 +182,6 @@ npm run test:functional
 # check test coverage
 npm run test:coverage
 ```
-
 
 ### 6. Testing the `central-ledger` API with Postman
 
