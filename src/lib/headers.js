@@ -1,5 +1,4 @@
 /*****
- * @file This registers all handlers for the central-ledger API
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
@@ -35,12 +34,12 @@ const Enums = require('@mojaloop/central-services-shared').Enum
 /**
  * @function createErrorCallbackHeaders
  * @description It returns the FSPIOP headers for callbacks
- * @param {object} params - parameters to the function with the shape `{ requestHeaders, dfspId, transferId, httpMethod, endpointTemplate }`
+ * @param {object} params - parameters to the function with the shape `{ headers, dfspId, transferId, httpMethod, endpointTemplate }`
  *
- * @returns {object} - FSPIOP callback headers merged with the request headers passed in `params.requestHeaders`
+ * @returns {object} - FSPIOP callback headers merged with the headers passed in `params.headers`
  */
 exports.createCallbackHeaders = (params) => {
-  const callbackHeaders = { ...params.requestHeaders }
+  const callbackHeaders = { ...params.headers }
 
   callbackHeaders[Enums.Http.Headers.FSPIOP.HTTP_METHOD] = params.httpMethod
   callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
