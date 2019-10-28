@@ -43,10 +43,7 @@ exports.createCallbackHeaders = (params) => {
   const callbackHeaders = { ...params.requestHeaders }
 
   callbackHeaders[Enums.Http.Headers.FSPIOP.HTTP_METHOD] = params.httpMethod
-  callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = Mustache.render(params.endpointTemplate, {
-    ID: params.transferId || null,
-    fsp: params.dfspId || null
-  })
+  callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
 
   return callbackHeaders
 }
