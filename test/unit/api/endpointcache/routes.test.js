@@ -15,6 +15,7 @@
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
+
  * Gates Foundation
 
  * Juan Correa <juan.correa@modusbox.com>
@@ -24,23 +25,18 @@
 
 'use strict'
 
-const ParticipantEndpointCache = require('@mojaloop/central-services-shared').Util.Endpoints
-const Config = require('../lib/config.js')
+const Test = require('tape')
+const Base = require('../../base')
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const Config = require('../../../../src/lib/config.js')
 
-/**
- * Operations on /resetendpointcache
- */
-module.exports = {
-  /**
-   * summary: PUT Reset Endpoint Cache
-   * description: The HTTP request PUT /resetendpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.
-   * parameters:
-   * produces: application/json
-   * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
-   */
-  put: async (request, h) => {
-    await ParticipantEndpointCache.stopCache()
-    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
-    return h.response().code(202)
-  }
-}
+Test('return error if required fields are missing on prepare', async function (assert) {
+  const req = Base.buildRequest({ url: '/endpointcache', method: 'DELETE', payload: {}, headers: { date: 'Mon, 28 Oct 2019 20:22:01 GMT' } })
+  const server = await Base.setup()
+  // TODO: initializeCache call explicitly here as it is NOT being called as part of Base.setup(), replace with proper mock
+  await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+  const res = await server.inject(req)
+  await server.stop()
+  assert.equal(202, res.statusCode)
+  assert.end()
+})
