@@ -33,7 +33,6 @@ const Config = require('../../../../src/lib/config.js')
 Test('return error if required fields are missing on prepare', async function (assert) {
   const req = Base.buildRequest({ url: '/endpointcache', method: 'DELETE', payload: {}, headers: { date: 'Mon, 28 Oct 2019 20:22:01 GMT' } })
   const server = await Base.setup()
-  // TODO: initializeCache call explicitly here as it is NOT being called as part of Base.setup(), replace with proper mock
   await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
   const res = await server.inject(req)
   await server.stop()

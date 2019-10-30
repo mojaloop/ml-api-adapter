@@ -37,6 +37,7 @@ const Config = require('../../../../src/lib/config.js')
 
 const Notification = require('../../../../src/handlers/notification')
 const Handler = require('../../../../src/api/endpointcache/handler')
+const ParticipantEndpointCache = require('@mojaloop/central-services-shared').Util.Endpoints
 const {
   createRequest,
   unwrapResponse
@@ -61,12 +62,32 @@ Test('route handler', (handlerTest) => {
   })
 
   handlerTest.test('/endpointcache should', endpointcacheTest => {
+    endpointcacheTest.test('returns the error response when the endpointcache is called without cache being initialized', async test => {
+      // Arrange
+      Notification.isConnected.resolves(true)
+      axios.get.resolves({ data: { status: 'OK' } })
+
+      sandbox.stub(ParticipantEndpointCache, 'stopCache').throws()
+
+      // Assert
+      try {
+        // Act
+        await unwrapResponse((reply) => Handler.deleteEndpointCache(createRequest({}), reply))
+        test.fail()
+        sandbox.restore()
+        test.end()
+      } catch (e) {
+        test.pass()
+        sandbox.restore()
+        test.end()
+      }
+    })
+
     endpointcacheTest.test('returns the correct response when the endpointcache is called', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 202
-      // TODO: initializeCache call explicitly here as it is NOT being called as part of Base.setup(), replace with proper mock
       await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
 
       // Act
