@@ -37,11 +37,24 @@ const Config = require('../../../../src/lib/config.js')
 
 const Notification = require('../../../../src/handlers/notification')
 const Handler = require('../../../../src/api/endpointcache/handler')
-const ParticipantEndpointCache = require('@mojaloop/central-services-shared').Util.Endpoints
+const proxyquire = require('proxyquire')
 const {
   createRequest,
   unwrapResponse
 } = require('../../../helpers')
+
+const SharedStub = {
+  Util: {
+    Endpoint: {
+      stopCache: () => {
+        throw new Error()
+      }
+    }
+  }
+}
+const handler = proxyquire('../../../../src/api/endpointcache/handler', {
+  '@mojaloop/central-services-shared': SharedStub
+})
 
 Test('route handler', (handlerTest) => {
   let sandbox
@@ -67,12 +80,10 @@ Test('route handler', (handlerTest) => {
       Notification.isConnected.resolves(true)
       axios.get.resolves({ data: { status: 'OK' } })
 
-      sandbox.stub(ParticipantEndpointCache, 'stopCache').throws()
-
       // Assert
       try {
         // Act
-        await unwrapResponse((reply) => Handler.deleteEndpointCache(createRequest({}), reply))
+        await unwrapResponse((reply) => handler.deleteEndpointCache(createRequest({}), reply))
         test.fail()
         sandbox.restore()
         test.end()
@@ -97,6 +108,7 @@ Test('route handler', (handlerTest) => {
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      sandbox.restore()
       test.end()
     })
 
