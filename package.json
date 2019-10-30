@@ -94,6 +94,7 @@
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "10.2.0",
     "joi-currency-code": "2.0.2",
+    "mustache": "3.1.0",
     "rc": "1.2.8"
   },
   "devDependencies": {
