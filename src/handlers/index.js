@@ -34,6 +34,7 @@
  */
 
 const Logger = require('@mojaloop/central-services-logger')
+const Enums = require('@mojaloop/central-services-shared').Enum
 const Config = require('../lib/config')
 const Setup = require('../shared/setup')
 const PJson = require('../../package.json')
@@ -62,7 +63,7 @@ Program.command('handler') // sub-command name, coffeeType = type, required
       handlerList.push(handler)
     }
     module.exports = Setup.initialize({
-      service: 'handler',
+      service: Enums.Http.ServiceType.HANDLER,
       port: Config.PORT,
       modules: [HealthPlugin, MetricsPlugin],
       handlers: handlerList,

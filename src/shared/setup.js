@@ -34,6 +34,9 @@ const Config = require('../lib/config')
 const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Metrics = require('@mojaloop/central-services-metrics')
 const Enums = require('@mojaloop/central-services-shared').Enum
+const Kafka = require('@mojaloop/central-services-stream').Util
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const generalEnum = require('@mojaloop/central-services-shared').Enum
 
 /**
  * @module src/shared/setup
@@ -123,6 +126,27 @@ const initializeInstrumentation = () => {
   }
 }
 
+const initializeProducers = async () => {
+  if (Config.HANDLERS_DISABLED) {
+    const configs = []
+    configs.push({
+      topicConfig: KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE),
+      kafkaConfig: KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
+    })
+
+    configs.push({
+      topicConfig: KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL),
+      kafkaConfig: KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
+    })
+
+    configs.push({
+      topicConfig: KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.GET),
+      kafkaConfig: KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.GET.toUpperCase())
+    })
+    await Kafka.Producer.connectAll(configs)
+  }
+}
+
 /**
  * @function initialize
  *
@@ -148,6 +172,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   switch (service) {
     case Enums.Http.ServiceType.API: {
       server = await createServer(port, modules)
+      await initializeProducers()
       break
     }
     case Enums.Http.ServiceType.HANDLER: {

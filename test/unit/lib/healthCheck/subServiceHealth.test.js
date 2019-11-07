@@ -23,6 +23,7 @@
  - Name Surname <name.surname@gatesfoundation.com>
 
  * Lewis Daly <lewis@vesselstech.com>
+ * Rajiv Mothilal <rajiv.mothilal@modusbox.com>
 
  --------------
  ******/
@@ -33,7 +34,8 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const proxyquire = require('proxyquire')
 const axios = require('axios')
-
+const Producer = require('@mojaloop/central-services-stream').Util.Producer
+const Config = require('../../../../src/lib/config')
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
 
 const Notification = require('../../../../src/handlers/notification/index')
@@ -82,6 +84,22 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
       // Assert
       test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
+      test.end()
+    })
+
+    brokerTest.test('Fail when isProducerConnected throws an error', async test => {
+      // Arrange
+      Config.HANDLERS_DISABLED = true
+      sandbox.stub(Producer, 'isConnected').throwsException()
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
+        Config: Config,
+        Producer: Producer
+      })
+      const expected = { name: serviceName.broker, status: statusEnum.DOWN }
+      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
+      Config.HANDLERS_DISABLED = false
+      Producer.isConnected.restore()
       test.end()
     })
 
