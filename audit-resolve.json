@@ -9,6 +9,14 @@
       "decision": "ignore",
       "madeAt": 1571649864997,
       "expiresAt": 1572254601268
+    },
+    "1300|hapi-swagger>handlebars": {
+      "decision": "fix",
+      "madeAt": 1573134401126
+    },
+    "1300|nyc>istanbul-reports>handlebars": {
+      "decision": "fix",
+      "madeAt": 1573134401126
     }
   },
   "rules": {},
