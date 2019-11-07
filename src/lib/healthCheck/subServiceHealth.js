@@ -44,9 +44,9 @@ const getSubServiceHealthBroker = async () => {
   try {
     if (!Config.HANDLERS_DISABLED) {
       await Notification.isConnected()
-    } else {
-      status = await isProducerConnected()
     }
+    status = await isProducerConnected()
+    status = status === Producer.stateList.PENDING ? statusEnum.OK : status
   } catch (err) {
     Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN
