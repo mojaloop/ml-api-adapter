@@ -13,7 +13,7 @@
     "PASSWORD": "password",
     "SCHEMA": "central_ledger",
     "POOL_MIN_SIZE": 10,
-    "POOL_MAX_SIZE": 10,
+    "POOL_MAX_SIZE": 30,
     "ACQUIRE_TIMEOUT_MILLIS": 30000,
     "CREATE_TIMEOUT_MILLIS": 30000,
     "DESTROY_TIMEOUT_MILLIS": 5000,
@@ -23,8 +23,8 @@
     "DEBUG": true
   },  
   "AMOUNT": {
-    "PRECISION": 10,
-    "SCALE": 2
+    "PRECISION": 18,
+    "SCALE": 4
   },
   "SIDECAR": {
     "DISABLED": true,
@@ -32,10 +32,6 @@
     "PORT": 5678,
     "CONNECT_TIMEOUT": 45000,
     "RECONNECT_INTERVAL": 5000
-  },
-  "DB_CONNECTION": {
-    "POOL_MIN": 10,
-    "POOL_MAX": 30
   },
   "MONGODB": {
     "DISABLED": true,
