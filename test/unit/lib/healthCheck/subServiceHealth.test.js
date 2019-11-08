@@ -103,6 +103,22 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       test.end()
     })
 
+    brokerTest.test('Fail when isProducerConnected throws an error', async test => {
+      // Arrange
+      Config.HANDLERS_DISABLED = true
+      sandbox.stub(Producer, 'isConnected').returns(Producer.stateList.DOWN)
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
+        Config: Config,
+        Producer: Producer
+      })
+      const expected = { name: serviceName.broker, status: statusEnum.DOWN }
+      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
+      Config.HANDLERS_DISABLED = false
+      Producer.isConnected.restore()
+      test.end()
+    })
+
     brokerTest.end()
   })
 
