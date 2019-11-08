@@ -1,4 +1,4 @@
-const RC = require('rc')('MLAPI', require('../../config/default.json'))
+const RC = require('parse-strings-in-object')(require('rc')('MLAPI', require('../../config/default.json')))
 
 // Set config object to be returned
 const config = {
