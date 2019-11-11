@@ -25,8 +25,6 @@
 const apiHost = process.env.APP_HOST || 'localhost'
 //  const apiHost = 'ml-api-adapter-functional'
 const RequestApi = require('supertest')('http://' + apiHost + ':3000')
-const P = require('bluebird')
-
 // const account1Name = 'dfsp1'
 // const account1AccountNumber = '1234'
 // const account1RoutingNumber = '2345'
@@ -95,8 +93,8 @@ const putApi = (path, data, auth = {
 
 // const getFulfillment = (transferId) => getApi(`/transfers/${transferId}/fulfillment`)
 
-// const prepareTransfer = (transferId, transfer) => P.resolve(putApi(`/transfers/${transferId}`, transfer))
-const create = (transfer) => P.resolve(postApi('/transfers', transfer))
+// const prepareTransfer = (transferId, transfer) => Promise.resolve(putApi(`/transfers/${transferId}`, transfer))
+const create = (transfer) => Promise.resolve(postApi('/transfers', transfer))
 
 // const fulfillTransfer = (transferId, fulfillment, auth) => putApi(`/transfers/${transferId}/fulfillment`, fulfillment, auth, 'text/plain')
 

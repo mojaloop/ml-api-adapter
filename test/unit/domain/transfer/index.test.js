@@ -27,7 +27,6 @@
 const EventSdk = require('@mojaloop/event-sdk')
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const P = require('bluebird')
 const Uuid = require('uuid4')
 const Service = require('../../../../src/domain/transfer')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
@@ -46,7 +45,7 @@ Test('Transfer Service tests', serviceTest => {
   serviceTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Kafka.Producer, 'produceMessage')
-    sandbox.stub(Kafka.Producer, 'disconnect').returns(P.resolve(true))
+    sandbox.stub(Kafka.Producer, 'disconnect').returns(Promise.resolve(true))
     t.end()
   })
 
@@ -108,7 +107,7 @@ Test('Transfer Service tests', serviceTest => {
         }
       }
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
-      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
 
       const span = EventSdk.Tracer.createSpan('test_span')
 
@@ -147,7 +146,7 @@ Test('Transfer Service tests', serviceTest => {
 
       const headers = {}
       const error = new Error()
-      Kafka.Producer.produceMessage.returns(P.reject(error))
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.prepare(headers, dataUri, message, span)
@@ -209,7 +208,7 @@ Test('Transfer Service tests', serviceTest => {
       }
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
 
-      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
       const span = EventSdk.Tracer.createSpan('test_span')
       const result = await Service.fulfil(headers, dataUri, message, { id }, span)
       test.equals(result, true)
@@ -240,7 +239,7 @@ Test('Transfer Service tests', serviceTest => {
       const headers = {}
       const id = 'dfsp1'
       const error = new Error()
-      Kafka.Producer.produceMessage.returns(P.reject(error))
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.fulfil(headers, dataUri, message, { id }, span)
@@ -274,7 +273,7 @@ Test('Transfer Service tests', serviceTest => {
       const headers = {}
       const id = 'dfsp1'
       const error = new Error()
-      Kafka.Producer.produceMessage.returns(P.reject(error))
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.fulfil(headers, dataUri, message, { id }, span)
@@ -338,7 +337,7 @@ Test('Transfer Service tests', serviceTest => {
       }
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, PREPARE, null, message.transferId)
 
-      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
       const span = EventSdk.Tracer.createSpan('test_span')
 
       const result = await Service.getTransferById(headers, { id }, span)
@@ -401,7 +400,7 @@ Test('Transfer Service tests', serviceTest => {
     await transferErrorTest.test('execute function', async test => {
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
-      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(P.resolve(true))
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
       const span = EventSdk.Tracer.createSpan('test_span')
       const result = await Service.transferError(headers, dataUri, message, { id }, span)
       test.equals(result, true)
@@ -410,7 +409,7 @@ Test('Transfer Service tests', serviceTest => {
 
     await transferErrorTest.test('throw error', async test => {
       const error = new Error()
-      Kafka.Producer.produceMessage.returns(P.reject(error))
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.transferError(headers, dataUri, message, { id }, span)

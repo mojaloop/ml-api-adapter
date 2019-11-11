@@ -25,7 +25,6 @@
 const ServerSetup = require('../../src/shared/setup')
 const ApiRoutes = require('../../src/api/routes')
 const getPort = require('get-port')
-// const Logger = require('@mojaloop/central-services-logger')
 
 const setupServer = async () => {
   const server = await ServerSetup.createServer(await getPort(), [ApiRoutes])
