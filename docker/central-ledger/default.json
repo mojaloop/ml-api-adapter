@@ -38,8 +38,8 @@
     "URI": "mongodb://objstore:27017/mlos"
   },
   "ERROR_HANDLING": {
-    "includeCauseExtension": false,
-    "truncateCause": true
+    "includeCauseExtension": true,
+    "truncateCause": false
   },
   "HANDLERS": {
     "DISABLED": false,
