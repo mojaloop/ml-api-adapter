@@ -25,6 +25,7 @@
 const Config = require('../lib/config')
 const Routes = require('./routes')
 const Setup = require('../shared/setup')
+const Enums = require('@mojaloop/central-services-shared').Enum
 
 /**
  * @module src/api/transfers
@@ -40,7 +41,7 @@ const Setup = require('../shared/setup')
  */
 
 module.exports = Setup.initialize({
-  service: 'api',
+  service: Enums.Http.ServiceType.API,
   port: Config.PORT,
   modules: [Routes],
   runHandlers: !Config.HANDLERS_DISABLED

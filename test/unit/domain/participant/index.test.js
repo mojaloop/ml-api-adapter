@@ -3,7 +3,6 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Uuid = require('uuid4')
-const P = require('bluebird')
 const Facade = require('@mojaloop/central-services-shared').Util.Endpoints
 const Service = require('../../../../src/domain/participant')
 const Enum = require('@mojaloop/central-services-shared').Enum
@@ -29,7 +28,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       const endpointType = Enum.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
       const expected = `http://localhost:1080/transfers/${transferId}`
-      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(P.resolve(expected))
+      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(Promise.resolve(expected))
 
       try {
         const result = await Service.getEndpoint(fsp, endpointType, transferId)
@@ -45,7 +44,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       const fsp = 'fsp'
       const endpointType = Enum.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST
       const expected = 'http://localhost:1080/transfers'
-      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType).returns(P.resolve(expected))
+      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType).returns(Promise.resolve(expected))
 
       try {
         const result = await Service.getEndpoint(fsp, endpointType)

@@ -3,11 +3,11 @@
 const src = '../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const P = require('bluebird')
 const Config = require(`${src}/lib/config`)
 const Proxyquire = require('proxyquire')
 const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Boom = require('@hapi/boom')
+const Kafka = require('@mojaloop/central-services-stream').Util
 
 Test('setup', setupTest => {
   let sandbox
@@ -21,10 +21,11 @@ Test('setup', setupTest => {
 
   setupTest.beforeEach(test => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Endpoints, 'initializeCache').returns(P.resolve(true))
+    sandbox.stub(Endpoints, 'initializeCache').returns(Promise.resolve(true))
+    sandbox.stub(Kafka.Producer, 'connectAll').returns(Promise.resolve(true))
 
     PluginsStub = {
-      registerPlugins: sandbox.stub().returns(P.resolve())
+      registerPlugins: sandbox.stub().returns(Promise.resolve())
     }
 
     serverStub = {
@@ -43,8 +44,8 @@ Test('setup', setupTest => {
     }
 
     RegisterHandlersStub = {
-      registerAllHandlers: sandbox.stub().returns(P.resolve()),
-      registerNotificationHandler: sandbox.stub().returns(P.resolve())
+      registerAllHandlers: sandbox.stub().returns(Promise.resolve()),
+      registerNotificationHandler: sandbox.stub().returns(Promise.resolve())
     }
 
     Setup = Proxyquire('../../../src/shared/setup', {
@@ -102,6 +103,19 @@ Test('setup', setupTest => {
 
       Setup.initialize({ service }).then(s => {
         test.equal(s, serverStub)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('return hapi server for "api" and register producers', async (test) => {
+      const service = 'api'
+      Config.HANDLERS_DISABLED = true
+      Setup.initialize({ service }).then(s => {
+        test.equal(s, serverStub)
+        Config.HANDLERS_DISABLED = false
         test.end()
       }).catch(err => {
         test.fail(`Should have not received an error: ${err}`)

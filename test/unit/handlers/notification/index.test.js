@@ -36,7 +36,6 @@ const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const EncodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Logger = require('@mojaloop/central-services-logger')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
-const P = require('bluebird')
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
 
 const Notification = require(`${src}/handlers/notification`)
@@ -58,15 +57,15 @@ Test('Notification Service tests', notificationTest => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Consumer.prototype, 'constructor')
 
-    sandbox.stub(Consumer.prototype, 'connect').returns(P.resolve(true))
+    sandbox.stub(Consumer.prototype, 'connect').returns(Promise.resolve(true))
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
-    sandbox.stub(Consumer.prototype, 'consume').returns(P.resolve(true)) // .callsArgAsync(0)
-    sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(P.resolve(true))
-    sandbox.stub(Participant, 'getEndpoint').returns(P.resolve(url))
+    sandbox.stub(Consumer.prototype, 'consume').returns(Promise.resolve(true)) // .callsArgAsync(0)
+    sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(Promise.resolve(true))
+    sandbox.stub(Participant, 'getEndpoint').returns(Promise.resolve(url))
 
     sandbox.stub(Logger)
-    // sandbox.stub(Callback, 'sendRequest').returns(P.resolve(true))
-    sandbox.stub(Callback, 'sendRequest').returns(P.resolve(true))
+    // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
+    sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     t.end()
   })
 
@@ -127,7 +126,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -167,7 +166,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -206,7 +205,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -243,7 +242,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -369,8 +368,8 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
-      Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -463,7 +462,7 @@ Test('Notification Service tests', notificationTest => {
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
       const message = { transferId: uuid }
 
-      Callback.sendRequest.withArgs(urlPayee, headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(urlPayee, headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       // test for "commit" action and "success" status
       await NotificationProxy.processMessage(msg)
@@ -484,9 +483,9 @@ Test('Notification Service tests', notificationTest => {
 
     processMessageTest.test('warn if invalid action received from kafka', async test => {
       const CentralServicesLoggerStub = {
-        error: sandbox.stub().returns(P.resolve()),
-        info: sandbox.stub().returns(P.resolve()),
-        warn: sandbox.stub().returns(P.resolve())
+        error: sandbox.stub().returns(Promise.resolve()),
+        info: sandbox.stub().returns(Promise.resolve()),
+        warn: sandbox.stub().returns(Promise.resolve())
       }
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '@mojaloop/central-services-logger': CentralServicesLoggerStub
@@ -577,8 +576,8 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
-      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
@@ -624,8 +623,8 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
-      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
@@ -670,7 +669,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -714,7 +713,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -758,7 +757,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -802,7 +801,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -846,7 +845,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, fromHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, fromHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, fromHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -890,7 +889,7 @@ Test('Notification Service tests', notificationTest => {
 
       const expected = 200
 
-      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(P.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
@@ -916,7 +915,7 @@ Test('Notification Service tests', notificationTest => {
 
     startConsumerTest.test('throw error on error connecting to kafka', async test => {
       const error = new Error()
-      Consumer.prototype.connect.returns(P.reject(error))
+      Consumer.prototype.connect.returns(Promise.reject(error))
       try {
         await Notification.startConsumer()
         test.fail('Was expecting an error when connecting to Kafka')
