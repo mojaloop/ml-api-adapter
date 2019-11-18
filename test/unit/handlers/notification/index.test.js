@@ -118,9 +118,6 @@ Test('Notification Service tests', notificationTest => {
         errorInformation: {
           errorCode: '3100',
           errorDescription: 'Validation error - PartyIdTypeEnum',
-          extensionList: {
-            extension: []
-          }
         }
       }
 

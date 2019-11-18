@@ -17,6 +17,14 @@
     "1300|nyc>istanbul-reports>handlebars": {
       "decision": "fix",
       "madeAt": 1573134401126
+    },
+    "1316|hapi-swagger>handlebars": {
+      "decision": "fix",
+      "madeAt": 1573829144487
+    },
+    "1316|nyc>istanbul-reports>handlebars": {
+      "decision": "fix",
+      "madeAt": 1573829144487
     }
   },
   "rules": {},
