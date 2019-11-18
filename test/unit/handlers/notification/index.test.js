@@ -117,7 +117,7 @@ Test('Notification Service tests', notificationTest => {
       const message = {
         errorInformation: {
           errorCode: '3100',
-          errorDescription: 'Validation error - PartyIdTypeEnum',
+          errorDescription: 'Validation error - PartyIdTypeEnum'
         }
       }
 
