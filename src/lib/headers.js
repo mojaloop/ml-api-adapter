@@ -38,11 +38,13 @@ const Enums = require('@mojaloop/central-services-shared').Enum
  *
  * @returns {object} - FSPIOP callback headers merged with the headers passed in `params.headers`
  */
-exports.createCallbackHeaders = (params) => {
+exports.createCallbackHeaders = (params, fromSwitch = false) => {
   const callbackHeaders = { ...params.headers }
 
   callbackHeaders[Enums.Http.Headers.FSPIOP.HTTP_METHOD] = params.httpMethod
-  callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
+  if (fromSwitch) {
+    callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
+  }
 
   return callbackHeaders
 }
