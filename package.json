@@ -99,7 +99,7 @@
     "rc": "1.2.8"
   },
   "devDependencies": {
-    "bluebird": "3.7.1",
+    "bluebird": "3.7.2",
     "faucet": "0.0.1",
     "get-port": "5.0.0",
     "jsdoc": "3.6.3",
