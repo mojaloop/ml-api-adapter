@@ -92,7 +92,7 @@
     "docdash": "1.1.1",
     "glob": "7.1.6",
     "hapi-auth-bearer-token": "6.2.1",
-    "hapi-swagger": "11.0.1",
+    "hapi-swagger": "11.0.2",
     "joi-currency-code": "2.0.2",
     "mustache": "3.1.0",
     "parse-strings-in-object": "1.2.0",
