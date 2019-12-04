@@ -20,6 +20,7 @@ services:
       - "3000:3000"
     environment:
       - LOG_LEVEL=info
+      - CSL_LOG_TRANSPORT=file
     volumes:
       # override the default values with our own - this is because the KAFKA_HOST env variable is ignored for some reason
        - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
