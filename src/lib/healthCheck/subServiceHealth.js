@@ -29,19 +29,24 @@ const Logger = require('@mojaloop/central-services-logger')
 
 const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
+const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const axios = require('axios')
 
 /**
  * @function getSubServiceHealthBroker
  *
  * @description Gets the health for the Notification broker
- * @returns Promise<SubServiceHealth> The SubService health object for the broker
+ * @returns Promise<object> The SubService health object for the broker
  */
 const getSubServiceHealthBroker = async () => {
   // TODO: Include use-case when running in API mode only (handlers.disabled=true) once 'getMetadata' enhancement has been added to the central-services-stream Producer.
   let status = statusEnum.OK
   try {
-    await Notification.isConnected()
+    if (!Config.HANDLERS_DISABLED) {
+      await Notification.isConnected()
+    }
+    status = await Producer.isConnected()
+    status = status === Producer.stateList.PENDING ? statusEnum.OK : status
   } catch (err) {
     Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN

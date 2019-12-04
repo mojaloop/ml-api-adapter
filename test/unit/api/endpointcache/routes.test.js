@@ -15,34 +15,27 @@
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
+
  * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+
+ * Juan Correa <juan.correa@modusbox.com>
+
  --------------
  ******/
 
 'use strict'
 
-const Config = require('../lib/config')
-const Routes = require('./routes')
-const Setup = require('../shared/setup')
-const Enums = require('@mojaloop/central-services-shared').Enum
+const Test = require('tape')
+const Base = require('../../base')
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const Config = require('../../../../src/lib/config.js')
 
-/**
- * @module src/api/transfers
- */
-
-/**
- * @function Initialize
- * @async
- *
- * @description This will initialize the api service by calling Setup.initialize
- *
- * @returns {object} - Returns the server object on success, throws error if failure occurs
- */
-
-module.exports = Setup.initialize({
-  service: Enums.Http.ServiceType.API,
-  port: Config.PORT,
-  modules: [Routes],
-  runHandlers: !Config.HANDLERS_DISABLED
+Test('return error if required fields are missing on prepare', async function (assert) {
+  const req = Base.buildRequest({ url: '/endpointcache', method: 'DELETE', payload: {}, headers: { date: 'Mon, 28 Oct 2019 20:22:01 GMT' } })
+  const server = await Base.setup()
+  await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+  const res = await server.inject(req)
+  await server.stop()
+  assert.equal(202, res.statusCode)
+  assert.end()
 })

@@ -19,7 +19,7 @@
   },
   "ERROR_HANDLING": {
     "includeCauseExtension": false,
-    "truncateCause": true
+    "truncateExtensions": true
   },
   "AMOUNT": {
     "PRECISION": 10,

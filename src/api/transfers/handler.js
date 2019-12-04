@@ -32,25 +32,7 @@ const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Enum = require('@mojaloop/central-services-shared').Enum
 
-const getSpanTags = ({ payload, headers }, transactionType, transactionAction) => {
-  const tags = {
-    transactionType,
-    transactionAction,
-    transactionId: payload.transferId,
-    source: headers[Enum.Http.Headers.FSPIOP.SOURCE],
-    destination: headers[Enum.Http.Headers.FSPIOP.DESTINATION]
-  }
-  if (payload.payerFsp && payload.payeeFsp) {
-    return {
-      ...tags,
-      payerFsp: payload.payerFsp,
-      payeeFsp: payload.payeeFsp
-    }
-  } else {
-    return tags
-  }
-}
-
+const { getTransferSpanTags } = require('@mojaloop/central-services-shared').Util.EventFramework
 /**
  * @module src/api/transfers/handler
  */
@@ -76,7 +58,7 @@ const create = async function (request, h) {
 
   const span = request.span
   try {
-    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await span.audit({
@@ -117,7 +99,7 @@ const fulfilTransfer = async function (request, h) {
 
   const span = request.span
   try {
-    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
     Validator.fulfilTransfer(request)
     Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
@@ -160,8 +142,8 @@ const getTransferById = async function (request, h) {
 
   const span = request.span
   try {
-    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    Logger.info('getById::id(%s)', request.params.id)
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
+    Logger.info(`getById::id(${request.params.id})`)
     await span.audit({
       headers: request.headers,
       params: request.params
@@ -197,7 +179,7 @@ const fulfilTransferError = async function (request, h) {
 
   const span = request.span
   try {
-    span.setTags(getSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
     Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
     Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
     Logger.debug('fulfilTransfer::id(%s)', request.params.id)

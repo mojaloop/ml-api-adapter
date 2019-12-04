@@ -17,32 +17,49 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
+
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
  --------------
  ******/
-
 'use strict'
 
-const Config = require('../lib/config')
-const Routes = require('./routes')
-const Setup = require('../shared/setup')
-const Enums = require('@mojaloop/central-services-shared').Enum
+const Test = require('tapes')(require('tape'))
+const Headers = require('../../../src/lib/headers')
+const Mustache = require('mustache')
 
-/**
- * @module src/api/transfers
- */
+Test('Headers tests', headersTest => {
+  let sandbox
+  const Sinon = require('sinon')
 
-/**
- * @function Initialize
- * @async
- *
- * @description This will initialize the api service by calling Setup.initialize
- *
- * @returns {object} - Returns the server object on success, throws error if failure occurs
- */
+  headersTest.beforeEach(t => {
+    sandbox = Sinon.createSandbox()
+    sandbox.stub(Mustache, 'render')
+    t.end()
+  })
 
-module.exports = Setup.initialize({
-  service: Enums.Http.ServiceType.API,
-  port: Config.PORT,
-  modules: [Routes],
-  runHandlers: !Config.HANDLERS_DISABLED
+  headersTest.afterEach(t => {
+    sandbox.restore()
+    t.end()
+  })
+
+  headersTest.test('createCallbackHeaders should', async createCallbackHeadersTest => {
+    createCallbackHeadersTest.test('test', test => {
+      const fromSwitch = true
+      const params = {
+        httpMethod: 'PUT'
+      }
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri')
+      const expected = {
+        'fspiop-http-method': 'PUT',
+        'fspiop-uri': 'http://fspiop-uri'
+      }
+      const result = Headers.createCallbackHeaders(params, fromSwitch)
+
+      test.deepEqual(result, expected)
+      test.end()
+    })
+    createCallbackHeadersTest.end()
+  })
+
+  headersTest.end()
 })

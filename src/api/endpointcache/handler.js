@@ -16,33 +16,38 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
  * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+
+ * Juan Correa <juan.correa@modusbox.com>
+
  --------------
  ******/
 
 'use strict'
 
-const Config = require('../lib/config')
-const Routes = require('./routes')
-const Setup = require('../shared/setup')
-const Enums = require('@mojaloop/central-services-shared').Enum
+const Logger = require('@mojaloop/central-services-logger')
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
+const ParticipantEndpointCache = require('@mojaloop/central-services-shared').Util.Endpoints
+const Config = require('../../lib/config.js')
 
 /**
- * @module src/api/transfers
- */
+  * summary: DELETE Reset Endpoint Cache
+  * description: The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.
+  * parameters:
+  * produces: application/json
+  * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
+  */
+const deleteEndpointCache = async (request, h) => {
+  try {
+    await ParticipantEndpointCache.stopCache()
+    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+    return h.response().code(202)
+  } catch (err) {
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    throw fspiopError
+  }
+}
 
-/**
- * @function Initialize
- * @async
- *
- * @description This will initialize the api service by calling Setup.initialize
- *
- * @returns {object} - Returns the server object on success, throws error if failure occurs
- */
-
-module.exports = Setup.initialize({
-  service: Enums.Http.ServiceType.API,
-  port: Config.PORT,
-  modules: [Routes],
-  runHandlers: !Config.HANDLERS_DISABLED
-})
+module.exports = {
+  deleteEndpointCache
+}

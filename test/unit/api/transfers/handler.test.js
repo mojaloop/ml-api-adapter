@@ -25,7 +25,6 @@
 const EventSdk = require('@mojaloop/event-sdk')
 const Sinon = require('sinon')
 const Test = require('tapes')(require('tape'))
-const P = require('bluebird')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
@@ -115,7 +114,7 @@ Test('transfer handler', handlerTest => {
         }
       }
 
-      TransferService.prepare.returns(P.resolve(true))
+      TransferService.prepare.returns(Promise.resolve(true))
 
       const request = createRequest(payload)
       const reply = {
@@ -161,7 +160,7 @@ Test('transfer handler', handlerTest => {
       }
 
       const error = new Error('An error has occurred')
-      TransferService.prepare.returns(P.reject(error))
+      TransferService.prepare.returns(Promise.reject(error))
 
       try {
         await Handler.create(createRequest(payload))
@@ -200,7 +199,7 @@ Test('transfer handler', handlerTest => {
         id: 'dfsp1'
       }
 
-      TransferService.fulfil.returns(P.resolve(true))
+      TransferService.fulfil.returns(Promise.resolve(true))
 
       const request = createPutRequest(params, payload)
       const reply = {
@@ -242,7 +241,7 @@ Test('transfer handler', handlerTest => {
         id: 'dfsp1'
       }
 
-      TransferService.fulfil.returns(P.resolve(true))
+      TransferService.fulfil.returns(Promise.resolve(true))
 
       const request = createPutRequest(params, payload)
 
@@ -282,7 +281,7 @@ Test('transfer handler', handlerTest => {
         id: 'dfsp1'
       }
 
-      TransferService.fulfil.returns(P.resolve(true))
+      TransferService.fulfil.returns(Promise.resolve(true))
 
       const request = createPutRequest(params, payload)
 
@@ -322,7 +321,7 @@ Test('transfer handler', handlerTest => {
       }
 
       const error = new Error('An error has occurred')
-      TransferService.fulfil.returns(P.reject(error))
+      TransferService.fulfil.returns(Promise.reject(error))
 
       try {
         await Handler.fulfilTransfer(createPutRequest(params, payload))
@@ -417,7 +416,7 @@ Test('transfer handler', handlerTest => {
       const params = {
         id: '888ec534-ee48-4575-b6a9-ead2955b8930'
       }
-      TransferService.transferError.returns(P.resolve(true))
+      TransferService.transferError.returns(Promise.resolve(true))
       const request = createPutRequest(params, payload)
       const reply = {
         response: (response) => {

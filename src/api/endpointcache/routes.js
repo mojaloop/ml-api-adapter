@@ -16,33 +16,27 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
  * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+
+ * Juan Correa <juan.correa@modusbox.com>
+
  --------------
  ******/
 
 'use strict'
 
-const Config = require('../lib/config')
-const Routes = require('./routes')
-const Setup = require('../shared/setup')
-const Enums = require('@mojaloop/central-services-shared').Enum
+const Handler = require('./handler')
+const Enum = require('@mojaloop/central-services-shared').Enum
+const tags = ['api', 'endpointcache', Enum.Tags.RouteTags.SAMPLED]
 
-/**
- * @module src/api/transfers
- */
-
-/**
- * @function Initialize
- * @async
- *
- * @description This will initialize the api service by calling Setup.initialize
- *
- * @returns {object} - Returns the server object on success, throws error if failure occurs
- */
-
-module.exports = Setup.initialize({
-  service: Enums.Http.ServiceType.API,
-  port: Config.PORT,
-  modules: [Routes],
-  runHandlers: !Config.HANDLERS_DISABLED
-})
+module.exports = [
+  {
+    method: 'DELETE',
+    path: '/endpointcache',
+    handler: Handler.deleteEndpointCache,
+    options: {
+      tags: tags,
+      description: 'The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.',
+      id: 'endpointcache'
+    }
+  }
+]

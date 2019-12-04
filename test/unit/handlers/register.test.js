@@ -2,7 +2,6 @@
 
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const P = require('bluebird')
 const Handlers = require('../../../src/handlers/register')
 const NotificationHandler = require('../../../src/handlers/notification')
 
@@ -21,7 +20,7 @@ Test('handlers', handlersTest => {
 
   handlersTest.test('handlers test should', registerAllTest => {
     registerAllTest.test('register all handlers', async (test) => {
-      sandbox.stub(NotificationHandler, 'startConsumer').returns(P.resolve(true))
+      sandbox.stub(NotificationHandler, 'startConsumer').returns(Promise.resolve(true))
       const result = await Handlers.registerAllHandlers()
       test.ok(NotificationHandler.startConsumer.called)
       test.equal(result, true)
