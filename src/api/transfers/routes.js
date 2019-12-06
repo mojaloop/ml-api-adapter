@@ -61,7 +61,9 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
       }).unknown(false).options({ stripUnknown: true }),
       payload: Joi.object({
         transferId: Joi.string().guid().required().description('Id of transfer').label('Transfer Id must be in a valid GUID format.'),
@@ -106,7 +108,9 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
       }).unknown(false).options({ stripUnknown: true }),
       params: Joi.object({
         id: Joi.string().required().description('path')
@@ -146,7 +150,9 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
       }).unknown(false).options({ stripUnknown: true }),
       params: Joi.object({
         id: Joi.string().required().description('path')
@@ -189,7 +195,9 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
       }).unknown(false).options({ stripUnknown: true }),
       params: Joi.object({
         id: Joi.string().guid().required().description('path').label('Supply a valid transfer Id to continue.') // To Do : expand user friendly error msg to params as well
