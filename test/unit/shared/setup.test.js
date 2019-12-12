@@ -73,16 +73,23 @@ Test('setup', setupTest => {
     createServerTest.test('throw error on fail', async (test) => {
       const errorToThrow = new Boom('Throw error')
 
-      const HapiStubThrowError = {
-        Server: sandbox.stub().callsFake((opt) => {
-          opt.routes.validate.failAction(sandbox.stub(), sandbox.stub(), errorToThrow)
-        })
+      PluginsStub = {
+        registerPlugins: sandbox.stub().returns(Promise.resolve())
+      }
+
+      serverStub = {
+        register: sandbox.stub(),
+        start: sandbox.stub().throws(errorToThrow),
+        info: { uri: 'http://server-info-uri' }
+      }
+
+      HapiStub = {
+        Server: sandbox.stub().returns(serverStub)
       }
 
       Setup = Proxyquire('../../../src/shared/setup', {
-        '../handlers/register': RegisterHandlersStub,
+        '@hapi/hapi': HapiStub,
         './plugins': PluginsStub,
-        '@hapi/hapi': HapiStubThrowError,
         '../lib/config': Config
       })
 
