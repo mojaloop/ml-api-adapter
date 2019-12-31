@@ -94,7 +94,7 @@
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "11.1.0",
     "joi-currency-code": "2.0.2",
-    "mustache": "3.2.0",
+    "mustache": "3.2.1",
     "parse-strings-in-object": "2.0.0",
     "rc": "1.2.8"
   },
