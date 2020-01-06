@@ -3,6 +3,7 @@
     "@hapi/boom",
     "@hapi/joi",
     "@hapi/joi-date",
+    "@hapi/inert",
     "joi-currency-code"
   ]
 }
