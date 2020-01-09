@@ -75,13 +75,13 @@ Test('Metadata handler test', async handlerTest => {
   handlerTest.test('/health', async healthCheckTest => {
     healthCheckTest.test('get the health status', async test => {
       // Arrange
-      const expectedSchema = {
+      const expectedSchema = Joi.object({
         status: Joi.string().valid('OK').required(),
         uptime: Joi.number().required(),
         startTime: Joi.date().iso().required(),
         versionNumber: Joi.string().required(),
         services: Joi.array().required()
-      }
+      })
       const expectedStatus = 200
       const expectedServices = [
         { name: 'broker', status: 'OK' },
@@ -95,7 +95,7 @@ Test('Metadata handler test', async handlerTest => {
       } = await unwrapResponse((reply) => metadataHandler.getHealth(createRequest({}), reply))
 
       // Assert
-      const validationResult = Joi.validate(responseBody, expectedSchema) // We use Joi to validate the results as they rely on timestamps that are variable
+      const validationResult = expectedSchema.validate(responseBody) // We use Joi to validate the results as they rely on timestamps that are variable
       test.equal(validationResult.error, null, 'The response matches the validation schema')
       test.deepEqual(responseCode, expectedStatus, 'The response code matches')
       test.deepEqual(responseBody.services, expectedServices, 'The sub-services are correct')
