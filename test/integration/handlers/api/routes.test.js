@@ -96,7 +96,7 @@ Test('Handlers test', async handlerTest => {
 
       // Assert
       const validationResult = expectedSchema.validate(responseBody) // We use Joi to validate the results as they rely on timestamps that are variable
-      test.equal(validationResult.error, null, 'The response matches the validation schema')
+      test.equal(validationResult.error, undefined, 'The response matches the validation schema')
       test.deepEqual(responseCode, expectedStatus, 'The response code matches')
       test.deepEqual(responseBody.services, expectedServices, 'The sub-services are correct')
       test.end()
