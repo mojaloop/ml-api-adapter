@@ -35,7 +35,7 @@ Test('return error if required fields are missing on prepare', async function (a
 })
 
 Test('return error if required headers are missing on prepare', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: {} })
+  const req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: {}, header: () => {} })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "date" fails because [date is required]. child "fspiop-source" fails because [fspiop-source is required]')
