@@ -27,11 +27,15 @@
 'use strict'
 
 const Handler = require('./handler')
-const BaseJoi = require('joi-currency-code')(require('@hapi/joi'))
+const RootJoi = require('@hapi/joi')
+const DateExtension = require('@hapi/joi-date')
+const CurrencyCodeExtension = require('joi-currency-code')
+const DateExtendedJoi = RootJoi.extend(DateExtension)
+const Joi = DateExtendedJoi.extend(CurrencyCodeExtension)
+
 const Enum = require('@mojaloop/central-services-shared').Enum
 const validateIncomingErrorCode = require('@mojaloop/central-services-error-handling').Handler.validateIncomingErrorCode
-const Extension = require('@hapi/joi-date')
-const Joi = BaseJoi.extend(Extension)
+
 const tags = ['api', 'transfers', Enum.Tags.RouteTags.SAMPLED]
 const transferState = [Enum.Transfers.TransferState.RECEIVED, Enum.Transfers.TransferState.RESERVED, Enum.Transfers.TransferState.COMMITTED, Enum.Transfers.TransferState.ABORTED, Enum.Transfers.TransferState.SETTLED]
 const regexAccept = Enum.Http.Headers.GENERAL.ACCEPT.regex
