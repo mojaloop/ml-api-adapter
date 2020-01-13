@@ -4,6 +4,11 @@
     "@hapi/joi",
     "@hapi/joi-date",
     "@hapi/inert",
-    "joi-currency-code"
+    "@hapi/good",
+    "@hapi/vision",
+    "@hapi/hapi",
+    "hapi-swagger",
+    "joi-currency-code",
+    "@mojaloop/central-services-shared"
   ]
 }

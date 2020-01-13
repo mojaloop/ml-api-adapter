@@ -39,6 +39,8 @@ const {
   getSubServiceHealthCentralLedger
 } = require('../../lib/healthCheck/subServiceHealth.js')
 
+const simpleCheck = new HealthCheck(packageJson, [])
+
 let healthCheck
 
 if (!Config.HANDLERS_DISABLED) {
@@ -47,7 +49,6 @@ if (!Config.HANDLERS_DISABLED) {
     getSubServiceHealthCentralLedger
   ])
 } else {
-  // TODO: Include getSubServiceHealthBroker once 'getMetadata' enhancement has been added to the central-services-stream Producer
   healthCheck = new HealthCheck(packageJson, [
     getSubServiceHealthBroker
   ])
@@ -88,7 +89,15 @@ const extractUrls = (request) => {
  * @param {*} request - the Hapi request object
  * @param {*} h - the Hapi handler object
  */
-const getHealth = defaultHealthHandler(healthCheck)
+const getHealth = (request, h) => {
+  const simpleHealthCheck = request.query && 'simple' in request.query && (request.query.simple === '' || request.query.simple === true)
+
+  if (simpleHealthCheck) {
+    return defaultHealthHandler(simpleCheck)(request, h)
+  }
+
+  return defaultHealthHandler(healthCheck)(request, h)
+}
 
 /**
  * @function metadata

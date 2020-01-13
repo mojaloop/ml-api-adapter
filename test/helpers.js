@@ -49,9 +49,11 @@ const unwrapResponse = async (asyncFunction) => {
   }
 }
 
-function createRequest (routes) {
+function createRequest (routes, { query } = {}) {
   const value = routes || []
+  const requestQuery = query || {}
   return {
+    query: requestQuery,
     server: {
       table: () => {
         return value

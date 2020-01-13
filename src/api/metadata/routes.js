@@ -1,3 +1,4 @@
+const Joi = require('@hapi/joi')
 const Handler = require('./handler')
 const tags = ['api', 'metadata']
 
@@ -9,7 +10,15 @@ module.exports = [
     options: {
       tags: tags,
       description: 'Status of adapter',
-      id: 'health'
+      id: 'health',
+      validate: {
+        query: Joi.object({
+          simple: [
+            Joi.string().max(0).allow(''),
+            Joi.boolean()
+          ]
+        })
+      }
     }
   },
   {
