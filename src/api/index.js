@@ -27,6 +27,7 @@ const Routes = require('./routes')
 const Setup = require('../shared/setup')
 const Enums = require('@mojaloop/central-services-shared').Enum
 
+process.env.UV_THREADPOOL_SIZE = 12
 /**
  * @module src/api/transfers
  */
