@@ -42,6 +42,8 @@ const HealthPlugin = require('./api/plugin')
 const MetricsPlugin = require('../api/metrics/plugin')
 const { Command } = require('commander')
 
+process.env.UV_THREADPOOL_SIZE = 12
+
 const Program = new Command()
 
 Program
