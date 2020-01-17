@@ -25,7 +25,7 @@
 const Package = require('../../package')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
-const Blipp = require('blipp')
+// const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const CentralServices = require('@mojaloop/central-services-shared')
 /**
@@ -60,14 +60,14 @@ const registerPlugins = async (server) => {
     plugin: require('@now-ims/hapi-now-auth')
   })
 
-  await server.register({
-    plugin: require('hapi-auth-bearer-token')
-  })
+  // await server.register({
+  //   plugin: require('hapi-auth-bearer-token')
+  // })
 
   await server.register([
     Inert,
     Vision,
-    Blipp,
+    // Blipp,
     ErrorHandling,
     CentralServices.Util.Hapi.HapiRawPayload,
     CentralServices.Util.Hapi.HapiEventPlugin
