@@ -135,7 +135,7 @@ executors:
   default-docker:
     working_directory: /home/circleci/project
     docker: 
-      - image: node:10.15.3-alpine
+      - image: node:12.14.1-alpine
 
   default-machine:
     machine:
