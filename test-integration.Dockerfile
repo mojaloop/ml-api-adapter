@@ -1,4 +1,4 @@
-FROM node:10.15.3-alpine
+FROM node:12.14.1-alpine
 USER root
 
 WORKDIR /opt/ml-api-adapter
