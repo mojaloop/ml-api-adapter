@@ -37,6 +37,7 @@ const EncodePayload = require('@mojaloop/central-services-shared').Util.Streamin
 const Logger = require('@mojaloop/central-services-logger')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
+const EventSdk = require('@mojaloop/event-sdk')
 
 const Notification = require(`${src}/handlers/notification`)
 const Util = require('@mojaloop/central-services-shared').Util
@@ -48,6 +49,7 @@ const ENUM = require('@mojaloop/central-services-shared').Enum
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
+let span
 
 Test('Notification Service tests', notificationTest => {
   let sandbox
@@ -56,12 +58,12 @@ Test('Notification Service tests', notificationTest => {
   notificationTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Consumer.prototype, 'constructor')
-
+    span = EventSdk.Tracer.createSpan('test_span')
     sandbox.stub(Consumer.prototype, 'connect').returns(Promise.resolve(true))
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'consume').returns(Promise.resolve(true)) // .callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(Promise.resolve(true))
-    sandbox.stub(Participant, 'getEndpoint').returns(Promise.resolve({ url, childSpan: undefined }))
+    sandbox.stub(Participant, 'getEndpoint').returns(Promise.resolve({ url, childSpan: span }))
 
     sandbox.stub(Logger)
     // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
@@ -71,6 +73,7 @@ Test('Notification Service tests', notificationTest => {
 
   notificationTest.afterEach(t => {
     sandbox.restore()
+    span.finish()
     t.end()
   })
 
@@ -124,7 +127,7 @@ Test('Notification Service tests', notificationTest => {
       const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), childSpan).returns(Promise.resolve(200))
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)), childSpan)
       test.equal(result, expected)
       test.end()
@@ -164,7 +167,7 @@ Test('Notification Service tests', notificationTest => {
       const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200), childSpan)
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -203,7 +206,7 @@ Test('Notification Service tests', notificationTest => {
       const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -241,7 +244,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -278,7 +281,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).throws(new Error())
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving trying post the transfer to the receiver')
         test.end()
       } catch (e) {
@@ -318,7 +321,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).throws(new Error())
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving trying to send an error notification to sender')
         test.end()
       } catch (e) {
@@ -368,7 +371,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.ok(Callback.sendRequest.calledWith(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -411,7 +414,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).throws(new Error())
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving trying to send an error notification to sender')
         test.end()
       } catch (e) {
@@ -462,17 +465,17 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(urlPayee, headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
       // test for "commit" action and "success" status
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.notok(Callback.sendRequest.calledWith(urlPayee, headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
 
       // test for "reject" action
       msg.value.metadata.event.action = 'reject'
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.notok(Callback.sendRequest.calledWith(urlPayee, headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
 
       // test for "abort" action
       msg.value.metadata.event.action = 'abort'
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.notok(Callback.sendRequest.calledWith(urlPayee, headers, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
 
       test.end()
@@ -510,7 +513,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
       try {
-        const result = await NotificationProxy.processMessage(msg)
+        const result = await NotificationProxy.processMessage(msg, span)
         test.ok(!result, 'processMessage should have returned false signalling that no action was taken')
         test.ok(CentralServicesLoggerStub.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
         test.end()
@@ -524,7 +527,7 @@ Test('Notification Service tests', notificationTest => {
       const msg = {}
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
       } catch (err) {
@@ -576,7 +579,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -623,7 +626,7 @@ Test('Notification Service tests', notificationTest => {
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.equal(result, expected)
@@ -668,7 +671,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(toUrl, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -711,7 +714,7 @@ Test('Notification Service tests', notificationTest => {
       const expected = true
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -755,7 +758,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -799,7 +802,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -843,7 +846,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(toUrl, fromHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, fromHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
@@ -887,7 +890,7 @@ Test('Notification Service tests', notificationTest => {
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, childSpan))
       test.equal(result, expected)
       test.end()
