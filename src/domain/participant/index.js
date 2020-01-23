@@ -61,7 +61,7 @@ const getEndpoint = async (fsp, endpointType, transferId = null, span = null) =>
   Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
   try {
-    const url = Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
+    const url = await Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
     !!childSpan && childSpan.finish()
     histTimerEnd({ success: true })
     return { url, childSpan }
