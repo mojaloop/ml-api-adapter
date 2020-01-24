@@ -51,25 +51,28 @@ const getEndpoint = async (fsp, endpointType, transferId = null, span = null) =>
   const histTimerEnd = Metrics.getHistogram(
     'notification_event_getEndpoint',
     'Gets endpoints for notification from central ledger db',
-    ['success']
+    ['success', 'endpointType', 'fsp']
   ).startTimer()
-
-  const childSpan = !!span && span.getChild(`${span.getContext().service}_getEndpoint`)
-  !!childSpan && childSpan.setTags({ endpointType, fsp })
+  let getEndpointSpan
+  if (span) {
+    getEndpointSpan = span.getChild(`${span.getContext().service}_getEndpoint`)
+    getEndpointSpan.setTags({ endpointType, fsp })
+  }
   Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
   Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
   Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
   try {
     const url = await Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
-    !!childSpan && childSpan.finish()
-    histTimerEnd({ success: true })
-    return { url, childSpan }
+    !!getEndpointSpan && await getEndpointSpan.finish()
+    histTimerEnd({ success: true, endpointType, fsp })
+    return url
   } catch (err) {
     Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
-    histTimerEnd({ success: false })
+    histTimerEnd({ success: false, fsp, endpointType })
+
     throw fspiopError
   }
 }
