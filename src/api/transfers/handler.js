@@ -55,7 +55,7 @@ const create = async function (request, h) {
     'Produce a transfer prepare message to transfer prepare kafka topic',
     ['success']
   ).startTimer()
-  Logger.info(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ ML-API::service::create - START`)
+  Logger.error(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ ML-API::service::create - START`)
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
@@ -96,7 +96,7 @@ const fulfilTransfer = async function (request, h) {
     'Produce a transfer fulfil message to transfer fulfil kafka topic',
     ['success']
   ).startTimer()
-  Logger.info(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ ML-API::service::fulfilTransfer - START`)
+  Logger.error(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ ML-API::service::fulfilTransfer - START`)
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
