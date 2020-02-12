@@ -1,7 +1,7 @@
 {
   "name": "@mojaloop/ml-api-adapter",
   "version": "9.1.0-perf.1",
-  "description": "Convert from ML API to/from internal Central Services messaging format",
+  "description": "Convert from ML API to/from internal Central Services messaging format.",
   "license": "Apache-2.0",
   "private": true,
   "author": "ModusBox",
