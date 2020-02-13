@@ -51,13 +51,13 @@ defaults_deploy_config_kubernetes_cluster: &defaults_deploy_config_kubernetes_cl
   command: |
     echo "Configure Kubernetes cluster ${K8_CLUSTER_NAME}"
     kubectl config set-cluster $K8_CLUSTER_NAME --server=$K8_CLUSTER_SERVER --insecure-skip-tls-verify=true
-    
+
 defaults_deploy_config_kubernetes_context: &defaults_deploy_config_kubernetes_context
   name: Confi gure Kubernetes context
   command: |
     echo "Configure Kubernetes context ${K8_CLUSTER_NAME}"
     kubectl config set-context $K8_CLUSTER_NAME --cluster=$K8_CLUSTER_NAME --user=$K8_USER_NAME --namespace=$K8_NAMESPACE
-    
+
 defaults_deploy_config_kubernetes_credentials: &defaults_deploy_config_kubernetes_credentials
   name: Configure Kubernetes credentails
   command: |
@@ -134,8 +134,8 @@ defaults_slack_announcement: &defaults_slack_announcement
 executors:
   default-docker:
     working_directory: /home/circleci/project
-    docker: 
-      - image: node:10.15.3-alpine
+    docker:
+      - image: node:12.15.0-alpine
 
   default-machine:
     machine:
@@ -143,7 +143,7 @@ executors:
 
   helm-kube:
     working_directory: /home/circleci/project
-    docker: 
+    docker:
       - image: hypnoglow/kubernetes-helm
 
 ##
@@ -297,7 +297,7 @@ jobs:
           command: mkdir -p ./audit/results
       - run:
           name: Check for new npm vulnerabilities
-          command: npm run audit:check --silent -- --json > ./audit/results/auditResults.json 
+          command: npm run audit:check --silent -- --json > ./audit/results/auditResults.json
       - store_artifacts:
           path: ./audit/results
           prefix: audit
@@ -336,7 +336,7 @@ jobs:
           root: /tmp
           paths:
             - ./docker-image.tar
-  
+
   license-scan:
     executor: default-machine
     steps:
@@ -393,7 +393,7 @@ jobs:
             aws s3 cp anchore-reports ${AWS_S3_DIR_ANCHORE_REPORTS}/${CIRCLE_PROJECT_REPONAME}/ --recursive
             aws s3 rm ${AWS_S3_DIR_ANCHORE_REPORTS}/latest/ --recursive --exclude "*" --include "${CIRCLE_PROJECT_REPONAME}*"
             aws s3 cp anchore-reports ${AWS_S3_DIR_ANCHORE_REPORTS}/latest/ --recursive
-        
+
             # TODO: Enable this when we want to increase the strictness of our security policies
             # failCount=$(cat anchore-reports/*policy*.json | grep 'fail' | wc -l)
             # echo "FailCount is: ${failCount}"
@@ -427,7 +427,7 @@ jobs:
           <<: *defaults_build_docker_publish
       - run:
           <<: *defaults_slack_announcement
-        
+
   deploy:
     executor: helm-kube
     steps:
