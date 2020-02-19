@@ -1,14 +1,5 @@
 {
   "reject": [
-    "@hapi/boom",
-    "@hapi/joi",
-    "@hapi/joi-date",
-    "@hapi/inert",
-    "@hapi/good",
-    "@hapi/vision",
-    "@hapi/hapi",
-    "hapi-swagger",
-    "joi-currency-code",
-    "@hapi/basic"
+
   ]
 }

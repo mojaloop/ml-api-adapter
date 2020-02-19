@@ -1,4 +1,4 @@
-FROM node:10.15.3-alpine as builder
+FROM node:12.16.0-alpine as builder
 USER root
 
 WORKDIR /opt/ml-api-adapter
@@ -16,7 +16,7 @@ RUN npm install
 COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
 
-FROM node:10.15.3-alpine
+FROM node:12.16.0-alpine
 
 WORKDIR /opt/ml-api-adapter
 
