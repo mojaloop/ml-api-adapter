@@ -1,0 +1,30 @@
+{
+  "decisions": {
+    "1476|@hapi/hapi>@hapi/subtext": {
+      "decision": "fix",
+      "madeAt": 1582871060061
+    },
+    "1480|@hapi/hapi>@hapi/subtext": {
+      "decision": "fix",
+      "madeAt": 1582871060062
+    },
+    "1482|@hapi/hapi": {
+      "decision": "fix",
+      "madeAt": 1582871060062
+    },
+    "1476|@mojaloop/central-services-health>@hapi/hapi>@hapi/subtext": {
+      "decision": "fix",
+      "madeAt": 1582871090535
+    },
+    "1480|@mojaloop/central-services-health>@hapi/hapi>@hapi/subtext": {
+      "decision": "fix",
+      "madeAt": 1582871090535
+    },
+    "1482|@mojaloop/central-services-health>@hapi/hapi": {
+      "decision": "fix",
+      "madeAt": 1582871090535
+    }
+  },
+  "rules": {},
+  "version": 1
+}
