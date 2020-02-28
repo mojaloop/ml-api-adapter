@@ -237,7 +237,10 @@ jobs:
     steps:
       - checkout
       - run:
-          <<: *defaults_build_docker_build
+          name: Build Docker $CIRCLE_TAG image
+          command: |
+            echo "Building Docker image: $CIRCLE_TAG"
+            docker build -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG .
       - run:
           name: Save docker image to workspace
           command: docker save -o /tmp/docker-image.tar $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG
