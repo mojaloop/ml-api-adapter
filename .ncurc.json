@@ -9,6 +9,6 @@
     "@hapi/hapi",
     "hapi-swagger",
     "joi-currency-code",
-    "@mojaloop/central-services-shared"
+    "@hapi/basic"
   ]
 }
