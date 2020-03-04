@@ -283,6 +283,7 @@ const processMessage = async (msg, span) => {
     } else {
       Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
     }
+    histTimerEnd({ success: true, action })
     return true
   }
 
@@ -304,6 +305,7 @@ const processMessage = async (msg, span) => {
     } else {
       Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
     }
+    histTimerEnd({ success: true, action })
     return true
   }
 
