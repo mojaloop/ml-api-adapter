@@ -54,7 +54,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
       'Tranxaction metrics for Transfers - Prepare Flow',
       ['success']
     )
-    histTracePrepareTimerEnd.observe({ success }, endTime - t_api_prepare)
+    histTracePrepareTimerEnd.observe({ success }, (endTime - t_api_prepare)/1000)
   }
   if (t_api_fulfil) {
     const histTraceFulfilTimerEnd = Metrics.getHistogram(
@@ -62,7 +62,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
       'Tranxaction metrics for Transfers - Fulfil Flow',
       ['success']
     )
-    histTraceFulfilTimerEnd.observe({ success }, endTime - t_api_fulfil)
+    histTraceFulfilTimerEnd.observe({ success }, (endTime - t_api_fulfil)/1000)
   }
   if (t_api_prepare && t_api_fulfil) {
     const histTraceEnd2EndTimerEnd = Metrics.getHistogram(
@@ -70,7 +70,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
       'Tranxaction metrics for Transfers - End-to-end Flow',
       ['success']
     )
-    histTraceEnd2EndTimerEnd.observe({ success }, endTime - t_api_prepare)
+    histTraceEnd2EndTimerEnd.observe({ success }, (endTime - t_api_prepare)/1000)
   }
 }
 
@@ -289,7 +289,7 @@ const processMessage = async (msg, span) => {
     // forward the fulfil to the destination
     !!LOG_ENABLED && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message1 - START`)
-    let response = { status: 'undefined' }
+    let response = { status: 'unknown' }
     const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
       'notification_event_delivery - metric for sending notification requests to FSPs',
