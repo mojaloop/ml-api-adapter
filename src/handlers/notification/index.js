@@ -45,6 +45,35 @@ let notificationConsumer = {}
 let autoCommitEnabled = true
 
 const LOG_ENABLED = false
+
+const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
+  const endTime = Date.now()
+  if (t_api_prepare && !t_api_fulfil) {
+    const histTracePrepareTimerEnd = Metrics.getHistogram(
+      'tx_transfer_prepare',
+      'Tranxaction metrics for Transfers - Prepare Flow',
+      ['success']
+    )
+    histTracePrepareTimerEnd.observe({ success }, endTime - t_api_prepare)
+  }
+  if (!t_api_prepare && t_api_fulfil) {
+    const histTraceFulfilTimerEnd = Metrics.getHistogram(
+      'tx_transfer_fulfil',
+      'Tranxaction metrics for Transfers - Fulfil Flow',
+      ['success']
+    )
+    histTraceFulfilTimerEnd.observe({ success }, endTime - t_api_fulfil)
+  }
+  if (t_api_prepare && t_api_fulfil) {
+    const histTraceEnd2EndTimerEnd = Metrics.getHistogram(
+      'tx_transfer',
+      'Tranxaction metrics for Transfers - End-to-end Flow',
+      ['success']
+    )
+    histTraceEnd2EndTimerEnd.observe({ success }, endTime - t_api_prepare)
+  }
+}
+
 /**
  * @module src/handlers/notification
  */
@@ -100,6 +129,8 @@ const consumeMessage = async (error, message) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success']
   ).startTimer()
+  let t_api_prepare
+  let t_api_fulfil
   try {
     if (error) {
       const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
@@ -114,6 +145,9 @@ const consumeMessage = async (error, message) => {
       Logger.info('Notification::consumeMessage::processMessage')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
+      const traceTags = span.getTracestateTags()
+      if (traceTags['t_api_prepare'] && parseInt(traceTags['t_api_prepare'])) t_api_prepare = parseInt(traceTags['t_api_prepare'])
+      if (traceTags['t_api_fulfil'] && parseInt(traceTags['t_api_fulfil'])) t_api_fulfil = parseInt(traceTags['t_api_fulfil'])
       try {
         await span.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, span).catch(err => {
@@ -141,12 +175,16 @@ const consumeMessage = async (error, message) => {
         }
       }
     }
+    // TODO: calculate end times - report end-to-time
+    // 
+    recordTxMetrics(t_api_prepare, t_api_fulfil, true)
     histTimerEnd({ success: true })
     return combinedResult
   } catch (err) {
-    histTimerEnd({ success: false })
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
+    recordTxMetrics(t_api_prepare, t_api_fulfil, false)
+    histTimerEnd({ success: false })
     throw fspiopError
   }
 }
