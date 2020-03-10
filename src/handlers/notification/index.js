@@ -56,7 +56,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
     )
     histTracePrepareTimerEnd.observe({ success }, endTime - t_api_prepare)
   }
-  if (t_api_fulfil && !t_api_prepare) {
+  if (t_api_fulfil) {
     const histTraceFulfilTimerEnd = Metrics.getHistogram(
       'tx_transfer_fulfil',
       'Tranxaction metrics for Transfers - Fulfil Flow',
