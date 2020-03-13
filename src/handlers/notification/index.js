@@ -127,7 +127,7 @@ const consumeMessage = async (error, message) => {
   const histTimerEnd = Metrics.getHistogram(
     'notification_event',
     'Consume a notification message from the kafka topic and process it accordingly',
-    ['success']
+    ['success', 'error']
   ).startTimer()
   let t_api_prepare
   let t_api_fulfil
@@ -184,7 +184,7 @@ const consumeMessage = async (error, message) => {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
     recordTxMetrics(t_api_prepare, t_api_fulfil, false)
-    histTimerEnd({ success: false })
+    histTimerEnd({ success: false, error: err})
     throw fspiopError
   }
 }
@@ -312,7 +312,22 @@ const processMessage = async (msg, span) => {
       const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message2 - START`)
-      const rv = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+      const histTimerEndSendRequest2 = Metrics.getHistogram(
+        'notification_event_delivery',
+        'notification_event_delivery - metric for sending notification requests to FSPs',
+        ['success', 'from', 'dest', 'action', 'status']
+      ).startTimer()
+      let rv
+      try {
+        rv = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+      } catch (err) {
+        Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message2 - END`)
+        histTimerEndSendRequest2({ success: false, to, dest: from, action, status: response.status})
+        histTimerEnd({ success: false, action })
+        throw err
+      }
+      histTimerEndSendRequest2({ success: true, to, dest: from, action,  status: response.status })
+      
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message2 - END`)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::processMessage - END`)
       histTimerEnd({ success: true, action })
@@ -320,7 +335,7 @@ const processMessage = async (msg, span) => {
     } else {
       Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::processMessage - END`)
-      histTimerEnd({ success: false, action })
+      histTimerEnd({ success: true, action })
       return true
     }
   }
