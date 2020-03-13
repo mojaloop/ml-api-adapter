@@ -184,7 +184,26 @@ const consumeMessage = async (error, message) => {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
     recordTxMetrics(t_api_prepare, t_api_fulfil, false)
-    histTimerEnd({ success: false, error: err})
+  
+    const getRecursiveCause = (error) => {
+      if(error.cause instanceof ErrorHandler.Factory.FSPIOPError){
+        return getRecursiveCause(error.cause)
+      } else if (error.cause instanceof Error) {
+        if (error.cause){
+          return error.cause
+        } else {
+          return error.message
+        }
+      } else if (error.cause) {
+        return error.cause
+      } else if (error.message) {
+        return error.message
+      } else {
+        return error
+      }
+    }
+    const errCause = getRecursiveCause(err)
+    histTimerEnd({ success: false, error: errCause})
     throw fspiopError
   }
 }
@@ -256,7 +275,7 @@ const processMessage = async (msg, span) => {
       Logger.error(err)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::prepare::message - END`)
       histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status})
-      histTimerEnd({ success: false, action })
+      histTimerEnd({ success: false, action})
       throw err
     }
     histTimerEndSendRequest({ success: true, from, dest: to, action,  status: response.status })
