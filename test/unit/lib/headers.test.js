@@ -48,10 +48,10 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT'
       }
-      Mustache.render = sandbox.stub().returns('http://fspiop-uri')
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/participants')
       const expected = {
         'fspiop-http-method': 'PUT',
-        'fspiop-uri': 'http://fspiop-uri'
+        'fspiop-uri': '/participants'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)
 
