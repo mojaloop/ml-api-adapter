@@ -58,6 +58,23 @@ Test('Headers tests', headersTest => {
       test.deepEqual(result, expected)
       test.end()
     })
+
+    createCallbackHeadersTest.test('test', test => {
+      const fromSwitch = true
+      const params = {
+        httpMethod: 'PUT'
+      }
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error')
+      const expected = {
+        'fspiop-http-method': 'PUT',
+        'fspiop-uri': '/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error'
+      }
+      const result = Headers.createCallbackHeaders(params, fromSwitch)
+
+      test.deepEqual(result, expected)
+      test.end()
+    })
+
     createCallbackHeadersTest.end()
   })
 
