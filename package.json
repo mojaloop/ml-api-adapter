@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "9.4.1",
+  "version": "9.4.2",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -10,7 +10,8 @@
     "Miguel de Barros <miguel.debarros@modusbox.com>",
     "Murthy Kakarlamudi <murthy@modusbox.com>",
     "Rajiv Mothilal <rajiv.mothilal@modusbox.com>",
-    "Steven Oderayi <steven.oderayi@modusbox.com>"
+    "Steven Oderayi <steven.oderayi@modusbox.com>",
+    "Valentin Genev <valentin.genev@modusbox.com>"
   ],
   "repository": {
     "type": "git",
@@ -80,9 +81,9 @@
     "@mojaloop/central-services-health": "9.2.0",
     "@mojaloop/central-services-logger": "9.1.0",
     "@mojaloop/central-services-metrics": "9.1.0",
-    "@mojaloop/central-services-shared": "9.4.0",
+    "@mojaloop/central-services-shared": "9.4.1",
     "@mojaloop/central-services-stream": "9.2.0",
-    "@mojaloop/event-sdk": "9.3.0",
+    "@mojaloop/event-sdk": "9.4.1",
     "@now-ims/hapi-now-auth": "2.0.1",
     "axios": "0.19.2",
     "blipp": "4.0.1",
