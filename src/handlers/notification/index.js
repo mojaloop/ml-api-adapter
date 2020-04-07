@@ -53,31 +53,31 @@ let autoCommitEnabled = true
 
 const LOG_ENABLED = false
 
-const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
+const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   const endTime = Date.now()
-  if (t_api_prepare && !t_api_fulfil) {
+  if (timeApiPrepare && !timeApiFulfil) {
     const histTracePrepareTimerEnd = Metrics.getHistogram(
       'tx_transfer_prepare',
       'Tranxaction metrics for Transfers - Prepare Flow',
       ['success']
     )
-    histTracePrepareTimerEnd.observe({ success }, (endTime - t_api_prepare)/1000)
+    histTracePrepareTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
   }
-  if (t_api_fulfil) {
+  if (timeApiFulfil) {
     const histTraceFulfilTimerEnd = Metrics.getHistogram(
       'tx_transfer_fulfil',
       'Tranxaction metrics for Transfers - Fulfil Flow',
       ['success']
     )
-    histTraceFulfilTimerEnd.observe({ success }, (endTime - t_api_fulfil)/1000)
+    histTraceFulfilTimerEnd.observe({ success }, (endTime - timeApiFulfil) / 1000)
   }
-  if (t_api_prepare && t_api_fulfil) {
+  if (timeApiPrepare && timeApiFulfil) {
     const histTraceEnd2EndTimerEnd = Metrics.getHistogram(
       'tx_transfer',
       'Tranxaction metrics for Transfers - End-to-end Flow',
       ['success']
     )
-    histTraceEnd2EndTimerEnd.observe({ success }, (endTime - t_api_prepare)/1000)
+    histTraceEnd2EndTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
   }
 }
 
@@ -136,8 +136,8 @@ const consumeMessage = async (error, message) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success', 'error']
   ).startTimer()
-  let t_api_prepare
-  let t_api_fulfil
+  let timeApiPrepare
+  let timeApiFulfil
   try {
     if (error) {
       const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
@@ -153,8 +153,8 @@ const consumeMessage = async (error, message) => {
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
-      if (traceTags['t_api_prepare'] && parseInt(traceTags['t_api_prepare'])) t_api_prepare = parseInt(traceTags['t_api_prepare'])
-      if (traceTags['t_api_fulfil'] && parseInt(traceTags['t_api_fulfil'])) t_api_fulfil = parseInt(traceTags['t_api_fulfil'])
+      if (traceTags.timeApiPrepare && parseInt(traceTags.timeApiPrepare)) timeApiPrepare = parseInt(traceTags.timeApiPrepare)
+      if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
       try {
         await span.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, span).catch(err => {
@@ -183,20 +183,20 @@ const consumeMessage = async (error, message) => {
       }
     }
     // TODO: calculate end times - report end-to-time
-    // 
-    recordTxMetrics(t_api_prepare, t_api_fulfil, true)
+    //
+    recordTxMetrics(timeApiPrepare, timeApiFulfil, true)
     histTimerEnd({ success: true })
     return combinedResult
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
-    recordTxMetrics(t_api_prepare, t_api_fulfil, false)
-  
+    recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
+
     const getRecursiveCause = (error) => {
-      if(error.cause instanceof ErrorHandler.Factory.FSPIOPError){
+      if (error.cause instanceof ErrorHandler.Factory.FSPIOPError) {
         return getRecursiveCause(error.cause)
       } else if (error.cause instanceof Error) {
-        if (error.cause){
+        if (error.cause) {
           return error.cause
         } else {
           return error.message
@@ -210,7 +210,7 @@ const consumeMessage = async (error, message) => {
       }
     }
     const errCause = getRecursiveCause(err)
-    histTimerEnd({ success: false, error: errCause})
+    histTimerEnd({ success: false, error: errCause })
     throw fspiopError
   }
 }
@@ -282,11 +282,11 @@ const processMessage = async (msg, span) => {
     } catch (err) {
       Logger.error(err)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::prepare::message - END`)
-      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status})
-      histTimerEnd({ success: false, action})
+      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
+      histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, from, dest: to, action,  status: response.status })
+    histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
     Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::prepare::message - END`)
     histTimerEnd({ success: true, action })
     return true
@@ -326,17 +326,17 @@ const processMessage = async (msg, span) => {
       response = await httpRequestHandler.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
     } catch (err) {
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message - END`)
-      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status})
+      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
       histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, from, dest: to, action,  status: response.status })
+    histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
     Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message1 - END`)
 
     // send an extra notification back to the original sender (if enabled in config)
     if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
-      !!LOG_ENABLED && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+      !!LOG_ENABLED && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message2 - START`)
       const histTimerEndSendRequest2 = Metrics.getHistogram(
@@ -355,7 +355,7 @@ const processMessage = async (msg, span) => {
         throw err
       }
       histTimerEndSendRequest2({ success: true, to, dest: from, action, status: response.status })
-      
+
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message2 - END`)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::processMessage - END`)
       histTimerEnd({ success: true, action })

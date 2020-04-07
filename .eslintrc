@@ -3,6 +3,14 @@
     "ecmaVersion": 9
   },
   "rules": {
+    "camelcase": [
+      2,
+      {
+        "allow": [
+          "[a-z]+(_[a-z])*"
+        ]
+      }
+    ],
     "no-console": [
       "off"
     ],
