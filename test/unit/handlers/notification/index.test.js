@@ -121,7 +121,7 @@ Test('Notification Service tests', notificationTest => {
         }
       }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       const result = await Notification.processMessage(msg)
@@ -161,7 +161,7 @@ Test('Notification Service tests', notificationTest => {
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       const result = await Notification.processMessage(msg)
@@ -200,7 +200,7 @@ Test('Notification Service tests', notificationTest => {
       const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       const result = await Notification.processMessage(msg)
@@ -237,7 +237,7 @@ Test('Notification Service tests', notificationTest => {
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
@@ -363,7 +363,7 @@ Test('Notification Service tests', notificationTest => {
       const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
@@ -571,7 +571,7 @@ Test('Notification Service tests', notificationTest => {
       const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
@@ -618,7 +618,7 @@ Test('Notification Service tests', notificationTest => {
       const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
@@ -664,7 +664,7 @@ Test('Notification Service tests', notificationTest => {
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
@@ -708,7 +708,7 @@ Test('Notification Service tests', notificationTest => {
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
@@ -752,7 +752,7 @@ Test('Notification Service tests', notificationTest => {
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
@@ -796,7 +796,7 @@ Test('Notification Service tests', notificationTest => {
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
@@ -840,7 +840,7 @@ Test('Notification Service tests', notificationTest => {
       const fromHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, fromHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
@@ -884,7 +884,7 @@ Test('Notification Service tests', notificationTest => {
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
 
-      const expected = 200
+      const expected = true
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 

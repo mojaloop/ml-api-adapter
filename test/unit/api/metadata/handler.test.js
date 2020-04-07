@@ -4,6 +4,7 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 const proxyquire = require('proxyquire')
+const Joi = require('@hapi/joi')
 
 const Config = require('../../../../src/lib/config')
 const Notification = require('../../../../src/handlers/notification')
@@ -98,6 +99,88 @@ Test('metadata handler', (handlerTest) => {
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
+    })
+
+    healthTest.test('get simple health status with query string "simple"', async test => {
+      // Arrange
+      const expectedSchema = {
+        status: Joi.string().valid('OK').required(),
+        uptime: Joi.number().required(),
+        startTime: Joi.date().iso().required(),
+        versionNumber: Joi.string().required(),
+        services: Joi.array().required()
+      }
+      const expectedStatus = 200
+      const expectedServices = []
+
+      // Act
+      const {
+        responseBody,
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}, { query: { simple: '' } }), reply))
+
+      // Assert
+      const validationResult = Joi.validate(responseBody, expectedSchema)
+      test.equal(validationResult.error, null, 'The response matches the validation schema')
+      test.deepEqual(responseCode, expectedStatus, 'The response code matches')
+      test.deepEqual(responseBody.services, expectedServices, 'The sub-services are empty')
+      test.end()
+    })
+
+    healthTest.test('get simple health status with query string "simple=true"', async test => {
+      // Arrange
+      const expectedSchema = {
+        status: Joi.string().valid('OK').required(),
+        uptime: Joi.number().required(),
+        startTime: Joi.date().iso().required(),
+        versionNumber: Joi.string().required(),
+        services: Joi.array().required()
+      }
+      const expectedStatus = 200
+      const expectedServices = []
+
+      // Act
+      const {
+        responseBody,
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}, { query: { simple: true } }), reply))
+
+      // Assert
+      const validationResult = Joi.validate(responseBody, expectedSchema)
+      test.equal(validationResult.error, null, 'The response matches the validation schema')
+      test.deepEqual(responseCode, expectedStatus, 'The response code matches')
+      test.deepEqual(responseBody.services, expectedServices, 'The sub-services are empty')
+      test.end()
+    })
+
+    healthTest.test('get detailed health status with query string "simple=false"', async test => {
+      // Arrange
+      axios.get.withArgs(Config.ENDPOINT_HEALTH_URL).resolves({ data: { status: 'OK' } })
+      const expectedSchema = {
+        status: Joi.string().valid('OK').required(),
+        uptime: Joi.number().required(),
+        startTime: Joi.date().iso().required(),
+        versionNumber: Joi.string().required(),
+        services: Joi.array().required()
+      }
+      const expectedStatus = 200
+      const expectedServices = [
+        { name: 'broker', status: 'OK' },
+        { name: 'participantEndpointService', status: 'OK' }
+      ]
+
+      // Act
+      const {
+        responseBody,
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}, { query: { simple: false } }), reply))
+
+      // Assert
+      const validationResult = Joi.validate(responseBody, expectedSchema)
+      test.equal(validationResult.error, null, 'The response matches the validation schema')
+      test.deepEqual(responseCode, expectedStatus, 'The response code matches')
+      test.deepEqual(responseBody.services, expectedServices, 'The sub-services are correct')
       test.end()
     })
 
