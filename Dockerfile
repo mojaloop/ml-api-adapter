@@ -1,13 +1,20 @@
-FROM node:12.16.0-alpine as builder
+FROM node:12.16.0-slim as builder
 USER root
 
 WORKDIR /opt/ml-api-adapter
 
-RUN apk --no-cache add git
-RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
-    && cd $(npm root -g)/npm \
+# RUN apk --no-cache add git
+# RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
+#     && cd $(npm root -g)/npm \
+#     && npm config set unsafe-perm true \
+#     && npm install -g node-gyp
+
+RUN apt-get update
+RUN apt-get install -y git make gcc g++ python libtool autoconf automake
+RUN cd $(npm root -g)/npm \
     && npm config set unsafe-perm true \
     && npm install -g node-gyp
+
 
 COPY package.json package-lock.json* /opt/ml-api-adapter/
 
@@ -16,7 +23,7 @@ RUN npm install
 COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
 
-FROM node:12.16.0-alpine
+FROM node:12.16.0-slim
 
 WORKDIR /opt/ml-api-adapter
 
