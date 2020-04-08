@@ -52,7 +52,6 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
       'Tranxaction metrics for Transfers - Prepare Flow',
       ['success']
     )
-    console.log('=====================BLA=========================')
     histTracePrepareTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
   }
   if (timeApiFulfil) {

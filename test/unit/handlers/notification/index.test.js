@@ -170,7 +170,101 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a transfer post callback and base64 encode the payload', async test => {
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback should throw', async test => {
+      const payeeFsp = 'dfsp1'
+      const payerFsp = 'dfsp2'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
+      const message = { transferId: uuid }
+      try {
+        Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+        Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.reject(new Error()))
+        await Notification.processMessage(msg)
+        test.fail('should throw')
+        test.end()
+      } catch (e) {
+        test.ok(e, 'error thrown')
+        test.end()
+      }
+    })
+
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback should throw', async test => {
+      const payeeFsp = 'dfsp1'
+      const payerFsp = 'dfsp2'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
+      const message = { transferId: uuid }
+      try {
+        Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.reject(new Error()))
+        Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+        await Notification.processMessage(msg)
+        test.fail('should throw')
+        test.end()
+      } catch (e) {
+        test.ok(e, 'error thrown')
+        test.end()
+      }
+    })
+
+    processMessageTest.test('process the message received from kafka and send out a transfer post callback and base64 encode the payload', async test => {
       const uuid = Uuid()
       const message = { transferId: uuid }
       const encodedPayload = EncodePayload(JSON.stringify(message), 'application/json')
@@ -513,7 +607,52 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    await processMessageTest.test('should not send notification to sender if "SEND_TRANSFER_CONFIRMATION_TO_PAYEE" is disabled', async test => {
+    processMessageTest.test('throw error if not able to send the notification to the sender', async test => {
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'commit',
+              action: 'commit',
+              state: {
+                status: 'error',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.PUT
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = { transferId: uuid }
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(true))
+
+      try {
+        await Notification.processMessage(msg)
+        test.ok(await Callback.sendRequest(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+        test.end()
+      } catch (e) {
+        test.fail('should be ok')
+        test.end()
+      }
+    })
+
+    processMessageTest.test('should not send notification to sender if "SEND_TRANSFER_CONFIRMATION_TO_PAYEE" is disabled', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
@@ -1077,7 +1216,85 @@ Test('Notification Service tests', async notificationTest => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
 
-    await consumeMessageTest.test('process the message with auto-commit disabled', async test => {
+    consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            },
+            trace: {
+              startTimestamp: new Date().toISOString(),
+              service: 'parent service',
+              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
+              spanId: '203f89c23748cfb1',
+              tags: {
+                tracestate: `acmevendor=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()}`
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
+    consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'fulfil',
+              action: 'fulfil',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            },
+            trace: {
+              startTimestamp: new Date().toISOString(),
+              service: 'parent service',
+              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
+              spanId: '203f89c23748cfb1',
+              tags: {
+                tracestate: `acmevendor=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()};timeApiFulfil:${Date.now()}`
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok((result === false))
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
+
+    consumeMessageTest.test('process the message with auto-commit disabled', async test => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
       const msg = {
         value: {
