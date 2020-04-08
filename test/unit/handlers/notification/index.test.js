@@ -481,11 +481,6 @@ Test('Notification Service tests', async notificationTest => {
               state: {
                 status: 'error',
                 code: 0
-              },
-              trace: {
-                tags: {
-                  tracestate: `mojaloop=spanId:124,timeApiPrepare=${Date.now()},timeApiFulfil=${Date.now()}`
-                }
               }
             }
           },
@@ -1036,15 +1031,6 @@ Test('Notification Service tests', async notificationTest => {
                 status: 'success',
                 code: 0
               }
-            },
-            trace: {
-              startTimestamp: new Date().toISOString(),
-              service: 'parent service',
-              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
-              spanId: '203f89c23748cfb1',
-              tags: {
-                tracestate: `mojaloop=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()}`
-              }
             }
           },
           content: {
@@ -1072,15 +1058,6 @@ Test('Notification Service tests', async notificationTest => {
               state: {
                 status: 'success',
                 code: 0
-              }
-            },
-            trace: {
-              startTimestamp: new Date().toISOString(),
-              service: 'parent service',
-              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
-              spanId: '203f89c23748cfb1',
-              tags: {
-                tracestate: `mojaloop=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()};timeApiFulfil:${Date.now()}`
               }
             }
           },
@@ -1111,15 +1088,6 @@ Test('Notification Service tests', async notificationTest => {
               state: {
                 status: 'success',
                 code: 0
-              }
-            },
-            trace: {
-              startTimestamp: new Date().toISOString(),
-              service: 'parent service',
-              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
-              spanId: '203f89c23748cfb1',
-              tags: {
-                tracestate: `mojaloop=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()};timeApiFulfil:${Date.now()}`
               }
             }
           },
