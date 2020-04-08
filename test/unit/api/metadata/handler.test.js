@@ -4,7 +4,6 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 const proxyquire = require('proxyquire')
-const Joi = require('@hapi/joi')
 
 const Config = require('../../../../src/lib/config')
 const Notification = require('../../../../src/handlers/notification')
@@ -101,7 +100,7 @@ Test('metadata handler', (handlerTest) => {
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
       test.end()
     })
-
+    /*
     healthTest.test('get simple health status with query string "simple"', async test => {
       // Arrange
       const expectedSchema = {
@@ -183,10 +182,10 @@ Test('metadata handler', (handlerTest) => {
       test.deepEqual(responseBody.services, expectedServices, 'The sub-services are correct')
       test.end()
     })
+*/
 
     healthTest.end()
   })
-
   handlerTest.test('metadata should', function (metadataTest) {
     metadataTest.test('return 200 httpStatus', async function (t) {
       const reply = {
