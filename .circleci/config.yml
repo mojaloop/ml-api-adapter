@@ -108,7 +108,7 @@ jobs:
           command: npm install -g tapes
       - run:
           name: Execute unit tests
-          command: npm -s run test:xunit > ./test/results/tape.xml
+          command: npm run test:xunit > ./test/results/tape.xml
       - store_artifacts:
           path: ./test/results
           prefix: test
@@ -358,7 +358,7 @@ jobs:
             --set ml-api-adapter.ml-api-adapter-service.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
             --set ml-api-adapter.ml-api-adapter-service.image.tag=$CIRCLE_TAG \
             --set ml-api-adapter.ml-api-adapter-handler-notification.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
-            --set ml-api-adapter.ml-api-adapter-handler-notification.image.tag=$CIRCLE_TAG 
+            --set ml-api-adapter.ml-api-adapter-handler-notification.image.tag=$CIRCLE_TAG
 
 ##
 # Workflows
