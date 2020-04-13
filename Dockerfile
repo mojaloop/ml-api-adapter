@@ -1,4 +1,4 @@
-FROM node:12.16.0-alpine as builder
+FROM node:12.16.1-alpine as builder
 USER root
 
 WORKDIR /opt/ml-api-adapter
@@ -20,7 +20,11 @@ FROM node:12.16.0-alpine
 
 WORKDIR /opt/ml-api-adapter
 
-COPY --from=builder /opt/ml-api-adapter .
+# Create a non-root user: ml-user
+RUN adduser -D ml-user 
+USER ml-user
+
+COPY --chown=ml-user --from=builder /opt/ml-api-adapter .
 RUN npm prune --production
 
 # Create empty log file & link stdout to the application log file
