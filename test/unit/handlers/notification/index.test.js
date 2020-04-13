@@ -1218,6 +1218,10 @@ Test('Notification Service tests', async notificationTest => {
 
     consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const ts = {
+        spanId: '203f89c23748cfb1',
+        timeApiPrepare: Date.now()
+      }
       const msg = {
         value: {
           metadata: {
@@ -1235,7 +1239,7 @@ Test('Notification Service tests', async notificationTest => {
               traceId: 'a2e298d549a55ee9ac342c6b42f58923',
               spanId: '203f89c23748cfb1',
               tags: {
-                tracestate: `acmevendor=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()}`
+                tracestate: `acmevendor=${Buffer.from(JSON.stringify(ts)).toString('base64')}`
               }
             }
           },
@@ -1255,8 +1259,14 @@ Test('Notification Service tests', async notificationTest => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
 
-    consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
+    consumeMessageTest.test('process the message with tracestate metrics for fulfil', async test => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const ts = {
+        spanId: '203f89c23748cfb1',
+        timeApiPrepare: Date.now(),
+        timeApiFulfil: Date.now()
+      }
+
       const msg = {
         value: {
           metadata: {
@@ -1274,7 +1284,7 @@ Test('Notification Service tests', async notificationTest => {
               traceId: 'a2e298d549a55ee9ac342c6b42f58923',
               spanId: '203f89c23748cfb1',
               tags: {
-                tracestate: `acmevendor=spanId:203f89c23748cfb1;timeApiPrepare:${Date.now()};timeApiFulfil:${Date.now()}`
+                tracestate: `acmevendor=${Buffer.from(JSON.stringify(ts)).toString('base64')}`
               }
             }
           },
