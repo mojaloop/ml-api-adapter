@@ -321,7 +321,7 @@ jobs:
       - slack/status:
           fail_only: true
           webhook: "$SLACK_WEBHOOK_ANNOUNCEMENT"
-          failure_message: "Anchore Image Scan failed for: $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG"
+          failure_message: 'Anchore Image Scan failed  for: \`"${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"\`'
       - store_artifacts:
           path: anchore-reports
 
@@ -363,9 +363,11 @@ jobs:
             --set ml-api-adapter.ml-api-adapter-handler-notification.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
             --set ml-api-adapter.ml-api-adapter-handler-notification.image.tag=$CIRCLE_TAG 
       - slack/status:
-          fail_only: true
+          # TODO: change back
+          fail_only: false
           webhook: "$SLACK_WEBHOOK_ANNOUNCEMENT"
-          failure_message: "Deployment failed for: $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG"
+          failure_message: 'TEST Deployment failed for: \`"${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"\`'
+
 
 ##
 # Workflows
