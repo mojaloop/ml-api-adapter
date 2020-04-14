@@ -17,6 +17,7 @@
   "TRANSFERS": {
     "SEND_TRANSFER_CONFIRMATION_TO_PAYEE": true
   },
+  "STRIP_UNKNOWN_HEADERS": false,
   "ERROR_HANDLING": {
     "includeCauseExtension": false,
     "truncateExtensions": true
