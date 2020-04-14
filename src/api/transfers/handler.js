@@ -57,6 +57,8 @@ const create = async function (request, h) {
   ).startTimer()
 
   const span = request.span
+
+  span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
     Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
@@ -98,6 +100,7 @@ const fulfilTransfer = async function (request, h) {
   ).startTimer()
 
   const span = request.span
+  span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
     Validator.fulfilTransfer(request)
