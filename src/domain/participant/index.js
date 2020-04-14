@@ -58,9 +58,9 @@ const getEndpoint = async (fsp, endpointType, transferId = null, span = null) =>
     getEndpointSpan = span.getChild(`${span.getContext().service}_getEndpoint`)
     getEndpointSpan.setTags({ endpointType, fsp })
   }
-  Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
-  Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
-  Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
   try {
     const url = await Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })

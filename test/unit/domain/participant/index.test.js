@@ -7,12 +7,14 @@ const Facade = require('@mojaloop/central-services-shared').Util.Endpoints
 const Service = require('../../../../src/domain/participant')
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Config = require('../../../../src/lib/config')
+const Logger = require('@mojaloop/central-services-logger')
 
 Test('ParticipantEndpoint Service Test', endpointTest => {
   let sandbox
 
   endpointTest.beforeEach(async test => {
     sandbox = Sinon.createSandbox()
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
     sandbox.stub(Facade, 'getEndpoint')
     test.end()
   })

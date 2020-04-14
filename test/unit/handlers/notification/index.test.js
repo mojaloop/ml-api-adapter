@@ -64,6 +64,10 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(Participant, 'getEndpoint').returns(Promise.resolve(url))
 
     sandbox.stub(Logger)
+    sandbox.stub(Logger, 'isErrorEnabled').value(true)
+    sandbox.stub(Logger, 'isInfoEnabled').value(true)
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
+
     // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     t.end()
