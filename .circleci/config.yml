@@ -108,7 +108,7 @@ jobs:
           command: npm install -g tapes
       - run:
           name: Execute unit tests
-          command: npm run test:xunit
+          command: npm -s run test:xunit > ./test/results/tape.xml
       - store_artifacts:
           path: ./test/results
           prefix: test
