@@ -48,7 +48,7 @@ const getSubServiceHealthBroker = async () => {
     status = await Producer.isConnected()
     status = status === Producer.stateList.PENDING ? statusEnum.OK : status
   } catch (err) {
-    Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
+    Logger.isDebugEnabled && Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN
   }
 
@@ -80,7 +80,7 @@ const getSubServiceHealthCentralLedger = async () => {
         throw new Error(`getSubServiceHealthCentralLedger request failed with unknown status: ${response.status}`)
     }
   } catch (err) {
-    Logger.debug(`getSubServiceHealthCentralLedger failed with error: ${err.message}.`)
+    Logger.isDebugEnabled && Logger.debug(`getSubServiceHealthCentralLedger failed with error: ${err.message}.`)
     status = statusEnum.DOWN
   }
 

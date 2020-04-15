@@ -33,6 +33,7 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Kafka = require('@mojaloop/central-services-stream').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Config = require('../../../../src/lib/config')
+const Logger = require('@mojaloop/central-services-logger')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
@@ -44,6 +45,9 @@ Test('Transfer Service tests', serviceTest => {
 
   serviceTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
+    sandbox.stub(Logger, 'isErrorEnabled').value(true)
+    sandbox.stub(Logger, 'isInfoEnabled').value(true)
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
     sandbox.stub(Kafka.Producer, 'produceMessage')
     sandbox.stub(Kafka.Producer, 'disconnect').returns(Promise.resolve(true))
     t.end()
