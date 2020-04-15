@@ -73,7 +73,7 @@ const createServer = async (port, modules) => {
   await server.register(modules)
 
   await server.start()
-  Logger.debug('Server running at: ', server.info.uri)
+  Logger.isDebugEnabled && Logger.debug('Server running at: ', server.info.uri)
   return server
 }
 
@@ -105,7 +105,7 @@ const createHandlers = async (handlers) => {
   for (handlerIndex in handlers) {
     const handler = handlers[handlerIndex]
     if (handler.enabled) {
-      Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
+      Logger.isInfoEnabled && Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
         await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
         await RegisterHandlers.registerNotificationHandler()

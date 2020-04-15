@@ -358,7 +358,7 @@ jobs:
             --set ml-api-adapter.ml-api-adapter-service.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
             --set ml-api-adapter.ml-api-adapter-service.image.tag=$CIRCLE_TAG \
             --set ml-api-adapter.ml-api-adapter-handler-notification.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
-            --set ml-api-adapter.ml-api-adapter-handler-notification.image.tag=$CIRCLE_TAG 
+            --set ml-api-adapter.ml-api-adapter-handler-notification.image.tag=$CIRCLE_TAG
 
 ##
 # Workflows
@@ -456,7 +456,7 @@ workflows:
             - audit-licenses
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?(\-hotfix(\.[0-9]+))?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
             branches:
               ignore:
                 - /.*/
@@ -466,7 +466,7 @@ workflows:
             - build
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?(\-hotfix(\.[0-9]+))?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
             branches:
               ignore:
                 - /.*/
@@ -476,7 +476,7 @@ workflows:
             - build
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?(\-hotfix(\.[0-9]+))?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
             branches:
               ignore:
                 - /.*/
@@ -487,7 +487,7 @@ workflows:
             - image-scan
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?(\-hotfix(\.[0-9]+))?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
             branches:
               ignore:
                 - /.*/
@@ -497,7 +497,7 @@ workflows:
             - publish
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?/
             branches:
               ignore:
                 - /.*/

@@ -29,7 +29,10 @@ const Logger = require('@mojaloop/central-services-logger')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Config = require('../../lib/config')
+const Metrics = require('@mojaloop/central-services-metrics')
+
 /**
+ *
  * @module src/domain/participant
  */
 
@@ -44,17 +47,32 @@ const Config = require('../../lib/config')
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const getEndpoint = async (fsp, endpointType, transferId = null) => {
-  Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
-  Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
-  Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
+const getEndpoint = async (fsp, endpointType, transferId = null, span = null) => {
+  const histTimerEnd = Metrics.getHistogram(
+    'notification_event_getEndpoint',
+    'Gets endpoints for notification from central ledger db',
+    ['success', 'endpointType', 'fsp']
+  ).startTimer()
+  let getEndpointSpan
+  if (span) {
+    getEndpointSpan = span.getChild(`${span.getContext().service}_getEndpoint`)
+    getEndpointSpan.setTags({ endpointType, fsp })
+  }
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
   try {
-    return Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
+    const url = await Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
+    !!getEndpointSpan && await getEndpointSpan.finish()
+    histTimerEnd({ success: true, endpointType, fsp })
+    return url
   } catch (err) {
     Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
+    histTimerEnd({ success: false, fsp, endpointType })
+
     throw fspiopError
   }
 }

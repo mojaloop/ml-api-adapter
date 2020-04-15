@@ -7,20 +7,22 @@ const Facade = require('@mojaloop/central-services-shared').Util.Endpoints
 const Service = require('../../../../src/domain/participant')
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Config = require('../../../../src/lib/config')
-const Logger = require('@mojaloop/central-services-logger')
+const EventSdk = require('@mojaloop/event-sdk')
+let span
 
 Test('ParticipantEndpoint Service Test', endpointTest => {
   let sandbox
 
   endpointTest.beforeEach(async test => {
+    span = EventSdk.Tracer.createSpan('test_span')
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Logger, 'isDebugEnabled').value(true)
     sandbox.stub(Facade, 'getEndpoint')
     test.end()
   })
 
   endpointTest.afterEach(async test => {
     sandbox.restore()
+    span.finish()
     test.end()
   })
 
@@ -33,7 +35,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(Promise.resolve(expected))
 
       try {
-        const result = await Service.getEndpoint(fsp, endpointType, transferId)
+        const result = await Service.getEndpoint(fsp, endpointType, transferId, span)
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
