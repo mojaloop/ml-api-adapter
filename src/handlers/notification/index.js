@@ -30,10 +30,12 @@ const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const Logger = require('@mojaloop/central-services-logger')
 const EventSdk = require('@mojaloop/event-sdk')
 const Participant = require('../../domain/participant')
-const Callback = require('@mojaloop/central-services-shared').Util.Request
+// const Callback = require('@mojaloop/central-services-shared').Util.Request
 const createCallbackHeaders = require('../../lib/headers').createCallbackHeaders
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+
+const Headers = require('@mojaloop/central-services-shared').Util.Headers
 
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('@mojaloop/central-services-shared').Enum
@@ -42,7 +44,96 @@ const isDataUri = require('@mojaloop/central-services-shared').Util.StreamingPro
 const Config = require('../../lib/config')
 const http = require('http')
 
-const httpRequestHandler = new Callback.HTTPRequestHandler({
+const axios = require('axios')
+const MISSING_FUNCTION_PARAMETERS = 'Missing parameters for function'
+
+
+// TODO put this in shared library
+class HTTPRequestHandler {
+  constructor (opts) {
+    if (opts) {
+      this._opts = opts
+    } else {
+      // Set config defaults when creating the instance
+      this._opts = {
+        httpAgent: new http.Agent({
+          keepAlive: true
+        })
+      }
+    }
+
+    this._requestInstance = axios.create(opts)
+  }
+
+  async sendRequest (url, headers, source, destination, method = ENUM.Http.RestMethods.GET, payload = undefined, responseType = ENUM.Http.ResponseTypes.JSON, span = undefined) {
+    const histTimerEnd = !!Metrics.isInitiated() && Metrics.getHistogram(
+      'sendRequest',
+      `sending ${method} request to: ${url} from: ${source} to: ${destination}`,
+      ['success', 'source', 'destination', 'method']
+    ).startTimer()
+    let sendRequestSpan
+    if (span) {
+      sendRequestSpan = span.getChild(`${span.getContext().service}_sendRequest`)
+      sendRequestSpan.setTags({ source, destination, method, url })
+    }
+    let requestOptions
+    if (!url || !method || !headers || (method !== ENUM.Http.RestMethods.GET && !payload) || !source || !destination) {
+      throw ErrorHandler.Factory.createInternalServerFSPIOPError(MISSING_FUNCTION_PARAMETERS)
+    }
+    try {
+      const transformedHeaders = Headers.transformHeaders(headers, {
+        httpMethod: method,
+        sourceFsp: source,
+        destinationFsp: destination
+      })
+      requestOptions = {
+        url,
+        method: method,
+        headers: transformedHeaders,
+        data: payload,
+        responseType
+      }
+      if (span) {
+        requestOptions = span.injectContextToHttpRequest(requestOptions)
+        span.audit(requestOptions, EventSdk.AuditEventAction.egress)
+      }
+      Logger.isInfoEnabled && Logger.info(`sendRequest::request ${JSON.stringify(requestOptions)}`)
+      const response = await this._requestInstance(requestOptions)
+      Logger.isInfoEnabled && Logger.info(`Success: sendRequest::response ${JSON.stringify(response, Object.getOwnPropertyNames(response))}`)
+      !!sendRequestSpan && await sendRequestSpan.finish()
+      !!histTimerEnd && histTimerEnd({ success: true, source, destination, method })
+      return response
+    } catch (error) {
+      Logger.isErrorEnabled && Logger.error(error)
+      const extensionArray = [
+        { key: 'url', value: url },
+        { key: 'sourceFsp', value: source },
+        { key: 'destinationFsp', value: destination },
+        { key: 'method', value: method },
+        { key: 'request', value: JSON.stringify(requestOptions) },
+        { key: 'errorMessage', value: error.message }
+      ]
+      const extensions = []
+      if (error.response) {
+        extensionArray.push({ key: 'status', value: error.response && error.response.status })
+        extensionArray.push({ key: 'response', value: error.response && error.response.data })
+        extensions.push({ key: 'status', value: error.response && error.response.status })
+      }
+      const cause = JSON.stringify(extensionArray)
+      extensions.push({ key: 'cause', value: cause })
+      const fspiopError = ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.DESTINATION_COMMUNICATION_ERROR, 'Failed to send HTTP request to host', error, source, extensions)
+      if (sendRequestSpan) {
+        const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed, fspiopError.apiErrorCode.code, fspiopError.apiErrorCode.message)
+        await sendRequestSpan.error(fspiopError, state)
+        await sendRequestSpan.finish(fspiopError.message, state)
+      }
+      !!histTimerEnd && histTimerEnd({ success: false, source, destination, method })
+      throw fspiopError
+    }
+  }
+}
+
+const httpRequestHandler = new HTTPRequestHandler({
   httpAgent: new http.Agent(
     Config.HTTP_CONFIG.httpAgent
   )
