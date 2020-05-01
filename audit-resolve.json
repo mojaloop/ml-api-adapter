@@ -1,8 +1,9 @@
 {
   "decisions": {
     "1500|npm-audit-resolver>yargs-unparser>yargs>yargs-parser": {
-      "decision": "fix",
-      "madeAt": 1588343028688
+      "decision": "ignore",
+      "madeAt": 1588343488532,
+      "expiresAt": 1588948282394
     },
     "1179|@mojaloop/central-services-health>@mojaloop/central-services-shared>@mojaloop/event-sdk>grpc>node-pre-gyp>mkdirp>minimist": {
       "decision": "ignore",
