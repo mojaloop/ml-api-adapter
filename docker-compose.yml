@@ -1,0 +1,133 @@
+version: "3.7"
+
+networks:
+  ml-mojaloop-net:
+    name: ml-mojaloop-net
+
+services:
+  ml-api-adapter:
+    build:
+      context: .
+      cache_from:
+        - mojaloop/ml-api-adapter
+        - central-ledger
+    container_name: ml_ml-api-adapter
+    command:
+      - "sh"
+      - "-c"
+      - "sh /opt/wait-for/wait-for-ml-api-adapter.sh && node src/api/index.js"
+    ports:
+      - "3000:3000"
+    environment:
+      - LOG_LEVEL=info
+      - CSL_LOG_TRANSPORT=file
+    volumes:
+      # override the default values with our own - this is because the KAFKA_HOST env variable is ignored for some reason
+       - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
+       - ./docker/wait-for:/opt/wait-for
+    networks:
+      - ml-mojaloop-net
+    depends_on:
+      - central-ledger
+      - kafka
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3000/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+
+  central-ledger:
+    image: mojaloop/central-ledger:latest
+    container_name: ml_central-ledger
+    command:
+      - "sh"
+      - "-c"
+      - "sh /opt/wait-for/wait-for-central-ledger.sh && node src/api/index.js"
+    links:
+      - mysql
+      - kafka
+    ports:
+      - "3001:3001"
+    volumes:
+      # override the default values with our own
+       - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
+       - ./docker/wait-for:/opt/wait-for
+    depends_on:
+      - mysql
+      - kafka
+    environment:
+      - CLEDG_SIDECAR__DISABLED=true
+    networks:
+      - ml-mojaloop-net
+    healthcheck:
+      test: ["CMD", "bash", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3001/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+
+  mysql:
+    image: mysql/mysql-server
+    container_name: ml_mysql
+    # Disable logging as it is far too verbose for debugging locally
+    logging:
+      driver: none
+    ports:
+      - "3306:3306"
+    volumes:
+      #this fixes the permissions issue, but docker-compose up will fail on first attempt
+      - ./docker/sql-init/:/docker-entrypoint-initdb.d/
+    environment:
+      - MYSQL_USER=${DBUSER:-central_ledger}
+      - MYSQL_PASSWORD=${DBPASS:-password}
+      - MYSQL_DATABASE=${DBUSER:-central_ledger}
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    networks:
+      - ml-mojaloop-net
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "mysql"]
+      timeout: 20s
+      retries: 10
+      start_period: 40s
+      interval: 30s
+
+  kafka:
+    image: johnnypark/kafka-zookeeper:2.3.0
+    container_name: ml_kafka
+    # Disable logging as it is far too verbose for debugging locally
+    logging:
+      driver: none
+    volumes:
+      - ./docker/kafka/:/opt/kafka_2.12-2.3.0/config/
+    ports:
+      - "2181:2181"
+      - "9092:9092"
+    environment:
+      - ZOO_LOG4J_PROP=WARN
+    networks:
+      - ml-mojaloop-net
+    healthcheck:
+      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","localhost:9092"]
+      timeout: 20s
+      retries: 10
+      start_period: 40s
+      interval: 30s
+
+  simulator:
+    image: mojaloop/simulator:latest
+    container_name: ml_simulator
+    ports:
+      - "8444:8444"
+    environment:
+      - LOG_LEVEL=info
+      - TRANSFERS_ENDPOINT=http://host.docker.internal:3000
+      - QUOTES_ENDPOINT=http://host.docker.internal:3002
+      - PARTIES_ENDPOINT=http://host.docker.internal:4002
+      - TRANSFERS_FULFIL_RESPONSE_DISABLED=false
+    networks:
+      - ml-mojaloop-net
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:8444/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+

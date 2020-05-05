@@ -1,156 +1,151 @@
 'use strict'
 
 const Test = require('tapes')(require('tape'))
-const Config = require('../../../../src/lib/config')
-const Handler = require('../../../../src/api/metadata/handler')
-const apiTags = ['api']
+const Sinon = require('sinon')
+const axios = require('axios')
+const proxyquire = require('proxyquire')
 
-function createRequest (routes) {
-  return {
-    server: {
-      table: () => [
-        {
-          table: routes || []
-        }
-      ]
-    }
-  }
-}
+const Config = require('../../../../src/lib/config')
+const Notification = require('../../../../src/handlers/notification')
+
+const {
+  createRequest,
+  unwrapResponse
+} = require('../../../helpers')
+
+const apiTags = ['api']
 
 Test('metadata handler', (handlerTest) => {
   let originalScale
   let originalPrecision
   let originalHostName
+  let sandbox
+  let Handler
 
   handlerTest.beforeEach(t => {
+    sandbox = Sinon.createSandbox()
+    sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(axios, 'get')
+    Handler = proxyquire('../../../../src/api/metadata/handler', {})
+
     originalScale = Config.AMOUNT.SCALE
     originalPrecision = Config.AMOUNT.PRECISION
     originalHostName = Config.HOSTNAME
     Config.AMOUNT.SCALE = 0
     Config.AMOUNT.PRECISION = 0
     Config.HOSTNAME = ''
+
     t.end()
   })
 
   handlerTest.afterEach(t => {
+    sandbox.restore()
+
     Config.AMOUNT.SCALE = originalScale
     Config.AMOUNT.PRECISION = originalPrecision
     Config.HOSTNAME = originalHostName
+    Config.HANDLERS_DISABLED = false
+
     t.end()
   })
 
-  handlerTest.test('health should', (healthTest) => {
-    healthTest.test('return status ok', (assert) => {
-      let reply = function (response) {
-        assert.equal(response.status, 'OK')
-        return {
-          code: (statusCode) => {
-            assert.equal(statusCode, 200)
-            assert.end()
-          }
-        }
-      }
+  handlerTest.test('/health should', healthTest => {
+    healthTest.test('returns the correct response when the health check is up', async test => {
+      // Arrange
+      Notification.isConnected.resolves(true)
+      axios.get.resolves({ data: { status: 'OK' } })
+      const expectedResponseCode = 200
 
-      Handler.health(createRequest(), reply)
+      // Act
+      const {
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+
+      // Assert
+      test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
     })
+
+    healthTest.test('returns the correct response when the health check is up in API mode only (Config.HANDLERS_DISABLED=true)', async test => {
+      // Arrange
+      Notification.isConnected.resolves(true)
+
+      Config.HANDLERS_DISABLED = true
+      Handler = proxyquire('../../../../src/api/metadata/handler', {})
+      axios.get.resolves({ data: { status: 'OK' } })
+      const expectedResponseCode = 200
+
+      // Act
+      const {
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+
+      // Assert
+      test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
+    })
+
+    healthTest.test('returns the correct response when the health check is down', async test => {
+      // Arrange
+      Notification.isConnected.throws(new Error('Error connecting to consumer'))
+      axios.get.resolves({ data: { status: 'OK' } })
+      const expectedResponseCode = 502
+
+      // Act
+      const {
+        responseCode
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
+
+      // Assert
+      test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
+      test.end()
+    })
+
     healthTest.end()
   })
-
   handlerTest.test('metadata should', function (metadataTest) {
-    metadataTest.test('return 200 httpStatus', (t) => {
-      let reply = (response) => {
-        return {
-          code: statusCode => {
-            t.equal(statusCode, 200)
-            t.end()
+    metadataTest.test('return 200 httpStatus', async function (t) {
+      const reply = {
+        response: () => {
+          return {
+            code: statusCode => {
+              t.equal(statusCode, 200)
+              t.end()
+            }
           }
         }
       }
-
-      Handler.metadata(createRequest(), reply)
-    })
-
-    metadataTest.test('return default values', t => {
-      let host = 'example-hostname'
-      let hostName = `http://${host}`
-      Config.HOSTNAME = hostName
-
-      let scale = 3
-      let precision = 7
-      Config.AMOUNT.SCALE = scale
-      Config.AMOUNT.PRECISION = precision
-
-      let reply = response => {
-        t.equal(response.currency_code, null)
-        t.equal(response.currency_symbol, null)
-        t.equal(response.ledger, hostName)
-        t.equal(response.precision, precision)
-        t.equal(response.scale, scale)
-        t.equal(response.urls['websocket'], `ws://${host}/websocket`)
-        t.deepEqual(response.connectors, [])
-        return { code: statusCode => { t.end() } }
-      }
-
-      Handler.metadata(createRequest(), reply)
+      await Handler.metadata(createRequest(), reply)
     })
 
     metadataTest.test('return urls from request.server and append hostname', t => {
-      let hostName = 'some-host-name'
+      const hostName = 'some-host-name'
       Config.HOSTNAME = hostName
-      let request = createRequest([
+      const request = createRequest([
         { settings: { id: 'first_route', tags: apiTags }, path: '/first' }
       ])
 
-      let reply = response => {
-        t.equal(response.urls['first_route'], `${hostName}/first`)
-        return { code: statusCode => { t.end() } }
+      const reply = {
+        response: (response) => {
+          t.equal(response.urls.first_route, `${hostName}/first`)
+          return { code: statusCode => { t.end() } }
+        }
       }
-
-      Handler.metadata(request, reply)
-    })
-
-    metadataTest.test('only return urls with id', t => {
-      let request = createRequest([
-        { settings: { tags: apiTags }, path: '/' },
-        { settings: { id: 'expected', tags: apiTags }, path: '/expected' }
-      ])
-
-      let reply = response => {
-        t.equal(Object.keys(response.urls).length, 2)
-        t.equal(response.urls['expected'], '/expected')
-        return { code: statusCode => { t.end() } }
-      }
-
-      Handler.metadata(request, reply)
-    })
-
-    metadataTest.test('only return urls tagged with api', t => {
-      let request = createRequest([
-        { settings: { id: 'nottagged' }, path: '/nottagged' },
-        { settings: { id: 'tagged', tags: apiTags }, path: '/tagged' },
-        { settings: { id: 'wrongtag', tags: ['notapi'] }, path: '/wrongtag' }
-      ])
-
-      let reply = response => {
-        t.equal(Object.keys(response.urls).length, 2)
-        t.equal(response.urls['tagged'], '/tagged')
-        t.notOk(response.urls['nottagged'])
-        return { code: statusCode => { t.end() } }
-      }
-
       Handler.metadata(request, reply)
     })
 
     metadataTest.test('format url parameters with colons', t => {
-      let request = createRequest([
+      const request = createRequest([
         { settings: { id: 'path', tags: apiTags }, path: '/somepath/{id}' },
         { settings: { id: 'manyargs', tags: apiTags }, path: '/somepath/{id}/{path*}/{test2}/' }
       ])
 
-      let reply = response => {
-        t.equal(response.urls['path'], '/somepath/:id')
-        t.equal(response.urls['manyargs'], '/somepath/:id/:path*/:test2/')
-        return { code: statusCode => { t.end() } }
+      const reply = {
+        response: (response) => {
+          t.equal(response.urls.path, '/somepath/:id')
+          t.equal(response.urls.manyargs, '/somepath/:id/:path*/:test2/')
+          return { code: () => { t.end() } }
+        }
       }
 
       Handler.metadata(request, reply)

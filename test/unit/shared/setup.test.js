@@ -1,49 +1,61 @@
 'use strict'
 
+const src = '../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const Hapi = require('hapi')
-const P = require('bluebird')
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const Migrator = require('../../../src/lib/migrator')
-const Db = require('../../../src/db')
-const Config = require('../../../src/lib/config')
-const Eventric = require('../../../src/eventric')
-const Plugins = require('../../../src/shared/plugins')
-const RequestLogger = require('../../../src/lib/request-logger')
-const UrlParser = require('../../../src/lib/urlparser')
-const Sidecar = require('../../../src/lib/sidecar')
+const Config = require(`${src}/lib/config`)
 const Proxyquire = require('proxyquire')
+const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const Boom = require('@hapi/boom')
+const Kafka = require('@mojaloop/central-services-stream').Util
 
 Test('setup', setupTest => {
   let sandbox
-  let uuidStub
   let oldHostName
-  let oldDatabaseUri
-  let hostName = 'http://test.com'
-  let databaseUri = 'some-database-uri'
+  const hostName = 'http://test.com'
   let Setup
+  let RegisterHandlersStub
+  let PluginsStub
+  let HapiStub
+  let serverStub
 
   setupTest.beforeEach(test => {
-    sandbox = Sinon.sandbox.create()
-    sandbox.stub(Hapi, 'Server')
-    sandbox.stub(Plugins, 'registerPlugins')
-    sandbox.stub(Migrator)
-    sandbox.stub(Eventric)
-    sandbox.stub(UrlParser, 'idFromTransferUri')
-    sandbox.stub(RequestLogger, 'logRequest')
-    sandbox.stub(RequestLogger, 'logResponse')
+    sandbox = Sinon.createSandbox()
+    sandbox.stub(Endpoints, 'initializeCache').returns(Promise.resolve(true))
+    sandbox.stub(Kafka.Producer, 'connectAll').returns(Promise.resolve(true))
 
-    Sidecar.connect = sandbox.stub()
-    Db.connect = sandbox.stub()
-    Db.disconnect = sandbox.stub()
-    uuidStub = sandbox.stub()
+    PluginsStub = {
+      registerPlugins: sandbox.stub().returns(Promise.resolve())
+    }
 
-    Setup = Proxyquire('../../../src/shared/setup', { 'uuid4': uuidStub })
+    serverStub = {
+      connection: sandbox.stub(),
+      register: sandbox.stub(),
+      ext: sandbox.stub(),
+      start: sandbox.stub(),
+      method: sandbox.stub(),
+      info: {
+        uri: sandbox.stub()
+      }
+    }
+
+    HapiStub = {
+      Server: sandbox.stub().returns(serverStub)
+    }
+
+    RegisterHandlersStub = {
+      registerAllHandlers: sandbox.stub().returns(Promise.resolve()),
+      registerNotificationHandler: sandbox.stub().returns(Promise.resolve())
+    }
+
+    Setup = Proxyquire('../../../src/shared/setup', {
+      '../handlers/register': RegisterHandlersStub,
+      './plugins': PluginsStub,
+      '@hapi/hapi': HapiStub,
+      '../lib/config': Config
+    })
 
     oldHostName = Config.HOSTNAME
-    oldDatabaseUri = Config.DATABASE_URI
-    Config.DATABASE_URI = databaseUri
     Config.HOSTNAME = hostName
 
     test.end()
@@ -51,213 +63,244 @@ Test('setup', setupTest => {
 
   setupTest.afterEach(test => {
     sandbox.restore()
+
     Config.HOSTNAME = oldHostName
-    Config.DATABASE_URI = oldDatabaseUri
+
     test.end()
   })
 
-  const createServer = () => {
-    const server = {
-      connection: sandbox.stub(),
-      register: sandbox.stub(),
-      ext: sandbox.stub()
-    }
-    Hapi.Server.returns(server)
-    return server
-  }
+  setupTest.test('createServer should', async (createServerTest) => {
+    createServerTest.test('throw error on fail', async (test) => {
+      const errorToThrow = new Boom.Boom('Throw error')
 
-  setupTest.test('createServer should', createServerTest => {
-    createServerTest.test('return Hapi Server', test => {
-      const server = createServer()
+      PluginsStub = {
+        registerPlugins: sandbox.stub().returns(Promise.resolve())
+      }
 
-      Setup.createServer().then(s => {
-        test.deepEqual(s, server)
+      serverStub = {
+        register: sandbox.stub(),
+        start: sandbox.stub().throws(errorToThrow),
+        info: { uri: 'http://server-info-uri' }
+      }
+
+      HapiStub = {
+        Server: sandbox.stub().returns(serverStub)
+      }
+
+      Setup = Proxyquire('../../../src/shared/setup', {
+        '@hapi/hapi': HapiStub,
+        './plugins': PluginsStub,
+        '../lib/config': Config
+      })
+
+      Setup.createServer(200, []).then(() => {
+        test.fail('Should not have successfully created server')
+        test.end()
+      }).catch(err => {
+        test.ok(err instanceof Error)
         test.end()
       })
     })
-
-    createServerTest.test('setup connection', test => {
-      const server = createServer()
-      const port = 1234
-
-      Setup.createServer(port).then(() => {
-        test.ok(server.connection.calledWith(Sinon.match({
-          port,
-          routes: {
-            validate: ErrorHandling.validateRoutes()
-          }
-        })))
-        test.end()
-      })
-    })
-
-    createServerTest.test('log request and traceid', test => {
-      const server = createServer()
-      const port = 1234
-
-      let request = { headers: { traceid: '1234' }, url: { path: '/test' } }
-      let reply = { continue: sandbox.stub() }
-      server.ext.onFirstCall().callsArgWith(1, request, reply)
-
-      Setup.createServer(port).then(() => {
-        test.ok(RequestLogger.logRequest.calledWith(request))
-        test.ok(reply.continue.calledOnce)
-        test.end()
-      })
-    })
-
-    createServerTest.test('use transfer id if traceid not found', test => {
-      const server = createServer()
-      const port = 1234
-      const transferId = 'transfer-id'
-      const path = '/test'
-
-      UrlParser.idFromTransferUri.returns(transferId)
-
-      let request = { headers: { }, url: { path } }
-      let reply = { continue: sandbox.stub() }
-      server.ext.onFirstCall().callsArgWith(1, request, reply)
-
-      Setup.createServer(port).then(() => {
-        test.ok(RequestLogger.logRequest.calledWith(sandbox.match({
-          headers: {
-            traceid: transferId
-          }
-        })))
-        test.ok(UrlParser.idFromTransferUri.calledWith(`${hostName}${path}`))
-        test.ok(reply.continue.calledOnce)
-        test.end()
-      })
-    })
-
-    createServerTest.test('create new uuid if traceid and transfer id not found', test => {
-      const server = createServer()
-      const port = 1234
-      const uuid = 'new-trace-id'
-
-      uuidStub.returns(uuid)
-
-      let request = { headers: { }, url: { path: '/' } }
-      let reply = { continue: sandbox.stub() }
-      server.ext.onFirstCall().callsArgWith(1, request, reply)
-
-      Setup.createServer(port).then(() => {
-        test.ok(RequestLogger.logRequest.calledWith(sandbox.match({
-          headers: {
-            traceid: uuid
-          }
-        })))
-        test.ok(reply.continue.calledOnce)
-        test.end()
-      })
-    })
-
-    createServerTest.test('log response', test => {
-      const server = createServer()
-      const port = 1234
-
-      let request = { headers: { traceid: '1234' } }
-      let reply = { continue: sandbox.stub() }
-      server.ext.onSecondCall().callsArgWith(1, request, reply)
-
-      Setup.createServer(port).then(() => {
-        test.ok(RequestLogger.logResponse.calledWith(request))
-        test.ok(reply.continue.calledOnce)
-        test.end()
-      })
-    })
-
-    createServerTest.test('register shared plugins', test => {
-      const server = createServer()
-      Setup.createServer().then(() => {
-        test.ok(Plugins.registerPlugins.calledWith(server))
-        test.end()
-      })
-    })
-
-    createServerTest.test('register provide modules', test => {
-      const server = createServer()
-      const modules = ['one', 'two']
-      Setup.createServer(1234, modules).then(() => {
-        test.ok(server.register.calledWith(modules))
-        test.end()
-      })
-    })
-
     createServerTest.end()
   })
 
-  setupTest.test('initialize should', initializeTest => {
-    const setupPromises = () => {
-      Migrator.migrate.returns(P.resolve())
-      Db.connect.returns(P.resolve())
-      Eventric.getContext.returns(P.resolve())
-      Sidecar.connect.returns(P.resolve())
-      return createServer()
-    }
+  setupTest.test('initialize should', async (initializeTest) => {
+    initializeTest.test('return hapi server for "api"', async (test) => {
+      const service = 'api'
 
-    initializeTest.test('connect to sidecar', test => {
-      const server = setupPromises()
-
-      const service = 'test'
       Setup.initialize({ service }).then(s => {
-        test.ok(Db.connect.calledWith(databaseUri))
-        test.ok(Sidecar.connect.calledWith(service))
-        test.notOk(Eventric.getContext.called)
-        test.notOk(Migrator.migrate.called)
-        test.equal(s, server)
+        test.equal(s, serverStub)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
         test.end()
       })
     })
 
-    initializeTest.test('connect to db and return hapi server', test => {
-      const server = setupPromises()
-
-      Setup.initialize({}).then(s => {
-        test.ok(Db.connect.calledWith(databaseUri))
-        test.notOk(Eventric.getContext.called)
-        test.notOk(Migrator.migrate.called)
-        test.equal(s, server)
-        test.end()
-      })
-    })
-
-    initializeTest.test('run migrations if runMigrations flag enabled', test => {
-      setupPromises()
-
-      Setup.initialize({ runMigrations: true }).then(() => {
-        test.ok(Db.connect.called)
-        test.ok(Migrator.migrate.called)
-        test.notOk(Eventric.getContext.called)
-        test.end()
-      })
-    })
-
-    initializeTest.test('setup eventric context if loadEventric flag enabled', test => {
-      setupPromises()
-
-      Setup.initialize({ loadEventric: true }).then(() => {
-        test.ok(Db.connect.called)
-        test.notOk(Migrator.migrate.called)
-        test.ok(Eventric.getContext.called)
-        test.end()
-      })
-    })
-
-    initializeTest.test('cleanup on error and rethrow', test => {
-      setupPromises()
-
-      let err = new Error('bad stuff')
-      Sidecar.connect.returns(P.reject(err))
-
-      const service = 'test'
+    initializeTest.test('return hapi server for "api" and register producers', async (test) => {
+      const service = 'api'
+      Config.HANDLERS_DISABLED = true
       Setup.initialize({ service }).then(s => {
-        test.fail('Should have thrown error')
+        test.equal(s, serverStub)
+        Config.HANDLERS_DISABLED = false
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
         test.end()
       })
-      .catch(e => {
-        test.ok(Db.disconnect.calledOnce)
-        test.equal(e, err)
+    })
+
+    initializeTest.test('return hapi server for "handler"', async (test) => {
+      const service = 'handler'
+
+      Setup.initialize({ service }).then(s => {
+        test.equal(s, serverStub)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('return throw an exception for server "undefined"', async (test) => {
+      const service = 'undefined'
+
+      Setup.initialize({ service }).then(s => {
+        test.equal(s, serverStub)
+        test.end()
+      }).catch(err => {
+        test.ok(err.message === `No valid service type ${service} found!`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('run Handlers if runHandlers flag enabled and start API', async (test) => {
+      const service = 'handler'
+
+      Setup.initialize({ service, runHandlers: true }).then((s) => {
+        test.ok(RegisterHandlersStub.registerAllHandlers.called)
+        test.equal(s, serverStub)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('run Handlers if runHandlers flag enabled and DONT start API', async (test) => {
+      const ConfigStub = Config
+      ConfigStub.HANDLERS_API_DISABLED = true
+
+      Setup = Proxyquire('../../../src/shared/setup', {
+        '../handlers/register': RegisterHandlersStub,
+        './plugins': PluginsStub,
+        '@hapi/hapi': HapiStub,
+        '../lib/config': ConfigStub
+      })
+
+      const service = 'handler'
+
+      sandbox.stub(Config, 'HANDLERS_API_DISABLED').returns(true)
+      Setup.initialize({ service, runHandlers: true }).then((s) => {
+        test.ok(RegisterHandlersStub.registerAllHandlers.called)
+        test.equal(s, undefined)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('dont initialize the instrumentation if the INSTRUMENTATION_METRICS_DISABLED is disabled', async (test) => {
+      const ConfigStub = Config
+      ConfigStub.HANDLERS_API_DISABLED = true
+      ConfigStub.INSTRUMENTATION_METRICS_DISABLED = true
+
+      Setup = Proxyquire('../../../src/shared/setup', {
+        '../handlers/register': RegisterHandlersStub,
+        './plugins': PluginsStub,
+        '@hapi/hapi': HapiStub,
+        '../lib/config': ConfigStub
+      })
+
+      const service = 'handler'
+
+      sandbox.stub(Config, 'HANDLERS_API_DISABLED').returns(true)
+      Setup.initialize({ service, runHandlers: true }).then((s) => {
+        test.ok(RegisterHandlersStub.registerAllHandlers.called)
+        test.equal(s, undefined)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('run invalid Handler if runHandlers flag enabled with handlers[] populated', async (test) => {
+      const service = 'api'
+
+      const notificationHandler = {
+        type: 'notification',
+        enabled: true
+      }
+
+      const unknownHandler = {
+        type: 'undefined',
+        enabled: true
+      }
+
+      const modulesList = [
+        notificationHandler,
+        unknownHandler
+      ]
+
+      Setup.initialize({ service, runHandlers: true, handlers: modulesList }).then(() => {
+        test.fail('Expected exception to be thrown')
+        test.end()
+      }).catch(err => {
+        console.log(err)
+        test.ok(RegisterHandlersStub.registerNotificationHandler.called)
+        test.notOk(RegisterHandlersStub.registerAllHandlers.called)
+        test.ok(err.message === `Handler Setup - ${JSON.stringify(unknownHandler)} is not a valid handler to register!`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('run Handler if runHandlers flag enabled with handlers[] populated', async (test) => {
+      const service = 'api'
+
+      const notificationHandler = {
+        type: 'notification',
+        enabled: true
+      }
+
+      const modulesList = [
+        notificationHandler
+      ]
+
+      Setup.initialize({ service, runHandlers: true, handlers: modulesList }).then(() => {
+        test.ok(RegisterHandlersStub.registerNotificationHandler.called)
+        test.notOk(RegisterHandlersStub.registerAllHandlers.called)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('run no Handlers if runHandlers flag enabled with handlers[] populated and the notificationHandler is disabled', async (test) => {
+      const service = 'api'
+
+      const notificationHandler = {
+        type: 'notification',
+        enabled: false
+      }
+
+      const modulesList = [
+        notificationHandler
+      ]
+
+      Setup.initialize({ service, runHandlers: true, handlers: modulesList }).then(() => {
+        test.notOk(RegisterHandlersStub.registerNotificationHandler.called)
+        test.notOk(RegisterHandlersStub.registerAllHandlers.called)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
+        test.end()
+      })
+    })
+
+    initializeTest.test('run all Handlers if runHandlers flag enabled with handlers[] is empty', async (test) => {
+      const service = 'api'
+
+      const modulesList = []
+
+      Setup.initialize({ service, runHandlers: true, handlers: modulesList }).then(() => {
+        test.notOk(RegisterHandlersStub.registerNotificationHandler.called)
+        test.ok(RegisterHandlersStub.registerAllHandlers.called)
+        test.end()
+      }).catch(err => {
+        test.fail(`Should have not received an error: ${err}`)
         test.end()
       })
     })

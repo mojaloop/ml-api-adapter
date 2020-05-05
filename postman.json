@@ -1,0 +1,100 @@
+{
+	"info": {
+		"_postman_id": "2b0ebd5f-41ad-45fa-b490-8f0b952730b8",
+		"name": "ml-api-adapter",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "POST Transfer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Date",
+						"value": "2018-04-25"
+					},
+					{
+						"key": "X-Forwarded-For",
+						"value": "client"
+					},
+					{
+						"key": "fspiop-source",
+						"value": "shashi"
+					},
+					{
+						"key": "shashi",
+						"value": "aaa"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n           \"transferId\": \"b51ec534-ee48-4575-b6a9-ead2955b8069\",\n           \"payerFsp\": \"dfsp1\",\n           \"payeeFsp\": \"dfsp2\",\n           \"amount\": {\n               \"currency\": \"USD\",\n               \"amount\": \"123.45\"\n           }, \n            \n            \n           \"ilpPacket\": \"AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA\",\n           \"condition\":\"f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA\",\n           \"expiration\": \"2016-05-24T08:38:08.699-04:00\",\n            \n           \"extensionList\":\n           {\n             \"extension\":\n             [\n               {\n                 \"key\": \"errorDescription\",\n                 \"value\": \"This is a more detailed error description\"\n               },\n               {\n                 \"key\": \"errorDescription\",\n                 \"value\": \"This is a more detailed error description\"\n               }\n             ]\n           }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/transfers",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"transfers"
+					]
+				},
+				"description": "sending transfer post"
+			},
+			"response": []
+		},
+		{
+			"name": "PUT fulfill",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Date",
+						"value": "2018-04-25"
+					},
+					{
+						"key": "X-Forwarded-For",
+						"value": "client"
+					},
+					{
+						"key": "fspiop-source",
+						"value": "dfsp1"
+					},
+					{
+						"key": "fspiop-destination",
+						"value": "dfsp2"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\t   \"fulfilment\":\"f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA\",\n           \"transferState\": \"RECEIVED\",\n           \"completedTimestamp\": \"2016-05-24T08:38:08.699-04:00\",\n            \n           \"extensionList\":\n           {\n             \"extension\":\n             [\n               {\n                 \"key\": \"errorDescription\",\n                 \"value\": \"This is a more detailed error description\"\n               },\n               {\n                 \"key\": \"errorDescription\",\n                 \"value\": \"This is a more detailed error description\"\n               }\n             ]\n           }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/transfers/dfsp1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"transfers",
+						"dfsp1"
+					]
+				},
+				"description": "sending transfer post"
+			},
+			"response": []
+		}
+	]
+}

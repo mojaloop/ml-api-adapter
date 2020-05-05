@@ -1,52 +1,55 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ --------------
+ ******/
+
 'use strict'
 
-const src = '../../../../src'
+const EventSdk = require('@mojaloop/event-sdk')
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const P = require('bluebird')
 const Uuid = require('uuid4')
-const TransferQueries = require('../../../../src/domain/transfer/queries')
-const SettleableTransfersReadModel = require(`${src}/models/settleable-transfers-read-model`)
-const SettlementsModel = require(`${src}/models/settlements`)
-const Events = require('../../../../src/lib/events')
-const Commands = require('../../../../src/domain/transfer/commands')
 const Service = require('../../../../src/domain/transfer')
-const TransferState = require('../../../../src/domain/transfer/state')
-const TransferTranslator = require('../../../../src/domain/transfer/translator')
-const RejectionType = require(`${src}/domain/transfer/rejection-type`)
-const Errors = require('../../../../src/errors')
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const Kafka = require('@mojaloop/central-services-stream').Util
+const Enum = require('@mojaloop/central-services-shared').Enum
+const Config = require('../../../../src/lib/config')
+const Logger = require('@mojaloop/central-services-logger')
 
-const createTransfer = (transferId = '3a2a1d9e-8640-4d2d-b06c-84f2cd613204') => {
-  return {
-    id: transferId,
-    ledger: 'ledger',
-    credits: [],
-    debits: [],
-    execution_condition: '',
-    expires_at: ''
-  }
-}
+const TRANSFER = 'transfer'
+const PREPARE = 'prepare'
+const FULFIL = 'fulfil'
+const dataUri = ''
 
 Test('Transfer Service tests', serviceTest => {
   let sandbox
 
   serviceTest.beforeEach(t => {
-    sandbox = Sinon.sandbox.create()
-    sandbox.stub(TransferQueries, 'findExpired')
-    sandbox.stub(TransferQueries, 'getById')
-    sandbox.stub(TransferQueries, 'getAll')
-    sandbox.stub(SettleableTransfersReadModel, 'getSettleableTransfers')
-    sandbox.stub(SettlementsModel, 'generateId')
-    sandbox.stub(SettlementsModel, 'create')
-    sandbox.stub(TransferTranslator, 'toTransfer')
-    sandbox.stub(TransferTranslator, 'fromPayload')
-    sandbox.stub(Events, 'emitTransferRejected')
-    sandbox.stub(Events, 'emitTransferExecuted')
-    sandbox.stub(Events, 'emitTransferPrepared')
-    sandbox.stub(Commands, 'settle')
-    sandbox.stub(Commands, 'reject')
-    sandbox.stub(Commands, 'fulfill')
-    sandbox.stub(Commands, 'prepare')
+    sandbox = Sinon.createSandbox()
+    sandbox.stub(Logger, 'isErrorEnabled').value(true)
+    sandbox.stub(Logger, 'isInfoEnabled').value(true)
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
+    sandbox.stub(Kafka.Producer, 'produceMessage')
+    sandbox.stub(Kafka.Producer, 'disconnect').returns(Promise.resolve(true))
     t.end()
   })
 
@@ -55,325 +58,511 @@ Test('Transfer Service tests', serviceTest => {
     t.end()
   })
 
-  serviceTest.test('getById should', getByIdTest => {
-    getByIdTest.test('return result from read model', test => {
-      const id = Uuid()
-      const transfer = {}
-      const transferPromise = P.resolve(transfer)
-      TransferQueries.getById.withArgs(id).returns(transferPromise)
-      test.equal(Service.getById(id), transferPromise)
-      test.end()
-    })
-    getByIdTest.end()
-  })
-
-  serviceTest.test('getAll should', getByIdTest => {
-    getByIdTest.test('return result from read model', test => {
-      const transfer = {}
-      const transferPromise = P.resolve(transfer)
-      TransferQueries.getAll.returns(transferPromise)
-      test.equal(Service.getAll(), transferPromise)
-      test.end()
-    })
-    getByIdTest.end()
-  })
-
-  serviceTest.test('getFulfillment should', getFulfillmentTest => {
-    getFulfillmentTest.test('throw TransferNotFoundError if transfer does not exists', test => {
-      const id = Uuid()
-      TransferQueries.getById.withArgs(id).returns(P.resolve(null))
-      Service.getFulfillment(id)
-        .then(() => {
-          test.fail('Expected exception')
-        })
-        .catch(Errors.TransferNotFoundError, e => {
-          test.equal(e.message, 'This transfer does not exist')
-        })
-        .catch(e => {
-          test.fail('Expected TransferNotFoundError')
-        })
-        .then(test.end)
-    })
-
-    getFulfillmentTest.test('throw TransferNotConditionError if transfer does not have execution_condition', test => {
-      const id = Uuid()
-      const model = { id }
-      TransferQueries.getById.withArgs(id).returns(P.resolve(model))
-
-      Service.getFulfillment(id)
-        .then(() => {
-          test.fail('expected exception')
-        })
-        .catch(Errors.TransferNotConditionalError, e => {
-          test.pass()
-        })
-        .catch(e => {
-          test.fail('Exepected TransferNotConditionalError')
-        })
-        .then(test.end)
-    })
-
-    getFulfillmentTest.test('throw AlreadyRolledBackError if transfer rejected', test => {
-      const id = Uuid()
-      const transfer = { id, executionCondition: 'condition', state: TransferState.REJECTED }
-      TransferQueries.getById.withArgs(id).returns(P.resolve(transfer))
-
-      Service.getFulfillment(id)
-        .then(() => {
-          test.fail('expected exception')
-        })
-        .catch(Errors.AlreadyRolledBackError, e => {
-          test.pass()
-        })
-        .catch(e => {
-          test.fail('Exepected AlreadyRolledBackError')
-        })
-        .then(test.end)
-    })
-
-    getFulfillmentTest.test('throw MissingFulfillmentError if transfer does not have fulfillment', test => {
-      const id = Uuid()
-      const transfer = { id, executionCondition: 'condition', state: TransferState.EXECUTED }
-      TransferQueries.getById.withArgs(id).returns(P.resolve(transfer))
-
-      Service.getFulfillment(id)
-        .then(() => {
-          test.fail('expected exception')
-        })
-        .catch(Errors.MissingFulfillmentError, e => {
-          test.equal(e.message, 'This transfer has not yet been fulfilled')
-        })
-        .catch(e => {
-          test.fail('Exepected MissingFulfillmentError')
-        })
-        .then(test.end)
-    })
-
-    getFulfillmentTest.test('return transfer fulfillment', test => {
-      const id = Uuid()
-      const fulfillment = 'fulfillment'
-      const transfer = { id, fulfillment, executionCondition: 'condition', state: TransferState.EXECUTED }
-      TransferQueries.getById.returns(P.resolve(transfer))
-      Service.getFulfillment(id)
-        .then(result => {
-          test.equal(result, fulfillment)
-          test.end()
-        })
-    })
-    getFulfillmentTest.end()
-  })
-
-  serviceTest.test('rejectExpired should', rejectTest => {
-    rejectTest.test('find expired transfers and reject them', test => {
-      const transfers = [{ transferUuid: 1 }, { transferUuid: 2 }]
-      TransferQueries.findExpired.returns(P.resolve(transfers))
-      transfers.forEach((x, i) => {
-        Commands.reject.onCall(i).returns(P.resolve({ alreadyRejected: false, transfer: x }))
-        TransferTranslator.toTransfer.onCall(i).returns({ id: x.transferUuid })
-      })
-      Service.rejectExpired()
-        .then(x => {
-          transfers.forEach(t => {
-            test.ok(Commands.reject.calledWith({ id: t.transferUuid, rejection_reason: RejectionType.EXPIRED }))
-          })
-          test.deepEqual(x, transfers.map(t => t.transferUuid))
-          test.end()
-        })
-    })
-    rejectTest.end()
-  })
-
-  serviceTest.test('settle should', settleTest => {
-    settleTest.test('find settalble transfers and settle them', test => {
-      let settlementId = Uuid()
-      SettlementsModel.generateId.returns(settlementId)
-      SettlementsModel.create.withArgs(settlementId).returns(P.resolve({ settlementId: settlementId, settledAt: 0 }))
-
-      let transfers = [{ transferId: 1 }, { transferId: 2 }]
-      SettleableTransfersReadModel.getSettleableTransfers.returns(P.resolve(transfers))
-
-      transfers.forEach((x, i) => {
-        Commands.settle.onCall(i).returns(P.resolve({ id: x.id }))
-      })
-
-      Service.settle()
-        .then(x => {
-          transfers.forEach(t => {
-            test.ok(Commands.settle.calledWith({ id: t.transferId, settlement_id: settlementId }))
-          })
-          test.deepEqual(x, transfers)
-          test.end()
-        })
-    })
-
-    settleTest.test('return empty array if no settleable transfers exist', test => {
-      let settlementId = Uuid()
-      SettlementsModel.generateId.returns(settlementId)
-      SettlementsModel.create.withArgs(settlementId).returns(P.resolve({ settlementId: settlementId, settledAt: 0 }))
-
-      SettleableTransfersReadModel.getSettleableTransfers.returns(P.resolve([]))
-
-      Service.settle()
-        .then(x => {
-          test.deepEqual(x, [])
-          test.end()
-        })
-    })
-
-    settleTest.end()
-  })
-
   serviceTest.test('prepare should', prepareTest => {
-    prepareTest.test('execute prepare function', test => {
-      const payload = { id: 'payload id' }
-      const proposedTransfer = { id: 'transfer id' }
-      TransferTranslator.fromPayload.withArgs(payload).returns(proposedTransfer)
+    prepareTest.test('execute prepare function', async test => {
+      const message = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
 
-      const preparedTransfer = { id: 'prepared transfer' }
-      const prepareResult = { existing: false, transfer: preparedTransfer }
-      Commands.prepare.withArgs(proposedTransfer).returns(P.resolve(prepareResult))
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
 
-      const expectedTransfer = { id: 'expected transfer' }
-      TransferTranslator.toTransfer.withArgs(preparedTransfer).returns(expectedTransfer)
+      const headers = {}
 
-      Service.prepare(payload)
-        .then(result => {
-          test.equal(result.existing, prepareResult.existing)
-          test.equal(result.transfer, expectedTransfer)
-          test.ok(Commands.prepare.calledWith(proposedTransfer))
-          test.end()
-        })
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = {
+        id: message.transferId,
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        content: {
+          headers: headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'prepare',
+            action: 'prepare',
+            createdAt: new Date(),
+            status: 'success'
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const result = await Service.prepare(headers, dataUri, message, span)
+      test.equals(result, true)
+      test.end()
     })
+    prepareTest.test('throw error if error while publishing message to kafka', async test => {
+      const message = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
 
-    prepareTest.test('Emit transfer prepared event', test => {
-      const payload = { id: 'payload id' }
-      const proposedTransfer = { id: 'transfer id' }
-      TransferTranslator.fromPayload.withArgs(payload).returns(proposedTransfer)
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
 
-      const preparedTransfer = { id: 'prepared transfer' }
-      const prepareResult = { existing: false, transfer: preparedTransfer }
-      Commands.prepare.withArgs(proposedTransfer).returns(P.resolve(prepareResult))
-
-      const expectedTransfer = { id: 'expected transfer' }
-      TransferTranslator.toTransfer.withArgs(preparedTransfer).returns(expectedTransfer)
-
-      Service.prepare(payload)
-        .then(result => {
-          test.ok(Events.emitTransferPrepared.calledWith(expectedTransfer))
-          test.end()
-        })
+      const headers = {}
+      const error = new Error()
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
+      try {
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.prepare(headers, dataUri, message, span)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
     })
 
     prepareTest.end()
   })
 
-  serviceTest.test('fulfill should', fulfillTest => {
-    fulfillTest.test('execute fulfill command', function (assert) {
-      let fulfillment = 'oAKAAA'
-      let transferId = '3a2a1d9e-8640-4d2d-b06c-84f2cd613204'
-      let expandedId = 'http://central-ledger/transfers/' + transferId
-      TransferTranslator.toTransfer.returns({ id: expandedId })
-      let payload = { id: transferId, fulfillment }
-      let transfer = createTransfer(transferId)
-      transfer.id = transferId
-      Commands.fulfill.withArgs(payload).returns(P.resolve(transfer))
-      Service.fulfill(payload)
-        .then(result => {
-          assert.equal(result.id, expandedId)
-          assert.ok(Commands.fulfill.calledWith(payload))
-          assert.end()
-        })
+  serviceTest.test('fulfil should', fulfilTest => {
+    fulfilTest.test('execute fulfil function', async test => {
+      const message = {
+        transferState: 'RECEIVED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const id = 'dfsp1'
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const messageProtocol = {
+        id,
+        to: headers['fspiop-destination'],
+        from: headers['fspiop-source'],
+        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        content: {
+          headers: headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'fulfil',
+            action: 'commit',
+            createdAt: new Date(),
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.fulfil(headers, dataUri, message, { id }, span)
+      test.equals(result, true)
+      test.end()
     })
 
-    fulfillTest.test('Emit transfer executed event', t => {
-      let fulfillment = 'oAKAAA'
-      let transferId = '3a2a1d9e-8640-4d2d-b06c-84f2cd613204'
-      let expandedId = 'http://central-ledger/transfers/' + transferId
-      TransferTranslator.toTransfer.returns({ id: expandedId })
-      let payload = { id: transferId, fulfillment }
-      let transfer = createTransfer(transferId)
-      Commands.fulfill.withArgs(payload).returns(P.resolve(transfer))
-      Service.fulfill(payload)
-        .then(result => {
-          let emitArgs = Events.emitTransferExecuted.firstCall.args
-          let args0 = emitArgs[0]
-          t.equal(args0.id, expandedId)
-          let args1 = emitArgs[1]
-          t.equal(args1.execution_condition_fulfillment, fulfillment)
-          t.end()
-        })
+    fulfilTest.test('execute fulfil function', async test => {
+      const message = {
+        transferState: 'COMMITTED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const id = 'dfsp1'
+      const error = new Error()
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
+      try {
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.fulfil(headers, dataUri, message, { id }, span)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
     })
 
-    fulfillTest.test('reject and throw error if transfer is expired', assert => {
-      let fulfillment = 'oAKAAA'
-      let transfer = createTransfer()
-      let payload = { id: transfer.id, fulfillment }
+    fulfilTest.test('execute fulfil function', async test => {
+      const message = {
+        transferState: 'ABORTED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
 
-      Commands.fulfill.withArgs(payload).returns(P.reject(new Errors.ExpiredTransferError()))
-      Commands.reject.returns(P.resolve({ transfer }))
-      Service.fulfill(payload)
-        .then(() => {
-          assert.fail('Expected exception')
-          assert.end()
-        })
-        .catch(e => {
-          assert.ok(Commands.reject.calledWith({ id: transfer.id, rejection_reason: RejectionType.EXPIRED }))
-          assert.equal(e.name, 'UnpreparedTransferError')
-          assert.end()
-        })
+      const headers = {}
+      const id = 'dfsp1'
+      const error = new Error()
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
+      try {
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.fulfil(headers, dataUri, message, { id }, span)
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+    fulfilTest.end()
+  })
+  serviceTest.test('getById should', async getTransferByIdTest => {
+    await getTransferByIdTest.test('return transfer', async test => {
+      const message = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
+
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+      const id = message.transferId
+      const headers = {}
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = {
+        id: message.id,
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        content: {
+          headers: headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'prepare',
+            action: 'prepare',
+            createdAt: new Date(),
+            status: 'success'
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, PREPARE, null, message.transferId)
+
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const result = await Service.getTransferById(headers, { id }, span)
+      test.equals(result, true)
+      test.end()
+    })
+    await getTransferByIdTest.test('throw error', async test => {
+      const id = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+      const headers = {}
+      const error = new Error()
+      Kafka.Producer.produceMessage.rejects(error)
+      try {
+        await Service.getTransferById(headers, { id })
+        test.fail('does not throw')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+    getTransferByIdTest.end()
+  })
+  serviceTest.test('transferError should', async transferErrorTest => {
+    const message = {
+      errorCode: '5001',
+      errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    }
+    const headers = {}
+    const id = '888ec534-ee48-4575-b6a9-ead2955b8930'
+    const messageProtocol = {
+      id,
+      to: headers['fspiop-destination'],
+      from: headers['fspiop-source'],
+      type: 'application/vnd.interoperability.transfers+json;version=1.0',
+      content: {
+        headers: headers,
+        payload: message
+      },
+      metadata: {
+        event: {
+          id: Uuid(),
+          type: 'fulfil',
+          action: 'abort',
+          createdAt: new Date(),
+          state: {
+            status: 'success',
+            code: 0
+          }
+        }
+      }
+    }
+
+    await transferErrorTest.test('execute function', async test => {
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.transferError(headers, dataUri, message, { id }, span)
+      test.equals(result, true)
+      test.end()
     })
 
-    fulfillTest.end()
+    await transferErrorTest.test('throw error', async test => {
+      const error = new Error()
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
+      try {
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.transferError(headers, dataUri, message, { id }, span)
+        test.fail('error not thrown')
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
+
+    transferErrorTest.end()
   })
 
-  serviceTest.test('reject should', rejectTest => {
-    rejectTest.test('execute reject command', test => {
-      const rejectionReason = 'some reason'
-      const transferId = Uuid()
-      const cleanTransfer = {}
-      const transfer = { id: transferId }
-      const payload = { id: transferId, rejection_reason: rejectionReason }
-      Commands.reject.withArgs(payload).returns(P.resolve({ alreadyRejected: false, transfer }))
-      TransferTranslator.toTransfer.withArgs(transfer).returns(cleanTransfer)
+  serviceTest.test('message format tests', formatTest => {
+    /* Test Data */
+    const transferId = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+    const message = {
+      transferId,
+      payeeFsp: '1234',
+      payerFsp: '5678',
+      amount: {
+        currency: 'USD',
+        amount: 123.45
+      },
+      ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+      condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      expiration: '2016-05-24T08:38:08.699-04:00',
+      extensionList:
+      {
+        extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+      }
+    }
+    const headers = {}
 
-      Service.reject(payload)
-        .then(result => {
-          test.deepEqual(result.transfer, cleanTransfer)
-          test.equal(result.alreadyRejected, false)
-          test.ok(Commands.reject.calledWith(payload))
-          test.end()
-        })
+    formatTest.test('prepare should call `produceMessage` with the correct messageProtocol format', async test => {
+      // Arrange
+      let resultMessageProtocol = {}
+      // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+      Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+        resultMessageProtocol = messageProtocol
+      }
+
+      const expectedMessageProtocol = {
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/json',
+        content: {
+          uriParams: {
+            id: message.transferId
+          },
+          headers,
+          payload: {}
+        },
+        metadata: {
+          correlationId: transferId,
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0,
+              description: 'action successful'
+            }
+          }
+        }
+      }
+
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      // Act
+      await Service.prepare(headers, dataUri, message, span)
+
+      test.equal(resultMessageProtocol.metadata.trace.service, 'test_span')
+
+      // Delete non-deterministic fields
+      delete resultMessageProtocol.id
+      delete resultMessageProtocol.metadata.event.id
+      delete resultMessageProtocol.metadata.event.createdAt
+      delete resultMessageProtocol.metadata.trace
+
+      // Assert
+      test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+      test.end()
     })
 
-    rejectTest.test('emit transfer rejected event if transfer not already rejected', test => {
-      const transfer = {}
-      Commands.reject.returns(P.resolve({ alreadyRejected: false, transfer }))
-      const cleanTransfer = { id: Uuid() }
-      TransferTranslator.toTransfer.withArgs(transfer).returns(cleanTransfer)
-      Service.reject({})
-        .then(result => {
-          test.deepEqual(result.transfer, cleanTransfer)
-          test.equal(result.alreadyRejected, false)
-          test.ok(Events.emitTransferRejected.calledWith(cleanTransfer))
-          test.end()
-        })
+    // TODO: I'm not sure this is a valid case
+    formatTest.test('prepare should not fail if message.transferId is undefined', async test => {
+      // Arrange
+      let resultMessageProtocol = {}
+      delete message.transferId
+      // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+      Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+        resultMessageProtocol = messageProtocol
+      }
+
+      const expectedMessageProtocol = {
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/json',
+        content: {
+          uriParams: {
+            id: undefined
+          },
+          headers,
+          payload: {}
+        },
+        metadata: {
+          correlationId: undefined,
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0,
+              description: 'action successful'
+            }
+          }
+        }
+      }
+
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      // Act
+      await Service.prepare(headers, dataUri, message, span)
+
+      test.equal(resultMessageProtocol.metadata.trace.service, 'test_span')
+
+      // Delete non-deterministic fields
+      delete resultMessageProtocol.id
+      delete resultMessageProtocol.metadata.event.id
+      delete resultMessageProtocol.metadata.event.createdAt
+      delete resultMessageProtocol.metadata.trace
+
+      // Assert
+      test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+      test.end()
     })
 
-    rejectTest.test('not emit transfer rejected event if transfer already rejected', test => {
-      const transfer = {}
-      Commands.reject.returns(P.resolve({ alreadyRejected: true, transfer }))
-      const cleanTransfer = { id: Uuid() }
-      TransferTranslator.toTransfer.withArgs(transfer).returns(cleanTransfer)
-      Service.reject({})
-        .then(result => {
-          test.deepEqual(result.transfer, cleanTransfer)
-          test.equal(result.alreadyRejected, true)
-          test.notOk(Events.emitTransferRejected.calledWith(cleanTransfer))
-          test.end()
-        })
-    })
-
-    rejectTest.end()
+    formatTest.end()
   })
 
   serviceTest.end()

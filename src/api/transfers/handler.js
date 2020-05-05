@@ -1,75 +1,211 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ Contributors
+ --------------
+ This is the official list of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
+ --------------
+ ******/
+
 'use strict'
 
-const Validator = require('./validator')
+const EventSdk = require('@mojaloop/event-sdk')
 const TransferService = require('../../domain/transfer')
-const TransferTranslator = require('../../domain/transfer/translator')
-const NotFoundError = require('../../errors').NotFoundError
-const Sidecar = require('../../lib/sidecar')
-const Logger = require('@mojaloop/central-services-shared').Logger
-const Boom = require('boom')
+const Validator = require('../../lib/validator')
+const Logger = require('@mojaloop/central-services-logger')
+const Metrics = require('@mojaloop/central-services-metrics')
+const ErrorHandler = require('@mojaloop/central-services-error-handling')
+const Enum = require('@mojaloop/central-services-shared').Enum
 
-const buildGetTransferResponse = (record) => {
-  if (!record) {
-    throw new NotFoundError('The requested resource could not be found.')
-  }
-  return TransferTranslator.toTransfer(record)
-}
+const { getTransferSpanTags } = require('@mojaloop/central-services-shared').Util.EventFramework
+/**
+ * @module src/api/transfers/handler
+ */
 
-exports.create = async function (request, reply) {
+/**
+ * @function Create
+ * @async
+ *
+ * @description This will call prepare method of transfer service, which will produce a transfer message on prepare kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer request as payload
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 202 on success, throws error if failure occurs
+ */
+
+const create = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_prepare',
+    'Produce a transfer prepare message to transfer prepare kafka topic',
+    ['success']
+  ).startTimer()
+
+  const span = request.span
+
+  span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
   try {
-    Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
-    Sidecar.logRequest(request)
-    return reply.response(request.payload).code(201)
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
+    Logger.isDebugEnabled && Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
+    Logger.isDebugEnabled && Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
+    await span.audit({
+      headers: request.headers,
+      dataUri: request.dataUri,
+      payload: request.payload
+    }, EventSdk.AuditEventAction.start)
+
+    await TransferService.prepare(request.headers, request.dataUri, request.payload, span)
+    histTimerEnd({ success: true })
+    return h.response().code(202)
   } catch (err) {
-    throw Boom.boomify(err, {statusCode: 400, message: 'An error has occurred'})
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    histTimerEnd({ success: false })
+    throw fspiopError
   }
 }
 
-exports.prepareTransfer = function (request, reply) {
-  Logger.info('prepareTransfer::start(%s)', JSON.stringify(request.payload))
-  Sidecar.logRequest(request)
-  return Validator.validate(request.payload, request.params.id)
-    .then(TransferService.prepare)
-    // .then(result => reply(result.transfer).code(202))
-    .then(result => reply(result.transfer).code((result.existing === true) ? 200 : 202))
-    .catch(reply)
-}
+/**
+ * @function FulfilTransfer
+ * @async
+ *
+ * @description This will call fulfil method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
+ */
 
-exports.fulfillTransfer = function (request, reply) {
-  Sidecar.logRequest(request)
-  const fulfillment = {
-    id: request.params.id,
-    fulfillment: request.payload
+const fulfilTransfer = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_fulfil',
+    'Produce a transfer fulfil message to transfer fulfil kafka topic',
+    ['success']
+  ).startTimer()
+
+  const span = request.span
+  span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
+  try {
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
+    Validator.fulfilTransfer(request)
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    await span.audit({
+      headers: request.headers,
+      dataUri: request.dataUri,
+      payload: request.payload,
+      params: request.params
+    }, EventSdk.AuditEventAction.start)
+    await TransferService.fulfil(request.headers, request.dataUri, request.payload, request.params, span)
+    histTimerEnd({ success: true })
+    return h.response().code(200)
+  } catch (err) {
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    histTimerEnd({ success: false })
+    throw fspiopError
   }
-
-  return TransferService.fulfill(fulfillment)
-    .then(transfer => reply(transfer).code(200))
-    .catch(reply)
 }
 
-exports.rejectTransfer = function (request, reply) {
-  Sidecar.logRequest(request)
-  const rejection = {
-    id: request.params.id,
-    rejection_reason: TransferRejectionType.CANCELLED,
-    message: request.payload,
-    requestingAccount: request.auth.credentials
+/**
+ * @function getById
+ * @async
+ *
+ * @description This will call getTransferById method of transfer service, which will produce a transfer fulfil message on fulfil kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
+ */
+
+const getTransferById = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_get',
+    'Get a transfer by Id',
+    ['success']
+  ).startTimer()
+
+  const span = request.span
+  try {
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
+    Logger.isInfoEnabled && Logger.info(`getById::id(${request.params.id})`)
+    await span.audit({
+      headers: request.headers,
+      params: request.params
+    }, EventSdk.AuditEventAction.start)
+    await TransferService.getTransferById(request.headers, request.params, span)
+    histTimerEnd({ success: true })
+    return h.response().code(202)
+  } catch (err) {
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    histTimerEnd({ success: false })
+    throw fspiopError
   }
-
-  return TransferService.reject(rejection)
-    .then(result => reply(rejection.message).code(result.alreadyRejected ? 200 : 201))
-    .catch(reply)
 }
 
-exports.getTransferById = function (request, reply) {
-  return TransferService.getById(request.params.id)
-    .then(buildGetTransferResponse)
-    .then(result => reply(result))
-    .catch(reply)
+/**
+ * @function fulfilTransferError
+ * @async
+ *
+ * @description This will call error method of transfer service, which will produce a transfer error message on fulfil kafka topic
+ *
+ * @param {object} request - the http request object, containing headers and transfer fulfilment request as payload. It also contains transferId as param
+ * @param {object} h - the http response object, the response code will be sent using this object methods.
+ *
+ * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
+ */
+const fulfilTransferError = async function (request, h) {
+  const histTimerEnd = Metrics.getHistogram(
+    'transfer_fulfil_error',
+    'Produce a transfer fulfil error message to transfer fulfil kafka topic',
+    ['success']
+  ).startTimer()
+
+  const span = request.span
+  try {
+    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    await span.audit({
+      headers: request.headers,
+      dataUri: request.dataUri,
+      payload: request.payload,
+      params: request.params
+    }, EventSdk.AuditEventAction.start)
+    await TransferService.transferError(request.headers, request.dataUri, request.payload, request.params, span)
+    histTimerEnd({ success: true })
+    return h.response().code(200)
+  } catch (err) {
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.error(fspiopError)
+    histTimerEnd({ success: false })
+    throw fspiopError
+  }
 }
 
-exports.getTransferFulfillment = function (request, reply) {
-  return TransferService.getFulfillment(request.params.id)
-    .then(result => reply(result).type('text/plain'))
-    .catch(reply)
+module.exports = {
+  create,
+  fulfilTransfer,
+  getTransferById,
+  fulfilTransferError
 }

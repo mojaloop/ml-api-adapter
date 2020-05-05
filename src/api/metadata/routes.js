@@ -5,10 +5,10 @@ module.exports = [
   {
     method: 'GET',
     path: '/health',
-    handler: Handler.health,
-    config: {
+    handler: Handler.getHealth,
+    options: {
       tags: tags,
-      description: 'Status of ledger',
+      description: 'Status of adapter',
       id: 'health'
     }
   },
@@ -16,7 +16,7 @@ module.exports = [
     method: 'GET',
     path: '/',
     handler: Handler.metadata,
-    config: {
+    options: {
       tags: tags,
       description: 'Metadata'
     }
