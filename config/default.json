@@ -10,6 +10,11 @@
   "ENDPOINT_SECURITY":{
     "TLS": {
       "rejectUnauthorized": true
+    },
+    "JWS": {
+      "JWS_SIGN": true,
+      "FSPIOP_SOURCE_TO_SIGN": "switch",
+      "JWS_SIGNING_KEY_PATH": "secrets/jwsSigningKey.key"
     }
   },
   "MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS": 200,
@@ -68,7 +73,7 @@
             "rdkafkaConf": {
               "client.id": "ml-con-notification-event",
               "group.id": "ml-group-notification-event",
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "127.0.0.1:9092",
               "socket.keepalive.enable": true
             },
             "topicConf": {
@@ -86,7 +91,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "127.0.0.1:9092",
               "client.id": "ml-prod-transfer-prepare",
               "event_cb": true,
               "dr_cb": true,
@@ -105,7 +110,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "127.0.0.1:9092",
               "client.id": "ml-prod-transfer-fulfil",
               "event_cb": true,
               "dr_cb": true,
@@ -124,7 +129,7 @@
               "messageCharset": "utf8"
             },
             "rdkafkaConf": {
-              "metadata.broker.list": "localhost:9092",
+              "metadata.broker.list": "127.0.0.1:9092",
               "client.id": "ml-prod-transfer-get",
               "event_cb": true,
               "dr_cb": true,
