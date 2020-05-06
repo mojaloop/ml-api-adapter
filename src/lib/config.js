@@ -1,11 +1,11 @@
 const RC = require('parse-strings-in-object')(require('rc')('MLAPI', require('../../config/default.json')))
-const fs = require('fs');
+const fs = require('fs')
 
-function getFileContent(path) {
+function getFileContent (path) {
   if (!fs.existsSync(path)) {
-      throw new Error('File doesn\'t exist');
+    throw new Error('File doesn\'t exist')
   }
-  return fs.readFileSync(path);
+  return fs.readFileSync(path)
 }
 // Set config object to be returned
 const config = {
@@ -35,7 +35,7 @@ const config = {
   JWS_SIGNING_KEY_PATH: RC.ENDPOINT_SECURITY.JWS.JWS_SIGNING_KEY_PATH
 }
 
-if(config.JWS_SIGN){
+if (config.JWS_SIGN) {
   config.JWS_SIGNING_KEY = getFileContent(config.JWS_SIGNING_KEY_PATH)
 }
 

@@ -34,7 +34,7 @@ const Callback = require('@mojaloop/central-services-shared').Util.Request
 const createCallbackHeaders = require('../../lib/headers').createCallbackHeaders
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer;
+const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('@mojaloop/central-services-shared').Enum
@@ -257,7 +257,7 @@ const processMessage = async (msg, span) => {
   }
 
   let jwsSigner = getJWSSigner(from)
-  
+
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id, span)
     callbackHeaders = createCallbackHeaders({ headers: content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -545,15 +545,15 @@ const disconnect = async () => {
  * @returns {Object} - returns JWS signer if enabled else returns undefined
  */
 const getJWSSigner = (from) => {
-  let jwsSigner = undefined;
-  if(Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
-    let logger = Logger
+  let jwsSigner
+  if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
+    const logger = Logger
     logger.log = logger.info
     Logger.isInfoEnabled && Logger.info('Notification::getJWSSigner: get JWS signer')
     jwsSigner = new JwsSigner({
       logger: logger,
       signingKey: Config.JWS_SIGNING_KEY
-    });
+    })
   }
   return jwsSigner
 }
