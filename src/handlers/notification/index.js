@@ -551,7 +551,7 @@ const getJWSSigner = (from) => {
     logger.log = logger.info
     Logger.isInfoEnabled && Logger.info('Notification::getJWSSigner: get JWS signer')
     jwsSigner = new JwsSigner({
-      logger: logger,
+      logger,
       signingKey: Config.JWS_SIGNING_KEY
     })
   }
@@ -563,6 +563,5 @@ module.exports = {
   startConsumer,
   processMessage,
   consumeMessage,
-  isConnected,
-  getJWSSigner
+  isConnected
 }
