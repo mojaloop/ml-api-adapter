@@ -3,6 +3,7 @@ const fs = require('fs')
 
 function getFileContent (path) {
   if (!fs.existsSync(path)) {
+    console.log(`File ${path} doesn't exist, can't enable JWS signing`)
     throw new Error('File doesn\'t exist')
   }
   return fs.readFileSync(path)
