@@ -44,7 +44,7 @@ Test('Config tests', configTest => {
   })
 
   configTest.test('getFileContent should', async getFileContentTest => {
-    getFileContentTest.test('throw error when file not found', test => {
+    getFileContentTest.test('should not throw', test => {
       try {
         const DefaultStub = Util.clone(Default)
         DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
