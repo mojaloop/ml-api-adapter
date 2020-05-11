@@ -61,7 +61,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
       'Tranxaction metrics for Transfers - Prepare Flow',
       ['success']
     )
-    histTracePrepareTimerEnd.observe({ success }, (endTime - t_api_prepare)/1000)
+    histTracePrepareTimerEnd.observe({ success }, (endTime - t_api_prepare) / 1000)
   }
   if (t_api_fulfil) {
     const histTraceFulfilTimerEnd = Metrics.getHistogram(
@@ -69,7 +69,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
       'Tranxaction metrics for Transfers - Fulfil Flow',
       ['success']
     )
-    histTraceFulfilTimerEnd.observe({ success }, (endTime - t_api_fulfil)/1000)
+    histTraceFulfilTimerEnd.observe({ success }, (endTime - t_api_fulfil) / 1000)
   }
   if (t_api_prepare && t_api_fulfil) {
     const histTraceEnd2EndTimerEnd = Metrics.getHistogram(
@@ -77,7 +77,7 @@ const recordTxMetrics = (t_api_prepare, t_api_fulfil, success) => {
       'Tranxaction metrics for Transfers - End-to-end Flow',
       ['success']
     )
-    histTraceEnd2EndTimerEnd.observe({ success }, (endTime - t_api_prepare)/1000)
+    histTraceEnd2EndTimerEnd.observe({ success }, (endTime - t_api_prepare) / 1000)
   }
 }
 
@@ -153,8 +153,8 @@ const consumeMessage = async (error, message) => {
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
-      if (traceTags['t_api_prepare'] && parseInt(traceTags['t_api_prepare'])) t_api_prepare = parseInt(traceTags['t_api_prepare'])
-      if (traceTags['t_api_fulfil'] && parseInt(traceTags['t_api_fulfil'])) t_api_fulfil = parseInt(traceTags['t_api_fulfil'])
+      if (traceTags.t_api_prepare && parseInt(traceTags.t_api_prepare)) t_api_prepare = parseInt(traceTags.t_api_prepare)
+      if (traceTags.t_api_fulfil && parseInt(traceTags.t_api_fulfil)) t_api_fulfil = parseInt(traceTags.t_api_fulfil)
       try {
         await span.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, span).catch(err => {
@@ -183,7 +183,7 @@ const consumeMessage = async (error, message) => {
       }
     }
     // TODO: calculate end times - report end-to-time
-    // 
+    //
     recordTxMetrics(t_api_prepare, t_api_fulfil, true)
     histTimerEnd({ success: true })
     return combinedResult
@@ -191,12 +191,12 @@ const consumeMessage = async (error, message) => {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
     recordTxMetrics(t_api_prepare, t_api_fulfil, false)
-  
+
     const getRecursiveCause = (error) => {
-      if(error.cause instanceof ErrorHandler.Factory.FSPIOPError){
+      if (error.cause instanceof ErrorHandler.Factory.FSPIOPError) {
         return getRecursiveCause(error.cause)
       } else if (error.cause instanceof Error) {
-        if (error.cause){
+        if (error.cause) {
           return error.cause
         } else {
           return error.message
@@ -210,7 +210,7 @@ const consumeMessage = async (error, message) => {
       }
     }
     const errCause = getRecursiveCause(err)
-    histTimerEnd({ success: false, error: errCause})
+    histTimerEnd({ success: false, error: errCause })
     throw fspiopError
   }
 }
@@ -282,11 +282,11 @@ const processMessage = async (msg, span) => {
     } catch (err) {
       Logger.error(err)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::prepare::message - END`)
-      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status})
-      histTimerEnd({ success: false, action})
+      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
+      histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, from, dest: to, action,  status: response.status })
+    histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
     Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::prepare::message - END`)
     histTimerEnd({ success: true, action })
     return true
@@ -326,11 +326,11 @@ const processMessage = async (msg, span) => {
       response = await httpRequestHandler.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
     } catch (err) {
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message - END`)
-      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status})
+      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
       histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, from, dest: to, action,  status: response.status })
+    histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
     Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message1 - END`)
 
     // send an extra notification back to the original sender (if enabled in config)
@@ -355,7 +355,7 @@ const processMessage = async (msg, span) => {
         throw err
       }
       histTimerEndSendRequest2({ success: true, to, dest: from, action, status: response.status })
-      
+
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::message2 - END`)
       Logger.error(`[cid=${id}, fsp=${from}, source=${from}, dest=${to}] ~ ML-Notification::commit::processMessage - END`)
       histTimerEnd({ success: true, action })

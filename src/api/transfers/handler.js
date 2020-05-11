@@ -55,7 +55,7 @@ const create = async function (request, h) {
   const histTimerEnd = Metrics.getHistogram(
     'transfer_prepare',
     'Produce a transfer prepare message to transfer prepare kafka topic',
-    ['success']
+    ['success', 'error']
   ).startTimer()
   Logger.error(`[cid=${request.payload.transferId}, fsp=${request.payload.payerFsp}, source=${request.payload.payerFsp}, dest=${request.payload.payeeFsp}] ~ ML-API::service::create - START`)
   const span = request.span
@@ -77,7 +77,25 @@ const create = async function (request, h) {
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
-    histTimerEnd({ success: false })
+    const getRecursiveCause = (error) => {
+      if (error.cause instanceof ErrorHandler.Factory.FSPIOPError) {
+        return getRecursiveCause(error.cause)
+      } else if (error.cause instanceof Error) {
+        if (error.cause) {
+          return error.cause
+        } else {
+          return error.message
+        }
+      } else if (error.cause) {
+        return error.cause
+      } else if (error.message) {
+        return error.message
+      } else {
+        return error
+      }
+    }
+    const errCause = getRecursiveCause(err)
+    histTimerEnd({ success: false, error: errCause })
     throw fspiopError
   }
 }
@@ -98,7 +116,7 @@ const fulfilTransfer = async function (request, h) {
   const histTimerEnd = Metrics.getHistogram(
     'transfer_fulfil',
     'Produce a transfer fulfil message to transfer fulfil kafka topic',
-    ['success']
+    ['success', 'error']
   ).startTimer()
   Logger.error(`[cid=${request.params.id}, fsp=${request.headers['fspiop-source']}, source=${request.headers['fspiop-source']}, dest=${request.headers['fspiop-destination']}] ~ ML-API::service::fulfilTransfer - START`)
   const span = request.span
@@ -121,7 +139,25 @@ const fulfilTransfer = async function (request, h) {
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
-    histTimerEnd({ success: false })
+    const getRecursiveCause = (error) => {
+      if (error.cause instanceof ErrorHandler.Factory.FSPIOPError) {
+        return getRecursiveCause(error.cause)
+      } else if (error.cause instanceof Error) {
+        if (error.cause) {
+          return error.cause
+        } else {
+          return error.message
+        }
+      } else if (error.cause) {
+        return error.cause
+      } else if (error.message) {
+        return error.message
+      } else {
+        return error
+      }
+    }
+    const errCause = getRecursiveCause(err)
+    histTimerEnd({ success: false, error: errCause })
     throw fspiopError
   }
 }
