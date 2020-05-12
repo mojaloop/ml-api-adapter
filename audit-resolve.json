@@ -52,13 +52,13 @@
     },
     "1179|faucet>minimist": {
       "decision": "ignore",
-      "madeAt": 1588343035169,
-      "expiresAt": 1588947816746
+      "madeAt": 1589294375966,
+      "expiresAt": 1591886352434
     },
     "1500|npm-audit-resolver>audit-resolve-core>yargs-parser": {
       "decision": "ignore",
-      "madeAt": 1588343045019,
-      "expiresAt": 1588947816746
+      "madeAt": 1589294387969,
+      "expiresAt": 1591886352434
     }
   },
   "rules": {},
