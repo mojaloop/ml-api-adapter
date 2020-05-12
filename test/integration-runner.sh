@@ -90,6 +90,20 @@ start_kafka()
 
 start_ml_api_adapter()
 {
+  echo docker run -d -i \
+   --link $KAFKA_HOST \
+   --link $ENDPOINT_HOST \
+   --link $SIMULATOR_HOST \
+   --network $DOCKER_NETWORK \
+   --name $APP_HOST \
+   --env KAFKA_HOST="$KAFKA_HOST" \
+   --env KAFKA_BROKER_PORT="$KAFKA_BROKER_PORT" \
+   --env LOG_LEVEL=debug \
+   -p $APP_PORT:$APP_PORT \
+   $DOCKER_IMAGE:$DOCKER_TAG \
+   /bin/sh \
+   -c "source test/.env; $APP_CMD"
+
   docker run -d -i \
    --link $KAFKA_HOST \
    --link $ENDPOINT_HOST \
@@ -134,6 +148,7 @@ fcurl_api_alive() {
 }
 
 is_api_up() {
+  echo "$(fcurl_api_alive "http://$APP_HOST:$APP_PORT/health?")"
   $(fcurl_api_alive "http://$APP_HOST:$APP_PORT/health?")
 }
 
