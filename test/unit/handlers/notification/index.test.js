@@ -72,7 +72,7 @@ Test('Notification Service tests', async notificationTest => {
     // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(JwsSigner.prototype, 'constructor')
-    sandbox.stub(JwsSigner.prototype, 'sign').returns(true)
+    sandbox.stub(JwsSigner.prototype, 'getSignature').returns(true)
     t.end()
   })
 
