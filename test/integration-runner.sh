@@ -134,7 +134,6 @@ fcurl_api_alive() {
 }
 
 is_api_up() {
-  echo "$(fcurl_api_alive "http://$APP_HOST:$APP_PORT/health?")"
   $(fcurl_api_alive "http://$APP_HOST:$APP_PORT/health?")
 }
 
