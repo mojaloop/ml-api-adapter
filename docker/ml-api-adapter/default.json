@@ -12,7 +12,7 @@
       "rejectUnauthorized": true
     },
     "JWS": {
-      "JWS_SIGN": true,
+      "JWS_SIGN": false,
       "FSPIOP_SOURCE_TO_SIGN": "switch",
       "JWS_SIGNING_KEY_PATH": "secrets/jwsSigningKey.key"
     }

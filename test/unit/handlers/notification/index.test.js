@@ -1134,6 +1134,12 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the prepare-duplicate message received from kafka and send out a transfer put callback - JWS sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
       const uuid = Uuid()
       const payerFsp = 'dfsp2'
       const payeeFsp = 'dfsp1'
@@ -1174,11 +1180,11 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.deepEqual(Callback.sendRequest.args[0][8], jwsSigner, 'JwsSigner is same')
 
@@ -1187,6 +1193,13 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the message received from kafka and send out a transfer error notification to the sender - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
       const uuid = Uuid()
       const msg = {
         value: {
@@ -1220,11 +1233,11 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.deepEqual(Callback.sendRequest.args[0][8], jwsSigner, 'JwsSigner is same')
       test.equal(result, expected)
@@ -1232,6 +1245,14 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the message received from kafka and send out a transfer post callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = true
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
       const payeeFsp = 'dfsp1'
       const payerFsp = 'dfsp2'
       const uuid = Uuid()
@@ -1273,13 +1294,13 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
@@ -1287,6 +1308,13 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the reject message received from kafka and send out a transfer put callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
       const uuid = Uuid()
       const payerFsp = 'dfsp2'
       const payeeFsp = 'dfsp1'
@@ -1328,13 +1356,13 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
@@ -1342,6 +1370,13 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the abort message received from kafka and send out a transfer put callback', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
       const uuid = Uuid()
       const payerFsp = 'dfsp2'
       const payeeFsp = 'dfsp1'
@@ -1382,13 +1417,13 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
@@ -1396,6 +1431,13 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the fulfil-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
       const uuid = Uuid()
       const payerFsp = 'dfsp1'
       const payeeFsp = 'dfsp2'
@@ -1435,18 +1477,25 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
       test.end()
     })
 
     await processMessageTest.test('process the abort-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
       const uuid = Uuid()
       const payerFsp = 'dfsp1'
       const payeeFsp = 'dfsp2'
@@ -1486,12 +1535,12 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSigner({
         logger,
-        signingKey: Config.JWS_SIGNING_KEY
+        signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
       test.end()
