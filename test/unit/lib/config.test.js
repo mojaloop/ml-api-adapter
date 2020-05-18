@@ -47,7 +47,7 @@ Test('Config tests', configTest => {
     getFileContentTest.test('should not throw', test => {
       try {
         const DefaultStub = Util.clone(Default)
-        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = true
         const Config = Proxyquire(`${src}/lib/config`, {
           '../../config/default.json': DefaultStub
         })
