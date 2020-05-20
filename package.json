@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "10.2.3-perf.1",
+  "version": "10.2.7-perf.1",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -81,7 +81,7 @@
     "@mojaloop/central-services-logger": "9.1.0",
     "@mojaloop/central-services-metrics": "9.1.2-snapshot",
     "@mojaloop/central-services-shared": "9.5.0-snapshot.0",
-    "@mojaloop/central-services-stream": "10.2.2-snapshot",
+    "@mojaloop/central-services-stream": "10.2.7-snapshot",
     "@mojaloop/event-sdk": "9.4.0",
     "@mojaloop/forensic-logging-client": "8.3.0",
     "@now-ims/hapi-now-auth": "2.0.1",
