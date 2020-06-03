@@ -46,6 +46,7 @@ const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
 const ENUM = require('@mojaloop/central-services-shared').Enum
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
 
@@ -70,6 +71,8 @@ Test('Notification Service tests', async notificationTest => {
 
     // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
+    sandbox.stub(JwsSigner.prototype, 'constructor')
+    sandbox.stub(JwsSigner.prototype, 'getSignature').returns(true)
     t.end()
   })
 
@@ -1126,6 +1129,419 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the prepare-duplicate message received from kafka and send out a transfer put callback - JWS sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const uuid = Uuid()
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare-duplicate',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.PUT
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
+      const message = { transferId: uuid }
+
+      const expected = true
+
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
+      test.deepEqual(Callback.sendRequest.args[0][8], jwsSigner, 'JwsSigner is same')
+
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the message received from kafka and send out a transfer error notification to the sender - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'error',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: { 'fspiop-source': 'dfsp1', 'fspiop-destination': 'dfsp2' },
+            payload: { transferId: uuid }
+          },
+          to: 'dfsp2',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.PUT
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = { transferId: uuid }
+
+      const expected = true
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
+      test.deepEqual(Callback.sendRequest.args[0][8], jwsSigner, 'JwsSigner is same')
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the message received from kafka and send out a transfer post callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = true
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const payeeFsp = 'dfsp1'
+      const payerFsp = 'dfsp2'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
+      const message = { transferId: uuid }
+
+      const expected = 200
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(urlPayee, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(urlPayer, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the reject message received from kafka and send out a transfer put callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'reject',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
+      const message = { transferId: uuid }
+
+      const expected = 200
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the abort message received from kafka and send out a transfer put callback', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const payerFsp = 'dfsp2'
+      const payeeFsp = 'dfsp1'
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'abort',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
+      const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = { transferId: uuid }
+
+      const expected = 200
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the fulfil-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const payerFsp = 'dfsp1'
+      const payeeFsp = 'dfsp2'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'fulfil-duplicate',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': payeeFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payerFsp,
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.PUT
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = { transferId: uuid }
+
+      const expected = true
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the abort-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.JWS_SIGN = true
+      ConfigStub.JWS_SIGNING_KEY = 'some jws key'
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const payerFsp = 'dfsp1'
+      const payeeFsp = 'dfsp2'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'abort-duplicate',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': payeeFsp
+            },
+            payload: { transferId: uuid }
+          },
+          to: payerFsp,
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.PUT
+      const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = { transferId: uuid }
+
+      const expected = true
+      const logger = Logger
+      logger.log = logger.info
+
+      const jwsSigner = new JwsSigner({
+        logger,
+        signingKey: ConfigStub.JWS_SIGNING_KEY
+      })
+
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner).returns(Promise.resolve(200))
+
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
       test.end()
     })
