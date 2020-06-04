@@ -76,7 +76,9 @@
               "client.id": "ml-con-notification-event",
               "group.id": "ml-group-notification-event",
               "metadata.broker.list": "localhost:9092",
-              "socket.keepalive.enable": true
+              "socket.keepalive.enable": true,
+              "event_cb": true,
+              "statistics.interval.ms": 3000
             },
             "topicConf": {
               "auto.offset.reset": "earliest"
@@ -98,7 +100,8 @@
               "event_cb": true,
               "dr_cb": true,
               "socket.keepalive.enable": true,
-              "queue.buffering.max.messages": 10000000
+              "queue.buffering.max.messages": 10000000,
+              "statistics.interval.ms": 3000
             },
             "topicConf": {
               "request.required.acks": "all",
