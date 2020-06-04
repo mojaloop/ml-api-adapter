@@ -85,7 +85,7 @@
     "@mojaloop/central-services-stream": "9.5.0",
     "@mojaloop/event-sdk": "9.5.2",
     "@mojaloop/forensic-logging-client": "8.3.0",
-    "@mojaloop/sdk-standard-components": "10.3.0",
+    "@mojaloop/sdk-standard-components": "10.3.1",
     "@now-ims/hapi-now-auth": "2.0.2",
     "axios": "0.19.2",
     "blipp": "4.0.1",
