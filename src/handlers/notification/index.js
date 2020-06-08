@@ -327,7 +327,7 @@ const processMessage = async (msg, span) => {
       const histTimerEndSendRequest2 = Metrics.getHistogram(
         'notification_event_delivery',
         'notification_event_delivery - metric for sending notification requests to FSPs',
-        ['success', 'from', 'to', 'dest', 'action', 'status']
+        ['success', 'from', 'dest', 'action', 'status']
       ).startTimer()
       let rv
       try {
