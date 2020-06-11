@@ -327,18 +327,18 @@ const processMessage = async (msg, span) => {
       const histTimerEndSendRequest2 = Metrics.getHistogram(
         'notification_event_delivery',
         'notification_event_delivery - metric for sending notification requests to FSPs',
-        ['success', 'from', 'to', 'dest', 'action', 'status']
+        ['success', 'from', 'dest', 'action', 'status']
       ).startTimer()
       let rv
       try {
         jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
         rv = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
       } catch (err) {
-        histTimerEndSendRequest2({ success: false, to, dest: from, action, status: response.status })
+        histTimerEndSendRequest2({ success: false, dest: from, action, status: response.status })
         histTimerEnd({ success: false, action })
         throw err
       }
-      histTimerEndSendRequest2({ success: true, to, dest: from, action, status: response.status })
+      histTimerEndSendRequest2({ success: true, dest: from, action, status: response.status })
 
       histTimerEnd({ success: true, action })
       return rv
@@ -406,9 +406,9 @@ const processMessage = async (msg, span) => {
 
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
-    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
     Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
     histTimerEnd({ success: true, action })
     return true
   }
