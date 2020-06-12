@@ -283,9 +283,6 @@ jobs:
             npm config set unsafe-perm true
             npm install -g node-gyp
       - run:
-          name: Install general dependencies
-          command: *defaults_Dependencies
-      - run:
           name: Install AWS CLI dependencies
           command: *defaults_awsCliDependencies
       - attach_workspace:
