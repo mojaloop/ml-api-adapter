@@ -319,8 +319,8 @@ const processMessage = async (msg, span) => {
     }
     histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
 
-    // send an extra notification back to the original sender (if enabled in config)
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
       const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
@@ -366,8 +366,8 @@ const processMessage = async (msg, span) => {
     Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
 
-    // send an extra notification back to the original sender (if enabled in config)
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
       jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
@@ -389,8 +389,8 @@ const processMessage = async (msg, span) => {
     Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
 
-    // send an extra notification back to the original sender (if enabled in config)
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
+    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
       jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
