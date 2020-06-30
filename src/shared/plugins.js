@@ -70,7 +70,8 @@ const registerPlugins = async (server) => {
     Blipp,
     ErrorHandling,
     CentralServices.Util.Hapi.HapiRawPayload,
-    CentralServices.Util.Hapi.HapiEventPlugin
+    CentralServices.Util.Hapi.HapiEventPlugin,
+    CentralServices.Util.Hapi.FSPIOPHeaderValidation
   ])
 }
 
