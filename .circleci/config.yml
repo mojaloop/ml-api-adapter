@@ -41,7 +41,7 @@ defaults_license_scanner: &defaults_license_scanner
   command: |
     git clone https://github.com/mojaloop/license-scanner /tmp/license-scanner
     cd /tmp/license-scanner && make build default-files set-up
-    
+
 ##
 # Executors
 #
@@ -50,7 +50,7 @@ defaults_license_scanner: &defaults_license_scanner
 executors:
   default-docker:
     working_directory: /home/circleci/project
-    docker: 
+    docker:
       - image: node:12.16.1-alpine
 
   default-machine:
@@ -352,21 +352,6 @@ jobs:
           webhook: "$SLACK_WEBHOOK_ANNOUNCEMENT"
           success_message: '*"${CIRCLE_PROJECT_REPONAME}"* - Release \`"${CIRCLE_TAG}"\` \nhttps://github.com/mojaloop/"${CIRCLE_PROJECT_REPONAME}"/releases/tag/"${CIRCLE_TAG}"'
 
-  deploy:
-    executor: deploy-kube/helm-kube
-    steps:
-      - checkout
-      - deploy-kube/setup_and_run:
-          helm_set_values: |
-            --set ml-api-adapter.ml-api-adapter-service.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
-            --set ml-api-adapter.ml-api-adapter-service.image.tag=$CIRCLE_TAG \
-            --set ml-api-adapter.ml-api-adapter-handler-notification.image.repository=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME \
-            --set ml-api-adapter.ml-api-adapter-handler-notification.image.tag=$CIRCLE_TAG 
-      - slack/status:
-          fail_only: true
-          webhook: "$SLACK_WEBHOOK_ANNOUNCEMENT"
-          failure_message: 'TEST Deployment failed for: \`"${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"\`'
-
 ##
 # Workflows
 #
@@ -429,17 +414,17 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-      - vulnerability-check:
-          context: org-global
-          requires:
-            - setup
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - /feature*/
-                - /bugfix*/
+      # - vulnerability-check:
+      #     context: org-global
+      #     requires:
+      #       - setup
+      #     filters:
+      #       tags:
+      #         only: /.*/
+      #       branches:
+      #         ignore:
+      #           - /feature*/
+      #           - /bugfix*/
       - audit-licenses:
           context: org-global
           requires:
@@ -458,53 +443,21 @@ workflows:
             - test-unit
             - test-coverage
             - test-integration
-            - test-functional
-            - vulnerability-check
+            # - vulnerability-check
             - audit-licenses
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
-            branches:
-              ignore:
-                - /.*/
-      - license-scan:
-          context: org-global
-          requires:
-            - build
-          filters:
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
-            branches:
-              ignore:
-                - /.*/
-      - image-scan:
-          context: org-global
-          requires:
-            - build
-          filters:
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?(\-hotfix(\.[0-9]+))?(\-versioning-poc-v[0-9]+(\.[0-9]+)*)/
             branches:
               ignore:
                 - /.*/
       - publish:
           context: org-global
           requires:
-            - license-scan
-            - image-scan
+            - build
           filters:
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot)?(\-hotfix(\.[0-9]+))?(\-versioning-poc-v[0-9]+(\.[0-9]+)*)/
             branches:
-              ignore:
-                - /.*/
-      - deploy:
-          context: org-global
-          requires:
-            - publish
-          filters:
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?/
-            branches:
-              ignore:
+              only:
                 - /.*/
