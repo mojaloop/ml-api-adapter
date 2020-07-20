@@ -83,7 +83,7 @@ Test('validator', validatorTest => {
         }
         ValidatorProxy.fulfilTransfer(request)
       } catch (err) {
-        test.fail('Expect validation to pass')
+        test.fail('OH NO! Expect validation to pass')
       }
       test.end()
     })
