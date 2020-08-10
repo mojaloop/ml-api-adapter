@@ -17,6 +17,7 @@ RUN apk del build-dependencies
 COPY src /opt/ml-api-adapter/src
 COPY test /opt/ml-api-adapter/test
 COPY config /opt/ml-api-adapter/config
+COPY secrets /opt/ml-api-adapter/secrets
 
 EXPOSE 3000
 CMD ["node /opt/ml-api-adapter/src/api/index.js"]

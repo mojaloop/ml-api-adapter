@@ -34,6 +34,7 @@ const Callback = require('@mojaloop/central-services-shared').Util.Request
 const createCallbackHeaders = require('../../lib/headers').createCallbackHeaders
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 
 const Metrics = require('@mojaloop/central-services-metrics')
 const ENUM = require('@mojaloop/central-services-shared').Enum
@@ -43,6 +44,34 @@ const Config = require('../../lib/config')
 
 let notificationConsumer = {}
 let autoCommitEnabled = true
+
+const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
+  const endTime = Date.now()
+  if (timeApiPrepare && !timeApiFulfil) {
+    const histTracePrepareTimerEnd = Metrics.getHistogram(
+      'tx_transfer_prepare',
+      'Tranxaction metrics for Transfers - Prepare Flow',
+      ['success']
+    )
+    histTracePrepareTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
+  }
+  if (timeApiFulfil) {
+    const histTraceFulfilTimerEnd = Metrics.getHistogram(
+      'tx_transfer_fulfil',
+      'Tranxaction metrics for Transfers - Fulfil Flow',
+      ['success']
+    )
+    histTraceFulfilTimerEnd.observe({ success }, (endTime - timeApiFulfil) / 1000)
+  }
+  if (timeApiPrepare && timeApiFulfil) {
+    const histTraceEnd2EndTimerEnd = Metrics.getHistogram(
+      'tx_transfer',
+      'Tranxaction metrics for Transfers - End-to-end Flow',
+      ['success']
+    )
+    histTraceEnd2EndTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
+  }
+}
 
 /**
  * @module src/handlers/notification
@@ -56,12 +85,12 @@ let autoCommitEnabled = true
  * @returns {boolean} Returns true on success and throws error on failure
  */
 const startConsumer = async () => {
-  Logger.info('Notification::startConsumer')
+  Logger.isInfoEnabled && Logger.info('Notification::startConsumer')
   let topicName
   try {
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
     topicName = topicConfig.topicName
-    Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
+    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
     const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
@@ -70,9 +99,9 @@ const startConsumer = async () => {
     }
     notificationConsumer = new Consumer([topicName], config)
     await notificationConsumer.connect()
-    Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
+    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
     await notificationConsumer.consume(consumeMessage)
-    Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
+    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
     return true
   } catch (err) {
     Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
@@ -93,26 +122,31 @@ const startConsumer = async () => {
  * @returns {boolean} Returns true on success or false on failure
  */
 const consumeMessage = async (error, message) => {
-  Logger.info('Notification::consumeMessage')
+  Logger.isInfoEnabled && Logger.info('Notification::consumeMessage')
   const histTimerEnd = Metrics.getHistogram(
     'notification_event',
     'Consume a notification message from the kafka topic and process it accordingly',
-    ['success']
+    ['success', 'error']
   ).startTimer()
+  let timeApiPrepare
+  let timeApiFulfil
   try {
     if (error) {
       const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
       Logger.error(fspiopError)
       throw fspiopError
     }
-    Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
+    Logger.isInfoEnabled && Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
 
     message = (!Array.isArray(message) ? [message] : message)
     let combinedResult = true
     for (const msg of message) {
-      Logger.info('Notification::consumeMessage::processMessage')
+      Logger.isInfoEnabled && Logger.info('Notification::consumeMessage::processMessage')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
+      const traceTags = span.getTracestateTags()
+      if (traceTags.timeApiPrepare && parseInt(traceTags.timeApiPrepare)) timeApiPrepare = parseInt(traceTags.timeApiPrepare)
+      if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
       try {
         await span.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, span).catch(err => {
@@ -126,7 +160,7 @@ const consumeMessage = async (error, message) => {
         if (!autoCommitEnabled) {
           notificationConsumer.commitMessageSync(msg)
         }
-        Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
+        Logger.isDebugEnabled && Logger.debug(`Notification:consumeMessage message processed: - ${res}`)
         combinedResult = (combinedResult && res)
       } catch (err) {
         const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
@@ -140,12 +174,35 @@ const consumeMessage = async (error, message) => {
         }
       }
     }
+    // TODO: calculate end times - report end-to-time
+    //
+    recordTxMetrics(timeApiPrepare, timeApiFulfil, true)
     histTimerEnd({ success: true })
     return combinedResult
   } catch (err) {
-    histTimerEnd({ success: false })
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
+    recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
+
+    const getRecursiveCause = (error) => {
+      if (error.cause instanceof ErrorHandler.Factory.FSPIOPError) {
+        return getRecursiveCause(error.cause)
+      } else if (error.cause instanceof Error) {
+        if (error.cause) {
+          return error.cause
+        } else {
+          return error.message
+        }
+      } else if (error.cause) {
+        return error.cause
+      } else if (error.message) {
+        return error.message
+      } else {
+        return error
+      }
+    }
+    const errCause = getRecursiveCause(err)
+    histTimerEnd({ success: false, error: errCause })
     throw fspiopError
   }
 }
@@ -162,9 +219,14 @@ const consumeMessage = async (error, message) => {
  */
 
 const processMessage = async (msg, span) => {
-  Logger.info('Notification::processMessage')
-
+  const histTimerEnd = Metrics.getHistogram(
+    'notification_event_process_msg',
+    'Consume a notification message from the kafka topic and process it accordingly',
+    ['success', 'action']
+  ).startTimer()
+  Logger.isInfoEnabled && Logger.info('Notification::processMessage')
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
+    histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
   }
 
@@ -176,8 +238,8 @@ const processMessage = async (msg, span) => {
   const actionLower = action.toLowerCase()
   const statusLower = status.toLowerCase()
 
-  Logger.info('Notification::processMessage action: ' + action)
-  Logger.info('Notification::processMessage status: ' + status)
+  Logger.isInfoEnabled && Logger.info('Notification::processMessage action: ' + action)
+  Logger.isInfoEnabled && Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
   const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
   let payloadForCallback
@@ -194,138 +256,241 @@ const processMessage = async (msg, span) => {
     }
   }
 
+  let jwsSigner = getJWSSigner(from)
+
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id, span)
     callbackHeaders = createCallbackHeaders({ headers: content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.POST}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.POST, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.POST}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    let response = { status: 'unknown' }
+    const histTimerEndSendRequest = Metrics.getHistogram(
+      'notification_event_delivery',
+      'notification_event_delivery - metric for sending notification requests to FSPs',
+      ['success', 'from', 'to', 'dest', 'action', 'status']
+    ).startTimer()
+    //
+    try {
+      response = await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.POST, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    } catch (err) {
+      Logger.error(err)
+      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
+      histTimerEnd({ success: false, action })
+      throw err
+    }
+    histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
+    histTimerEnd({ success: false, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.PREPARE && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.PREPARE_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    return true
   }
 
-  if (actionLower === ENUM.Events.Event.Action.COMMIT && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+  if ((actionLower === ENUM.Events.Event.Action.COMMIT || actionLower === ENUM.Events.Event.Action.RESERVE) && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
     // forward the fulfil to the destination
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    let response = { status: 'unknown' }
+    const histTimerEndSendRequest = Metrics.getHistogram(
+      'notification_event_delivery',
+      'notification_event_delivery - metric for sending notification requests to FSPs',
+      ['success', 'from', 'dest', 'action', 'status']
+    ).startTimer()
+    try {
+      response = await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    } catch (err) {
+      histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
+      histTimerEnd({ success: false, action })
+      throw err
+    }
+    histTimerEndSendRequest({ success: true, from, dest: to, action, status: response.status })
 
-    // send an extra notification back to the original sender (if enabled in config)
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
-      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-      callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
-      return Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+    if ((actionLower === ENUM.Events.Event.Action.RESERVE) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to)) {
+      const payloadForPayee = JSON.parse(payloadForCallback)
+      if (payloadForPayee.fulfilment && actionLower === ENUM.Events.Event.Action.RESERVE) {
+        delete payloadForPayee.fulfilment
+        payloadForCallback = JSON.stringify(payloadForPayee)
+      }
+      const method = (actionLower === ENUM.Events.Event.Action.RESERVE) ? ENUM.Http.RestMethods.PATCH : ENUM.Http.RestMethods.PUT
+      const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+      callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
+      const histTimerEndSendRequest2 = Metrics.getHistogram(
+        'notification_event_delivery',
+        'notification_event_delivery - metric for sending notification requests to FSPs',
+        ['success', 'from', 'dest', 'action', 'status']
+      ).startTimer()
+      let rv
+      try {
+        jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
+        rv = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, method, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+      } catch (err) {
+        histTimerEndSendRequest2({ success: false, dest: from, action, status: response.status })
+        histTimerEnd({ success: false, action })
+        throw err
+      }
+      histTimerEndSendRequest2({ success: true, dest: from, action, status: response.status })
+
+      histTimerEnd({ success: true, action })
+      return rv
     } else {
-      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+      histTimerEnd({ success: true, action })
+      return true
     }
   }
 
   if (actionLower === ENUM.Events.Event.Action.COMMIT && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.REJECT) {
-    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
     // forward the reject to the destination
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
 
-    // send an extra notification back to the original sender (if enabled in config)
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
-      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
+      jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
-      return Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+      const response = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+      histTimerEnd({ success: true, action })
+      return response
     } else {
-      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
     }
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT) {
-    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
     // forward the abort to the destination
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
 
-    // send an extra notification back to the original sender (if enabled in config)
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE) {
-      Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
+      jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-      return Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+      const response = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+      histTimerEnd({ success: true, action })
+      return response
     } else {
-      Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}) because feature is disabled in config.`)
     }
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT_DUPLICATE && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.TIMEOUT_RECEIVED) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${to}, ${from})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${to}, ${from})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    histTimerEnd({ success: true, action })
+    return true
+  }
+
+  if (actionLower === ENUM.Events.Event.Action.TIMEOUT_RESERVED) {
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
+    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${to}, ${from})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+
+    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
+    jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
+    await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.GET && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id)
-    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
     Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   if (actionLower === ENUM.Events.Event.Action.GET && statusLower !== ENUM.Events.EventStatus.SUCCESS.status) {
-    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id)
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-    Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
-    return Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
+    await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+    histTimerEnd({ success: true, action })
+    return true
   }
 
   Logger.warn(`Unknown action received from kafka: ${action}`)
+  histTimerEnd({ success: false, action: 'unknown' })
   return false
 }
 
@@ -369,7 +534,7 @@ const isConnected = async () => {
 
   const foundTopics = metadata.topics.map(topic => topic.name)
   if (foundTopics.indexOf(topicName) === -1) {
-    Logger.debug(`Connected to consumer, but ${topicName} not found.`)
+    Logger.isDebugEnabled && Logger.debug(`Connected to consumer, but ${topicName} not found.`)
     throw new Error(`Connected to consumer, but ${topicName} not found.`)
   }
 
@@ -391,6 +556,28 @@ const disconnect = async () => {
   }
 
   return notificationConsumer.disconnect()
+}
+
+/**
+ * @function getJWSSigner
+ *
+ *
+ * @description Get the JWS signer if enabled
+ *
+ * @returns {Object} - returns JWS signer if enabled else returns undefined
+ */
+const getJWSSigner = (from) => {
+  let jwsSigner
+  if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
+    const logger = Logger
+    logger.log = logger.info
+    Logger.isInfoEnabled && Logger.info('Notification::getJWSSigner: get JWS signer')
+    jwsSigner = new JwsSigner({
+      logger,
+      signingKey: Config.JWS_SIGNING_KEY
+    })
+  }
+  return jwsSigner
 }
 
 module.exports = {

@@ -55,7 +55,7 @@ Program.command('handler') // sub-command name, coffeeType = type, required
   .action(async (args) => {
     const handlerList = []
     if (args.notification && typeof args.notification === 'boolean') {
-      Logger.debug('CLI: Executing --notification')
+      Logger.isDebugEnabled && Logger.debug('CLI: Executing --notification')
       const handler = {
         type: 'notification',
         enabled: true
