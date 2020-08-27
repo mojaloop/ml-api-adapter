@@ -95,7 +95,7 @@ const prepare = async (headers, dataUri, payload, span) => {
 const fulfil = async (headers, dataUri, payload, params, span) => {
   Logger.isDebugEnabled && Logger.debug('domain::transfer::fulfil::start(%s, %s, %s)', params.id, headers, payload)
   try {
-    const action = payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : generalEnum.Events.Event.Action.COMMIT
+    const action = payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : (payload.transferState === generalEnum.Transfers.TransferState.RESERVED) ? generalEnum.Events.Event.Action.RESERVE : generalEnum.Events.Event.Action.COMMIT
     const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
     const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.FULFIL, action, state)
     const metadata = StreamingProtocol.createMetadata(params.id, event)
