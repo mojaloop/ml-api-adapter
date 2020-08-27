@@ -966,8 +966,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': payeeFsp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': payeeFsp
             },
             payload: { transferId: uuid }
           },
@@ -1142,8 +1142,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid }
           },
@@ -1162,7 +1162,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
-      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
     })
@@ -1186,8 +1186,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid }
           },
@@ -1209,7 +1209,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
 
       const result = await Notification.processMessage(msg)
-      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON))
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.equal(result, expected)
       test.end()
