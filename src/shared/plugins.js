@@ -22,7 +22,7 @@
 
 'use strict'
 
-const Package = require('../../package')
+// const Package = require('../../package')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
