@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "11.1.0",
+  "version": "11.0.2",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -74,6 +74,7 @@
     "@hapi/good": "9.0.0",
     "@hapi/hapi": "20.0.0",
     "@hapi/inert": "6.0.2",
+    "@hapi/joi": "17.1.1",
     "@hapi/joi-date": "2.0.1",
     "@hapi/vision": "6.0.1",
     "@mojaloop/central-services-error-handling": "10.6.0",
@@ -93,8 +94,8 @@
     "glob": "7.1.6",
     "hapi-auth-bearer-token": "6.2.1",
     "hapi-swagger": "14.0.0",
-    "joi": "17.2.1",
     "joi-currency-code": "3.0.1",
+    "joi": "17.2.1",
     "mustache": "4.0.1",
     "parse-strings-in-object": "2.0.0",
     "rc": "1.2.8"
