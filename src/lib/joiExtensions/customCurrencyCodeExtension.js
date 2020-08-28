@@ -200,7 +200,7 @@ module.exports = joi => {
     rules: {
       currency: {
         validate (value, helpers) {
-          if (currencyCodes.includes(value.toUpperCase())) {
+          if (!currencyCodes.includes(value.toUpperCase())) {
             return helpers.error('currency.base')
           }
           return value.toUpperCase()
