@@ -22,7 +22,7 @@
 
 'use strict'
 
-// const Package = require('../../package')
+const Package = require('../../package')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
@@ -33,15 +33,15 @@ const CentralServices = require('@mojaloop/central-services-shared')
  */
 
 const registerPlugins = async (server) => {
-  // await server.register({
-  //   plugin: require('hapi-swagger'),
-  //   options: {
-  //     info: {
-  //       title: 'ml api adapter API Documentation',
-  //       version: Package.version
-  //     }
-  //   }
-  // })
+  await server.register({
+    plugin: require('hapi-swagger'),
+    options: {
+      info: {
+        title: 'ml api adapter API Documentation',
+        version: Package.version
+      }
+    }
+  })
 
   await server.register({
     plugin: require('@hapi/good'),
