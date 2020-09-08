@@ -38,7 +38,7 @@ const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
 
 const timeoutAttempts = 10
-const callbackWaitSeconds = 2
+const callbackWaitSeconds = 10
 
 const getNotificationUrl = process.env.ENDPOINT_URL
 
