@@ -38,7 +38,7 @@ const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
 
 const timeoutAttempts = 10
-const callbackWaitSeconds = 10
+const callbackWaitSeconds = 2
 
 const getNotificationUrl = process.env.ENDPOINT_URL
 
@@ -63,7 +63,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-destination': 'dfsp2',
             'fspiop-source': 'dfsp1'
@@ -120,7 +120,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-source': 'switch',
             'fspiop-destination': 'dfsp1'
@@ -176,14 +176,14 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-destination': 'dfsp2',
             'fspiop-source': 'dfsp1'
           },
           payload: {
             amount: { amount: 100, currency: 'USD' },
-            transferState: 'COMMITTED',
+            transferState: 'RESERVED',
             fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
             condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
             expiration: '2018-08-24T21:31:00.534+01:00',
@@ -238,7 +238,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-source': 'dfsp2',
             'fspiop-destination': 'dfsp1'
@@ -294,7 +294,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-destination': 'dfsp2',
             'fspiop-source': 'dfsp1'
@@ -355,7 +355,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-destination': 'dfsp2',
             'fspiop-source': 'dfsp1'
@@ -416,7 +416,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-source': 'dfsp1',
             'fspiop-destination': 'dfsp2'
@@ -474,7 +474,7 @@ Test('Notification Handler', notificationHandlerTest => {
         content: {
           headers: {
             'content-length': 1038,
-            'content-type': 'application/json',
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.0',
             date: '2017-11-02T00:00:00.000Z',
             'fspiop-destination': 'dfsp2',
             'fspiop-source': 'dfsp1'

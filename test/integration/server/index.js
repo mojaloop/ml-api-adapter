@@ -29,6 +29,10 @@ const Routes = require('./routes')
 const RawPayloadToDataUriPlugin = require('@mojaloop/central-services-shared').Util.Hapi.HapiRawPayload
 const Logger = require('@mojaloop/central-services-logger')
 
+const Enum = require('@mojaloop/central-services-shared').Enum
+const regexAccept = Enum.Http.Headers.GENERAL.ACCEPT.regex
+const regexContentType = Enum.Http.Headers.GENERAL.ACCEPT.regex
+
 const createServer = (port, modules) => {
   return (async () => {
     const server = await new Hapi.Server({
@@ -42,7 +46,8 @@ const createServer = (port, modules) => {
         },
         payload: {
           parse: true,
-          output: 'stream'
+          output: 'stream',
+          multipart: true
         }
       }
     })
@@ -55,6 +60,19 @@ const createServer = (port, modules) => {
         }
       }
     })
+
+    server.ext('onRequest', function (request, h) {
+      if (regexContentType.test(request.headers['content-type'])) {
+        request.headers['x-content-type'] = request.headers['content-type']
+        request.headers['content-type'] = 'application/json'
+      }
+      if (regexAccept.test(request.headers.accept)) {
+        request.headers['x-accept'] = request.headers.accept
+        request.headers.accept = 'application/json'
+      }
+      return h.continue
+    })
+
     await server.start()
     Logger.info(`Test Server started at ${server.info.uri}`)
     return server
