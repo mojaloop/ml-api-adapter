@@ -13,19 +13,40 @@ The ml api adapter is a series of services that facilitate clearing and settleme
 
 The following documentation represents the services, APIs and endpoints responsible for various ledger functions.
 
+
 ## Contents:
 
-- [Deployment](#deployment)
-- [Configuration](#configuration)
-- [API](#api)
-- [Logging](#logging)
-- [Tests](#tests)
-- [Auditing Dependencies](#auditing-dependencies)
-- [Container Scans](#container-scans)
+- [ml-api-adapter](#ml-api-adapter)
+  - [Contents:](#contents)
+  - [Deployment](#deployment)
+      - [Mac users and standard Python:](#mac-users-and-standard-python)
+  - [Configuration](#configuration)
+    - [Environment variables](#environment-variables)
+  - [API](#api)
+  - [Logging](#logging)
+  - [Tests](#tests)
+  - [Auditing Dependencies](#auditing-dependencies)
+  - [Container Scans](#container-scans)
 
 ## Deployment
 
 See the [Onboarding guide](Onboarding.md) for running the service locally.
+
+#### Mac users and standard Python:
+There is a need to have proper version of python 3, elsewhere `npm install` command will fail. By default, on your Mac, you have python 2.7.* installed, you need to have fresh 3.* version.
+
+```bash
+brew install python
+```
+
+To invoke proper version of Python, you have to update your PATH env variable in your shell profile.
+
+For `~/.zshrc`
+
+```bash
+echo 'export PATH="/usr/local/opt/python/libexec/bin:$PATH"' >> ~/.zshrc 
+```
+
 
 ## Configuration
 
