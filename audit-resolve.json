@@ -1,0 +1,20 @@
+{
+  "decisions": {
+    "1594|@mojaloop/central-services-health>@mojaloop/central-services-shared>axios": {
+      "decision": "fix",
+      "madeAt": 1611105975153
+    },
+    "1500|@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
+      "decision": "ignore",
+      "madeAt": 1611109060249,
+      "expiresAt": 1613701053992
+    },
+    "1500|@mojaloop/central-services-health>@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
+      "decision": "ignore",
+      "madeAt": 1611109060249,
+      "expiresAt": 1613701053992
+    }
+  },
+  "rules": {},
+  "version": 1
+}
