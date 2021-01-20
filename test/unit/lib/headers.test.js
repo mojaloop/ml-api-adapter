@@ -46,18 +46,47 @@ Test('Headers tests', headersTest => {
     createCallbackHeadersTest.test('test', test => {
       const fromSwitch = true
       const params = {
-        httpMethod: 'PUT'
+        httpMethod: 'PUT',
+        headers: {
+          'FSPIOP-Source': 'payer',
+          'FSPIOP-Destination': 'payee'
+        }
       }
-      Mustache.render = sandbox.stub().returns('http://fspiop-uri')
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/participants')
       const expected = {
         'fspiop-http-method': 'PUT',
-        'fspiop-uri': 'http://fspiop-uri'
+        'fspiop-uri': '/participants',
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)
 
       test.deepEqual(result, expected)
       test.end()
     })
+
+    createCallbackHeadersTest.test('test', test => {
+      const fromSwitch = true
+      const params = {
+        httpMethod: 'PUT',
+        headers: {
+          'FSPIOP-Source': 'payer',
+          'FSPIOP-Destination': 'payee'
+        }
+      }
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error')
+      const expected = {
+        'fspiop-http-method': 'PUT',
+        'fspiop-uri': '/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error',
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee'
+      }
+      const result = Headers.createCallbackHeaders(params, fromSwitch)
+
+      test.deepEqual(result, expected)
+      test.end()
+    })
+
     createCallbackHeadersTest.end()
   })
 

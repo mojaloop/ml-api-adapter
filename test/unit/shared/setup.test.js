@@ -71,7 +71,7 @@ Test('setup', setupTest => {
 
   setupTest.test('createServer should', async (createServerTest) => {
     createServerTest.test('throw error on fail', async (test) => {
-      const errorToThrow = new Boom('Throw error')
+      const errorToThrow = new Boom.Boom('Throw error')
 
       PluginsStub = {
         registerPlugins: sandbox.stub().returns(Promise.resolve())

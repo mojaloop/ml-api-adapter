@@ -103,7 +103,6 @@ Test('metadata handler', (handlerTest) => {
 
     healthTest.end()
   })
-
   handlerTest.test('metadata should', function (metadataTest) {
     metadataTest.test('return 200 httpStatus', async function (t) {
       const reply = {

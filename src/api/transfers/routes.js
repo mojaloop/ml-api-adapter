@@ -27,15 +27,22 @@
 'use strict'
 
 const Handler = require('./handler')
-const BaseJoi = require('joi-currency-code')(require('@hapi/joi'))
+const RootJoi = require('@hapi/joi')
+const DateExtension = require('@hapi/joi-date')
+const CurrencyCodeExtension = require('@mojaloop/central-services-shared').Util.Hapi.customCurrencyCodeValidation
+const DateExtendedJoi = RootJoi.extend(DateExtension)
+const Joi = DateExtendedJoi.extend(CurrencyCodeExtension)
+const Config = require('../../lib/config')
 const Enum = require('@mojaloop/central-services-shared').Enum
 const validateIncomingErrorCode = require('@mojaloop/central-services-error-handling').Handler.validateIncomingErrorCode
-const Extension = require('@hapi/joi-date')
-const Joi = BaseJoi.extend(Extension)
+
 const tags = ['api', 'transfers', Enum.Tags.RouteTags.SAMPLED]
 const transferState = [Enum.Transfers.TransferState.RECEIVED, Enum.Transfers.TransferState.RESERVED, Enum.Transfers.TransferState.COMMITTED, Enum.Transfers.TransferState.ABORTED, Enum.Transfers.TransferState.SETTLED]
 const regexAccept = Enum.Http.Headers.GENERAL.ACCEPT.regex
 const regexContentType = Enum.Http.Headers.GENERAL.ACCEPT.regex
+
+const stripUnknown = Config.STRIP_UNKNOWN_HEADERS
+const allowUnknown = !stripUnknown
 
 module.exports = [{
   method: 'POST',
@@ -61,8 +68,10 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({ stripUnknown: true }),
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
+      }).unknown(allowUnknown).options({ stripUnknown }),
       payload: Joi.object({
         transferId: Joi.string().guid().required().description('Id of transfer').label('Transfer Id must be in a valid GUID format.'),
         payeeFsp: Joi.string().required().min(1).max(32).description('Financial Service Provider of Payee').label('A valid Payee FSP number must be supplied.'),
@@ -106,8 +115,10 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({ stripUnknown: true }),
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
+      }).unknown(allowUnknown).options({ stripUnknown }),
       params: Joi.object({
         id: Joi.string().required().description('path')
       }),
@@ -146,8 +157,10 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({ stripUnknown: true }),
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
+      }).unknown(allowUnknown).options({ stripUnknown }),
       params: Joi.object({
         id: Joi.string().required().description('path')
       }),
@@ -189,8 +202,10 @@ module.exports = [{
         'fspiop-encryption': Joi.string().optional(),
         'fspiop-signature': Joi.string().optional(),
         'fspiop-uri': Joi.string().optional(),
-        'fspiop-http-method': Joi.string().optional()
-      }).unknown(false).options({ stripUnknown: true }),
+        'fspiop-http-method': Joi.string().optional(),
+        traceparent: Joi.string().optional(),
+        tracestate: Joi.string().optional()
+      }).unknown(allowUnknown).options({ stripUnknown }),
       params: Joi.object({
         id: Joi.string().guid().required().description('path').label('Supply a valid transfer Id to continue.') // To Do : expand user friendly error msg to params as well
       })

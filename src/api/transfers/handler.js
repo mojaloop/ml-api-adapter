@@ -57,10 +57,12 @@ const create = async function (request, h) {
   ).startTimer()
 
   const span = request.span
+
+  span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
-    Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
-    Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
+    Logger.isDebugEnabled && Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
+    Logger.isDebugEnabled && Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
     await span.audit({
       headers: request.headers,
       dataUri: request.dataUri,
@@ -98,12 +100,13 @@ const fulfilTransfer = async function (request, h) {
   ).startTimer()
 
   const span = request.span
+  span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
     Validator.fulfilTransfer(request)
-    Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
-    Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
-    Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await span.audit({
       headers: request.headers,
       dataUri: request.dataUri,
@@ -143,7 +146,7 @@ const getTransferById = async function (request, h) {
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    Logger.info(`getById::id(${request.params.id})`)
+    Logger.isInfoEnabled && Logger.info(`getById::id(${request.params.id})`)
     await span.audit({
       headers: request.headers,
       params: request.params
@@ -180,9 +183,9 @@ const fulfilTransferError = async function (request, h) {
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
-    Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
-    Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
-    Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    Logger.isDebugEnabled && Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
+    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::id(%s)', request.params.id)
     await span.audit({
       headers: request.headers,
       dataUri: request.dataUri,

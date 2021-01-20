@@ -30,6 +30,7 @@
 
 const Mustache = require('mustache')
 const Enums = require('@mojaloop/central-services-shared').Enum
+const uriRegex = /(?:^.*)(\/(participants|parties|quotes|transfers)(\/.*)*)$/
 
 /**
  * @function createErrorCallbackHeaders
@@ -42,8 +43,13 @@ exports.createCallbackHeaders = (params, fromSwitch = false) => {
   const callbackHeaders = { ...params.headers }
 
   callbackHeaders[Enums.Http.Headers.FSPIOP.HTTP_METHOD] = params.httpMethod
+  const uri = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
+  callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = uriRegex.exec(uri)[1]
   if (fromSwitch) {
-    callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
+    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = params.headers['FSPIOP-Source'] || params.headers[Enums.Http.Headers.FSPIOP.SOURCE]
+    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = params.headers['FSPIOP-Destination'] || params.headers[Enums.Http.Headers.FSPIOP.DESTINATION]
+    delete callbackHeaders['FSPIOP-Source']
+    delete callbackHeaders['FSPIOP-Destination']
   }
 
   return callbackHeaders

@@ -10,6 +10,11 @@
   "ENDPOINT_SECURITY":{
     "TLS": {
       "rejectUnauthorized": true
+    },
+    "JWS": {
+      "JWS_SIGN": false,
+      "FSPIOP_SOURCE_TO_SIGN": "switch",
+      "JWS_SIGNING_KEY_PATH": "secrets/jwsSigningKey.key"
     }
   },
   "MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS": 200,
@@ -17,6 +22,7 @@
   "TRANSFERS": {
     "SEND_TRANSFER_CONFIRMATION_TO_PAYEE": true
   },
+  "STRIP_UNKNOWN_HEADERS": false,
   "ERROR_HANDLING": {
     "includeCauseExtension": false,
     "truncateExtensions": true
@@ -93,7 +99,8 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all"
+              "request.required.acks": "all",
+              "partitioner": "murmur2_random"
             }
           }
         },
@@ -111,7 +118,8 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all"
+              "request.required.acks": "all",
+              "partitioner": "murmur2_random"
             }
           }
         },
@@ -129,7 +137,8 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all"
+              "request.required.acks": "all",
+              "partitioner": "murmur2_random"
             }
           }
         }

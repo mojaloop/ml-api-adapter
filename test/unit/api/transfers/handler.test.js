@@ -30,6 +30,7 @@ const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
 const Enum = require('@mojaloop/central-services-shared').Enum
+const Logger = require('@mojaloop/central-services-logger')
 
 const createRequest = (payload) => {
   const requestPayload = payload || {}
@@ -70,6 +71,9 @@ Test('transfer handler', handlerTest => {
 
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
+    sandbox.stub(Logger, 'isErrorEnabled').value(true)
+    sandbox.stub(Logger, 'isInfoEnabled').value(true)
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
     sandbox.stub(TransferService, 'prepare')
     sandbox.stub(TransferService, 'fulfil')
     sandbox.stub(TransferService, 'getTransferById')

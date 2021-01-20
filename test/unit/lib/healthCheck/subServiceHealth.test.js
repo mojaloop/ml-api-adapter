@@ -37,6 +37,7 @@ const axios = require('axios')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const Config = require('../../../../src/lib/config')
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
+const Logger = require('@mojaloop/central-services-logger')
 
 const Notification = require('../../../../src/handlers/notification/index')
 
@@ -52,6 +53,9 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     sandbox.stub(Notification, 'isConnected')
     sandbox.stub(axios, 'get')
 
+    sandbox.stub(Logger, 'isErrorEnabled').value(true)
+    sandbox.stub(Logger, 'isInfoEnabled').value(true)
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
     t.end()
   })
 

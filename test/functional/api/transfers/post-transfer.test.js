@@ -63,7 +63,7 @@ Test('POST /transfers', postTest => {
         }
       }
     const headers = {
-      'content-type': 'application/vnd.interoperability.transfers+json;version=1',
+      'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
       date: 'Mon, 10 Sep 2018 20:22:01 GMT',
       'fspiop-source': 'test'
     }
