@@ -6,8 +6,13 @@
     },
     "1500|@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
       "decision": "ignore",
-      "madeAt": 1611106072064,
-      "expiresAt": 1613697958538
+      "madeAt": 1611109060249,
+      "expiresAt": 1613701053992
+    },
+    "1500|@mojaloop/central-services-health>@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
+      "decision": "ignore",
+      "madeAt": 1611109060249,
+      "expiresAt": 1613701053992
     }
   },
   "rules": {},
