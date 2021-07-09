@@ -526,8 +526,9 @@ Test('Notification Handler', notificationHandlerTest => {
 
 function sleep (seconds) {
   const waitUntil = new Date().getTime() + seconds * 1000
+  Logger.debug(`Sleep helper - waiting ${waitUntil}`)
   while (new Date().getTime() < waitUntil) {
-
+    Logger.debug('.')
   }
 }
 
