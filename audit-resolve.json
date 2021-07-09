@@ -6,8 +6,8 @@
     },
     "1500|@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
       "decision": "ignore",
-      "madeAt": 1616649465968,
-      "expiresAt": 1619241438761
+      "madeAt": 1625550088711,
+      "expiresAt": 1628142079222
     },
     "1500|@mojaloop/central-services-health>@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
       "decision": "ignore",
@@ -25,6 +25,45 @@
     "1640|@mojaloop/central-services-shared>widdershins>urijs": {
       "decision": "fix",
       "madeAt": 1616649452109
+    },
+    "1673|@mojaloop/central-services-shared>data-urls>whatwg-url>lodash": {
+      "decision": "fix",
+      "madeAt": 1623061356257
+    },
+    "1673|@mojaloop/central-services-shared>openapi-backend>lodash": {
+      "decision": "fix",
+      "madeAt": 1623061356257
+    },
+    "1673|@mojaloop/central-services-shared>openapi-backend>mock-json-schema>lodash": {
+      "decision": "fix",
+      "madeAt": 1623061356257
+    },
+    "1673|@mojaloop/central-services-shared>shins>sanitize-html>lodash": {
+      "decision": "fix",
+      "madeAt": 1623061356257
+    },
+    "1673|@mojaloop/forensic-logging-client>@mojaloop/central-services-logger>winston>async>lodash": {
+      "decision": "fix",
+      "madeAt": 1623061356257
+    },
+    "1675|@mojaloop/central-services-shared>shins>sanitize-html": {
+      "decision": "ignore",
+      "madeAt": 1625550097227,
+      "expiresAt": 1628142079222
+    },
+    "1676|@mojaloop/central-services-shared>shins>sanitize-html": {
+      "decision": "ignore",
+      "madeAt": 1625550097227,
+      "expiresAt": 1628142079222
+    },
+    "1693|@mojaloop/central-services-shared>shins>sanitize-html>postcss": {
+      "decision": "ignore",
+      "madeAt": 1623061363001,
+      "expiresAt": 1623666143320
+    },
+    "1751|@mojaloop/central-services-shared>shins>chokidar>glob-parent": {
+      "decision": "fix",
+      "madeAt": 1623245154119
     }
   },
   "rules": {},
