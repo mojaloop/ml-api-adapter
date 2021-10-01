@@ -39,7 +39,7 @@ const uriRegex = /(?:^.*)(\/(participants|parties|quotes|transfers)(\/.*)*)$/
  *
  * @returns {object} - FSPIOP callback headers merged with the headers passed in `params.headers`
  */
-exports.createCallbackHeaders = (params, fromSwitch = false) => {
+const createCallbackHeaders = (params, fromSwitch = false) => {
   const callbackHeaders = { ...params.headers }
 
   callbackHeaders[Enums.Http.Headers.FSPIOP.HTTP_METHOD] = params.httpMethod
@@ -67,4 +67,10 @@ const getHeaderCaseInsensitiveValue = (object, searchKey) => {
   const key = Object.keys(object).find(key => key.toLowerCase() === searchKey.toLowerCase())
   if (key) return object[key]
   return null
+}
+
+module.exports = {
+  createCallbackHeaders,
+  getHeaderCaseInsensitiveKey,
+  getHeaderCaseInsensitiveValue
 }

@@ -138,5 +138,59 @@ Test('Headers tests', headersTest => {
     createCallbackHeadersTest.end()
   })
 
+  headersTest.test('getHeaderCaseInsensitiveKey should', async getHeaderCaseInsensitiveKeyTest => {
+    getHeaderCaseInsensitiveKeyTest.test('return null if object is null', test => {
+      const headers = null
+      const key = 'not null'
+
+      const result = Headers.getHeaderCaseInsensitiveKey(headers, key)
+
+      test.ok(result == null)
+      test.end()
+    })
+
+    getHeaderCaseInsensitiveKeyTest.test('return null if searchKey is null', test => {
+      const headers = {
+        'FSPIOP-Source': 'payer',
+        'FSPIOP-Destination': 'payee'
+      }
+      const key = null
+
+      const result = Headers.getHeaderCaseInsensitiveKey(headers, key)
+
+      test.ok(result == null)
+      test.end()
+    })
+
+    getHeaderCaseInsensitiveKeyTest.end()
+  })
+
+  headersTest.test('getHeaderCaseInsensitiveValue should', async getHeaderCaseInsensitiveValueTest => {
+    getHeaderCaseInsensitiveValueTest.test('return null if object is null', test => {
+      const headers = null
+      const key = 'not null'
+
+      const result = Headers.getHeaderCaseInsensitiveValue(headers, key)
+
+      test.ok(result == null)
+      test.end()
+    })
+
+    getHeaderCaseInsensitiveValueTest.test('return null if searchKey is null', test => {
+      const headers = {
+        'FSPIOP-Source': 'payer',
+        'FSPIOP-Destination': 'payee'
+      }
+      const key = null
+
+      const result = Headers.getHeaderCaseInsensitiveValue(headers, key)
+
+      test.ok(result == null)
+      test.end()
+    })
+
+    getHeaderCaseInsensitiveValueTest.end()
+  })
+
   headersTest.end()
 })
