@@ -53,7 +53,7 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
     const fspIOPSingatureKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SIGNATURE)
     if (fspIOPSingatureKey) delete callbackHeaders[fspIOPSingatureKey]
     callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Enums.Http.Headers.FSPIOP.SWITCH.value
-    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
+    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(params.headers, Enums.Http.Headers.FSPIOP.DESTINATION)
   }
 
   return callbackHeaders
