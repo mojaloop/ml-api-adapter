@@ -46,12 +46,14 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
   const uri = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
   callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = uriRegex.exec(uri)[1]
   if (fromSwitch) {
-    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Enums.Http.Headers.FSPIOP.SWITCH.value
-    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
-    delete callbackHeaders['FSPIOP-Source']
-    delete callbackHeaders['FSPIOP-Destination']
+    const fspIOPSourceKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SOURCE)
+    if (fspIOPSourceKey) delete callbackHeaders[fspIOPSourceKey]
+    const fspIOPDestinationKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
+    if (fspIOPDestinationKey) delete callbackHeaders[fspIOPDestinationKey]
     const fspIOPSingatureKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SIGNATURE)
     if (fspIOPSingatureKey) delete callbackHeaders[fspIOPSingatureKey]
+    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Enums.Http.Headers.FSPIOP.SWITCH.value
+    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
   }
 
   return callbackHeaders
