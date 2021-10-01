@@ -46,11 +46,25 @@ exports.createCallbackHeaders = (params, fromSwitch = false) => {
   const uri = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
   callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = uriRegex.exec(uri)[1]
   if (fromSwitch) {
-    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = params.headers['FSPIOP-Source'] || params.headers[Enums.Http.Headers.FSPIOP.SOURCE]
-    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = params.headers['FSPIOP-Destination'] || params.headers[Enums.Http.Headers.FSPIOP.DESTINATION]
+    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Enums.Http.Headers.FSPIOP.SWITCH.value
+    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
     delete callbackHeaders['FSPIOP-Source']
     delete callbackHeaders['FSPIOP-Destination']
+    const fspIOPSingatureKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SIGNATURE)
+    if (fspIOPSingatureKey) delete callbackHeaders[fspIOPSingatureKey]
   }
 
   return callbackHeaders
+}
+
+const getHeaderCaseInsensitiveKey = (object, searchKey) => {
+  if (object == null || searchKey == null) return null
+  return Object.keys(object).find(key => key.toLowerCase() === searchKey.toLowerCase())
+}
+
+const getHeaderCaseInsensitiveValue = (object, searchKey) => {
+  if (object == null || searchKey == null) return null
+  const key = Object.keys(object).find(key => key.toLowerCase() === searchKey.toLowerCase())
+  if (key) return object[key]
+  return null
 }
