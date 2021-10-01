@@ -978,7 +978,7 @@ Test('Notification Service tests', async notificationTest => {
       }
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = ENUM.Http.RestMethods.PUT
-      const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
 
       const expected = true
@@ -1154,7 +1154,7 @@ Test('Notification Service tests', async notificationTest => {
       }
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
       const expected = true
@@ -1199,7 +1199,7 @@ Test('Notification Service tests', async notificationTest => {
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
