@@ -69,7 +69,8 @@
     "license:list": "license-checker . --excludePackages `cat .licenseignore | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'` --production --csv",
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`",
     "dep:check": "npx ncu -e 2",
-    "dep:update": "npx ncu -u"
+    "dep:update": "npx ncu -u",
+    "release": "standard-version --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'"
   },
   "dependencies": {
     "@hapi/basic": "6.0.0",
@@ -118,11 +119,12 @@
     "rewire": "5.0.0",
     "sinon": "11.1.2",
     "standard": "16.0.3",
+    "standard-version": "^9.3.1",
     "supertest": "6.1.6",
+    "tap-spec": "^5.0.0",
     "tap-xunit": "2.4.1",
     "tape": "5.3.1",
     "tapes": "4.1.0",
-    "tap-spec": "^5.0.0",
     "uuid4": "2.0.2"
   }
 }
