@@ -106,7 +106,7 @@
   },
   "devDependencies": {
     "faucet": "0.0.1",
-    "get-port": "6.0.0",
+    "get-port": "5.1.1",
     "jsdoc": "3.6.7",
     "license-checker": "25.0.1",
     "nodemon": "2.0.13",
