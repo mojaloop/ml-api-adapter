@@ -84,6 +84,60 @@
     "1781|@mojaloop/event-sdk>grpc>@mapbox/node-pre-gyp>tar": {
       "decision": "fix",
       "madeAt": 1633094239947
+    },
+    "1002401|@mojaloop/event-sdk>@grpc/proto-loader>yargs>string-width>strip-ansi>ansi-regex": {
+      "decision": "fix",
+      "madeAt": 1634054714967
+    },
+    "1002401|@mojaloop/event-sdk>@grpc/proto-loader>yargs>cliui>string-width>strip-ansi>ansi-regex": {
+      "decision": "fix",
+      "madeAt": 1634054714967
+    },
+    "1002401|@mojaloop/event-sdk>@grpc/proto-loader>yargs>cliui>wrap-ansi>string-width>strip-ansi>ansi-regex": {
+      "decision": "fix",
+      "madeAt": 1634054714967
+    },
+    "1002401|@mojaloop/event-sdk>@grpc/proto-loader>yargs>cliui>strip-ansi>ansi-regex": {
+      "decision": "fix",
+      "madeAt": 1634054714967
+    },
+    "1002401|@mojaloop/event-sdk>@grpc/proto-loader>yargs>cliui>wrap-ansi>strip-ansi>ansi-regex": {
+      "decision": "fix",
+      "madeAt": 1634054714967
+    },
+    "1002401|blipp>easy-table>ansi-regex": {
+      "decision": "fix",
+      "madeAt": 1634054741075
+    },
+    "1002401|@mojaloop/central-services-shared>widdershins>yargs>string-width>strip-ansi>ansi-regex": {
+      "decision": "ignore",
+      "madeAt": 1634054751894,
+      "expiresAt": 1634659494501
+    },
+    "1002401|@mojaloop/central-services-shared>widdershins>yargs>cliui>string-width>strip-ansi>ansi-regex": {
+      "decision": "ignore",
+      "madeAt": 1634054751894,
+      "expiresAt": 1634659494501
+    },
+    "1002401|@mojaloop/event-sdk>grpc>@mapbox/node-pre-gyp>npmlog>gauge>wide-align>string-width>strip-ansi>ansi-regex": {
+      "decision": "ignore",
+      "madeAt": 1634054751894,
+      "expiresAt": 1634659494501
+    },
+    "1002865|@mojaloop/central-services-shared>shins>sanitize-html": {
+      "decision": "ignore",
+      "madeAt": 1634054752901,
+      "expiresAt": 1634659494501
+    },
+    "1002866|@mojaloop/central-services-shared>shins>sanitize-html": {
+      "decision": "ignore",
+      "madeAt": 1634054752901,
+      "expiresAt": 1634659494501
+    },
+    "1003019|@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
+      "decision": "ignore",
+      "madeAt": 1634054754111,
+      "expiresAt": 1634659494501
     }
   },
   "rules": {},
