@@ -23,11 +23,13 @@
 'use strict'
 
 const Package = require('../../package')
+const Config = require('../lib/config')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const CentralServices = require('@mojaloop/central-services-shared')
+
 /**
  * @module src/shared/plugin
  */
@@ -64,6 +66,30 @@ const registerPlugins = async (server) => {
     plugin: require('hapi-auth-bearer-token')
   })
 
+  // Helper to construct FSPIOPHeaderValidation option configuration
+  const getOptionsForFSPIOPHeaderValidation = () => {
+    // configure supported FSPIOP Content-Type versions
+    const supportedProtocolContentVersions = [Config.PROTOCOL_VERSIONS.CONTENT.toString()]
+
+    // configure supported FSPIOP Accept version
+    const supportedProtocolAcceptVersions = []
+    for (const version of Config.PROTOCOL_VERSIONS.ACCEPT) {
+      supportedProtocolAcceptVersions.push(version.toString())
+    }
+
+    // configure FSPIOP resources
+    const resources = [
+      'transfers'
+    ]
+
+    // return FSPIOPHeaderValidation plugin options
+    return {
+      resources,
+      supportedProtocolContentVersions,
+      supportedProtocolAcceptVersions
+    }
+  }
+
   await server.register([
     Inert,
     Vision,
@@ -71,7 +97,10 @@ const registerPlugins = async (server) => {
     ErrorHandling,
     CentralServices.Util.Hapi.HapiRawPayload,
     CentralServices.Util.Hapi.HapiEventPlugin,
-    CentralServices.Util.Hapi.FSPIOPHeaderValidation
+    {
+      plugin: CentralServices.Util.Hapi.FSPIOPHeaderValidation.plugin,
+      options: getOptionsForFSPIOPHeaderValidation()
+    }
   ])
 }
 
