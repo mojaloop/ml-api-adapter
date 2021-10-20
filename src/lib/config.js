@@ -8,6 +8,15 @@ function getFileContent (path) {
   }
   return fs.readFileSync(path)
 }
+
+const DEFAULT_PROTOCOL_VERSION = {
+  CONTENT: '1.1',
+  ACCEPT: [
+    '1',
+    '1.1'
+  ]
+}
+
 // Set config object to be returned
 const config = {
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),
@@ -34,7 +43,7 @@ const config = {
   JWS_SIGN: RC.ENDPOINT_SECURITY.JWS.JWS_SIGN,
   FSPIOP_SOURCE_TO_SIGN: RC.ENDPOINT_SECURITY.JWS.FSPIOP_SOURCE_TO_SIGN,
   JWS_SIGNING_KEY_PATH: RC.ENDPOINT_SECURITY.JWS.JWS_SIGNING_KEY_PATH,
-  PROTOCOL_VERSIONS: RC.PROTOCOL_VERSIONS
+  PROTOCOL_VERSIONS: RC.PROTOCOL_VERSIONS || DEFAULT_PROTOCOL_VERSION
 }
 
 if (config.JWS_SIGN) {
