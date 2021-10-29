@@ -73,7 +73,7 @@ const registerPlugins = async (server) => {
 
     // configure supported FSPIOP Accept version
     const supportedProtocolAcceptVersions = []
-    for (const version of Config.PROTOCOL_VERSIONS.ACCEPT) {
+    for (const version of Config.PROTOCOL_VERSIONS.ACCEPT.VALIDATELIST) {
       supportedProtocolAcceptVersions.push(version.toString())
     }
 

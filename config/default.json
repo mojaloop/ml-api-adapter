@@ -9,10 +9,12 @@
   },
   "PROTOCOL_VERSIONS": {
     "CONTENT": "1.1",
-    "ACCEPT": [
+    "ACCEPT": {
+      "VALIDATELIST": [
         "1",
         "1.1"
-    ]
+      ]
+    }
   },
   "ENDPOINT_SECURITY":{
     "TLS": {

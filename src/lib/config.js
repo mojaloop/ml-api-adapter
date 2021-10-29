@@ -11,10 +11,19 @@ function getFileContent (path) {
 
 const DEFAULT_PROTOCOL_VERSION = {
   CONTENT: '1.1',
-  ACCEPT: [
-    '1',
-    '1.1'
-  ]
+  ACCEPT: {
+    DEFAULT: '1', // This is not currently used by the ml-api-adapter, but it is here for consistency between services. In future if we need to default the ACCEPT protocol, then this should be used.
+    VALIDATELIST: [
+      '1',
+      '1.1'
+    ]
+  }
+}
+
+const T_PROTOCOL_VERSION = { ...DEFAULT_PROTOCOL_VERSION, ...RC.PROTOCOL_VERSIONS }
+
+if (T_PROTOCOL_VERSION.ACCEPT && T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST && (typeof T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST === 'string' || T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST instanceof String)) {
+  T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST = JSON.parse(T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST)
 }
 
 // Set config object to be returned
@@ -43,7 +52,7 @@ const config = {
   JWS_SIGN: RC.ENDPOINT_SECURITY.JWS.JWS_SIGN,
   FSPIOP_SOURCE_TO_SIGN: RC.ENDPOINT_SECURITY.JWS.FSPIOP_SOURCE_TO_SIGN,
   JWS_SIGNING_KEY_PATH: RC.ENDPOINT_SECURITY.JWS.JWS_SIGNING_KEY_PATH,
-  PROTOCOL_VERSIONS: RC.PROTOCOL_VERSIONS || DEFAULT_PROTOCOL_VERSION
+  PROTOCOL_VERSIONS: T_PROTOCOL_VERSION
 }
 
 if (config.JWS_SIGN) {
