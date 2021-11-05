@@ -7,6 +7,15 @@
     "expiresIn": 180000,
     "generateTimeout": 30000
   },
+  "PROTOCOL_VERSIONS": {
+    "CONTENT": "1.1",
+    "ACCEPT": {
+      "VALIDATELIST": [
+        "1",
+        "1.1"
+      ]
+    }
+  },
   "ENDPOINT_SECURITY":{
     "TLS": {
       "rejectUnauthorized": false

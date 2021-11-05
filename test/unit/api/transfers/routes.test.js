@@ -26,7 +26,7 @@ const Test = require('tape')
 const Base = require('../../base')
 
 Test('return error if required fields are missing on prepare', async function (assert) {
-  const req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' } })
+  const req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' } })
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
@@ -48,7 +48,7 @@ Test('return error if transferId is not a guid', async function (assert) {
     url: '/transfers',
     method: 'POST',
     payload: { transferId: 'invalid transfer id' },
-    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -87,7 +87,7 @@ Test('return error if amount is not a valid amount', async function (assert) {
         ]
       }
     },
-    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -126,7 +126,7 @@ Test('return error if currency is not a valid ISO 4217 currency code', async fun
         ]
       }
     },
-    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -165,7 +165,7 @@ Test('return error if condition is not valid according to the pattern /^[A-Za-z0
         ]
       }
     },
-    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -204,7 +204,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
         ]
       }
     },
-    headers: { date: '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -243,7 +243,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
         ]
       }
     },
-    headers: { date: '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -267,7 +267,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
         }]
       }
     },
-    headers: { date: '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: '2018-04-26', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -284,7 +284,7 @@ Test('return error if transfer is not provided', async function (assert) {
     headers: {
       date: 'Mon, 10 Sep 2018 20:22:01 GMT',
       'fspiop-source': 'value',
-      'content-type': 'application/vnd.interoperability.transfers+json;version=1.0'
+      'content-type': 'application/vnd.interoperability.transfers+json;version=1.1'
     }
   })
   const server = await Base.setup()
@@ -309,7 +309,7 @@ Test('return error if FSPIOP-Source is not provided to PUT /transfers/{id}/error
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -333,7 +333,7 @@ Test('return error if invalid errorCode is provided to PUT /transfers/{id}/error
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -356,7 +356,7 @@ Test('return error if errorCode is not provided to PUT /transfers/{id}/error', a
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -379,7 +379,7 @@ Test('return error if errorDescription is not provided to PUT /transfers/{id}/er
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)

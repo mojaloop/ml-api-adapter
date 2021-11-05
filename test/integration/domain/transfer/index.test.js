@@ -10,7 +10,7 @@ Test('transfer service', (modelTest) => {
   modelTest.test('prepare should', (prepareTest) => {
     prepareTest.test('produce a transfer message to kafka', async (assert) => {
       const transfer = Fixtures.buildTransfer(Fixtures.generateTransferId())
-      const dataUri = encodePayload(transfer.toString(), 'application/vnd.interoperability.participants+json;version=1.0')
+      const dataUri = encodePayload(transfer.toString(), 'application/vnd.interoperability.participants+json;version=1.1')
       const span = Fixtures.generateParentTestSpan()
       const result = await TransferService.prepare(Fixtures.buildHeaders, dataUri, transfer, span)
       assert.equal(result, true)

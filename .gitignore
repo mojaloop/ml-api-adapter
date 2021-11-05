@@ -45,6 +45,9 @@ jspm_packages
 
 .npmrc
 
+# yarn
+yarn.lock
+
 # --------------- #
 # IntelliJ #
 # --------------- #
