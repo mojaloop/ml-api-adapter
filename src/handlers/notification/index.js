@@ -430,9 +430,9 @@ const processMessage = async (msg, span) => {
     if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
-      const response = await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
+      await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner)
       histTimerEnd({ success: true, action })
-      return response
+      return true
     } else {
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping notification callback to original sender (${from}).`)
     }

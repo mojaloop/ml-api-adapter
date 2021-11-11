@@ -224,6 +224,236 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', async test => {
+      // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      const ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+      const msg = {
+        value: {
+          from: 'dfsp1',
+          to: 'dfsp2',
+          id: '6b74834e-688b-419f-aa59-145ccb962b24',
+          content: {
+            uriParams: {
+              id: '6b74834e-688b-419f-aa59-145ccb962b24'
+            },
+            headers: {
+              accept: 'application/vnd.interoperability.transfers+json;version=1.1',
+              'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+              date: '2021-11-08T09:35:59.000Z',
+              'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
+              'fspiop-http-method': 'PUT',
+              'fspiop-source': 'payeefsp',
+              'fspiop-destination': 'payerfsp',
+              'fspiop-signature': '{{fspiopSignature}}',
+              authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
+              host: 'localhost:3000',
+              'accept-encoding': 'gzip, deflate, br',
+              connection: 'keep-alive',
+              'content-length': '97'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '3100',
+                errorDescription: 'Generic validation error - invalid fulfilment',
+                extensionList: {
+                  extension: [
+                    {
+                      key: 'cause',
+                      value: 'FSPIOPError: invalid fulfilment\n    at Object.createFSPIOPError (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/node_modules/@mojaloop/central-services-error-handling/src/factory.js:198:12)\n    at fulfil (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/src/handlers/transfers/handler.js:439:52)\n    at processTicksAndRejections (internal/process/task_queues.js:97:5)'
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          type: 'application/json',
+          metadata: {
+            correlationId: '6b74834e-688b-419f-aa59-145ccb962b24',
+            event: {
+              type: 'notification',
+              action: 'abort-validation',
+              createdAt: '2021-11-08T11:35:59.183Z',
+              state: {
+                status: 'success',
+                code: 0,
+                description: 'action successful'
+              },
+              id: '11e08d8b-76d0-48e2-9a88-9c24f5e9d6f5',
+              responseTo: 'fd86e9ed-8d85-4c42-be15-f3cba6b68ae8'
+            },
+            trace: {
+              startTimestamp: '2021-11-08T11:36:05.033Z',
+              service: 'cl_transfer_position',
+              traceId: '000d6eafe3f9a7541148009044eb18d1',
+              spanId: 'd2eeab3327961401',
+              parentSpanId: '80cbe7ac57bf9384',
+              tags: {
+                tracestate: 'acmevendor=eyJzcGFuSWQiOiJkMmVlYWIzMzI3OTYxNDAxIiwidGltZUFwaUZ1bGZpbCI6IjE2MzYzNzEzNTkxODAifQ==',
+                transactionType: 'transfer',
+                transactionAction: 'fulfil',
+                transactionId: '6b74834e-688b-419f-aa59-145ccb962b24',
+                source: 'payeefsp',
+                destination: 'payerfsp'
+              },
+              tracestates: {
+                acmevendor: {
+                  spanId: 'd2eeab3327961401',
+                  timeApiFulfil: '1636371359180'
+                }
+              }
+            },
+            'protocol.createdAt': 1636371368576
+          }
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = {
+        errorInformation:
+        {
+          errorCode: '3100',
+          errorDescription: 'Generic validation error - invalid fulfilment'
+        }
+      }
+      try {
+        // callback request to PayerFSP
+        Callback.sendRequest.withArgs(urlPayer, payeeHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+        // callback request to PayeeFSP
+        Callback.sendRequest.withArgs(urlPayee, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+
+        // process message
+        const result = await Notification.processMessage(msg)
+        console.log(`Callback.sendRequest.calledWith(${url}, ${payerHeaders}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.to}, ${method}, ${JSON.stringify(message)})`)
+        test.ok(Callback.sendRequest.calledOnce)
+        test.ok(Callback.sendRequest.calledWith(url, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)))
+        test.equal(result, true)
+        test.end()
+      } catch (e) {
+        test.fail('should not throw')
+        test.end()
+      }
+      // Reset SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+    })
+
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback with PayeeFSP Callback', async test => {
+      const msg = {
+        value: {
+          from: 'dfsp1',
+          to: 'dfsp2',
+          id: '6b74834e-688b-419f-aa59-145ccb962b24',
+          content: {
+            uriParams: {
+              id: '6b74834e-688b-419f-aa59-145ccb962b24'
+            },
+            headers: {
+              accept: 'application/vnd.interoperability.transfers+json;version=1.1',
+              'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+              date: '2021-11-08T09:35:59.000Z',
+              'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
+              'fspiop-http-method': 'PUT',
+              'fspiop-source': 'payeefsp',
+              'fspiop-destination': 'payerfsp',
+              'fspiop-signature': '{{fspiopSignature}}',
+              authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
+              host: 'localhost:3000',
+              'accept-encoding': 'gzip, deflate, br',
+              connection: 'keep-alive',
+              'content-length': '97'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '3100',
+                errorDescription: 'Generic validation error - invalid fulfilment',
+                extensionList: {
+                  extension: [
+                    {
+                      key: 'cause',
+                      value: 'FSPIOPError: invalid fulfilment\n    at Object.createFSPIOPError (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/node_modules/@mojaloop/central-services-error-handling/src/factory.js:198:12)\n    at fulfil (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/src/handlers/transfers/handler.js:439:52)\n    at processTicksAndRejections (internal/process/task_queues.js:97:5)'
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          type: 'application/json',
+          metadata: {
+            correlationId: '6b74834e-688b-419f-aa59-145ccb962b24',
+            event: {
+              type: 'notification',
+              action: 'abort-validation',
+              createdAt: '2021-11-08T11:35:59.183Z',
+              state: {
+                status: 'success',
+                code: 0,
+                description: 'action successful'
+              },
+              id: '11e08d8b-76d0-48e2-9a88-9c24f5e9d6f5',
+              responseTo: 'fd86e9ed-8d85-4c42-be15-f3cba6b68ae8'
+            },
+            trace: {
+              startTimestamp: '2021-11-08T11:36:05.033Z',
+              service: 'cl_transfer_position',
+              traceId: '000d6eafe3f9a7541148009044eb18d1',
+              spanId: 'd2eeab3327961401',
+              parentSpanId: '80cbe7ac57bf9384',
+              tags: {
+                tracestate: 'acmevendor=eyJzcGFuSWQiOiJkMmVlYWIzMzI3OTYxNDAxIiwidGltZUFwaUZ1bGZpbCI6IjE2MzYzNzEzNTkxODAifQ==',
+                transactionType: 'transfer',
+                transactionAction: 'fulfil',
+                transactionId: '6b74834e-688b-419f-aa59-145ccb962b24',
+                source: 'payeefsp',
+                destination: 'payerfsp'
+              },
+              tracestates: {
+                acmevendor: {
+                  spanId: 'd2eeab3327961401',
+                  timeApiFulfil: '1636371359180'
+                }
+              }
+            },
+            'protocol.createdAt': 1636371368576
+          }
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = {
+        errorInformation:
+        {
+          errorCode: '3100',
+          errorDescription: 'Generic validation error - invalid fulfilment'
+        }
+      }
+      try {
+        // callback request to PayerFSP
+        Callback.sendRequest.withArgs(urlPayer, payeeHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+        // callback request to PayeeFSP
+        Callback.sendRequest.withArgs(urlPayee, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+
+        // process message
+        const result = await Notification.processMessage(msg)
+        console.log(`Callback.sendRequest.calledWith(${url}, ${payerHeaders}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.to}, ${method}, ${JSON.stringify(message)})`)
+        test.ok(Callback.sendRequest.calledTwice)
+        test.ok(Callback.sendRequest.calledWith(url, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)))
+        test.ok(Callback.sendRequest.calledWith(url, payeeHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+        test.equal(result, true)
+        test.end()
+      } catch (e) {
+        test.fail('should not throw')
+        test.end()
+      }
+    })
+
     processMessageTest.test('process the message received from kafka and send out a transfer post callback should throw', async test => {
       const payeeFsp = 'dfsp1'
       const payerFsp = 'dfsp2'
