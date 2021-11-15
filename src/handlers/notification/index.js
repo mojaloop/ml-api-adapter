@@ -440,6 +440,58 @@ const processMessage = async (msg, span) => {
     return true
   }
 
+  // special event emitted by central-ledger when the Payee sent a status of `RESERVED` in PUT /transfers/{ID}
+  // and the ledger failed to commit the transfer
+
+  // TODO: waiting for PR: https://github.com/mojaloop/central-services-shared/pull/317
+  // if (actionLower === ENUM.Events.Event.Action.RESERVED_ABORTED) {
+  if (actionLower === 'reserved-aborted') {
+    if (Config.PROTOCOL_VERSIONS.CONTENT !== '1.1') {
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping reserved_aborted notification callback (${from}).`)
+      return
+    }
+
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+    const method = ENUM.Http.RestMethods.PATCH
+    callbackHeaders = createCallbackHeaders({
+      dfspId: to, 
+      transferId: id, 
+      headers: content.headers, 
+      httpMethod: method, 
+      endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT 
+    }, fromSwitch)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+    
+    // TODO: what should this be?
+    const histTimerEndSendRequest = Metrics.getHistogram(
+      'notification_event_delivery',
+      'notification_event_delivery - metric for sending notification requests to FSPs',
+      ['success', 'from', 'dest', 'action', 'status']
+    ).startTimer()
+
+    let callbackResponse
+    try {
+      jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
+      callbackResponse = await Callback.sendRequest(
+        callbackURLTo, 
+        callbackHeaders, 
+        ENUM.Http.Headers.FSPIOP.SWITCH.value, 
+        to, 
+        method, 
+        payloadForCallback, 
+        ENUM.Http.ResponseTypes.JSON, 
+        span, 
+        jwsSigner
+      )
+    } catch (err) {
+      histTimerEnd({ success: false, action })
+      throw err
+    }
+    histTimerEndSendRequest({ success: true, dest: from, action, status: callbackResponse.status })
+    histTimerEnd({ success: true, action })
+    return callbackResponse
+  }
+
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
