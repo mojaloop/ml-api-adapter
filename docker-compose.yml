@@ -8,9 +8,8 @@ services:
   ml-api-adapter:
     build:
       context: .
-      cache_from:
-        - mojaloop/ml-api-adapter
-        - central-ledger
+      # cache_from:
+        # - mojaloop/ml-api-adapter:latest
     container_name: ml_ml-api-adapter
     command:
       - "sh"

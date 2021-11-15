@@ -60,7 +60,8 @@
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`",
     "dep:check": "npx ncu -e 2",
     "dep:update": "npx ncu -u",
-    "release": "standard-version --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'"
+    "release": "standard-version --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'",
+    "wait-4-docker": "node ./scripts/_wait4_all.js"
   },
   "dependencies": {
     "@hapi/basic": "6.0.0",
