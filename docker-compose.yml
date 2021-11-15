@@ -20,6 +20,7 @@ services:
       - ./docker/wait4:/opt/ml-api-adapter/wait4
     networks:
       - ml-mojaloop-net
+    user: 'root'
     depends_on:
       - central-ledger
       - kafka
@@ -48,8 +49,9 @@ services:
       - CLEDG_SIDECAR__DISABLED=true
     networks:
       - ml-mojaloop-net
+    user: 'root'
     healthcheck:
-      test: ["CMD", "bash", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3001/health"]
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3001/health"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -95,7 +97,7 @@ services:
     networks:
       - ml-mojaloop-net
     healthcheck:
-      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","localhost:9092"]
+      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","kafka:9092"]
       timeout: 20s
       retries: 10
       start_period: 40s

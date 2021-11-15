@@ -9,33 +9,10 @@ const { execSync } = require('child_process')
 
 // Define the docker-compose containers you want to monitor here
 const expectedContainers = [
-  'account-lookup-service',
-  'central-ledger',
-  // 'central-settlement', no health check
-  // 'dfspa-backend', no health check
-  // 'dfspa-sdk-scheme-adapter', no health check
-  'dfspa-thirdparty-scheme-adapter-inbound',
-  'dfspa-thirdparty-scheme-adapter-outbound',
-  // 'dfspa-redis', no health check
-  // 'dfspb-backend', no health check
-  // 'dfspb-sdk-scheme-adapter', no health check
-  'dfspb-thirdparty-scheme-adapter-inbound',
-  'dfspb-thirdparty-scheme-adapter-outbound',
-  // 'dfspb-redis', no health check
-  // 'pisp-backend', no health check
-  // 'pisp-sdk-scheme-adapter', no health check
-  'pisp-thirdparty-scheme-adapter-inbound',
-  'pisp-thirdparty-scheme-adapter-outbound',
-  'thirdparty-api-svc',
-  // 'pisp-redis', no health check
-  'kafka',
-  'ml-api-adapter',
-  'mysql',
-  'mysql-als',
-  'objstore',
-  'quoting-service',
-  'simulator',
-  'transaction-requests-service'
+  'ml_central-ledger',
+  'ml_kafka',
+  'ml_ml-api-adapter',
+  'ml_mysql',
 ]
 
 let retries = 40
