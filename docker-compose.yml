@@ -8,22 +8,16 @@ services:
   ml-api-adapter:
     build:
       context: .
-      # cache_from:
-        # - mojaloop/ml-api-adapter:latest
     container_name: ml_ml-api-adapter
-    command:
-      - "sh"
-      - "-c"
-      - "sh /opt/wait-for/wait-for-ml-api-adapter.sh && node src/api/index.js"
+    command: sh -c "/opt/ml-api-adapter/wait4/wait4.js ml-api-adapter && node src/api/index.js"
     ports:
       - "3000:3000"
     environment:
       - LOG_LEVEL=info
       - CSL_LOG_TRANSPORT=file
     volumes:
-      # override the default values with our own - this is because the KAFKA_HOST env variable is ignored for some reason
-       - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
-       - ./docker/wait-for:/opt/wait-for
+      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
+      - ./docker/wait4:/opt/ml-api-adapter/wait4
     networks:
       - ml-mojaloop-net
     depends_on:
@@ -38,19 +32,15 @@ services:
   central-ledger:
     image: mojaloop/central-ledger:latest
     container_name: ml_central-ledger
-    command:
-      - "sh"
-      - "-c"
-      - "sh /opt/wait-for/wait-for-central-ledger.sh && node src/api/index.js"
+    command: sh -c "/opt/central-ledger/wait4/wait4.js central-ledger && node src/api/index.js"
     links:
       - mysql
       - kafka
     ports:
       - "3001:3001"
     volumes:
-      # override the default values with our own
-       - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
-       - ./docker/wait-for:/opt/wait-for
+      - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
+      - ./docker/wait4:/opt/central-ledger/wait4
     depends_on:
       - mysql
       - kafka
