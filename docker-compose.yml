@@ -30,6 +30,34 @@ services:
       retries: 10
       interval: 30s
 
+  # a special server for testing integration callbacks
+  ml-api-adapter-endpoint:
+    build:
+      context: .
+    container_name: ml_ml-api-adapter-endpoint
+    command: sh -c "source test/.env; node test/integration/server/index.js"
+    ports:
+      - "4545:4545"
+    environment:
+      - LOG_LEVEL=info
+      - CSL_LOG_TRANSPORT=file
+      - LIB_RESOURCE_VERSIONS="transfers=1.1,participants=1.1"
+      - ENDPOINT_PORT=4545
+    volumes:
+      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
+      - ./test:/opt/ml-api-adapter/test
+    networks:
+      - ml-mojaloop-net
+    user: 'root'
+    depends_on:
+      - central-ledger
+      - kafka
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3000/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+
   central-ledger:
     image: mojaloop/central-ledger:latest
     container_name: ml_central-ledger
