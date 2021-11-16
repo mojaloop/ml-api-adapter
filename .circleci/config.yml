@@ -173,6 +173,8 @@ jobs:
           name: Run the integration tests
           command: | 
             npm run test:int
+          environment:
+            ENDPOINT_URL: http://localhost:4545/notification  
       - store_artifacts:
           path: ./test/results
           prefix: test
