@@ -158,8 +158,16 @@ jobs:
           name: Create dir for test results
           command: mkdir -p ./test/results
       - run:
+          name: Set up nvm
+          command: |
+            echo ${NVM_DIR}
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install v12.16.1
+            nvm alias default v12.16.1
+      - run:
           name: Build and start the docker containers
           command: | 
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             docker-compose build
             docker-compose pull
             docker-compose up -d
@@ -171,7 +179,8 @@ jobs:
             npm run wait-4-docker
       - run:
           name: Run the integration tests
-          command: | 
+          command: |
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             npm run test:int
           environment:
             ENDPOINT_URL: http://localhost:4545/notification  
