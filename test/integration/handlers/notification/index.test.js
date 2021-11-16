@@ -521,7 +521,6 @@ Test('Notification Handler', notificationHandlerTest => {
         Enum.Kafka.Config.PRODUCER, 
         Enum.Events.Event.Type.TRANSFER.toUpperCase(), 
         Enum.Events.Event.Action.FULFIL.toUpperCase()
-        // 'RESERVED-ABORTED'
       )
       const messageProtocol = {
         metadata: {
@@ -545,6 +544,7 @@ Test('Notification Handler', notificationHandlerTest => {
             'FSPIOP-Source': 'switch'
           },
           payload: {
+            // TODO: should we have the transferId here?
             transferId: transferId,
             completedTimestamp: '2021-05-24T08:38:08.699-04:00',
             transferState: 'ABORTED'

@@ -86,7 +86,6 @@ exports.receiveNotificationPut = async function (request, h) {
   const transferId = request.params.transferId
   const path = request.path
   const result = path.split('/')
-  const operation = () => {}
   const operation = (path.includes('error') ? 'error' : 'put')
   const fsp = result[1]
   console.log('OPERATION:: ', operation)

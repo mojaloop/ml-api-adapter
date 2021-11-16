@@ -37,7 +37,6 @@ services:
       context: .
     container_name: ml_ml-api-adapter-endpoint
     command: sh -c "node test/integration/server/index.js"
-    # command: sh -c "sleep infinity"
     ports:
       - "4545:4545"
     environment:
