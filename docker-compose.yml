@@ -15,6 +15,7 @@ services:
     environment:
       - LOG_LEVEL=info
       - CSL_LOG_TRANSPORT=file
+      - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:
       - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
       - ./docker/wait4:/opt/ml-api-adapter/wait4

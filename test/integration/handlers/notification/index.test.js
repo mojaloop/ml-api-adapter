@@ -86,9 +86,7 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
 
-      console.log('about to produce message')
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-      console.log('produced message')
 
       const operation = 'post'
       let response = await getNotifications(messageProtocol.to, operation, transferId)
