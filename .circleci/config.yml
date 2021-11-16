@@ -180,6 +180,7 @@ jobs:
           name: Run the integration tests
           command: |
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            sleep 60
             npm run test:int
           environment:
             ENDPOINT_URL: http://localhost:4545/notification  
