@@ -13,7 +13,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - LOG_LEVEL=info
+      - LOG_LEVEL=debug
       - CSL_LOG_TRANSPORT=file
       - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:

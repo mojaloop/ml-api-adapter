@@ -1916,7 +1916,7 @@ Test('Notification Service tests', async notificationTest => {
         value: {
           metadata: {
             event: {
-              type: 'prepare',
+              type: 'fulfil',
               action: 'reserved-aborted',
               state: {
                 status: 'error',

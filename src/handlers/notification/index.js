@@ -447,7 +447,8 @@ const processMessage = async (msg, span) => {
   // if (actionLower === ENUM.Events.Event.Action.RESERVED_ABORTED) {
   if (actionLower === 'reserved-aborted') {
     if (Config.PROTOCOL_VERSIONS.CONTENT !== '1.1') {
-      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping reserved_aborted notification callback (${from}).`)
+      console.log(JSON.stringify(Config.PROTOCOL_VERSIONS))
+      Logger.isDebugEnabled && Logger.debug(`HELLO! Notification::processMessage - Action: ${actionLower} - Skipping reserved_aborted notification callback (${from}).`)
       return
     }
 
