@@ -12,6 +12,7 @@ const expectedContainers = [
   'ml_central-ledger',
   'ml_kafka',
   'ml_ml-api-adapter',
+  'ml_ml-api-adapter-endpoint',
   'ml_mysql',
 ]
 
