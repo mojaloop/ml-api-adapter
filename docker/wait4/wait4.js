@@ -167,7 +167,6 @@ async function methodMySQL (waitJob, RC) {
   return waitJob
 }
 
-// TODO: update auth-service config to be standardized like other services
 /**
  * @function methodMySQLAlt
  * @description Waits for the MySQL service to be up and running based on deprecated config files

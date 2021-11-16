@@ -559,7 +559,6 @@ Test('Notification Handler', notificationHandlerTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, 
         Enum.Events.Event.Type.NOTIFICATION, 
-        // TODO: is this right?
         Enum.Events.Event.Action.EVENT
       )
 

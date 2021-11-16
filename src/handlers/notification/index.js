@@ -442,10 +442,7 @@ const processMessage = async (msg, span) => {
 
   // special event emitted by central-ledger when the Payee sent a status of `RESERVED` in PUT /transfers/{ID}
   // and the ledger failed to commit the transfer
-
-  // TODO: waiting for PR: https://github.com/mojaloop/central-services-shared/pull/317
-  // if (actionLower === ENUM.Events.Event.Action.RESERVED_ABORTED) {
-  if (actionLower === 'reserved-aborted') {
+  if (actionLower === ENUM.Events.Event.Action.RESERVED_ABORTED) {
     if (Config.PROTOCOL_VERSIONS.CONTENT !== '1.1') {
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping reserved_aborted notification callback (${from}).`)
       return
