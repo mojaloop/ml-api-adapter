@@ -10,6 +10,7 @@
   "PROTOCOL_VERSIONS": {
     "CONTENT": "1.1",
     "ACCEPT": {
+      "DEFAULT": "1",
       "VALIDATELIST": [
         "1",
         "1.1"

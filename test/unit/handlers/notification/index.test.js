@@ -69,7 +69,6 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(Logger, 'isInfoEnabled').value(true)
     sandbox.stub(Logger, 'isDebugEnabled').value(true)
 
-    // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(JwsSigner.prototype, 'constructor')
     sandbox.stub(JwsSigner.prototype, 'getSignature').returns(true)
@@ -174,6 +173,64 @@ Test('Notification Service tests', async notificationTest => {
       const result = await Notification.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process the message received from kafka and send out a transfer post callback with injected protocolVersions config', async test => {
+      const ConfigStub = Util.clone(Config)
+      // override the PROTOCOL_VERSIONS config
+      ConfigStub.PROTOCOL_VERSIONS = {
+        CONTENT: '2.1',
+        ACCEPT: {
+          DEFAULT: '2',
+          VALIDATELIST: [
+            '2',
+            '2.1'
+          ]
+        }
+      }
+
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {
+              transferId: uuid
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const method = ENUM.Http.RestMethods.POST
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
+      const message = { transferId: uuid }
+
+      const expected = true
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.equal(Callback.sendRequest.args[0][9].content, ConfigStub.PROTOCOL_VERSIONS.CONTENT)
+      test.equal(Callback.sendRequest.args[0][9].accept, ConfigStub.PROTOCOL_VERSIONS.ACCEPT.DEFAULT)
       test.end()
     })
 
