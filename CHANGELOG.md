@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [12.1.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.0.0...v12.1.0) (2021-12-14)
+
+
+### Features
+
+* **mojaloop/#2608:** injected resource versions config for outbound requests ([#490](https://github.com/mojaloop/ml-api-adapter/issues/490)) ([d46a05b](https://github.com/mojaloop/ml-api-adapter/commit/d46a05ba3d0573ad84beaca60667b1aa1d4b0445)), closes [mojaloop/#2608](https://github.com/mojaloop/ml-api-adapter/issues/2608)
+
 ## [12.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v11.2.0...v12.0.0) (2021-11-11)
 
 
