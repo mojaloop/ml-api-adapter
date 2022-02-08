@@ -2138,10 +2138,11 @@ Test('Notification Service tests', async notificationTest => {
 
       // Act
       try {
-        const result = await NotificationProxy.processMessage(msg)
+        // TODO: use this for validating the test
+        // const result = await NotificationProxy.processMessage(msg)
         test.notOk('Code should not be executed')
       } catch (err) {
-        //Assert
+        // Assert
         test.ok(Callback.sendRequest.calledWith(
           url,
           expectedHeaders,

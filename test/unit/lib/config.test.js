@@ -70,7 +70,7 @@ Test('Config tests', configTest => {
           '../../config/default.json': DefaultStub
         })
         test.ok(Config)
-        console.log("config", JSON.stringify(Config.PROTOCOL_VERSIONS))
+        console.log('config', JSON.stringify(Config.PROTOCOL_VERSIONS))
         test.ok('pass')
         test.deepEqual(Config.PROTOCOL_VERSIONS.ACCEPT.VALIDATELIST, validateList)
       } catch (e) {
@@ -83,10 +83,10 @@ Test('Config tests', configTest => {
       // Arrange
       const DefaultStub = Util.clone(Default)
       DefaultStub.PROTOCOL_VERSIONS = {
-        "CONTENT": "1.1",
-        "ACCEPT": {
-          "VALIDATELIST": [
-            "1",
+        CONTENT: '1.1',
+        ACCEPT: {
+          VALIDATELIST: [
+            '1'
           ]
         }
       }
@@ -95,21 +95,21 @@ Test('Config tests', configTest => {
         ACCEPT: {
           DEFAULT: '1',
           VALIDATELIST: [
-            '1',
+            '1'
           ]
         }
       }
-      
+
       // Act
       const Config = Proxyquire(`${src}/lib/config`, {
         '../../config/default.json': DefaultStub
       })
-      
+
       // Assert
-      console.log("config", JSON.stringify(Config.PROTOCOL_VERSIONS))
+      console.log('config', JSON.stringify(Config.PROTOCOL_VERSIONS))
       test.ok('pass')
       test.deepEqual(Config.PROTOCOL_VERSIONS, expected, 'PROTOCOL_VERSIONS should be parsed correctly')
-      
+
       test.end()
     })
 

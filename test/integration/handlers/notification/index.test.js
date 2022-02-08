@@ -517,9 +517,9 @@ Test('Notification Handler', notificationHandlerTest => {
     notificationTest.test('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(
-        Config.KAFKA_CONFIG, 
-        Enum.Kafka.Config.PRODUCER, 
-        Enum.Events.Event.Type.TRANSFER.toUpperCase(), 
+        Config.KAFKA_CONFIG,
+        Enum.Kafka.Config.PRODUCER,
+        Enum.Events.Event.Type.TRANSFER.toUpperCase(),
         Enum.Events.Event.Action.FULFIL.toUpperCase()
       )
       const messageProtocol = {
@@ -557,8 +557,8 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
-        Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, 
-        Enum.Events.Event.Type.NOTIFICATION, 
+        Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE,
+        Enum.Events.Event.Type.NOTIFICATION,
         Enum.Events.Event.Action.EVENT
       )
 
@@ -594,8 +594,8 @@ const getNotifications = async (fsp, operation, id) => {
     Logger.debug(`getNotifications: ${url}`)
     const response = await Request.sendRequest(
       url,
-      Fixtures.buildHeaders, 
-      Enum.Http.Headers.FSPIOP.SWITCH.value, 
+      Fixtures.buildHeaders,
+      Enum.Http.Headers.FSPIOP.SWITCH.value,
       Enum.Http.Headers.FSPIOP.SWITCH.value
     )
     return response.data
@@ -605,14 +605,13 @@ const getNotifications = async (fsp, operation, id) => {
   }
 }
 
-
 const wrapWithRetries = async (func, remainingRetries, timeout) => {
   try {
     const result = await func()
     if (!result) {
       throw new Error('result is undefined')
     }
-    return result 
+    return result
   } catch (err) {
     if (remainingRetries === 0) {
       throw err

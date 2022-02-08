@@ -16,8 +16,7 @@ Test('transfer service', async (modelTest) => {
       test.equal(result, true)
       test.pass()
       test.end()
-      console.log("why no exit!")
-      return
+      console.log('why no exit!')
     })
 
     prepareTest.end()

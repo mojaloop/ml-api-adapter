@@ -457,14 +457,14 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     const method = ENUM.Http.RestMethods.PATCH
     callbackHeaders = createCallbackHeaders({
-      dfspId: to, 
-      transferId: id, 
-      headers: content.headers, 
-      httpMethod: method, 
-      endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT 
+      dfspId: to,
+      transferId: id,
+      headers: content.headers,
+      httpMethod: method,
+      endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
     }, fromSwitch)
     Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-    
+
     // TODO: what should this be?
     const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
@@ -476,14 +476,14 @@ const processMessage = async (msg, span) => {
     try {
       jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
       callbackResponse = await Callback.sendRequest(
-        callbackURLTo, 
-        callbackHeaders, 
-        ENUM.Http.Headers.FSPIOP.SWITCH.value, 
-        to, 
-        method, 
-        payloadForCallback, 
-        ENUM.Http.ResponseTypes.JSON, 
-        span, 
+        callbackURLTo,
+        callbackHeaders,
+        ENUM.Http.Headers.FSPIOP.SWITCH.value,
+        to,
+        method,
+        payloadForCallback,
+        ENUM.Http.ResponseTypes.JSON,
+        span,
         jwsSigner
       )
     } catch (err) {

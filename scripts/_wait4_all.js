@@ -13,7 +13,7 @@ const expectedContainers = [
   'ml_kafka',
   'ml_ml-api-adapter',
   'ml_ml-api-adapter-endpoint',
-  'ml_mysql',
+  'ml_mysql'
 ]
 
 let retries = 40
@@ -82,7 +82,8 @@ async function updateServiceStatus (waitingMap) {
   const startingServices = getServicesForStatus(waitingMap, 'starting')
 
   Promise.all(startingServices.map(async serviceName => {
-    const currentStatus = waitingMap[serviceName]
+    // TODO: This info may be useful in future!
+    // const currentStatus = waitingMap[serviceName]
     const progress = await getProgress(serviceName)
     waitingMap[serviceName] = progress
   }))
