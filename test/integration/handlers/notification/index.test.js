@@ -514,6 +514,62 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
+    notificationTest.test('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(
+        Config.KAFKA_CONFIG, 
+        Enum.Kafka.Config.PRODUCER, 
+        Enum.Events.Event.Type.TRANSFER.toUpperCase(), 
+        Enum.Events.Event.Action.FULFIL.toUpperCase()
+      )
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: 'fulfil',
+            action: 'reserved-aborted',
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2021-11-02T00:00:00.000Z',
+            'FSPIOP-Destination': 'dfsp1',
+            'FSPIOP-Source': 'switch'
+          },
+          payload: {
+            // TODO: should we have the transferId here?
+            transferId: transferId,
+            completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+            transferState: 'ABORTED'
+          }
+        },
+        to: 'dfsp1',
+        from: 'switch',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(
+        Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, 
+        Enum.Events.Event.Type.NOTIFICATION, 
+        Enum.Events.Event.Action.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const operation = 'patch'
+      const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, transferId), 5, 2)
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
     notificationTest.test('tear down', async test => {
       await Kafka.Producer.disconnect()
       test.end()
@@ -534,10 +590,35 @@ function sleep (seconds) {
 
 const getNotifications = async (fsp, operation, id) => {
   try {
-    const response = await Request.sendRequest(`${getNotificationUrl}/${fsp}/${operation}/${id}`, Fixtures.buildHeaders, Enum.Http.Headers.FSPIOP.SWITCH.value, Enum.Http.Headers.FSPIOP.SWITCH.value)
+    const url = `${getNotificationUrl}/${fsp}/${operation}/${id}`
+    Logger.debug(`getNotifications: ${url}`)
+    const response = await Request.sendRequest(
+      url,
+      Fixtures.buildHeaders, 
+      Enum.Http.Headers.FSPIOP.SWITCH.value, 
+      Enum.Http.Headers.FSPIOP.SWITCH.value
+    )
     return response.data
   } catch (error) {
     Logger.error(error)
     throw error
+  }
+}
+
+
+const wrapWithRetries = async (func, remainingRetries, timeout) => {
+  try {
+    const result = await func()
+    if (!result) {
+      throw new Error('result is undefined')
+    }
+    return result 
+  } catch (err) {
+    if (remainingRetries === 0) {
+      throw err
+    }
+
+    await sleep(2)
+    return wrapWithRetries(func, remainingRetries - 1, timeout)
   }
 }

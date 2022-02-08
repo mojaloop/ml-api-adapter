@@ -68,15 +68,27 @@ Logs are sent to standard output by default.
 
 ## Tests
 
-Tests include unit, functional, and integration. 
+Take a look at the `package.json` file for a full list of the tests available.
 
-Running the tests:
+### Unit Tests
 
+```bash
+npm run test:unit
+```
 
-    npm run test:all
+### Integration Tests
 
+```bash
+# start docker-compose dependencies
+docker-compose up -d
 
-Tests include code coverage via istanbul. See the test/ folder for testing scripts.
+# wait for docker compoments to start
+npm run wait-4-docker
+
+# run the integration tests locally
+export ENDPOINT_URL=http://localhost:4545/notification
+npm run test:int
+```
 
 ## Auditing Dependencies
 

@@ -32,7 +32,6 @@
     "start": "run-p start:api",
     "start:api": "node src/api/index.js",
     "watch:api": "nodemon src/api/index.js",
-    "dev": "npm run docker:stop && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d",
     "pretest": "npx standard",
     "standard": "npx standard",
     "standard:fix": "npx standard --fix",
@@ -70,7 +69,8 @@
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`",
     "dep:check": "npx ncu -e 2",
     "dep:update": "npx ncu -u",
-    "release": "standard-version --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'"
+    "release": "standard-version --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'",
+    "wait-4-docker": "node ./scripts/_wait4_all.js"
   },
   "dependencies": {
     "@hapi/basic": "6.0.0",
@@ -85,7 +85,7 @@
     "@mojaloop/central-services-health": "13.0.0",
     "@mojaloop/central-services-logger": "10.6.2",
     "@mojaloop/central-services-metrics": "11.0.0",
-    "@mojaloop/central-services-shared": "15.2.0",
+    "@mojaloop/central-services-shared": "git+https://github.com/vessels-tech/central-services-shared.git#feat/2553-patch-notification",
     "@mojaloop/central-services-stream": "10.7.0",
     "@mojaloop/event-sdk": "10.7.1",
     "@mojaloop/forensic-logging-client": "8.3.0",
@@ -107,6 +107,7 @@
   "devDependencies": {
     "get-port": "5.1.1",
     "jsdoc": "3.6.7",
+    "leaked-handles": "^5.2.0",
     "license-checker": "25.0.1",
     "nodemon": "2.0.15",
     "npm-audit-resolver": "2.3.1",

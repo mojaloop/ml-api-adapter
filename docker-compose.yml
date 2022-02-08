@@ -8,25 +8,20 @@ services:
   ml-api-adapter:
     build:
       context: .
-      cache_from:
-        - mojaloop/ml-api-adapter
-        - central-ledger
     container_name: ml_ml-api-adapter
-    command:
-      - "sh"
-      - "-c"
-      - "sh /opt/wait-for/wait-for-ml-api-adapter.sh && node src/api/index.js"
+    command: sh -c "/opt/ml-api-adapter/wait4/wait4.js ml-api-adapter && node src/api/index.js"
     ports:
       - "3000:3000"
     environment:
-      - LOG_LEVEL=info
+      - LOG_LEVEL=debug
       - CSL_LOG_TRANSPORT=file
+      - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:
-      # override the default values with our own - this is because the KAFKA_HOST env variable is ignored for some reason
-       - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
-       - ./docker/wait-for:/opt/wait-for
+      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
+      - ./docker/wait4:/opt/ml-api-adapter/wait4
     networks:
       - ml-mojaloop-net
+    user: 'root'
     depends_on:
       - central-ledger
       - kafka
@@ -36,22 +31,45 @@ services:
       retries: 10
       interval: 30s
 
+  # a special server for testing integration callbacks
+  ml-api-adapter-endpoint:
+    build:
+      context: .
+    container_name: ml_ml-api-adapter-endpoint
+    command: sh -c "node test/integration/server/index.js"
+    ports:
+      - "4545:4545"
+    environment:
+      - LOG_LEVEL=info
+      - CSL_LOG_TRANSPORT=file
+      - ENDPOINT_PORT=4545
+    volumes:
+      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
+      - ./test:/opt/ml-api-adapter/test
+    networks:
+      - ml-mojaloop-net
+    user: 'root'
+    depends_on:
+      - central-ledger
+      - kafka
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:4545/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+
   central-ledger:
     image: mojaloop/central-ledger:latest
     container_name: ml_central-ledger
-    command:
-      - "sh"
-      - "-c"
-      - "sh /opt/wait-for/wait-for-central-ledger.sh && node src/api/index.js"
+    command: sh -c "/opt/central-ledger/wait4/wait4.js central-ledger && node src/api/index.js"
     links:
       - mysql
       - kafka
     ports:
       - "3001:3001"
     volumes:
-      # override the default values with our own
-       - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
-       - ./docker/wait-for:/opt/wait-for
+      - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
+      - ./docker/wait4:/opt/central-ledger/wait4
     depends_on:
       - mysql
       - kafka
@@ -59,8 +77,9 @@ services:
       - CLEDG_SIDECAR__DISABLED=true
     networks:
       - ml-mojaloop-net
+    user: 'root'
     healthcheck:
-      test: ["CMD", "bash", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3001/health"]
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3001/health"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -106,7 +125,7 @@ services:
     networks:
       - ml-mojaloop-net
     healthcheck:
-      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","localhost:9092"]
+      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","kafka:29092"]
       timeout: 20s
       retries: 10
       start_period: 40s
