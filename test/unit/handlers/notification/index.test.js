@@ -2163,494 +2163,494 @@ Test('Notification Service tests', async notificationTest => {
     await processMessageTest.end()
   })
 
-  // await notificationTest.test('startConsumer should', async startConsumerTest => {
-  //   await startConsumerTest.test('start the consumer and consumer messages', async test => {
-  //     test.ok(await Notification.startConsumer())
-  //     test.end()
-  //   })
+  await notificationTest.test('startConsumer should', async startConsumerTest => {
+    await startConsumerTest.test('start the consumer and consumer messages', async test => {
+      test.ok(await Notification.startConsumer())
+      test.end()
+    })
 
-  //   await startConsumerTest.test('start the consumer and consumer messages with auto-commit enabled', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = undefined
-  //     test.ok(await Notification.startConsumer())
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    await startConsumerTest.test('start the consumer and consumer messages with auto-commit enabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = undefined
+      test.ok(await Notification.startConsumer())
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   await startConsumerTest.test('throw error on error connecting to kafka', async test => {
-  //     const error = new Error()
-  //     Consumer.prototype.connect.returns(Promise.reject(error))
-  //     try {
-  //       await Notification.startConsumer()
-  //       test.fail('Was expecting an error when connecting to Kafka')
-  //       test.end()
-  //     } catch (e) {
-  //       test.ok(e instanceof Error)
-  //       test.end()
-  //     }
-  //   })
+    await startConsumerTest.test('throw error on error connecting to kafka', async test => {
+      const error = new Error()
+      Consumer.prototype.connect.returns(Promise.reject(error))
+      try {
+        await Notification.startConsumer()
+        test.fail('Was expecting an error when connecting to Kafka')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
 
-  //   await startConsumerTest.end()
-  // })
+    await startConsumerTest.end()
+  })
 
-  // await notificationTest.test('consumeMessage should', async consumeMessageTest => {
-  //   await consumeMessageTest.test('process the message', async test => {
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok(result)
-  //     test.end()
-  //   })
+  await notificationTest.test('consumeMessage should', async consumeMessageTest => {
+    await consumeMessageTest.test('process the message', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+    })
 
-  //   await consumeMessageTest.test('process the message with auto-commit enabled', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok(result)
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    await consumeMessageTest.test('process the message with auto-commit enabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
-  //     const ts = {
-  //       spanId: '203f89c23748cfb1',
-  //       timeApiPrepare: Date.now()
-  //     }
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           },
-  //           trace: {
-  //             startTimestamp: new Date().toISOString(),
-  //             service: 'parent service',
-  //             traceId: 'a2e298d549a55ee9ac342c6b42f58923',
-  //             spanId: '203f89c23748cfb1',
-  //             tags: {
-  //               tracestate: `acmevendor=${Buffer.from(JSON.stringify(ts)).toString('base64')}`
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok(result)
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const ts = {
+        spanId: '203f89c23748cfb1',
+        timeApiPrepare: Date.now()
+      }
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            },
+            trace: {
+              startTimestamp: new Date().toISOString(),
+              service: 'parent service',
+              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
+              spanId: '203f89c23748cfb1',
+              tags: {
+                tracestate: `acmevendor=${Buffer.from(JSON.stringify(ts)).toString('base64')}`
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   consumeMessageTest.test('process the message with tracestate metrics for fulfil', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
-  //     const ts = {
-  //       spanId: '203f89c23748cfb1',
-  //       timeApiPrepare: Date.now(),
-  //       timeApiFulfil: Date.now()
-  //     }
+    consumeMessageTest.test('process the message with tracestate metrics for fulfil', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const ts = {
+        spanId: '203f89c23748cfb1',
+        timeApiPrepare: Date.now(),
+        timeApiFulfil: Date.now()
+      }
 
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'fulfil',
-  //             action: 'fulfil',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           },
-  //           trace: {
-  //             startTimestamp: new Date().toISOString(),
-  //             service: 'parent service',
-  //             traceId: 'a2e298d549a55ee9ac342c6b42f58923',
-  //             spanId: '203f89c23748cfb1',
-  //             tags: {
-  //               tracestate: `acmevendor=${Buffer.from(JSON.stringify(ts)).toString('base64')}`
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok((result === false))
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'fulfil',
+              action: 'fulfil',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            },
+            trace: {
+              startTimestamp: new Date().toISOString(),
+              service: 'parent service',
+              traceId: 'a2e298d549a55ee9ac342c6b42f58923',
+              spanId: '203f89c23748cfb1',
+              tags: {
+                tracestate: `acmevendor=${Buffer.from(JSON.stringify(ts)).toString('base64')}`
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok((result === false))
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   consumeMessageTest.test('process the message for reserve action', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'notification',
-  //             action: 'reserve',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {
-  //             fulfilment: 'test'
-  //           }
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok((result === true))
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    consumeMessageTest.test('process the message for reserve action', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'reserve',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {
+              fulfilment: 'test'
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok((result === true))
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   consumeMessageTest.test('process the message with auto-commit disabled', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok(result)
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    consumeMessageTest.test('process the message with auto-commit disabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   await consumeMessageTest.test('process the message with action = get', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'get',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok(result)
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    await consumeMessageTest.test('process the message with action = get', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'get',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   await consumeMessageTest.test('process the message with action = get and unsuccessful message status', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'get',
-  //             state: {
-  //               status: 'error',
-  //               code: 1
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     test.ok(await Notification.startConsumer())
-  //     const result = await Notification.consumeMessage(null, [msg])
-  //     test.ok(result)
-  //     test.end()
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    await consumeMessageTest.test('process the message with action = get and unsuccessful message status', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'get',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      test.ok(await Notification.startConsumer())
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   await consumeMessageTest.test('throw error is there is any error processing the message', async test => {
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     try {
-  //       await Notification.consumeMessage(null, [msg])
-  //       test.fail('Should not have caught an error here since it should have been dealt with')
-  //       test.end()
-  //     } catch (e) {
-  //       test.pass('Error successfully thrown')
-  //       test.end()
-  //     }
-  //   })
+    await consumeMessageTest.test('throw error is there is any error processing the message', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      try {
+        await Notification.consumeMessage(null, [msg])
+        test.fail('Should not have caught an error here since it should have been dealt with')
+        test.end()
+      } catch (e) {
+        test.pass('Error successfully thrown')
+        test.end()
+      }
+    })
 
-  //   await consumeMessageTest.test('throw error is there is any error processing the message with auto-commit enabled', async test => {
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     try {
-  //       test.ok(await Notification.startConsumer())
-  //       await Notification.consumeMessage(null, [msg])
-  //       test.fail('Should not have caught an error here since it should have been dealt with')
-  //       test.end()
-  //     } catch (e) {
-  //       test.pass('Error successfully thrown')
-  //       test.end()
-  //     }
-  //     Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-  //   })
+    await consumeMessageTest.test('throw error is there is any error processing the message with auto-commit enabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      try {
+        test.ok(await Notification.startConsumer())
+        await Notification.consumeMessage(null, [msg])
+        test.fail('Should not have caught an error here since it should have been dealt with')
+        test.end()
+      } catch (e) {
+        test.pass('Error successfully thrown')
+        test.end()
+      }
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+    })
 
-  //   await consumeMessageTest.test('convert a single message into an array', async test => {
-  //     const msg = {
-  //       value: {
-  //         metadata: {
-  //           event: {
-  //             type: 'prepare',
-  //             action: 'prepare',
-  //             state: {
-  //               status: 'success',
-  //               code: 0
-  //             }
-  //           }
-  //         },
-  //         content: {
-  //           headers: {},
-  //           payload: {}
-  //         },
-  //         to: 'dfsp2',
-  //         from: 'dfsp1',
-  //         id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
-  //       }
-  //     }
-  //     const result = await Notification.consumeMessage(null, msg)
-  //     test.ok(result === true)
-  //     test.end()
-  //   })
+    await consumeMessageTest.test('convert a single message into an array', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {}
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const result = await Notification.consumeMessage(null, msg)
+      test.ok(result === true)
+      test.end()
+    })
 
-  //   await consumeMessageTest.test('throw error on invalid message', async test => {
-  //     const msg = {
-  //     }
+    await consumeMessageTest.test('throw error on invalid message', async test => {
+      const msg = {
+      }
 
-  //     const message = [msg]
-  //     const error = new Error()
+      const message = [msg]
+      const error = new Error()
 
-  //     try {
-  //       await Notification.consumeMessage(error, message)
-  //       test.fail('ehe')
-  //       test.end()
-  //     } catch (e) {
-  //       test.ok(e instanceof Error)
-  //       test.end()
-  //     }
-  //   })
+      try {
+        await Notification.consumeMessage(error, message)
+        test.fail('ehe')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.end()
+      }
+    })
 
-  //   await consumeMessageTest.end()
-  // })
+    await consumeMessageTest.end()
+  })
 
-  // await notificationTest.test('isConnected', async isConnectedTest => {
-  //   await isConnectedTest.test('reject with an error if getMetadata fails', async test => {
-  //     // Arrange
-  //     const NotificationProxy = rewire(`${src}/handlers/notification`)
-  //     NotificationProxy.__set__('notificationConsumer', {
-  //       // Callback with error
-  //       getMetadata: (options, cb) => {
-  //         const error = new Error('test err message')
-  //         cb(error, null)
-  //       }
-  //     })
+  await notificationTest.test('isConnected', async isConnectedTest => {
+    await isConnectedTest.test('reject with an error if getMetadata fails', async test => {
+      // Arrange
+      const NotificationProxy = rewire(`${src}/handlers/notification`)
+      NotificationProxy.__set__('notificationConsumer', {
+        // Callback with error
+        getMetadata: (options, cb) => {
+          const error = new Error('test err message')
+          cb(error, null)
+        }
+      })
 
-  //     // Act
-  //     try {
-  //       await NotificationProxy.isConnected()
-  //       test.fail('Error not thrown!')
-  //     } catch (err) {
-  //       // Assert
-  //       test.equal(err.message, 'Error connecting to consumer: Error: test err message', 'Error message does not match')
-  //       test.pass('Error successfully thrown')
-  //     }
-  //     test.end()
-  //   })
+      // Act
+      try {
+        await NotificationProxy.isConnected()
+        test.fail('Error not thrown!')
+      } catch (err) {
+        // Assert
+        test.equal(err.message, 'Error connecting to consumer: Error: test err message', 'Error message does not match')
+        test.pass('Error successfully thrown')
+      }
+      test.end()
+    })
 
-  //   await isConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
-  //     // Arrange
-  //     const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-  //     const topicName = topicConf.topicName
-  //     const NotificationProxy = rewire(`${src}/handlers/notification`)
-  //     const metadata = {
-  //       orig_broker_id: 0,
-  //       orig_broker_name: 'kafka:9092/0',
-  //       topics: [],
-  //       brokers: [{ id: 0, host: 'kafka', port: 9092 }]
-  //     }
-  //     NotificationProxy.__set__('notificationConsumer', {
-  //       // Successful callback
-  //       getMetadata: (options, cb) => cb(null, metadata)
-  //     })
+    await isConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
+      // Arrange
+      const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+      const topicName = topicConf.topicName
+      const NotificationProxy = rewire(`${src}/handlers/notification`)
+      const metadata = {
+        orig_broker_id: 0,
+        orig_broker_name: 'kafka:9092/0',
+        topics: [],
+        brokers: [{ id: 0, host: 'kafka', port: 9092 }]
+      }
+      NotificationProxy.__set__('notificationConsumer', {
+        // Successful callback
+        getMetadata: (options, cb) => cb(null, metadata)
+      })
 
-  //     // Act
-  //     try {
-  //       await NotificationProxy.isConnected()
-  //       test.fail('Error not thrown!')
-  //     } catch (err) {
-  //       // Assert
-  //       test.equal(err.message, `Connected to consumer, but ${topicName} not found.`, 'Error message does not match')
-  //       test.pass('Error successfully thrown')
-  //     }
-  //     test.end()
-  //   })
+      // Act
+      try {
+        await NotificationProxy.isConnected()
+        test.fail('Error not thrown!')
+      } catch (err) {
+        // Assert
+        test.equal(err.message, `Connected to consumer, but ${topicName} not found.`, 'Error message does not match')
+        test.pass('Error successfully thrown')
+      }
+      test.end()
+    })
 
-  //   await isConnectedTest.test('pass if the topic can be found', async test => {
-  //     // Arrange
-  //     const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-  //     const topicName = topicConf.topicName
-  //     const NotificationProxy = rewire(`${src}/handlers/notification`)
-  //     const metadata = {
-  //       orig_broker_id: 0,
-  //       orig_broker_name: 'kafka:9092/0',
-  //       topics: [
-  //         { name: topicName, partitions: [] }
-  //       ],
-  //       brokers: [{ id: 0, host: 'kafka', port: 9092 }]
-  //     }
-  //     NotificationProxy.__set__('notificationConsumer', {
-  //       // Successful callback
-  //       getMetadata: (options, cb) => cb(null, metadata)
-  //     })
+    await isConnectedTest.test('pass if the topic can be found', async test => {
+      // Arrange
+      const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
+      const topicName = topicConf.topicName
+      const NotificationProxy = rewire(`${src}/handlers/notification`)
+      const metadata = {
+        orig_broker_id: 0,
+        orig_broker_name: 'kafka:9092/0',
+        topics: [
+          { name: topicName, partitions: [] }
+        ],
+        brokers: [{ id: 0, host: 'kafka', port: 9092 }]
+      }
+      NotificationProxy.__set__('notificationConsumer', {
+        // Successful callback
+        getMetadata: (options, cb) => cb(null, metadata)
+      })
 
-  //     // Act
-  //     let result
-  //     try {
-  //       result = await NotificationProxy.isConnected()
-  //     } catch (err) {
-  //       test.fail(err.message)
-  //     }
+      // Act
+      let result
+      try {
+        result = await NotificationProxy.isConnected()
+      } catch (err) {
+        test.fail(err.message)
+      }
 
-  //     // Assert
-  //     test.equal(result, true, 'isConnected should return true')
-  //     test.end()
-  //   })
+      // Assert
+      test.equal(result, true, 'isConnected should return true')
+      test.end()
+    })
 
-  //   await isConnectedTest.end()
-  // })
+    await isConnectedTest.end()
+  })
 
   await notificationTest.end()
 })
