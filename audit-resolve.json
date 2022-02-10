@@ -96,43 +96,43 @@
     },
     "1004854|@mojaloop/central-services-shared>widdershins>openapi-sampler>json-pointer": {
       "decision": "ignore",
-      "madeAt": 1639467580396,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493471030,
+      "expiresAt": 1647085463820
     },
     "1004869|@mojaloop/central-services-shared>widdershins>swagger2openapi>better-ajv-errors>jsonpointer": {
       "decision": "ignore",
-      "madeAt": 1639467581844,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493472292,
+      "expiresAt": 1647085463820
     },
     "1004869|@mojaloop/central-services-shared>widdershins>swagger2openapi>oas-validator>better-ajv-errors>jsonpointer": {
       "decision": "ignore",
-      "madeAt": 1639467581844,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493472293,
+      "expiresAt": 1647085463820
     },
     "1004946|@mojaloop/central-services-shared>widdershins>yargs>string-width>strip-ansi>ansi-regex": {
       "decision": "ignore",
-      "madeAt": 1639467582894,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493473344,
+      "expiresAt": 1647085463820
     },
     "1004946|@mojaloop/central-services-shared>widdershins>yargs>cliui>string-width>strip-ansi>ansi-regex": {
       "decision": "ignore",
-      "madeAt": 1639467582894,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493473344,
+      "expiresAt": 1647085463820
     },
     "1005383|@mojaloop/central-services-shared>shins>sanitize-html": {
       "decision": "ignore",
-      "madeAt": 1639467583960,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493474394,
+      "expiresAt": 1647085463820
     },
     "1005384|@mojaloop/central-services-shared>shins>sanitize-html": {
       "decision": "ignore",
-      "madeAt": 1639467583960,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493474394,
+      "expiresAt": 1647085463820
     },
     "1005534|@mojaloop/central-services-shared>widdershins>yargs>yargs-parser": {
       "decision": "ignore",
-      "madeAt": 1639467585064,
-      "expiresAt": 1642059574095
+      "madeAt": 1644493475509,
+      "expiresAt": 1647085463820
     },
     "1006767|hapi-swagger>swagger-ui-dist": {
       "decision": "ignore",
@@ -161,6 +161,16 @@
       "decision": "ignore",
       "madeAt": 1644323750400,
       "expiresAt": 1646915719714
+    },
+    "1006846|@mojaloop/central-services-shared>shins>sanitize-html>postcss": {
+      "decision": "ignore",
+      "madeAt": 1644493476539,
+      "expiresAt": 1647085463820
+    },
+    "1006886|@mojaloop/central-services-shared>shins>markdown-it": {
+      "decision": "ignore",
+      "madeAt": 1644493477610,
+      "expiresAt": 1647085463820
     }
   },
   "rules": {},
