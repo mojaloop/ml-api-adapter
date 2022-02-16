@@ -424,7 +424,6 @@ const processMessage = async (msg, span) => {
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT_VALIDATION) {
-    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
     // forward the abort to the destination
@@ -433,7 +432,8 @@ const processMessage = async (msg, span) => {
     await Callback.sendRequest(callbackURLTo, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to && from !== ENUM.Http.Headers.FSPIOP.SWITCH.value) {
+      const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
       await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
@@ -484,7 +484,8 @@ const processMessage = async (msg, span) => {
         payloadForCallback,
         ENUM.Http.ResponseTypes.JSON,
         span,
-        jwsSigner
+        jwsSigner,
+        protocolVersions
       )
     } catch (err) {
       histTimerEnd({ success: false, action })
