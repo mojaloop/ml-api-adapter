@@ -70,6 +70,7 @@ Test('validator', validatorTest => {
     fulfilTransferTest.test('use setting with missing or undefined MAX_FULFIL_TIMEOUT_DURATION_SECONDS config', test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.MAX_FULFIL_TIMEOUT_DURATION_SECONDS = undefined
+      ConfigStub.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS = 10000
       const ValidatorProxy = Proxyquire('../../../src/lib/validator', {
         '../lib/config': ConfigStub
       })
