@@ -465,7 +465,6 @@ const processMessage = async (msg, span) => {
     }, fromSwitch)
     Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
 
-    // TODO: what should this be?
     const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
       'notification_event_delivery - metric for sending notification requests to FSPs',
@@ -488,6 +487,7 @@ const processMessage = async (msg, span) => {
         protocolVersions
       )
     } catch (err) {
+      histTimerEndSendRequest({ success: false, dest: from, action, status: callbackResponse.status })
       histTimerEnd({ success: false, action })
       throw err
     }
