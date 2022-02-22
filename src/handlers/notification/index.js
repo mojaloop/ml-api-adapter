@@ -487,11 +487,11 @@ const processMessage = async (msg, span) => {
         protocolVersions
       )
     } catch (err) {
-      histTimerEndSendRequest({ success: false, dest: from, action, status: callbackResponse.status })
+      histTimerEndSendRequest({ success: false, dest: from, action, status: callbackResponse && callbackResponse.status })
       histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, dest: from, action, status: callbackResponse.status })
+    histTimerEndSendRequest({ success: true, dest: from, action, status: callbackResponse && callbackResponse.status })
     histTimerEnd({ success: true, action })
     return callbackResponse
   }
