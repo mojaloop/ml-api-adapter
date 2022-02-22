@@ -99,6 +99,26 @@ exports.receiveNotificationPut = async function (request, h) {
   return h.response(true).code(200)
 }
 
+exports.receiveNotificationPatch = async function (request, h) {
+  console.log('Received receiveNotificationPatch message')
+  console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
+  console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
+
+  const transferId = request.params.transferId
+  const path = request.path
+  const result = path.split('/')
+  const operation = 'patch'
+  const fsp = result[1]
+  console.log('receiveNotificationPatch::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
+  notifications[fsp] = {}
+  notifications[fsp][operation] = {}
+  notifications[fsp][operation][transferId] = {
+    payload: request.payload,
+    dataUri: request.dataUri
+  }
+  return h.response(true).code(200)
+}
+
 exports.getNotification = async function (request, h) {
   console.log('getNotification::transferId(%s),fsp(%s),operation(%s)', request.params.transferId, request.params.fsp, request.params.operation)
   const transferId = request.params.transferId
@@ -107,8 +127,6 @@ exports.getNotification = async function (request, h) {
   let response = null
   if (notifications[fsp] && notifications[fsp][operation] && notifications[fsp][operation][transferId]) {
     response = notifications[fsp][operation][transferId]
-  // } else {
-  //   response = notifications
   }
   console.log('Response: %s', JSON.stringify(response))
   return h.response(response).code(200)

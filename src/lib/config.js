@@ -1,4 +1,5 @@
-const RC = require('parse-strings-in-object')(require('rc')('MLAPI', require('../../config/default.json')))
+// const RC = require('parse-strings-in-object')(require('rc')('MLAPI', require('../../config/default.json')))
+const RC = require('rc')('MLAPI', require('../../config/default.json'))
 const fs = require('fs')
 
 const getFileContent = (path) => {
@@ -21,9 +22,20 @@ const DEFAULT_PROTOCOL_VERSION = {
 }
 
 const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) => {
-  const T_PROTOCOL_VERSION = { ...defaultProtocolVersions, ...overrideProtocolVersions }
-  if (overrideProtocolVersions && overrideProtocolVersions.ACCEPT) T_PROTOCOL_VERSION.ACCEPT = { ...defaultProtocolVersions.ACCEPT, ...overrideProtocolVersions.ACCEPT }
-  if (T_PROTOCOL_VERSION.ACCEPT && T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST && (typeof T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST === 'string' || T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST instanceof String)) {
+  const T_PROTOCOL_VERSION = {
+    ...defaultProtocolVersions,
+    ...overrideProtocolVersions
+  }
+  if (overrideProtocolVersions && overrideProtocolVersions.ACCEPT) {
+    T_PROTOCOL_VERSION.ACCEPT = {
+      ...defaultProtocolVersions.ACCEPT,
+      ...overrideProtocolVersions.ACCEPT
+    }
+  }
+  if (T_PROTOCOL_VERSION.ACCEPT &&
+    T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST &&
+    (typeof T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST === 'string' ||
+      T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST instanceof String)) {
     T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST = JSON.parse(T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST)
   }
   return T_PROTOCOL_VERSION

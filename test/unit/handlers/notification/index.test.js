@@ -1959,6 +1959,207 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('ignore a RESERVED_ABORTED message if the API version !== 1.1', async test => {
+      // Arrange
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.2'
+      ConfigStub.JWS_SIGN = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'fulfil',
+              action: 'reserved-aborted',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': 'dfsp1',
+              'FSPIOP-Source': 'switch'
+            },
+            // TODO: double check - is this a valid payload?
+            payload: {
+              transferId: uuid,
+              completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+              transferState: 'ABORTED'
+            }
+          },
+          to: 'dfsp1',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      // Act
+      const result = await NotificationProxy.processMessage(msg)
+
+      // Assert
+      const callbackCall = Callback.sendRequest.getCall(0)
+      test.equal(callbackCall, null, 'Callback.sendRequest should not have been called')
+      test.equal(result, undefined, 'NotificationProxy.processMessage should resolve to undefined')
+      test.end()
+    })
+
+    await processMessageTest.test('process a RESERVED_ABORTED message if the API version === 1.1', async test => {
+      // Arrange
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.1'
+      ConfigStub.JWS_SIGN = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'reserved-aborted',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': 'dfsp1',
+              'FSPIOP-Source': 'switch'
+            },
+            // TODO: double check - is this a valid payload?
+            payload: {
+              transferId: uuid,
+              completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+              transferState: 'ABORTED'
+            }
+          },
+          to: 'dfsp1',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const expectedHeaders = createCallbackHeaders({
+        dfspId: 'dfsp1',
+        transferId: uuid,
+        headers: msg.value.content.headers,
+        httpMethod: ENUM.Http.RestMethods.PATCH,
+        endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
+      }, true)
+      const expectedMessageStr = JSON.stringify({
+        // hmm I don't think this should include the transferId!
+        transferId: uuid,
+        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+        transferState: 'ABORTED'
+      })
+
+      // Act
+      const result = await NotificationProxy.processMessage(msg)
+
+      // Assert
+      test.ok(Callback.sendRequest.calledWith(
+        url,
+        expectedHeaders,
+        msg.value.from,
+        msg.value.to,
+        ENUM.Http.RestMethods.PATCH,
+        expectedMessageStr,
+        ENUM.Http.ResponseTypes.JSON,
+        undefined,
+        undefined
+      ), 'Callback.sendRequest was called with the expected args')
+      test.equal(result, true, 'NotificationProxy.processMessage should match the expected')
+      test.end()
+    })
+
+    await processMessageTest.test('throws an error if Callback.sendRequest fails', async test => {
+      // Arrange
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.1'
+      ConfigStub.JWS_SIGN = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      // Override mock
+      Callback.sendRequest.returns(Promise.reject(new Error('Test Error')))
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'reserved-aborted',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': 'dfsp1',
+              'FSPIOP-Source': 'switch'
+            },
+            // TODO: double check - is this a valid payload?
+            payload: {
+              transferId: uuid,
+              completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+              transferState: 'ABORTED'
+            }
+          },
+          to: 'dfsp1',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const expectedHeaders = createCallbackHeaders({
+        dfspId: 'dfsp1',
+        transferId: uuid,
+        headers: msg.value.content.headers,
+        httpMethod: ENUM.Http.RestMethods.PATCH,
+        endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
+      }, true)
+      const expectedMessageStr = JSON.stringify({
+        // hmm I don't think this should include the transferId!
+        transferId: uuid,
+        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+        transferState: 'ABORTED'
+      })
+
+      // Act
+      try {
+        // TODO: use this for validating the test
+        await NotificationProxy.processMessage(msg)
+        test.notOk('Code should not be executed')
+      } catch (err) {
+        // Assert
+        test.ok(Callback.sendRequest.calledWith(
+          url,
+          expectedHeaders,
+          msg.value.from,
+          msg.value.to,
+          ENUM.Http.RestMethods.PATCH,
+          expectedMessageStr,
+          ENUM.Http.ResponseTypes.JSON,
+          undefined,
+          undefined
+        ), 'Callback.sendRequest was called with the expected args')
+        test.equal(err.message, 'Test Error')
+      }
+
+      test.end()
+    })
+
     await processMessageTest.end()
   })
 
