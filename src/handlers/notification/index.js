@@ -454,6 +454,7 @@ const processMessage = async (msg, span) => {
       return
     }
 
+    // TODO: this should possibly be address by a new endpoint-type FSPIOP_CALLBACK_URL_TRANSFER_PATCH, but for the time being lets avoid adding a new enum as we want to simplify the configurations and consolidate them instead in future.
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
     const method = ENUM.Http.RestMethods.PATCH
     callbackHeaders = createCallbackHeaders({
