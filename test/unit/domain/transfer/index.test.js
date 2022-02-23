@@ -95,7 +95,7 @@ Test('Transfer Service tests', serviceTest => {
         id: message.transferId,
         to: message.payeeFsp,
         from: message.payerFsp,
-        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
           headers: headers,
           payload: message
@@ -192,7 +192,7 @@ Test('Transfer Service tests', serviceTest => {
         id,
         to: headers['fspiop-destination'],
         from: headers['fspiop-source'],
-        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
           headers: headers,
           payload: message
@@ -324,7 +324,7 @@ Test('Transfer Service tests', serviceTest => {
         id: message.id,
         to: message.payeeFsp,
         from: message.payerFsp,
-        type: 'application/vnd.interoperability.transfers+json;version=1.0',
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
           headers: headers,
           payload: message
@@ -382,7 +382,7 @@ Test('Transfer Service tests', serviceTest => {
       id,
       to: headers['fspiop-destination'],
       from: headers['fspiop-source'],
-      type: 'application/vnd.interoperability.transfers+json;version=1.0',
+      type: 'application/vnd.interoperability.transfers+json;version=1.1',
       content: {
         headers: headers,
         payload: message

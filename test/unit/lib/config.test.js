@@ -56,6 +56,59 @@ Test('Config tests', configTest => {
       } catch (e) {
         test.fail('should throw')
       }
+      test.end()
+    })
+
+    getFileContentTest.test('should pass ENV var MLAPI_PROTOCOL_VERSIONS__ACCEPT__VALIDATELIST as a string', test => {
+      try {
+        const DefaultStub = Util.clone(Default)
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = true
+        // set env var
+        const validateList = ['1']
+        process.env.MLAPI_PROTOCOL_VERSIONS__ACCEPT__VALIDATELIST = JSON.stringify(validateList)
+        const Config = Proxyquire(`${src}/lib/config`, {
+          '../../config/default.json': DefaultStub
+        })
+        test.ok(Config)
+        console.log('config', JSON.stringify(Config.PROTOCOL_VERSIONS))
+        test.ok('pass')
+        test.deepEqual(Config.PROTOCOL_VERSIONS.ACCEPT.VALIDATELIST, validateList)
+      } catch (e) {
+        test.fail('should throw')
+      }
+      test.end()
+    })
+
+    getFileContentTest.test('variables in default.json should be strings, not numbers', test => {
+      // Arrange
+      const DefaultStub = Util.clone(Default)
+      DefaultStub.PROTOCOL_VERSIONS = {
+        CONTENT: '1.1',
+        ACCEPT: {
+          VALIDATELIST: [
+            '1'
+          ]
+        }
+      }
+      const expected = {
+        CONTENT: '1.1',
+        ACCEPT: {
+          DEFAULT: '1',
+          VALIDATELIST: [
+            '1'
+          ]
+        }
+      }
+
+      // Act
+      const Config = Proxyquire(`${src}/lib/config`, {
+        '../../config/default.json': DefaultStub
+      })
+
+      // Assert
+      console.log('config', JSON.stringify(Config.PROTOCOL_VERSIONS))
+      test.ok('pass')
+      test.deepEqual(Config.PROTOCOL_VERSIONS, expected, 'PROTOCOL_VERSIONS should be parsed correctly')
 
       test.end()
     })
@@ -73,7 +126,6 @@ Test('Config tests', configTest => {
       } catch (e) {
         test.ok(e, 'File /fake/path doesn\'t exist, can\'t enable JWS signing')
       }
-
       test.end()
     })
 

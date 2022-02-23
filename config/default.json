@@ -7,6 +7,16 @@
     "expiresIn": 180000,
     "generateTimeout": 30000
   },
+  "PROTOCOL_VERSIONS": {
+    "CONTENT": "1.1",
+    "ACCEPT": {
+      "DEFAULT": "1",
+      "VALIDATELIST": [
+        "1",
+        "1.1"
+      ]
+    }
+  },
   "ENDPOINT_SECURITY":{
     "TLS": {
       "rejectUnauthorized": true
@@ -100,7 +110,7 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all",
+              "request.required.acks": "1",
               "partitioner": "murmur2_random"
             }
           }
@@ -119,7 +129,7 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all",
+              "request.required.acks": "1",
               "partitioner": "murmur2_random"
             }
           }
@@ -138,7 +148,7 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all",
+              "request.required.acks": "1",
               "partitioner": "murmur2_random"
             }
           }
