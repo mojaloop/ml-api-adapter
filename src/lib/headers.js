@@ -39,18 +39,40 @@ const uriRegex = /(?:^.*)(\/(participants|parties|quotes|transfers)(\/.*)*)$/
  *
  * @returns {object} - FSPIOP callback headers merged with the headers passed in `params.headers`
  */
-exports.createCallbackHeaders = (params, fromSwitch = false) => {
+const createCallbackHeaders = (params, fromSwitch = false) => {
   const callbackHeaders = { ...params.headers }
 
   callbackHeaders[Enums.Http.Headers.FSPIOP.HTTP_METHOD] = params.httpMethod
   const uri = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
   callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = uriRegex.exec(uri)[1]
   if (fromSwitch) {
-    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = params.headers['FSPIOP-Source'] || params.headers[Enums.Http.Headers.FSPIOP.SOURCE]
-    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = params.headers['FSPIOP-Destination'] || params.headers[Enums.Http.Headers.FSPIOP.DESTINATION]
-    delete callbackHeaders['FSPIOP-Source']
-    delete callbackHeaders['FSPIOP-Destination']
+    const fspIOPSourceKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SOURCE)
+    if (fspIOPSourceKey) delete callbackHeaders[fspIOPSourceKey]
+    const fspIOPDestinationKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
+    if (fspIOPDestinationKey) delete callbackHeaders[fspIOPDestinationKey]
+    const fspIOPSingatureKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SIGNATURE)
+    if (fspIOPSingatureKey) delete callbackHeaders[fspIOPSingatureKey]
+    callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Enums.Http.Headers.FSPIOP.SWITCH.value
+    callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(params.headers, Enums.Http.Headers.FSPIOP.DESTINATION)
   }
 
   return callbackHeaders
+}
+
+const getHeaderCaseInsensitiveKey = (object, searchKey) => {
+  if (object == null || searchKey == null) return null
+  return Object.keys(object).find(key => key.toLowerCase() === searchKey.toLowerCase())
+}
+
+const getHeaderCaseInsensitiveValue = (object, searchKey) => {
+  if (object == null || searchKey == null) return null
+  const key = Object.keys(object).find(key => key.toLowerCase() === searchKey.toLowerCase())
+  if (key) return object[key]
+  return null
+}
+
+module.exports = {
+  createCallbackHeaders,
+  getHeaderCaseInsensitiveKey,
+  getHeaderCaseInsensitiveValue
 }

@@ -137,6 +137,20 @@ module.exports = [{
   }
 },
 {
+  method: 'PATCH',
+  path: '/dfsp1/transfers/{transferId}',
+  handler: Handler.receiveNotificationPatch,
+  options: {
+    id: 'dfsp1-patch',
+    tags: tags,
+    description: 'receive patch notification for dfsp1',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error'
+    }
+  }
+},
+{
   method: 'PUT',
   path: '/dfsp2/transfers/{transferId}',
   handler: Handler.receiveNotificationPut,

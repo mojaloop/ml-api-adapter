@@ -69,7 +69,6 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(Logger, 'isInfoEnabled').value(true)
     sandbox.stub(Logger, 'isDebugEnabled').value(true)
 
-    // sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(JwsSigner.prototype, 'constructor')
     sandbox.stub(JwsSigner.prototype, 'getSignature').returns(true)
@@ -177,6 +176,64 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('process the message received from kafka and send out a transfer post callback with injected protocolVersions config', async test => {
+      const ConfigStub = Util.clone(Config)
+      // override the PROTOCOL_VERSIONS config
+      ConfigStub.PROTOCOL_VERSIONS = {
+        CONTENT: '2.1',
+        ACCEPT: {
+          DEFAULT: '2',
+          VALIDATELIST: [
+            '2',
+            '2.1'
+          ]
+        }
+      }
+
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {
+              transferId: uuid
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const method = ENUM.Http.RestMethods.POST
+      const url = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, msg.value.content.payload.transferId)
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
+      const message = { transferId: uuid }
+
+      const expected = true
+
+      Callback.sendRequest.withArgs(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      const result = await NotificationProxy.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.equal(Callback.sendRequest.args[0][9].content, ConfigStub.PROTOCOL_VERSIONS.CONTENT)
+      test.equal(Callback.sendRequest.args[0][9].accept, ConfigStub.PROTOCOL_VERSIONS.ACCEPT.DEFAULT)
+      test.end()
+    })
+
     processMessageTest.test('process the message received from kafka and send out a transfer post callback should throw', async test => {
       const payeeFsp = 'dfsp1'
       const payerFsp = 'dfsp2'
@@ -220,6 +277,236 @@ Test('Notification Service tests', async notificationTest => {
         test.end()
       } catch (e) {
         test.ok(e, 'error thrown')
+        test.end()
+      }
+    })
+
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', async test => {
+      // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      const ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
+      const msg = {
+        value: {
+          from: 'dfsp1',
+          to: 'dfsp2',
+          id: '6b74834e-688b-419f-aa59-145ccb962b24',
+          content: {
+            uriParams: {
+              id: '6b74834e-688b-419f-aa59-145ccb962b24'
+            },
+            headers: {
+              accept: 'application/vnd.interoperability.transfers+json;version=1.1',
+              'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+              date: '2021-11-08T09:35:59.000Z',
+              'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
+              'fspiop-http-method': 'PUT',
+              'fspiop-source': 'payeefsp',
+              'fspiop-destination': 'payerfsp',
+              'fspiop-signature': '{{fspiopSignature}}',
+              authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
+              host: 'localhost:3000',
+              'accept-encoding': 'gzip, deflate, br',
+              connection: 'keep-alive',
+              'content-length': '97'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '3100',
+                errorDescription: 'Generic validation error - invalid fulfilment',
+                extensionList: {
+                  extension: [
+                    {
+                      key: 'cause',
+                      value: 'FSPIOPError: invalid fulfilment\n    at Object.createFSPIOPError (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/node_modules/@mojaloop/central-services-error-handling/src/factory.js:198:12)\n    at fulfil (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/src/handlers/transfers/handler.js:439:52)\n    at processTicksAndRejections (internal/process/task_queues.js:97:5)'
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          type: 'application/json',
+          metadata: {
+            correlationId: '6b74834e-688b-419f-aa59-145ccb962b24',
+            event: {
+              type: 'notification',
+              action: 'abort-validation',
+              createdAt: '2021-11-08T11:35:59.183Z',
+              state: {
+                status: 'success',
+                code: 0,
+                description: 'action successful'
+              },
+              id: '11e08d8b-76d0-48e2-9a88-9c24f5e9d6f5',
+              responseTo: 'fd86e9ed-8d85-4c42-be15-f3cba6b68ae8'
+            },
+            trace: {
+              startTimestamp: '2021-11-08T11:36:05.033Z',
+              service: 'cl_transfer_position',
+              traceId: '000d6eafe3f9a7541148009044eb18d1',
+              spanId: 'd2eeab3327961401',
+              parentSpanId: '80cbe7ac57bf9384',
+              tags: {
+                tracestate: 'acmevendor=eyJzcGFuSWQiOiJkMmVlYWIzMzI3OTYxNDAxIiwidGltZUFwaUZ1bGZpbCI6IjE2MzYzNzEzNTkxODAifQ==',
+                transactionType: 'transfer',
+                transactionAction: 'fulfil',
+                transactionId: '6b74834e-688b-419f-aa59-145ccb962b24',
+                source: 'payeefsp',
+                destination: 'payerfsp'
+              },
+              tracestates: {
+                acmevendor: {
+                  spanId: 'd2eeab3327961401',
+                  timeApiFulfil: '1636371359180'
+                }
+              }
+            },
+            'protocol.createdAt': 1636371368576
+          }
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = {
+        errorInformation:
+        {
+          errorCode: '3100',
+          errorDescription: 'Generic validation error - invalid fulfilment'
+        }
+      }
+      try {
+        // callback request to PayerFSP
+        Callback.sendRequest.withArgs(urlPayer, payeeHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+        // callback request to PayeeFSP
+        Callback.sendRequest.withArgs(urlPayee, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+
+        // process message
+        const result = await Notification.processMessage(msg)
+        console.log(`Callback.sendRequest.calledWith(${url}, ${payerHeaders}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.to}, ${method}, ${JSON.stringify(message)})`)
+        test.ok(Callback.sendRequest.calledOnce)
+        test.ok(Callback.sendRequest.calledWith(url, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)))
+        test.equal(result, true)
+        test.end()
+      } catch (e) {
+        test.fail('should not throw')
+        test.end()
+      }
+      // Reset SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+      Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE
+    })
+
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback with PayeeFSP Callback', async test => {
+      const msg = {
+        value: {
+          from: 'dfsp1',
+          to: 'dfsp2',
+          id: '6b74834e-688b-419f-aa59-145ccb962b24',
+          content: {
+            uriParams: {
+              id: '6b74834e-688b-419f-aa59-145ccb962b24'
+            },
+            headers: {
+              accept: 'application/vnd.interoperability.transfers+json;version=1.1',
+              'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+              date: '2021-11-08T09:35:59.000Z',
+              'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
+              'fspiop-http-method': 'PUT',
+              'fspiop-source': 'payeefsp',
+              'fspiop-destination': 'payerfsp',
+              'fspiop-signature': '{{fspiopSignature}}',
+              authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
+              host: 'localhost:3000',
+              'accept-encoding': 'gzip, deflate, br',
+              connection: 'keep-alive',
+              'content-length': '97'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '3100',
+                errorDescription: 'Generic validation error - invalid fulfilment',
+                extensionList: {
+                  extension: [
+                    {
+                      key: 'cause',
+                      value: 'FSPIOPError: invalid fulfilment\n    at Object.createFSPIOPError (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/node_modules/@mojaloop/central-services-error-handling/src/factory.js:198:12)\n    at fulfil (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/src/handlers/transfers/handler.js:439:52)\n    at processTicksAndRejections (internal/process/task_queues.js:97:5)'
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          type: 'application/json',
+          metadata: {
+            correlationId: '6b74834e-688b-419f-aa59-145ccb962b24',
+            event: {
+              type: 'notification',
+              action: 'abort-validation',
+              createdAt: '2021-11-08T11:35:59.183Z',
+              state: {
+                status: 'success',
+                code: 0,
+                description: 'action successful'
+              },
+              id: '11e08d8b-76d0-48e2-9a88-9c24f5e9d6f5',
+              responseTo: 'fd86e9ed-8d85-4c42-be15-f3cba6b68ae8'
+            },
+            trace: {
+              startTimestamp: '2021-11-08T11:36:05.033Z',
+              service: 'cl_transfer_position',
+              traceId: '000d6eafe3f9a7541148009044eb18d1',
+              spanId: 'd2eeab3327961401',
+              parentSpanId: '80cbe7ac57bf9384',
+              tags: {
+                tracestate: 'acmevendor=eyJzcGFuSWQiOiJkMmVlYWIzMzI3OTYxNDAxIiwidGltZUFwaUZ1bGZpbCI6IjE2MzYzNzEzNTkxODAifQ==',
+                transactionType: 'transfer',
+                transactionAction: 'fulfil',
+                transactionId: '6b74834e-688b-419f-aa59-145ccb962b24',
+                source: 'payeefsp',
+                destination: 'payerfsp'
+              },
+              tracestates: {
+                acmevendor: {
+                  spanId: 'd2eeab3327961401',
+                  timeApiFulfil: '1636371359180'
+                }
+              }
+            },
+            'protocol.createdAt': 1636371368576
+          }
+        }
+      }
+
+      const urlPayee = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const urlPayer = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const message = {
+        errorInformation:
+        {
+          errorCode: '3100',
+          errorDescription: 'Generic validation error - invalid fulfilment'
+        }
+      }
+      try {
+        // callback request to PayerFSP
+        Callback.sendRequest.withArgs(urlPayer, payeeHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+        // callback request to PayeeFSP
+        Callback.sendRequest.withArgs(urlPayee, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+
+        // process message
+        const result = await Notification.processMessage(msg)
+        console.log(`Callback.sendRequest.calledWith(${url}, ${payerHeaders}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${msg.value.to}, ${method}, ${JSON.stringify(message)})`)
+        test.ok(Callback.sendRequest.calledTwice)
+        test.ok(Callback.sendRequest.calledWith(url, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)))
+        test.ok(Callback.sendRequest.calledWith(url, payeeHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+        test.equal(result, true)
+        test.end()
+      } catch (e) {
+        test.fail('should not throw')
         test.end()
       }
     })
@@ -978,7 +1265,7 @@ Test('Notification Service tests', async notificationTest => {
       }
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, msg.value.content.payload.transferId)
       const method = ENUM.Http.RestMethods.PUT
-      const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
 
       const expected = true
@@ -1154,7 +1441,7 @@ Test('Notification Service tests', async notificationTest => {
       }
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
       const expected = true
@@ -1199,7 +1486,7 @@ Test('Notification Service tests', async notificationTest => {
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint(msg.value.to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
       const fromUrl = await Participant.getEndpoint(msg.value.from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, msg.value.content.payload.transferId)
-      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
 
@@ -1669,6 +1956,207 @@ Test('Notification Service tests', async notificationTest => {
       const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON, undefined, jwsSigner))
       test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('ignore a RESERVED_ABORTED message if the API version !== 1.1', async test => {
+      // Arrange
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.2'
+      ConfigStub.JWS_SIGN = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'fulfil',
+              action: 'reserved-aborted',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': 'dfsp1',
+              'FSPIOP-Source': 'switch'
+            },
+            // TODO: double check - is this a valid payload?
+            payload: {
+              transferId: uuid,
+              completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+              transferState: 'ABORTED'
+            }
+          },
+          to: 'dfsp1',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      // Act
+      const result = await NotificationProxy.processMessage(msg)
+
+      // Assert
+      const callbackCall = Callback.sendRequest.getCall(0)
+      test.equal(callbackCall, null, 'Callback.sendRequest should not have been called')
+      test.equal(result, undefined, 'NotificationProxy.processMessage should resolve to undefined')
+      test.end()
+    })
+
+    await processMessageTest.test('process a RESERVED_ABORTED message if the API version === 1.1', async test => {
+      // Arrange
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.1'
+      ConfigStub.JWS_SIGN = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'reserved-aborted',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': 'dfsp1',
+              'FSPIOP-Source': 'switch'
+            },
+            // TODO: double check - is this a valid payload?
+            payload: {
+              transferId: uuid,
+              completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+              transferState: 'ABORTED'
+            }
+          },
+          to: 'dfsp1',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const expectedHeaders = createCallbackHeaders({
+        dfspId: 'dfsp1',
+        transferId: uuid,
+        headers: msg.value.content.headers,
+        httpMethod: ENUM.Http.RestMethods.PATCH,
+        endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
+      }, true)
+      const expectedMessageStr = JSON.stringify({
+        // hmm I don't think this should include the transferId!
+        transferId: uuid,
+        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+        transferState: 'ABORTED'
+      })
+
+      // Act
+      const result = await NotificationProxy.processMessage(msg)
+
+      // Assert
+      test.ok(Callback.sendRequest.calledWith(
+        url,
+        expectedHeaders,
+        msg.value.from,
+        msg.value.to,
+        ENUM.Http.RestMethods.PATCH,
+        expectedMessageStr,
+        ENUM.Http.ResponseTypes.JSON,
+        undefined,
+        undefined
+      ), 'Callback.sendRequest was called with the expected args')
+      test.equal(result, true, 'NotificationProxy.processMessage should match the expected')
+      test.end()
+    })
+
+    await processMessageTest.test('throws an error if Callback.sendRequest fails', async test => {
+      // Arrange
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.1'
+      ConfigStub.JWS_SIGN = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      // Override mock
+      Callback.sendRequest.returns(Promise.reject(new Error('Test Error')))
+
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'reserved-aborted',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': 'dfsp1',
+              'FSPIOP-Source': 'switch'
+            },
+            // TODO: double check - is this a valid payload?
+            payload: {
+              transferId: uuid,
+              completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+              transferState: 'ABORTED'
+            }
+          },
+          to: 'dfsp1',
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const expectedHeaders = createCallbackHeaders({
+        dfspId: 'dfsp1',
+        transferId: uuid,
+        headers: msg.value.content.headers,
+        httpMethod: ENUM.Http.RestMethods.PATCH,
+        endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
+      }, true)
+      const expectedMessageStr = JSON.stringify({
+        // hmm I don't think this should include the transferId!
+        transferId: uuid,
+        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+        transferState: 'ABORTED'
+      })
+
+      // Act
+      try {
+        // TODO: use this for validating the test
+        await NotificationProxy.processMessage(msg)
+        test.notOk('Code should not be executed')
+      } catch (err) {
+        // Assert
+        test.ok(Callback.sendRequest.calledWith(
+          url,
+          expectedHeaders,
+          msg.value.from,
+          msg.value.to,
+          ENUM.Http.RestMethods.PATCH,
+          expectedMessageStr,
+          ENUM.Http.ResponseTypes.JSON,
+          undefined,
+          undefined
+        ), 'Callback.sendRequest was called with the expected args')
+        test.equal(err.message, 'Test Error')
+      }
+
       test.end()
     })
 

@@ -45,10 +45,18 @@ jspm_packages
 
 .npmrc
 
+# yarn
+yarn.lock
+
 # --------------- #
 # IntelliJ #
 # --------------- #
 .idea/
 **/*.iml
 
-#package-lock.json
+# https://devspace.sh/
+devspace*
+.devspace/**.*
+
+# General Ignore
+*IGNORE*
