@@ -424,7 +424,6 @@ const processMessage = async (msg, span) => {
   }
 
   if (actionLower === ENUM.Events.Event.Action.ABORT_VALIDATION) {
-    const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
     // forward the abort to the destination
@@ -433,7 +432,8 @@ const processMessage = async (msg, span) => {
     await Callback.sendRequest(callbackURLTo, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, to, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to) {
+    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to && from !== ENUM.Http.Headers.FSPIOP.SWITCH.value) {
+      const callbackURLFrom = await Participant.getEndpoint(from, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id, span)
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${ENUM.Http.RestMethods.PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: ENUM.Http.RestMethods.PUT, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
       await Callback.sendRequest(callbackURLFrom, callbackHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, from, ENUM.Http.RestMethods.PUT, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
@@ -444,6 +444,57 @@ const processMessage = async (msg, span) => {
     }
     histTimerEnd({ success: true, action })
     return true
+  }
+
+  // special event emitted by central-ledger when the Payee sent a status of `RESERVED` in PUT /transfers/{ID}
+  // and the ledger failed to commit the transfer
+  if (actionLower === ENUM.Events.Event.Action.RESERVED_ABORTED) {
+    if (Config.PROTOCOL_VERSIONS.CONTENT !== '1.1') {
+      Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping reserved_aborted notification callback (${from}).`)
+      return
+    }
+
+    // TODO: this should possibly be address by a new endpoint-type FSPIOP_CALLBACK_URL_TRANSFER_PATCH, but for the time being lets avoid adding a new enum as we want to simplify the configurations and consolidate them instead in future.
+    const callbackURLTo = await Participant.getEndpoint(to, ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id, span)
+    const method = ENUM.Http.RestMethods.PATCH
+    callbackHeaders = createCallbackHeaders({
+      dfspId: to,
+      transferId: id,
+      headers: content.headers,
+      httpMethod: method,
+      endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
+    }, fromSwitch)
+    Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${ENUM.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+
+    const histTimerEndSendRequest = Metrics.getHistogram(
+      'notification_event_delivery',
+      'notification_event_delivery - metric for sending notification requests to FSPs',
+      ['success', 'from', 'dest', 'action', 'status']
+    ).startTimer()
+
+    let callbackResponse
+    try {
+      jwsSigner = getJWSSigner(ENUM.Http.Headers.FSPIOP.SWITCH.value)
+      callbackResponse = await Callback.sendRequest(
+        callbackURLTo,
+        callbackHeaders,
+        ENUM.Http.Headers.FSPIOP.SWITCH.value,
+        to,
+        method,
+        payloadForCallback,
+        ENUM.Http.ResponseTypes.JSON,
+        span,
+        jwsSigner,
+        protocolVersions
+      )
+    } catch (err) {
+      histTimerEndSendRequest({ success: false, dest: from, action, status: callbackResponse && callbackResponse.status })
+      histTimerEnd({ success: false, action })
+      throw err
+    }
+    histTimerEndSendRequest({ success: true, dest: from, action, status: callbackResponse && callbackResponse.status })
+    histTimerEnd({ success: true, action })
+    return callbackResponse
   }
 
   if (actionLower === ENUM.Events.Event.Action.FULFIL_DUPLICATE && statusLower === ENUM.Events.EventStatus.SUCCESS.status) {

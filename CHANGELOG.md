@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [12.2.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.1.0...v12.2.0) (2022-02-22)
+
+
+### Features
+
+* **mojaloop/project#2556:** implement patch notification for failure scenarios ([#492](https://github.com/mojaloop/ml-api-adapter/issues/492)) ([026f764](https://github.com/mojaloop/ml-api-adapter/commit/026f764e26f8e9caefb1b0d222469aadad326a6c)), closes [mojaloop/project#2556](https://github.com/mojaloop/project/issues/2556) [#2697](https://github.com/mojaloop/ml-api-adapter/issues/2697)
+
 ## [12.1.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.0.0...v12.1.0) (2021-12-14)
 
 

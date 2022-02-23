@@ -110,7 +110,7 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all",
+              "request.required.acks": "1",
               "partitioner": "murmur2_random"
             }
           }
@@ -129,7 +129,7 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all",
+              "request.required.acks": "1",
               "partitioner": "murmur2_random"
             }
           }
@@ -148,7 +148,7 @@
               "queue.buffering.max.messages": 10000000
             },
             "topicConf": {
-              "request.required.acks": "all",
+              "request.required.acks": "1",
               "partitioner": "murmur2_random"
             }
           }
