@@ -4,7 +4,7 @@ USER root
 WORKDIR /opt/ml-api-adapter
 
 RUN apk --no-cache add git
-RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake \
+RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool libressl-dev openssl-dev autoconf automake \
     && cd $(npm root -g)/npm \
     && npm config set unsafe-perm true \
     && npm install -g node-gyp
@@ -18,6 +18,11 @@ COPY config /opt/ml-api-adapter/config
 COPY secrets /opt/ml-api-adapter/secrets
 
 FROM node:12.16.0-alpine
+
+WORKDIR /opt/central-ledger/cert
+RUN apk add --no-cache curl 
+RUN curl --etag-compare etag.txt --etag-save etag.txt --remote-name https://curl.se/ca/cacert.pem \
+    && apk del curl
 
 WORKDIR /opt/ml-api-adapter
 # Create empty log file & link stdout to the application log file
