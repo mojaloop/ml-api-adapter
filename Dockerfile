@@ -19,11 +19,6 @@ COPY secrets /opt/ml-api-adapter/secrets
 
 FROM node:12.16.0-alpine
 
-WORKDIR /opt/central-ledger/cert
-RUN apk add --no-cache curl 
-RUN curl --etag-compare etag.txt --etag-save etag.txt --remote-name https://curl.se/ca/cacert.pem \
-    && apk del curl
-
 WORKDIR /opt/ml-api-adapter
 # Create empty log file & link stdout to the application log file
 RUN mkdir ./logs && touch ./logs/combined.log
