@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [12.3.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.2.0...v12.3.0) (2022-02-25)
+
+
+### Features
+
+* added ssl Support ([#494](https://github.com/mojaloop/ml-api-adapter/issues/494)) ([86cf167](https://github.com/mojaloop/ml-api-adapter/commit/86cf167de454d24422109c2c425491ed182a2789))
+
 ## [12.2.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.1.0...v12.2.0) (2022-02-22)
 
 
