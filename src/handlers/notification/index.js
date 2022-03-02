@@ -260,7 +260,7 @@ const processMessage = async (msg, span) => {
 
   // Injected Configuration for outbound Content-Type & Accept headers.
   const protocolVersions = {
-    content: Config.PROTOCOL_VERSIONS.CONTENT.toString(),
+    content: Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT.toString(),
     accept: Config.PROTOCOL_VERSIONS.ACCEPT.DEFAULT.toString()
   }
 

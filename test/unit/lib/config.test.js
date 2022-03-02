@@ -65,6 +65,7 @@ Test('Config tests', configTest => {
         DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = true
         // set env var
         const validateList = ['1']
+        process.env.MLAPI_PROTOCOL_VERSIONS__CONTENT__VALIDATELIST = JSON.stringify(validateList)
         process.env.MLAPI_PROTOCOL_VERSIONS__ACCEPT__VALIDATELIST = JSON.stringify(validateList)
         const Config = Proxyquire(`${src}/lib/config`, {
           '../../config/default.json': DefaultStub
@@ -73,8 +74,13 @@ Test('Config tests', configTest => {
         console.log('config', JSON.stringify(Config.PROTOCOL_VERSIONS))
         test.ok('pass')
         test.deepEqual(Config.PROTOCOL_VERSIONS.ACCEPT.VALIDATELIST, validateList)
+        test.deepEqual(Config.PROTOCOL_VERSIONS.CONTENT.VALIDATELIST, validateList)
       } catch (e) {
         test.fail('should throw')
+      } finally {
+        // remove env vars so they will not impact other tests
+        delete process.env.MLAPI_PROTOCOL_VERSIONS__CONTENT__VALIDATELIST
+        delete process.env.MLAPI_PROTOCOL_VERSIONS__ACCEPT__VALIDATELIST
       }
       test.end()
     })
@@ -83,17 +89,28 @@ Test('Config tests', configTest => {
       // Arrange
       const DefaultStub = Util.clone(Default)
       DefaultStub.PROTOCOL_VERSIONS = {
-        CONTENT: '1.1',
+        CONTENT: {
+          DEFAULT: '1.1',
+          VALIDATELIST: [
+            '1.1'
+          ]
+        },
         ACCEPT: {
+          DEFAULT: '1.0',
           VALIDATELIST: [
             '1'
           ]
         }
       }
       const expected = {
-        CONTENT: '1.1',
+        CONTENT: {
+          DEFAULT: '1.1',
+          VALIDATELIST: [
+            '1.1'
+          ]
+        },
         ACCEPT: {
-          DEFAULT: '1',
+          DEFAULT: '1.0',
           VALIDATELIST: [
             '1'
           ]
