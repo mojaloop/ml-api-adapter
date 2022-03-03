@@ -72,6 +72,8 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(Callback, 'sendRequest').returns(Promise.resolve(true))
     sandbox.stub(JwsSigner.prototype, 'constructor')
     sandbox.stub(JwsSigner.prototype, 'getSignature').returns(true)
+
+    Proxyquire.callThru()
     t.end()
   })
 
@@ -180,7 +182,13 @@ Test('Notification Service tests', async notificationTest => {
       const ConfigStub = Util.clone(Config)
       // override the PROTOCOL_VERSIONS config
       ConfigStub.PROTOCOL_VERSIONS = {
-        CONTENT: '2.1',
+        CONTENT: {
+          DEFAULT: '2.1',
+          VALIDATELIST: [
+            '2',
+            '2.1'
+          ]
+        },
         ACCEPT: {
           DEFAULT: '2',
           VALIDATELIST: [
@@ -229,7 +237,7 @@ Test('Notification Service tests', async notificationTest => {
       const result = await NotificationProxy.processMessage(msg)
       test.ok(Callback.sendRequest.calledWith(url, headers, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.equal(result, expected)
-      test.equal(Callback.sendRequest.args[0][9].content, ConfigStub.PROTOCOL_VERSIONS.CONTENT)
+      test.equal(Callback.sendRequest.args[0][9].content, ConfigStub.PROTOCOL_VERSIONS.CONTENT.DEFAULT)
       test.equal(Callback.sendRequest.args[0][9].accept, ConfigStub.PROTOCOL_VERSIONS.ACCEPT.DEFAULT)
       test.end()
     })
@@ -1962,7 +1970,7 @@ Test('Notification Service tests', async notificationTest => {
     await processMessageTest.test('ignore a RESERVED_ABORTED message if the API version !== 1.1', async test => {
       // Arrange
       const ConfigStub = Util.clone(Config)
-      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.2'
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT.DEFAULT = '1.2'
       ConfigStub.JWS_SIGN = false
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
@@ -2012,8 +2020,9 @@ Test('Notification Service tests', async notificationTest => {
     await processMessageTest.test('process a RESERVED_ABORTED message if the API version === 1.1', async test => {
       // Arrange
       const ConfigStub = Util.clone(Config)
-      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.1'
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT.DEFAULT = '1.1'
       ConfigStub.JWS_SIGN = false
+
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
       })
@@ -2084,7 +2093,7 @@ Test('Notification Service tests', async notificationTest => {
     await processMessageTest.test('throws an error if Callback.sendRequest fails', async test => {
       // Arrange
       const ConfigStub = Util.clone(Config)
-      ConfigStub.PROTOCOL_VERSIONS.CONTENT = '1.1'
+      ConfigStub.PROTOCOL_VERSIONS.CONTENT.DEFAULT = '1.1'
       ConfigStub.JWS_SIGN = false
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
