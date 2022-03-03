@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [13.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.3.0...v13.0.0) (2022-03-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mojaloop/#2704:** - Config PROTOCOL_VERSIONS.CONTENT has now been modified to support backward compatibility for minor versions (i.e. v1.0 & 1.1) as follows:
+
+> ```
+>   "PROTOCOL_VERSIONS": {
+>     "CONTENT": "1.1", <-- used when generating messages from the "SWITCH", and validate incoming FSPIOP API requests/callbacks CONTENT-TYPE headers
+>     "ACCEPT": {
+>       "DEFAULT": "1", <-- used when generating messages from the "SWITCH"
+>       "VALIDATELIST": [ <-- used to validate incoming FSPIOP API requests/callbacks ACCEPT headers
+>         "1",
+>         "1.0",
+>         "1.1"
+>       ]
+>     }
+>   },
+> ```
+> 
+> to be consistent with the ACCEPT structure as follows:
+> 
+> ```
+>   "PROTOCOL_VERSIONS": {
+>     "CONTENT": {
+>       "DEFAULT": "1.1", <-- used when generating messages from the "SWITCH"
+>       "VALIDATELIST": [ <-- used to validate incoming FSPIOP API requests/callbacks CONTENT-TYPE headers
+>         "1.1",
+>         "1.0"
+>       ]
+>     },
+>     "ACCEPT": {
+>       "DEFAULT": "1", <-- used when generating messages from the "SWITCH"
+>       "VALIDATELIST": [ <-- used to validate incoming FSPIOP API requests/callbacks ACCEPT headers
+>         "1",
+>         "1.0",
+>         "1.1"
+>       ]
+>     }
+>   },
+> ```
+
+### Features
+
+* **mojaloop/#2704:** core-services support for non-breaking backward api compatibility ([#496](https://github.com/mojaloop/ml-api-adapter/issues/496)) ([5928511](https://github.com/mojaloop/ml-api-adapter/commit/5928511dcb9780d8c9751bc22322e1f0331ef6e3)), closes [mojaloop/#2704](https://github.com/mojaloop/ml-api-adapter/issues/2704) [mojaloop/#2704](https://github.com/mojaloop/ml-api-adapter/issues/2704)
+
 ## [12.3.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.2.0...v12.3.0) (2022-02-25)
 
 
