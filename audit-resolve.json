@@ -176,6 +176,16 @@
       "decision": "ignore",
       "madeAt": 1645104323030,
       "expiresAt": 1647696313138
+    },
+    "1007050|@mojaloop/central-services-shared>widdershins>urijs": {
+      "decision": "ignore",
+      "madeAt": 1646235001499,
+      "expiresAt": 1648826992822
+    },
+    "1007017|00unidentified>widdershins>swagger2openapi>oas-validator>ajv": {
+      "decision": "ignore",
+      "madeAt": 1646300189108,
+      "expiresAt": 1648892183526
     }
   },
   "rules": {},

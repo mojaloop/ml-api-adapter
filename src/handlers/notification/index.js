@@ -260,7 +260,7 @@ const processMessage = async (msg, span) => {
 
   // Injected Configuration for outbound Content-Type & Accept headers.
   const protocolVersions = {
-    content: Config.PROTOCOL_VERSIONS.CONTENT.toString(),
+    content: Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT.toString(),
     accept: Config.PROTOCOL_VERSIONS.ACCEPT.DEFAULT.toString()
   }
 
@@ -449,7 +449,7 @@ const processMessage = async (msg, span) => {
   // special event emitted by central-ledger when the Payee sent a status of `RESERVED` in PUT /transfers/{ID}
   // and the ledger failed to commit the transfer
   if (actionLower === ENUM.Events.Event.Action.RESERVED_ABORTED) {
-    if (Config.PROTOCOL_VERSIONS.CONTENT !== '1.1') {
+    if (Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT !== '1.1') {
       Logger.isDebugEnabled && Logger.debug(`Notification::processMessage - Action: ${actionLower} - Skipping reserved_aborted notification callback (${from}).`)
       return
     }

@@ -69,7 +69,10 @@ const registerPlugins = async (server) => {
   // Helper to construct FSPIOPHeaderValidation option configuration
   const getOptionsForFSPIOPHeaderValidation = () => {
     // configure supported FSPIOP Content-Type versions
-    const supportedProtocolContentVersions = [Config.PROTOCOL_VERSIONS.CONTENT.toString()]
+    const supportedProtocolContentVersions = []
+    for (const version of Config.PROTOCOL_VERSIONS.CONTENT.VALIDATELIST) {
+      supportedProtocolContentVersions.push(version.toString())
+    }
 
     // configure supported FSPIOP Accept version
     const supportedProtocolAcceptVersions = []

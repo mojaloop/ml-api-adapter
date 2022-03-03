@@ -8,11 +8,18 @@
     "generateTimeout": 30000
   },
   "PROTOCOL_VERSIONS": {
-    "CONTENT": "1.1",
+    "CONTENT": {
+      "DEFAULT": "1.1",
+      "VALIDATELIST": [
+        "1.1",
+        "1.0"
+      ]
+    },
     "ACCEPT": {
       "DEFAULT": "1",
       "VALIDATELIST": [
         "1",
+        "1.0",
         "1.1"
       ]
     }
