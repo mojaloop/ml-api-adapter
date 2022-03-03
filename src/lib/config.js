@@ -33,19 +33,20 @@ const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) 
     ...defaultProtocolVersions,
     ...overrideProtocolVersions
   }
+
   if (overrideProtocolVersions && overrideProtocolVersions.CONTENT) {
     T_PROTOCOL_VERSION.CONTENT = {
       ...defaultProtocolVersions.CONTENT,
       ...overrideProtocolVersions.CONTENT
     }
   }
-
   if (overrideProtocolVersions && overrideProtocolVersions.ACCEPT) {
     T_PROTOCOL_VERSION.ACCEPT = {
       ...defaultProtocolVersions.ACCEPT,
       ...overrideProtocolVersions.ACCEPT
     }
   }
+
   if (T_PROTOCOL_VERSION.CONTENT &&
     T_PROTOCOL_VERSION.CONTENT.VALIDATELIST &&
     (typeof T_PROTOCOL_VERSION.CONTENT.VALIDATELIST === 'string' ||
