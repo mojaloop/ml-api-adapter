@@ -85,7 +85,7 @@
     "@mojaloop/central-services-health": "13.0.0",
     "@mojaloop/central-services-logger": "10.6.2",
     "@mojaloop/central-services-metrics": "11.0.0",
-    "@mojaloop/central-services-shared": "https://github.com/mdebarros/central-services-shared.git#feat/%232704-core-services-support-for-non-breaking-backward-api-compatibility",
+    "@mojaloop/central-services-shared": "16.0.0",
     "@mojaloop/central-services-stream": "10.7.0",
     "@mojaloop/event-sdk": "10.7.1",
     "@mojaloop/forensic-logging-client": "8.3.0",
