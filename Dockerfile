@@ -17,7 +17,7 @@ COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
 COPY secrets /opt/ml-api-adapter/secrets
 
-FROM node:12.16.0-alpine
+FROM node:16.15.0-alpine
 
 WORKDIR /opt/ml-api-adapter
 # Create empty log file & link stdout to the application log file
