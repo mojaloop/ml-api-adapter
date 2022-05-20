@@ -7,7 +7,7 @@ module.exports = [
     path: '/health',
     handler: Handler.getHealth,
     options: {
-      tags: tags,
+      tags,
       description: 'Status of adapter',
       id: 'health'
     }
@@ -17,7 +17,7 @@ module.exports = [
     path: '/',
     handler: Handler.metadata,
     options: {
-      tags: tags,
+      tags,
       description: 'Metadata'
     }
   }

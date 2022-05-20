@@ -30,7 +30,7 @@ module.exports = [{
   handler: Handler.getNotification,
   options: {
     id: 'test-getNotification',
-    tags: tags,
+    tags,
     description: 'Get Notification Details'
   }
 },
@@ -40,7 +40,7 @@ module.exports = [{
   handler: Handler.getNotification,
   options: {
     id: 'test-get',
-    tags: tags,
+    tags,
     description: 'test endpoint'
   }
 },
@@ -50,7 +50,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp1-error',
-    tags: tags,
+    tags,
     description: 'receive error notification for dfsp1',
     payload: {
       failAction: 'error'
@@ -63,7 +63,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp2-error',
-    tags: tags,
+    tags,
     description: 'receive error notification for dfsp2',
     payload: {
       failAction: 'error'
@@ -76,7 +76,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp3-error',
-    tags: tags,
+    tags,
     description: 'receive error notification for dfsp3',
     payload: {
       failAction: 'error'
@@ -89,7 +89,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPost,
   options: {
     id: 'dfsp1-transfers',
-    tags: tags,
+    tags,
     description: 'receive -transfers for dfsp1',
     payload: {
       failAction: 'error'
@@ -102,7 +102,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPost,
   options: {
     id: 'dfsp2-transfers',
-    tags: tags,
+    tags,
     description: 'receive -transfers for dfsp2',
     payload: {
       failAction: 'error'
@@ -115,7 +115,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPost,
   options: {
     id: 'dfsp3-transfers',
-    tags: tags,
+    tags,
     description: 'receive transfers for dfsp3',
     payload: {
       failAction: 'error'
@@ -128,7 +128,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp1-put',
-    tags: tags,
+    tags,
     description: 'receive put notification for dfsp1',
     payload: {
       allow: 'application/json',
@@ -142,7 +142,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPatch,
   options: {
     id: 'dfsp1-patch',
-    tags: tags,
+    tags,
     description: 'receive patch notification for dfsp1',
     payload: {
       allow: 'application/json',
@@ -156,7 +156,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp2-put',
-    tags: tags,
+    tags,
     description: 'receive put notification for dfsp2',
     payload: {
       failAction: 'error'
@@ -169,7 +169,7 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp3-put',
-    tags: tags,
+    tags,
     description: 'receive put notification for dfsp3',
     payload: {
       failAction: 'error'
@@ -182,7 +182,7 @@ module.exports = [{
   handler: Handler.getEndpoints,
   options: {
     id: 'test-getEndpoints',
-    tags: tags,
+    tags,
     description: 'Get Endpoint Details'
   }
 }

@@ -34,7 +34,7 @@ module.exports = [
     path: '/endpointcache',
     handler: Handler.deleteEndpointCache,
     options: {
-      tags: tags,
+      tags,
       description: 'The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.',
       id: 'endpointcache'
     }

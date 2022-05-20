@@ -99,7 +99,7 @@ const createHandlers = async (handlers) => {
     ext: {},
     start: new Date(),
     info: {},
-    handlers: handlers
+    handlers
   }
 
   for (handlerIndex in handlers) {
