@@ -32,4 +32,4 @@ RUN npm prune --production
 
 EXPOSE 3000
 
-CMD ["node", "src/api/index.js"]
+CMD ["npm", "start"]
