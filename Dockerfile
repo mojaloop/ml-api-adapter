@@ -1,4 +1,4 @@
-FROM node:12.16.1-alpine as builder
+FROM node:16.15.0-alpine as builder
 USER root
 
 WORKDIR /opt/ml-api-adapter
