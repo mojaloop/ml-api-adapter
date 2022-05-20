@@ -19,6 +19,7 @@ orbs:
 # YAML defaults templates, in alphabetical order
 ##
 defaults_Dependencies: &defaults_Dependencies |
+  apk --no-cache add bash
   apk --no-cache add git
   apk --no-cache add ca-certificates
   apk --no-cache add curl
@@ -54,9 +55,8 @@ defaults_configure_nvm: &defaults_configure_nvm
   name: Configure NVM
   command: |
     touch $HOME/.profile
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
     export NVM_DIR="$HOME/.nvm"
-    echo ${NVM_DIR}
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     echo "Installing Node version: $(cat .nvmrc)"
     nvm install $(cat .nvmrc)
