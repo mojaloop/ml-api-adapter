@@ -48,7 +48,7 @@ Test('Config tests', configTest => {
       try {
         const DefaultStub = Util.clone(Default)
         DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = true
-        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGNING_KEY_PATH='./test/secrets/dummy.key'
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGNING_KEY_PATH = './test/secrets/dummy.key'
         const Config = Proxyquire(`${src}/lib/config`, {
           '../../config/default.json': DefaultStub
         })

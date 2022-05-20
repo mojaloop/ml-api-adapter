@@ -18,7 +18,6 @@ RUN apk del build-dependencies
 COPY src /opt/app/src
 COPY test /opt/app/test
 COPY config /opt/app/config
-COPY secrets /opt/app/secrets
 
 EXPOSE 3000
 CMD ["npm", "start"]
