@@ -499,7 +499,7 @@ jobs:
           name: Set Image Digest
           command: |
             IMAGE_DIGEST=$(docker images --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)
-            echo "IMAGE_DIGEST=${IMAGE_DIGEST"
+            echo "IMAGE_DIGEST=${IMAGE_DIGEST}"
             echo "export IMAGE_DIGEST=${IMAGE_DIGEST}" >> $BASH_ENV
       - run:
           name: Update Slack config
