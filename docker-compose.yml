@@ -9,7 +9,7 @@ services:
     build:
       context: .
     container_name: ml_ml-api-adapter
-    command: sh -c "/opt/ml-api-adapter/wait4/wait4.js ml-api-adapter && node src/api/index.js"
+    command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
     ports:
       - "3000:3000"
     environment:
@@ -17,8 +17,8 @@ services:
       - CSL_LOG_TRANSPORT=file
       - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:
-      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
-      - ./docker/wait4:/opt/ml-api-adapter/wait4
+      - ./docker/ml-api-adapter/default.json:/opt/app/config/default.json
+      - ./docker/wait4:/opt/app/wait4
     networks:
       - ml-mojaloop-net
     user: 'root'
@@ -44,8 +44,8 @@ services:
       - CSL_LOG_TRANSPORT=file
       - ENDPOINT_PORT=4545
     volumes:
-      - ./docker/ml-api-adapter/default.json:/opt/ml-api-adapter/config/default.json
-      - ./test:/opt/ml-api-adapter/test
+      - ./docker/ml-api-adapter/default.json:/opt/app/config/default.json
+      - ./test:/opt/app/test
     networks:
       - ml-mojaloop-net
     user: 'root'
