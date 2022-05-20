@@ -57,7 +57,8 @@
     "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`",
     "dep:check": "npx ncu -e 2",
     "dep:update": "npx ncu -u",
-    "release": "npx standard-version --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'",
+    "release": "standard-version --no-verify --releaseCommitMessageFormat 'chore(release): {{currentTag}} [skip ci]'",
+    "snapshot": "standard-version --no-verify --skip.changelog --prerelease snapshot --releaseCommitMessageFormat 'chore(snapshot): {{currentTag}}'",
     "wait-4-docker": "node ./scripts/_wait4_all.js"
   },
   "dependencies": {
