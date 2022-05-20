@@ -49,6 +49,17 @@ defaults_configure_git: &defaults_configure_git
     git config user.email ${GIT_CI_EMAIL}
     git config user.name ${GIT_CI_USER}
 
+defaults_configure_nvm: &defaults_configure_nvm
+  name: Configure NVM
+  command: |
+    echo ${NVM_DIR}
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    echo "Installing Node version: $(cat .nvmrc)"
+    nvm install $(cat .nvmrc)
+    nvm alias default $(cat .nvmrc)
+    nvm use $(cat .nvmrc)
+    npm ci
+
 ##
 # Executors
 #
@@ -79,6 +90,8 @@ jobs:
           command: *defaults_Dependencies
       - checkout
       - run:
+          <<: *defaults_configure_nvm
+      - run:
           name: Update NPM install
           command: npm ci
       - save_cache:
@@ -93,6 +106,8 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - checkout
+      - run:
+          <<: *defaults_configure_nvm
       - restore_cache:
           key: dependency-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
@@ -106,6 +121,8 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - checkout
+      - run:
+          <<: *defaults_configure_nvm
       - restore_cache:
           key: dependency-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
@@ -119,6 +136,8 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - checkout
+      - run:
+          <<: *defaults_configure_nvm
       - restore_cache:
           key: dependency-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
@@ -147,6 +166,8 @@ jobs:
           name: Install AWS CLI dependencies
           command: *defaults_awsCliDependencies
       - checkout
+      - run:
+          <<: *defaults_configure_nvm
       - restore_cache:
           key: dependency-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
@@ -176,14 +197,7 @@ jobs:
           name: Create dir for test results
           command: mkdir -p ./test/results
       - run:
-          name: Set up nvm
-          command: |
-            echo ${NVM_DIR}
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install $(cat .nvmrc)
-            nvm alias default $(cat .nvmrc)
-            nvm use $(cat .nvmrc)
-            npm ci
+          <<: *defaults_configure_nvm
       - run:
           name: Build and start the docker containers
           command: | 

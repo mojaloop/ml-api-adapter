@@ -48,6 +48,7 @@ Test('Config tests', configTest => {
       try {
         const DefaultStub = Util.clone(Default)
         DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = true
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGNING_KEY_PATH='./test/secrets/dummy.key'
         const Config = Proxyquire(`${src}/lib/config`, {
           '../../config/default.json': DefaultStub
         })
@@ -62,7 +63,7 @@ Test('Config tests', configTest => {
     getFileContentTest.test('should pass ENV var MLAPI_PROTOCOL_VERSIONS__ACCEPT__VALIDATELIST as a string', test => {
       try {
         const DefaultStub = Util.clone(Default)
-        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = true
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
         // set env var
         const validateList = ['1']
         process.env.MLAPI_PROTOCOL_VERSIONS__CONTENT__VALIDATELIST = JSON.stringify(validateList)
