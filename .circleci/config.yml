@@ -19,14 +19,13 @@ orbs:
 # YAML defaults templates, in alphabetical order
 ##
 defaults_Dependencies: &defaults_Dependencies |
-  apk --no-cache add git
-  apk --no-cache add ca-certificates
-  apk --no-cache add curl
-  apk --no-cache add openssh-client
-  apk --no-cache add bash
-  apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
-  npm config set unsafe-perm true
-  npm install -g node-gyp
+    apk --no-cache add git
+    apk --no-cache add ca-certificates
+    apk --no-cache add curl
+    apk --no-cache add openssh-client
+    apk add --no-cache -t build-dependencies make gcc g++ python3 libtool autoconf automake jq
+    npm config set unsafe-perm true
+    npm install -g node-gyp
 
 defaults_awsCliDependencies: &defaults_awsCliDependencies |
     apk --no-cache add aws-cli
