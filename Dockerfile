@@ -15,7 +15,6 @@ RUN npm ci
 
 COPY src /opt/app/src
 COPY config /opt/app/config
-COPY secrets /opt/app/secrets
 
 FROM node:16.15.0-alpine
 
