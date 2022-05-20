@@ -24,10 +24,10 @@ RUN mkdir ./logs && touch ./logs/combined.log
 RUN ln -sf /dev/stdout ./logs/combined.log
 
 # Create a non-root user: ml-user
-RUN adduser -D ml-user 
-USER ml-user
+RUN adduser -D app-user
+USER app-user
 
-COPY --chown=ml-user --from=builder /opt/app .
+COPY --chown=app-user --from=builder /opt/app .
 RUN npm prune --production
 
 EXPOSE 3000
