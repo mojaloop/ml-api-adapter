@@ -315,6 +315,15 @@ jobs:
       - setup_remote_docker
       - checkout
       - run:
+          name: Setup Slack config
+          command: |
+            echo "export SLACK_PROJECT_NAME=${CIRCLE_PROJECT_REPONAME}" >> $BASH_ENV
+            echo "export SLACK_RELEASE_TYPE='GitHub Release'" >> $BASH_ENV
+            echo "export SLACK_RELEASE_TAG='${RELEASE_TAG} on ${CIRCLE_BRANCH} branch'" >> $BASH_ENV
+            echo "export SLACK_BUILD_ID=${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+            echo "export SLACK_CI_URL=${CIRCLE_BUILD_URL}" >> $BASH_ENV
+            echo "export SLACK_CUSTOM_MSG='Anchore Image Scan failed for: \`${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}\`'" >> $BASH_ENV
+      - run:
           name: Install docker dependencies for anchore
           command: |
             apk add --update py-pip docker python3-dev libffi-dev openssl-dev gcc libc-dev make jq npm
@@ -365,12 +374,11 @@ jobs:
       - run:
           name: Evaluate failures
           command: /tmp/ci-config/container-scanning/anchore-result-diff.js anchore-reports/node_12.16.1-alpine-policy.json anchore-reports/${CIRCLE_PROJECT_REPONAME}*-policy.json
-      - slack/status:
-          fail_only: true
-          webhook: "$SLACK_WEBHOOK_ANNOUNCEMENT"
-          failure_message: 'Anchore Image Scan failed  for: \`"${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"\`'
       - store_artifacts:
           path: anchore-reports
+      - slack/notify:
+          event: fail
+          template: SLACK_TEMP_RELEASE_FAILURE
 
   release:
     executor: default-docker
