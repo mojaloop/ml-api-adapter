@@ -499,7 +499,7 @@ jobs:
       - run:
           name: Update Slack config
           command: |
-            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${$DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${DOCKER_DIGEST}?context=explore'" | sed -r 's/:/-/g' >> $BASH_ENV
+            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${DOCKER_DIGEST}?context=explore'" | sed -r 's/:/-/g' >> $BASH_ENV
       - run:
           name: Login to Docker Hub
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -552,7 +552,7 @@ jobs:
       - run:
           name: Update Slack config
           command: |
-            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${$DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${DOCKER_DIGEST}?context=explore'" | sed -r 's/:/-/g' >> $BASH_ENV
+            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${DOCKER_DIGEST}?context=explore'" | sed -r 's/:/-/g' >> $BASH_ENV
       - run:
           name: Login to Docker Hub
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
