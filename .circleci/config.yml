@@ -234,10 +234,10 @@ jobs:
     executor: default-machine
     steps:
       - checkout
-      - run:
-          name: Install Docker Compose
-          command: |
-            sudo apt-get install docker-compose-plugin
+      # - run:
+      #     name: Install Docker Compose
+      #     command: |
+      #       sudo apt-get install docker.io
       - restore_cache:
           key: dependency-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
@@ -401,6 +401,8 @@ jobs:
           name: Install general dependencies
           command: *defaults_Dependencies
       - checkout
+      - run:
+          <<: *defaults_configure_nvm
       - restore_cache:
           keys:
           - dependency-cache-{{ .Environment.CIRCLE_SHA1 }}
