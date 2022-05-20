@@ -495,11 +495,16 @@ jobs:
           name: Load the pre-built docker image from workspace
           command: | 
             docker load -i /tmp/docker-image.tar
-            echo DOCKER_DIGEST="$(docker images --digest --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG)" >> $BASH_ENV
+      - run:
+          name: Set Image Digest
+          command: |
+            IMAGE_DIGEST="$(docker images --digest --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)"
+            echo "IMAGE_DIGEST=${IMAGE_DIGEST"
+            echo "export IMAGE_DIGEST=${IMAGE_DIGEST}" >> $BASH_ENV
       - run:
           name: Update Slack config
           command: |
-            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${DOCKER_DIGEST}?context=explore'" | sed -r 's/:/-/g' >> $BASH_ENV
+            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${IMAGE_DIGEST}?context=explore'" | sed -r 's/sha256:/sha256-/g' >> $BASH_ENV
       - run:
           name: Login to Docker Hub
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -548,11 +553,17 @@ jobs:
           name: Load the pre-built docker image from workspace
           command: | 
             docker load -i /tmp/docker-image.tar
-            echo DOCKER_DIGEST="$(docker images --digest --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)" >> $BASH_ENV
+            echo "export IMAGE_DIGEST=$(docker images --digest --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)" >> $BASH_ENV
+      - run:
+          name: Set Image Digest
+          command: |
+            IMAGE_DIGEST="$(docker images --digest --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)"
+            echo "IMAGE_DIGEST=${IMAGE_DIGEST"
+            echo "export IMAGE_DIGEST=${IMAGE_DIGEST}" >> $BASH_ENV
       - run:
           name: Update Slack config
           command: |
-            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${DOCKER_DIGEST}?context=explore'" | sed -r 's/:/-/g' >> $BASH_ENV
+            echo "export SLACK_RELEASE_URL='https://hub.docker.com/layers/${CIRCLE_PROJECT_REPONAME}/${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}/v${CIRCLE_TAG:1}/images/${IMAGE_DIGEST}?context=explore'" | sed -r 's/sha256:/sha256-/g' >> $BASH_ENV
       - run:
           name: Login to Docker Hub
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
