@@ -56,7 +56,7 @@ defaults_configure_nvm: &defaults_configure_nvm
   command: |
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
     echo ${NVM_DIR}
-    # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     echo "Installing Node version: $(cat .nvmrc)"
     nvm install $(cat .nvmrc)
     nvm alias default $(cat .nvmrc)
