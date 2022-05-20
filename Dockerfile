@@ -4,14 +4,14 @@ USER root
 WORKDIR /opt/ml-api-adapter
 
 RUN apk --no-cache add git
-RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool libressl-dev openssl-dev autoconf automake \
+RUN apk add --no-cache -t build-dependencies make gcc g++ python3 libtool libressl-dev openssl-dev autoconf automake \
     && cd $(npm root -g)/npm \
     && npm config set unsafe-perm true \
     && npm install -g node-gyp
 
 COPY package.json package-lock.json* /opt/ml-api-adapter/
 
-RUN npm install
+RUN npm ci
 
 COPY src /opt/ml-api-adapter/src
 COPY config /opt/ml-api-adapter/config
@@ -32,4 +32,5 @@ COPY --chown=ml-user --from=builder /opt/ml-api-adapter .
 RUN npm prune --production
 
 EXPOSE 3000
+
 CMD ["node", "src/api/index.js"]
