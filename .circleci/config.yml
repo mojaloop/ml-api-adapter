@@ -730,6 +730,7 @@ workflows:
             - test-unit
             - test-coverage
             - test-integration
+            - test-functional
             - vulnerability-check
             - audit-licenses
             - license-scan
@@ -752,11 +753,17 @@ workflows:
           context: org-global
           requires:
             - pr-tools/pr-title-check
+            - test-dependencies
             - test-lint
             - test-unit
             - test-coverage
+            - test-integration
+            - test-functional
             - vulnerability-check
             - audit-licenses
+            - test-integration
+            - license-scan
+            - image-scan
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
@@ -767,11 +774,17 @@ workflows:
           context: org-global
           requires:
             - pr-tools/pr-title-check
+            - test-dependencies
             - test-lint
             - test-unit
             - test-coverage
+            - test-integration
+            - test-functional
             - vulnerability-check
             - audit-licenses
+            - test-integration
+            - license-scan
+            - image-scan
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*\-snapshot+((\.[0-9]+)?)/
