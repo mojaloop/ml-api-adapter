@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "14.0.0-snapshot.12",
+  "version": "14.0.0-snapshot.13",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -86,7 +86,7 @@
     "docdash": "1.2.0",
     "glob": "8.0.3",
     "hapi-auth-bearer-token": "8.0.0",
-    "hapi-swagger": "14.5.0",
+    "hapi-swagger": "14.5.1",
     "mustache": "4.2.0",
     "parse-strings-in-object": "2.0.0",
     "rc": "1.2.8"
@@ -98,7 +98,7 @@
     "license-checker": "25.0.1",
     "nodemon": "2.0.16",
     "npm-audit-resolver": "3.0.0-7",
-    "npm-check-updates": "13.0.1",
+    "npm-check-updates": "13.0.3",
     "nyc": "15.1.0",
     "pre-commit": "1.2.2",
     "proxyquire": "2.1.3",
