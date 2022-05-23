@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [14.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v13.0.0...v14.0.0) (2022-05-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mojaloop/#2092:** Major version bump for node v16 LTS support, re-structuring of project directories to align to core Mojaloop repositories and docker image now uses `/opt/app` instead of `/opt/ml-api-adapter` which will impact config/secret mounts.
+
+### Features
+
+* **mojaloop/#2092:** upgrade nodeJS version for core services ([#501](https://github.com/mojaloop/ml-api-adapter/issues/501)) ([bcf0b6d](https://github.com/mojaloop/ml-api-adapter/commit/bcf0b6d021e04ac36e28cfea1d92c2056b590026)), closes [mojaloop/#2092](https://github.com/mojaloop/project/issues/2092)
+
 ## [13.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.3.0...v13.0.0) (2022-03-03)
 
 
