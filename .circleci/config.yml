@@ -498,7 +498,7 @@ jobs:
       - run:
           name: Set Image Digest
           command: |
-            IMAGE_DIGEST=$(docker images --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)
+            IMAGE_DIGEST=$(docker images --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:v${CIRCLE_TAG:1})
             echo "IMAGE_DIGEST=${IMAGE_DIGEST}"
             echo "export IMAGE_DIGEST=${IMAGE_DIGEST}" >> $BASH_ENV
       - run:
@@ -556,7 +556,7 @@ jobs:
       - run:
           name: Set Image Digest
           command: |
-            IMAGE_DIGEST=$(docker images --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG)
+            IMAGE_DIGEST=$(docker images --no-trunc --quiet $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:v${CIRCLE_TAG:1})
             echo "IMAGE_DIGEST=${IMAGE_DIGEST}"
             echo "export IMAGE_DIGEST=${IMAGE_DIGEST}" >> $BASH_ENV
       - run:
