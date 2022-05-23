@@ -47,7 +47,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
-* **mojaloop/#2704:** core-services support for non-breaking backward api compatibility ([#496](https://github.com/mojaloop/ml-api-adapter/issues/496)) ([5928511](https://github.com/mojaloop/ml-api-adapter/commit/5928511dcb9780d8c9751bc22322e1f0331ef6e3)), closes [mojaloop/#2704](https://github.com/mojaloop/ml-api-adapter/issues/2704) [mojaloop/#2704](https://github.com/mojaloop/ml-api-adapter/issues/2704)
+* **mojaloop/#2704:** core-services support for non-breaking backward api compatibility ([#496](https://github.com/mojaloop/ml-api-adapter/issues/496)) ([5928511](https://github.com/mojaloop/ml-api-adapter/commit/5928511dcb9780d8c9751bc22322e1f0331ef6e3)), closes [mojaloop/#2704](https://github.com/mojaloop/project/issues/\2704)
 
 ## [12.3.0](https://github.com/mojaloop/ml-api-adapter/compare/v12.2.0...v12.3.0) (2022-02-25)
 
@@ -68,7 +68,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
-* **mojaloop/#2608:** injected resource versions config for outbound requests ([#490](https://github.com/mojaloop/ml-api-adapter/issues/490)) ([d46a05b](https://github.com/mojaloop/ml-api-adapter/commit/d46a05ba3d0573ad84beaca60667b1aa1d4b0445)), closes [mojaloop/#2608](https://github.com/mojaloop/ml-api-adapter/issues/2608)
+* **mojaloop/#2608:** injected resource versions config for outbound requests ([#490](https://github.com/mojaloop/ml-api-adapter/issues/490)) ([d46a05b](https://github.com/mojaloop/ml-api-adapter/commit/d46a05ba3d0573ad84beaca60667b1aa1d4b0445)), closes [mojaloop/#2608](https://github.com/mojaloop/project/issues/\2608)
 
 ## [12.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v11.2.0...v12.0.0) (2021-11-11)
 
@@ -80,4 +80,4 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 * **#2557:** error notification to payer fsp, header for source having  wrong value ([#488](https://github.com/mojaloop/ml-api-adapter/issues/488)) ([42f079f](https://github.com/mojaloop/ml-api-adapter/commit/42f079f10ab30588b9403c5fcfca5f26364701a3)), closes [#2557](https://github.com/mojaloop/ml-api-adapter/issues/2557)
-* **mojaloop/#2536:** fspiop api version negotiation not handled by transfers service ([#487](https://github.com/mojaloop/ml-api-adapter/issues/487)) ([c4d6b45](https://github.com/mojaloop/ml-api-adapter/commit/c4d6b45605606f06cde0a4cbeb76a9470c76c23b)), closes [mojaloop/#2536](https://github.com/mojaloop/ml-api-adapter/issues/2536) [mojaloop/#2536](https://github.com/mojaloop/ml-api-adapter/issues/2536)
+* **mojaloop/#2536:** fspiop api version negotiation not handled by transfers service ([#487](https://github.com/mojaloop/ml-api-adapter/issues/487)) ([c4d6b45](https://github.com/mojaloop/ml-api-adapter/commit/c4d6b45605606f06cde0a4cbeb76a9470c76c23b)), closes [mojaloop/#2536](https://github.com/mojaloop/project/issues/\2536)

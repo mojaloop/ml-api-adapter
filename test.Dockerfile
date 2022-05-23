@@ -1,23 +1,23 @@
-FROM node:12.16.0-alpine
+FROM node:16.15.0-alpine
 USER root
 
-WORKDIR /opt/ml-api-adapter
+WORKDIR /opt/app
 
 RUN apk --no-cache add git
-RUN apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake && \
-  cd $(npm root -g)/npm \
-  && npm config set unsafe-perm true \
-  && npm install -g node-gyp tape tap-xunit
+RUN apk add --no-cache -t build-dependencies make gcc g++ python3 libtool libressl-dev openssl-dev autoconf automake \
+    && cd $(npm root -g)/npm \
+    && npm config set unsafe-perm true \
+    && npm install -g node-gyp tape tap-xunit
 
-COPY package.json package-lock.json* /opt/ml-api-adapter/
-RUN npm install
+COPY package.json package-lock.json* /opt/app/
+
+RUN npm ci
 
 RUN apk del build-dependencies
 
-COPY src /opt/ml-api-adapter/src
-COPY test /opt/ml-api-adapter/test
-COPY config /opt/ml-api-adapter/config
-COPY secrets /opt/ml-api-adapter/secrets
+COPY src /opt/app/src
+COPY test /opt/app/test
+COPY config /opt/app/config
 
 EXPOSE 3000
-CMD ["node /opt/ml-api-adapter/src/api/index.js"]
+CMD ["npm", "start"]

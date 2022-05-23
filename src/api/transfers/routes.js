@@ -50,7 +50,7 @@ module.exports = [{
   handler: Handler.create,
   config: {
     id: 'ml_transfer_prepare',
-    tags: tags,
+    tags,
     auth: null,
     description: 'Transfer API.',
     payload: {
@@ -99,7 +99,7 @@ module.exports = [{
   handler: Handler.fulfilTransfer,
   options: {
     id: 'ml_transfer_fulfil',
-    tags: tags,
+    tags,
     // auth: Auth.strategy(),
     description: 'Fulfil a transfer',
     payload: {
@@ -142,7 +142,7 @@ module.exports = [{
   handler: Handler.fulfilTransferError,
   options: {
     id: 'ml_transfer_abort',
-    tags: tags,
+    tags,
     description: 'Abort a transfer',
     payload: {
       failAction: 'error'
@@ -189,7 +189,7 @@ module.exports = [{
   handler: Handler.getTransferById,
   options: {
     id: 'ml_transfer_getById',
-    tags: tags,
+    tags,
     description: 'Get a transfer by Id',
     validate: {
       headers: Joi.object({

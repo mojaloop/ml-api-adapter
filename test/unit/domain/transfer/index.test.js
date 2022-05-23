@@ -97,7 +97,7 @@ Test('Transfer Service tests', serviceTest => {
         from: message.payerFsp,
         type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
-          headers: headers,
+          headers,
           payload: message
         },
         metadata: {
@@ -194,7 +194,7 @@ Test('Transfer Service tests', serviceTest => {
         from: headers['fspiop-source'],
         type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
-          headers: headers,
+          headers,
           payload: message
         },
         metadata: {
@@ -326,7 +326,7 @@ Test('Transfer Service tests', serviceTest => {
         from: message.payerFsp,
         type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
-          headers: headers,
+          headers,
           payload: message
         },
         metadata: {
@@ -384,7 +384,7 @@ Test('Transfer Service tests', serviceTest => {
       from: headers['fspiop-source'],
       type: 'application/vnd.interoperability.transfers+json;version=1.1',
       content: {
-        headers: headers,
+        headers,
         payload: message
       },
       metadata: {
