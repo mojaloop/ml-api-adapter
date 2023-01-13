@@ -7,6 +7,7 @@
     "expiresIn": 180000,
     "generateTimeout": 30000
   },
+  "INCLUDE_DECODED_TRANSACTION_OBJECT": false,
   "PROTOCOL_VERSIONS": {
     "CONTENT": {
       "DEFAULT": "1.1",

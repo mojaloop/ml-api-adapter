@@ -33,6 +33,7 @@ const StreamingProtocol = require('@mojaloop/central-services-shared').Util.Stre
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Config = require('../../lib/config')
 const generalEnum = require('@mojaloop/central-services-shared').Enum
+const { Ilp } = require('@mojaloop/sdk-standard-components')
 
 /**
  * @module src/domain/transfer
@@ -56,7 +57,20 @@ const prepare = async (headers, dataUri, payload, span) => {
     const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
     const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
     const metadata = StreamingProtocol.createMetadata(payload.transferId, event)
-    let messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
+    let messageProtocol
+    if (Config.INCLUDE_DECODED_TRANSACTION_OBJECT) {
+      // Add decoded Transaction Object (ILP Packet) to the dataUri message payload
+      const parsedDataUri = StreamingProtocol.parseDataURI(dataUri)
+      const mimeType = parsedDataUri.mimeType
+      const version = parsedDataUri.parameters[0]
+      const decodedDataUri = StreamingProtocol.decodePayload(dataUri)
+      const decodedIlpPacket = (new Ilp({ secret: null })).getTransactionObject(decodedDataUri.ilpPacket)
+      decodedDataUri.transaction = decodedIlpPacket
+      const transactionAppendedEncodedDataUri = StreamingProtocol.encodePayload(JSON.stringify(decodedDataUri), `${mimeType};${version}`)
+      messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri: transactionAppendedEncodedDataUri, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
+    } else {
+      messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
+    }
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
     const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
     Logger.isDebugEnabled && Logger.debug(`domain::transfer::prepare::messageProtocol - ${messageProtocol}`)

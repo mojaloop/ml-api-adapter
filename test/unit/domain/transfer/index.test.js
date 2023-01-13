@@ -34,11 +34,12 @@ const Kafka = require('@mojaloop/central-services-stream').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Config = require('../../../../src/lib/config')
 const Logger = require('@mojaloop/central-services-logger')
+const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
 const FULFIL = 'fulfil'
-const dataUri = ''
+const dataUri = 'data:application/vnd.interoperability.transfers+json;version=1.1;base64,eyJ0cmFuc2ZlcklkIjoiNzlkMDM0ZWEtMWNjMS00MGMwLWE3N2QtOWZiZjhmNWUwYzVkIiwicGF5ZXJGc3AiOiJ0ZXN0aW5ndG9vbGtpdGRmc3AiLCJwYXllZUZzcCI6InBheWVlZnNwIiwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sImV4cGlyYXRpb24iOiIyMDIzLTAxLTExVDExOjQ4OjExLjk2NFoiLCJpbHBQYWNrZXQiOiJBWUlER1FBQUFBQUFBQ2NRSFdjdWNHRjVaV1ZtYzNBdWJYTnBjMlJ1TGpJM056RXpPREF6T1RFeWdnTHZaWGxLTUdOdFJuVmpNa1pxWkVkc2RtSnJiR3RKYW05cFRucHNhMDFFVFRCYVYwVjBUVmRPYWsxVE1EQk5SMDEzVEZkRk0wNHlVWFJQVjFwcFdtcG9iVTVYVlhkWmVsWnJTV2wzYVdOWVZuWmtSMVpLV2tOSk5rbHFUWGxPYlVsNVRsUm5Na3hVYXpSTlZHTjBUa1JuTVU1NU1XaE9SRTAwVEZSbmQwNUVTbXBaZWxVeFQxUm9hVnBwU1hOSmJrSm9aVmRXYkVscWNEZEpia0pvWTI1U05WTlhVa3BpYlZwMlNXcHdOMGx1UW1oamJsSTFVMWRTVldWWVFteEphbTlwVkZaT1NsVXdVazlKYVhkcFkwZEdlV1JJYkVwYVIxWjFaRWRzYldGWFZubEphbTlwVFdwak0wMVVUVFJOUkUwMVRWUkphVXhEU20xak0wSktXa05KTmtsdVFtaGxWMVpzV201T2QwbHVNVGxNUTBwM1dWaHNiR05wU1RabGVVcDNXVmhLTUdWVmJHdFRWelZ0WW5sSk5tVjVTbmRaV0Vvd1pWVnNhMVpJYkhkYVUwazJTV3N4VkZOV1RrVlVhVWx6U1c1Q2FHTnVValZUVjFKc1ltNVNjRnB0Ykd4amFVazJTV3BSTUUxVVNYcE9SRlV5VG5wbk5VbHBkMmxhYms1M1UxZFJhVTlwU2pCYVdFNHdZVmMxYm1SSE9YWmlSM1J3WkVkU2JXTXpRV2xtVTNkcFkwZFdlV015T1hWWlYzaEtZbTFhZGtscWNEZEpiVTUyWWxoQ2MxcFlhRTlaVnpGc1NXcHdOMGx0V25CamJrNHdWRzFHZEZwVFNUWkphMXB3WTI1T01HSnRSblJhVXpGVldsaE9NRWxwZDJsaVIwWjZaRVUxYUdKWFZXbFBhVXBOV1ZoT01HSnRSblJhVXpGVldsaE9NRWx1TUhOSmJWSm9aRWRXVUZwclNuQmpibEp2U1dwdmFVMVVhelJPUXpCM1RWTXdkMDFUU2psbVUzZHBXVmN4ZG1SWE5UQkphbkEzU1cxR2RHSXpWblZrUTBrMlNXcEZkMDFEU1hOSmJVNHhZMjVLYkdKdFRqVkphbTlwVmxaT1JVbHVNSE5KYmxKNVdWYzFlbGxYVGpCaFZ6bDFWa2hzZDFwVFNUWmxlVXA2V1RKV2RWbFlTbkJpZVVrMlNXeFNVMUZWTlZSU2ExWlRTV2wzYVdGWE5YQmtSMnhvWkVjNWVVbHFiMmxWUlVaYVVsWkphVXhEU25CaWJXd3dZVmRHTUdJelNsVmxXRUpzU1dwdmFWRXdPVTlWTVZaT1VsWkphV1pZTUFBIiwiY29uZGl0aW9uIjoicXUwLXptUUlUNDZwejVSNDZpZ2h5SkpWdWZVMldyT1NFd1JxYXZIeFpOQSJ9'
 
 Test('Transfer Service tests', serviceTest => {
   let sandbox
@@ -158,6 +159,145 @@ Test('Transfer Service tests', serviceTest => {
         test.ok(e instanceof Error)
         test.end()
       }
+    })
+
+    prepareTest.test('decoded transaction object', transactionObjectTest => {
+      /* Test Data */
+      const transferId = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+      const message = {
+        transferId,
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+            [
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              },
+              {
+                key: 'errorDescription',
+                value: 'This is a more detailed error description'
+              }
+            ]
+        }
+      }
+      const headers = {}
+
+      transactionObjectTest.test('should be included when INCLUDE_DECODED_TRANSACTION_OBJECT is true', async test => {
+        // Arrange
+        Config.INCLUDE_DECODED_TRANSACTION_OBJECT = true
+        let resultMessageProtocol = {}
+        // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+        Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+          resultMessageProtocol = messageProtocol
+        }
+
+        const expectedMessageProtocol = {
+          to: message.payeeFsp,
+          from: message.payerFsp,
+          type: 'application/json',
+          content: {
+            uriParams: {
+              id: message.transferId
+            },
+            headers,
+            payload: 'data:application/vnd.interoperability.transfers+json;version=1.1;base64,eyJ0cmFuc2ZlcklkIjoiNzlkMDM0ZWEtMWNjMS00MGMwLWE3N2QtOWZiZjhmNWUwYzVkIiwicGF5ZXJGc3AiOiJ0ZXN0aW5ndG9vbGtpdGRmc3AiLCJwYXllZUZzcCI6InBheWVlZnNwIiwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sImV4cGlyYXRpb24iOiIyMDIzLTAxLTExVDExOjQ4OjExLjk2NFoiLCJpbHBQYWNrZXQiOiJBWUlER1FBQUFBQUFBQ2NRSFdjdWNHRjVaV1ZtYzNBdWJYTnBjMlJ1TGpJM056RXpPREF6T1RFeWdnTHZaWGxLTUdOdFJuVmpNa1pxWkVkc2RtSnJiR3RKYW05cFRucHNhMDFFVFRCYVYwVjBUVmRPYWsxVE1EQk5SMDEzVEZkRk0wNHlVWFJQVjFwcFdtcG9iVTVYVlhkWmVsWnJTV2wzYVdOWVZuWmtSMVpLV2tOSk5rbHFUWGxPYlVsNVRsUm5Na3hVYXpSTlZHTjBUa1JuTVU1NU1XaE9SRTAwVEZSbmQwNUVTbXBaZWxVeFQxUm9hVnBwU1hOSmJrSm9aVmRXYkVscWNEZEpia0pvWTI1U05WTlhVa3BpYlZwMlNXcHdOMGx1UW1oamJsSTFVMWRTVldWWVFteEphbTlwVkZaT1NsVXdVazlKYVhkcFkwZEdlV1JJYkVwYVIxWjFaRWRzYldGWFZubEphbTlwVFdwak0wMVVUVFJOUkUwMVRWUkphVXhEU20xak0wSktXa05KTmtsdVFtaGxWMVpzV201T2QwbHVNVGxNUTBwM1dWaHNiR05wU1RabGVVcDNXVmhLTUdWVmJHdFRWelZ0WW5sSk5tVjVTbmRaV0Vvd1pWVnNhMVpJYkhkYVUwazJTV3N4VkZOV1RrVlVhVWx6U1c1Q2FHTnVValZUVjFKc1ltNVNjRnB0Ykd4amFVazJTV3BSTUUxVVNYcE9SRlV5VG5wbk5VbHBkMmxhYms1M1UxZFJhVTlwU2pCYVdFNHdZVmMxYm1SSE9YWmlSM1J3WkVkU2JXTXpRV2xtVTNkcFkwZFdlV015T1hWWlYzaEtZbTFhZGtscWNEZEpiVTUyWWxoQ2MxcFlhRTlaVnpGc1NXcHdOMGx0V25CamJrNHdWRzFHZEZwVFNUWkphMXB3WTI1T01HSnRSblJhVXpGVldsaE9NRWxwZDJsaVIwWjZaRVUxYUdKWFZXbFBhVXBOV1ZoT01HSnRSblJhVXpGVldsaE9NRWx1TUhOSmJWSm9aRWRXVUZwclNuQmpibEp2U1dwdmFVMVVhelJPUXpCM1RWTXdkMDFUU2psbVUzZHBXVmN4ZG1SWE5UQkphbkEzU1cxR2RHSXpWblZrUTBrMlNXcEZkMDFEU1hOSmJVNHhZMjVLYkdKdFRqVkphbTlwVmxaT1JVbHVNSE5KYmxKNVdWYzFlbGxYVGpCaFZ6bDFWa2hzZDFwVFNUWmxlVXA2V1RKV2RWbFlTbkJpZVVrMlNXeFNVMUZWTlZSU2ExWlRTV2wzYVdGWE5YQmtSMnhvWkVjNWVVbHFiMmxWUlVaYVVsWkphVXhEU25CaWJXd3dZVmRHTUdJelNsVmxXRUpzU1dwdmFWRXdPVTlWTVZaT1VsWkphV1pZTUFBIiwiY29uZGl0aW9uIjoicXUwLXptUUlUNDZwejVSNDZpZ2h5SkpWdWZVMldyT1NFd1JxYXZIeFpOQSIsInRyYW5zYWN0aW9uIjp7InRyYW5zYWN0aW9uSWQiOiI3OWQwMzRlYS0xY2MxLTQwYzAtYTc3ZC05ZmJmOGY1ZTBjNWQiLCJxdW90ZUlkIjoiMzI2YjI1ODYtOTgxNy00ODU3LWE0MzgtODA0MmNjNTU5OGJmIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNzcxMzgwMzkxMiIsImZzcElkIjoicGF5ZWVmc3AifX0sInBheWVyIjp7InBhcnR5SWRJbmZvIjp7InBhcnR5SWRUeXBlIjoiTVNJU0ROIiwicGFydHlJZGVudGlmaWVyIjoiNDQxMjM0NTY3ODkiLCJmc3BJZCI6InRlc3Rpbmd0b29sa2l0ZGZzcCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiRmlyc3RuYW1lLVRlc3QiLCJsYXN0TmFtZSI6Ikxhc3RuYW1lLVRlc3QifSwiZGF0ZU9mQmlydGgiOiIxOTg0LTAxLTAxIn19LCJhbW91bnQiOnsiYW1vdW50IjoiMTAwIiwiY3VycmVuY3kiOiJVU0QifSwidHJhbnNhY3Rpb25UeXBlIjp7InNjZW5hcmlvIjoiVFJBTlNGRVIiLCJpbml0aWF0b3IiOiJQQVlFUiIsImluaXRpYXRvclR5cGUiOiJDT05TVU1FUiJ9fX0='
+          },
+          metadata: {
+            correlationId: transferId,
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0,
+                description: 'action successful'
+              }
+            }
+          }
+        }
+
+        const span = EventSdk.Tracer.createSpan('test_span')
+        // Act
+        await Service.prepare(headers, dataUri, message, span)
+
+        test.equal(resultMessageProtocol.metadata.trace.service, 'test_span')
+
+        // Delete non-deterministic fields
+        delete resultMessageProtocol.id
+        delete resultMessageProtocol.metadata.event.id
+        delete resultMessageProtocol.metadata.event.createdAt
+        delete resultMessageProtocol.metadata.trace
+
+        // Assert
+        test.ok(StreamingProtocol.decodePayload(resultMessageProtocol.content.payload).transaction)
+        test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+        test.end()
+      })
+
+      transactionObjectTest.test('should be absent when INCLUDE_DECODED_TRANSACTION_OBJECT is false', async test => {
+        // Arrange
+        Config.INCLUDE_DECODED_TRANSACTION_OBJECT = false
+        let resultMessageProtocol = {}
+        // stub and unwrap the message sent to `Kafka.Producer.produceMessage`
+        Kafka.Producer.produceMessage = (messageProtocol, topicConfig, kafkaConfig) => {
+          resultMessageProtocol = messageProtocol
+        }
+
+        const expectedMessageProtocol = {
+          to: message.payeeFsp,
+          from: message.payerFsp,
+          type: 'application/json',
+          content: {
+            uriParams: {
+              id: message.transferId
+            },
+            headers,
+            payload: dataUri
+          },
+          metadata: {
+            correlationId: transferId,
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0,
+                description: 'action successful'
+              }
+            }
+          }
+        }
+
+        const span = EventSdk.Tracer.createSpan('test_span')
+
+        // Act
+        await Service.prepare(headers, dataUri, message, span)
+
+        test.equal(resultMessageProtocol.metadata.trace.service, 'test_span')
+
+        // Delete non-deterministic fields
+        delete resultMessageProtocol.id
+        delete resultMessageProtocol.metadata.event.id
+        delete resultMessageProtocol.metadata.event.createdAt
+        delete resultMessageProtocol.metadata.trace
+
+        // Assert
+        test.deepEqual(resultMessageProtocol.content.payload, dataUri, 'dataUri should be unchanged')
+        test.deepEqual(resultMessageProtocol, expectedMessageProtocol, 'messageProtocols should match')
+        test.end()
+      })
+
+      transactionObjectTest.end()
     })
 
     prepareTest.end()
@@ -475,7 +615,7 @@ Test('Transfer Service tests', serviceTest => {
             id: message.transferId
           },
           headers,
-          payload: {}
+          payload: dataUri
         },
         metadata: {
           correlationId: transferId,
@@ -528,7 +668,7 @@ Test('Transfer Service tests', serviceTest => {
             id: undefined
           },
           headers,
-          payload: {}
+          payload: dataUri
         },
         metadata: {
           correlationId: undefined,
