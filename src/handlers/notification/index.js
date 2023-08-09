@@ -136,7 +136,7 @@ const consumeMessage = async (error, message) => {
       Logger.error(fspiopError)
       throw fspiopError
     }
-    Logger.isInfoEnabled && Logger.info(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
+    Logger.isDebugEnabled && Logger.debug(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
 
     message = (!Array.isArray(message) ? [message] : message)
     let combinedResult = true
