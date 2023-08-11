@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [14.0.1](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.0...v14.0.1) (2023-08-11)
+
+
+### Bug Fixes
+
+* change consume message log line to debug ([#510](https://github.com/mojaloop/ml-api-adapter/issues/510)) ([95d20ae](https://github.com/mojaloop/ml-api-adapter/commit/95d20aed82477e804df5c11c7368b70bc276ee26))
+
 ## [14.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v13.0.0...v14.0.0) (2022-05-23)
 
 
