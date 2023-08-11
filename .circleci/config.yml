@@ -205,7 +205,7 @@ jobs:
           command: mkdir -p ./test/results
       - run:
           name: Build and start the docker containers
-          command: | 
+          command: |
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             docker-compose build
             docker-compose pull
@@ -223,7 +223,7 @@ jobs:
             curl localhost:3000/health
             npm run test:int
           environment:
-            ENDPOINT_URL: http://localhost:4545/notification  
+            ENDPOINT_URL: http://localhost:4545/notification
       - store_artifacts:
           path: ./test/results
           prefix: test
@@ -266,7 +266,7 @@ jobs:
           command: mkdir -p ./audit/results
       - run:
           name: Check for new npm vulnerabilities
-          command: npm run audit:check --silent -- --json > ./audit/results/auditResults.json
+          command: npm run audit:check -- -o json > ./audit/results/auditResults.json
       - store_artifacts:
           path: ./audit/results
           prefix: audit
@@ -493,7 +493,7 @@ jobs:
           at: /tmp
       - run:
           name: Load the pre-built docker image from workspace
-          command: | 
+          command: |
             docker load -i /tmp/docker-image.tar
       - run:
           name: Login to Docker Hub
@@ -551,7 +551,7 @@ jobs:
           at: /tmp
       - run:
           name: Load the pre-built docker image from workspace
-          command: | 
+          command: |
             docker load -i /tmp/docker-image.tar
       - run:
           name: Login to Docker Hub
