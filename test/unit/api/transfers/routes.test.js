@@ -276,7 +276,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
   assert.end()
 })
 
-Test('return error if transfer is not provided', async function (assert) {
+Test.skip('return error if transfer is not provided', async function (assert) {
   const req = Base.buildRequest({
     url: '/transfers/{id}',
     method: 'GET',

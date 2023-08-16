@@ -241,7 +241,7 @@ const processMessage = async (msg, span) => {
   Logger.isInfoEnabled && Logger.info('Notification::processMessage action: ' + action)
   Logger.isInfoEnabled && Logger.info('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
-  const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
+  const id = (content.uriParams && content.uriParams.id) || JSON.parse(decodedPayload.body.toString()).transferId
   let payloadForCallback
   let callbackHeaders
 
