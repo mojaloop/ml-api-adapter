@@ -142,7 +142,6 @@ const getTransferById = async function (request, h) {
     'Get a transfer by Id',
     ['success']
   ).startTimer()
-  Logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
 
   const span = request.span
   try {
@@ -156,7 +155,6 @@ const getTransferById = async function (request, h) {
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
-    Logger.info(err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     Logger.error(fspiopError)
     histTimerEnd({ success: false })
