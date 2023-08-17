@@ -85,12 +85,12 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   * @returns {boolean} Returns true on success and throws error on failure
   */
 const startConsumer = async () => {
-  Logger.isInfoEnabled && Logger.info('Notification::startConsumer')
+  Logger.isDebugEnabled && Logger.debug('Notification::startConsumer')
   let topicName
   try {
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
     topicName = topicConfig.topicName
-    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
+    Logger.isDebugEnabled && Logger.debug(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
     const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
@@ -99,9 +99,9 @@ const startConsumer = async () => {
     }
     notificationConsumer = new Consumer([topicName], config)
     await notificationConsumer.connect()
-    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
+    Logger.isDebugEnabled && Logger.debug(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
     await notificationConsumer.consume(consumeMessage)
-    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
+    Logger.isDebugEnabled && Logger.debug(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
     return true
   } catch (err) {
     Logger.isErrorEnabled && Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
@@ -122,7 +122,7 @@ const startConsumer = async () => {
   * @returns {boolean} Returns true on success or false on failure
   */
 const consumeMessage = async (error, message) => {
-  Logger.isInfoEnabled && Logger.info('Notification::consumeMessage')
+  Logger.isDebugEnabled && Logger.debug('Notification::consumeMessage')
   const histTimerEnd = Metrics.getHistogram(
     'notification_event',
     'Consume a notification message from the kafka topic and process it accordingly',
@@ -141,7 +141,7 @@ const consumeMessage = async (error, message) => {
     message = (!Array.isArray(message) ? [message] : message)
     let combinedResult = true
     for (const msg of message) {
-      Logger.isInfoEnabled && Logger.info('Notification::consumeMessage::processMessage')
+      Logger.isDebugEnabled && Logger.debug('Notification::consumeMessage::processMessage')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
@@ -224,7 +224,7 @@ const processMessage = async (msg, span) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success', 'action']
   ).startTimer()
-  Logger.isInfoEnabled && Logger.info('Notification::processMessage')
+  Logger.isDebugEnabled && Logger.debug('Notification::processMessage')
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
@@ -238,8 +238,8 @@ const processMessage = async (msg, span) => {
   const actionLower = action.toLowerCase()
   const statusLower = status.toLowerCase()
 
-  Logger.isInfoEnabled && Logger.info('Notification::processMessage action: ' + action)
-  Logger.isInfoEnabled && Logger.info('Notification::processMessage status: ' + status)
+  Logger.isDebugEnabled && Logger.debug('Notification::processMessage action: ' + action)
+  Logger.isDebugEnabled && Logger.debug('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
   const id = (content.uriParams && content.uriParams.id) || JSON.parse(decodedPayload.body.toString()).transferId
   let payloadForCallback
@@ -659,7 +659,7 @@ const getJWSSigner = (from) => {
   if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
     const logger = Logger
     logger.log = logger.info
-    Logger.isInfoEnabled && Logger.info('Notification::getJWSSigner: get JWS signer')
+    Logger.isDebugEnabled && Logger.debug('Notification::getJWSSigner: get JWS signer')
     jwsSigner = new JwsSigner({
       logger,
       signingKey: Config.JWS_SIGNING_KEY

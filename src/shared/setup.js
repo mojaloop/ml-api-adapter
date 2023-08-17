@@ -73,7 +73,7 @@ const createServer = async (port, modules) => {
   await server.register(modules)
 
   await server.start()
-  Logger.isDebugEnabled && Logger.debug('Server running at: ', server.info.uri)
+  Logger.isDebugEnabled && Logger.debug(`Server running at: ${server.info.uri}`)
   return server
 }
 
@@ -112,7 +112,7 @@ const createHandlers = async (handlers) => {
       } else {
         const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
         const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
-        Logger.error(fspiopError)
+        Logger.isErrorEnabled && Logger.error(fspiopError)
         throw fspiopError
       }
     }
@@ -181,7 +181,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     }
     default: {
       const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(`No valid service type ${service} found!`)
-      Logger.error(fspiopError)
+      Logger.isErrorEnabled && Logger.error(fspiopError)
       throw fspiopError
     }
   }

@@ -74,7 +74,7 @@ const create = async function (request, h) {
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -118,7 +118,7 @@ const fulfilTransfer = async function (request, h) {
     return h.response().code(200)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -156,7 +156,7 @@ const getTransferById = async function (request, h) {
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -197,7 +197,7 @@ const fulfilTransferError = async function (request, h) {
     return h.response().code(200)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
