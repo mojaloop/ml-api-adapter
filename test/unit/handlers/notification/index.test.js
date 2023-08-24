@@ -2603,5 +2603,21 @@ Test('Notification Service tests', async notificationTest => {
     await isConnectedTest.end()
   })
 
+  await notificationTest.test('disconnect', async disconnectTest => {
+    await disconnectTest.test('call base class disconnect function', async test => {
+      // Arrange
+      sandbox.stub(Consumer.prototype, 'disconnect')
+
+      // Act
+      await Notification.disconnect()
+
+      // Assert
+      test.ok(Consumer.prototype.disconnect.calledOnce)
+      test.end()
+    })
+
+    await disconnectTest.end()
+  })
+
   await notificationTest.end()
 })
