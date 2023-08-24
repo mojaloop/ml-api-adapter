@@ -71,8 +71,10 @@ services:
       - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
       - ./docker/wait4:/opt/central-ledger/wait4
     depends_on:
-      - mysql
-      - kafka
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
       - CLEDG_SIDECAR__DISABLED=true
     networks:
