@@ -47,7 +47,6 @@ if (!Config.HANDLERS_DISABLED) {
     getSubServiceHealthCentralLedger
   ])
 } else {
-  // TODO: Include getSubServiceHealthBroker once 'getMetadata' enhancement has been added to the central-services-stream Producer
   healthCheck = new HealthCheck(packageJson, [
     getSubServiceHealthBroker
   ])

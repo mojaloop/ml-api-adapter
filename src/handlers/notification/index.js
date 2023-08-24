@@ -583,50 +583,15 @@ const processMessage = async (msg, span) => {
 }
 
 /**
-  * @function getMetadataPromise
-  *
-  * @description a Promisified version of getMetadata on the kafka consumer
-  *
-  * @param {Kafka.Consumer} consumer The consumer
-  * @param {string} topic The topic name
-  * @returns {Promise<object>} Metadata response
-  */
-const getMetadataPromise = (consumer, topic) => {
-  return new Promise((resolve, reject) => {
-    const cb = (err, metadata) => {
-      if (err) {
-        return reject(new Error(`Error connecting to consumer: ${err}`))
-      }
-
-      return resolve(metadata)
-    }
-
-    consumer.getMetadata({ topic, timeout: 3000 }, cb)
-  })
-}
-
-/**
   * @function isConnected
   *
   *
-  * @description Use this to determine whether or not we are connected to the broker. Internally, it calls `getMetadata` to determine
-  * if the broker client is connected.
+  * @description Use this to determine whether or not we are connected to the broker.
   *
-  * @returns {true} - if connected
-  * @throws {Error} - if we can't find the topic name, or the consumer is not connected
+  * @returns {boolean}
   */
-const isConnected = async () => {
-  const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-  const topicName = topicConfig.topicName
-  const metadata = await getMetadataPromise(notificationConsumer, topicName)
-
-  const foundTopics = metadata.topics.map(topic => topic.name)
-  if (foundTopics.indexOf(topicName) === -1) {
-    Logger.isDebugEnabled && Logger.debug(`Connected to consumer, but ${topicName} not found.`)
-    throw new Error(`Connected to consumer, but ${topicName} not found.`)
-  }
-
-  return true
+const isConnected = () => {
+  return notificationConsumer.isConnected()
 }
 
 /**
