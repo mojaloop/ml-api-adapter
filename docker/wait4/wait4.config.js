@@ -21,18 +21,18 @@ module.exports = {
           description: 'Kafka broker',
           uri: 'kafka:29092',
           method: 'ncat'
+        },
+        {
+          description: 'MySQL ledger',
+          uri: 'mysql:3306',
+          method: 'mysql',
+          // customized RC setup
+          rc: {
+            namespace: 'CLEDG',
+            configPath: '../config/default.json'
+          },
+          retries: 60
         }
-        // {
-        //   description: 'MySQL ledger',
-        //   uri: 'mysql:3306',
-        //   method: 'mysql',
-        //   // customized RC setup
-        //   rc: {
-        //     namespace: 'CLEDG',
-        //     configPath: '../config/default.json'
-        //   },
-        //   retries: 60
-        // },
         // {
         //   description: 'MongoDB object store',
         //   uri: 'mongodb://objstore:27017/mlos',
