@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [14.0.2](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.1...v14.0.2) (2023-08-28)
+
+
+### Bug Fixes
+
+* **mojaloop/#3470:** pull in performance improved central-services-shared ([#512](https://github.com/mojaloop/ml-api-adapter/issues/512)) ([ca37d10](https://github.com/mojaloop/ml-api-adapter/commit/ca37d101510e5354e11f6f6be09144644109a00a)), closes [mojaloop/#3470](https://github.com/mojaloop/project/issues/3470)
+
 ### [14.0.1](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.0...v14.0.1) (2023-08-11)
 
 
