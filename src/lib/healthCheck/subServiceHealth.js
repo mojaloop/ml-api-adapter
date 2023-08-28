@@ -38,11 +38,13 @@ const axios = require('axios')
  * @returns Promise<object> The SubService health object for the broker
  */
 const getSubServiceHealthBroker = async () => {
-  // TODO: Include use-case when running in API mode only (handlers.disabled=true) once 'getMetadata' enhancement has been added to the central-services-stream Producer.
   let status = statusEnum.OK
   try {
     if (!Config.HANDLERS_DISABLED) {
-      await Notification.isConnected()
+      const notificationStatus = Notification.isConnected()
+      if (!notificationStatus) {
+        throw new Error('Not connected!')
+      }
     }
     status = await Producer.isConnected()
     status = status === Producer.stateList.PENDING ? statusEnum.OK : status

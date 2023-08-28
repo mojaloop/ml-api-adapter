@@ -74,18 +74,17 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
 }
 
 /**
- * @module src/handlers/notification
- */
+  * @module src/handlers/notification
+  */
 
 /**
- * @function startConsumer
- * @async
- * @description This will create a kafka consumer which will listen to the notification topics configured in the config
- *
- * @returns {boolean} Returns true on success and throws error on failure
- */
+  * @function startConsumer
+  * @async
+  * @description This will create a kafka consumer which will listen to the notification topics configured in the config
+  *
+  * @returns {boolean} Returns true on success and throws error on failure
+  */
 const startConsumer = async () => {
-  Logger.isInfoEnabled && Logger.info('Notification::startConsumer')
   let topicName
   try {
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
@@ -104,25 +103,25 @@ const startConsumer = async () => {
     Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
     return true
   } catch (err) {
-    Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
+    Logger.isErrorEnabled && Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     throw fspiopError
   }
 }
 
 /**
- * @function consumeMessage
- * @async
- * @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
- * processMessage - called to process the message received from kafka
- * @param {object} error - the error message received form kafka in case of error
- * @param {object} message - the message received form kafka
+  * @function consumeMessage
+  * @async
+  * @description This is the callback function for the kafka consumer, this will receive the message from kafka, commit the message and send it for processing
+  * processMessage - called to process the message received from kafka
+  * @param {object} error - the error message received form kafka in case of error
+  * @param {object} message - the message received form kafka
 
- * @returns {boolean} Returns true on success or false on failure
- */
+  * @returns {boolean} Returns true on success or false on failure
+  */
 const consumeMessage = async (error, message) => {
-  Logger.isInfoEnabled && Logger.info('Notification::consumeMessage')
+  Logger.isDebugEnabled && Logger.debug('Notification::consumeMessage')
   const histTimerEnd = Metrics.getHistogram(
     'notification_event',
     'Consume a notification message from the kafka topic and process it accordingly',
@@ -133,7 +132,7 @@ const consumeMessage = async (error, message) => {
   try {
     if (error) {
       const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
-      Logger.error(fspiopError)
+      Logger.isErrorEnabled && Logger.error(fspiopError)
       throw fspiopError
     }
     Logger.isDebugEnabled && Logger.debug(`Notification:consumeMessage message: - ${JSON.stringify(message)}`)
@@ -141,7 +140,7 @@ const consumeMessage = async (error, message) => {
     message = (!Array.isArray(message) ? [message] : message)
     let combinedResult = true
     for (const msg of message) {
-      Logger.isInfoEnabled && Logger.info('Notification::consumeMessage::processMessage')
+      Logger.isDebugEnabled && Logger.debug('Notification::consumeMessage::processMessage')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
@@ -151,7 +150,7 @@ const consumeMessage = async (error, message) => {
         await span.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, span).catch(err => {
           const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError('Error processing notification message', err)
-          Logger.error(fspiopError)
+          Logger.isErrorEnabled && Logger.error(fspiopError)
           if (!autoCommitEnabled) {
             notificationConsumer.commitMessageSync(msg)
           }
@@ -181,7 +180,7 @@ const consumeMessage = async (error, message) => {
     return combinedResult
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 
     const getRecursiveCause = (error) => {
@@ -208,15 +207,15 @@ const consumeMessage = async (error, message) => {
 }
 
 /**
- * @function processMessage
- * @async
- * @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
- * Callback.sendCallback - called to send the notification callback
- * @param {object} msg - the message received form kafka
- * @param {object} span - the parent event span
- *
- * @returns {boolean} Returns true on sucess and throws error on failure
- */
+  * @function processMessage
+  * @async
+  * @description This is the function that will process the message received from kafka, it determined the action and status from the message and sends calls to appropriate fsp
+  * Callback.sendCallback - called to send the notification callback
+  * @param {object} msg - the message received form kafka
+  * @param {object} span - the parent event span
+  *
+  * @returns {boolean} Returns true on success and throws error on failure
+  */
 
 const processMessage = async (msg, span) => {
   const histTimerEnd = Metrics.getHistogram(
@@ -224,7 +223,7 @@ const processMessage = async (msg, span) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success', 'action']
   ).startTimer()
-  Logger.isInfoEnabled && Logger.info('Notification::processMessage')
+  Logger.isDebugEnabled && Logger.debug('Notification::processMessage')
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
@@ -238,10 +237,10 @@ const processMessage = async (msg, span) => {
   const actionLower = action.toLowerCase()
   const statusLower = status.toLowerCase()
 
-  Logger.isInfoEnabled && Logger.info('Notification::processMessage action: ' + action)
-  Logger.isInfoEnabled && Logger.info('Notification::processMessage status: ' + status)
+  Logger.isDebugEnabled && Logger.debug('Notification::processMessage action: ' + action)
+  Logger.isDebugEnabled && Logger.debug('Notification::processMessage status: ' + status)
   const decodedPayload = decodePayload(content.payload, { asParsed: false })
-  const id = JSON.parse(decodedPayload.body.toString()).transferId || (content.uriParams && content.uriParams.id)
+  const id = (content.uriParams && content.uriParams.id) || JSON.parse(decodedPayload.body.toString()).transferId
   let payloadForCallback
   let callbackHeaders
 
@@ -278,7 +277,7 @@ const processMessage = async (msg, span) => {
     try {
       response = await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, ENUM.Http.RestMethods.POST, payloadForCallback, ENUM.Http.ResponseTypes.JSON, span, null, protocolVersions)
     } catch (err) {
-      Logger.error(err)
+      Logger.isErrorEnabled && Logger.error(err)
       histTimerEndSendRequest({ success: false, from, dest: to, action, status: response.status })
       histTimerEnd({ success: false, action })
       throw err
@@ -583,61 +582,26 @@ const processMessage = async (msg, span) => {
 }
 
 /**
- * @function getMetadataPromise
- *
- * @description a Promisified version of getMetadata on the kafka consumer
- *
- * @param {Kafka.Consumer} consumer The consumer
- * @param {string} topic The topic name
- * @returns {Promise<object>} Metadata response
- */
-const getMetadataPromise = (consumer, topic) => {
-  return new Promise((resolve, reject) => {
-    const cb = (err, metadata) => {
-      if (err) {
-        return reject(new Error(`Error connecting to consumer: ${err}`))
-      }
-
-      return resolve(metadata)
-    }
-
-    consumer.getMetadata({ topic, timeout: 3000 }, cb)
-  })
+  * @function isConnected
+  *
+  *
+  * @description Use this to determine whether or not we are connected to the broker.
+  *
+  * @returns {boolean}
+  */
+const isConnected = () => {
+  return notificationConsumer.isConnected()
 }
 
 /**
- * @function isConnected
- *
- *
- * @description Use this to determine whether or not we are connected to the broker. Internally, it calls `getMetadata` to determine
- * if the broker client is connected.
- *
- * @returns {true} - if connected
- * @throws {Error} - if we can't find the topic name, or the consumer is not connected
- */
-const isConnected = async () => {
-  const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-  const topicName = topicConfig.topicName
-  const metadata = await getMetadataPromise(notificationConsumer, topicName)
-
-  const foundTopics = metadata.topics.map(topic => topic.name)
-  if (foundTopics.indexOf(topicName) === -1) {
-    Logger.isDebugEnabled && Logger.debug(`Connected to consumer, but ${topicName} not found.`)
-    throw new Error(`Connected to consumer, but ${topicName} not found.`)
-  }
-
-  return true
-}
-
-/**
- * @function disconnect
- *
- *
- * @description Disconnect from the notificationConsumer
- *
- * @returns Promise<*> - Passes on the Promise from Consumer.disconnect()
- * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
- */
+  * @function disconnect
+  *
+  *
+  * @description Disconnect from the notificationConsumer
+  *
+  * @returns Promise<*> - Passes on the Promise from Consumer.disconnect()
+  * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
+  */
 const disconnect = async () => {
   if (!notificationConsumer || !notificationConsumer.disconnect) {
     throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
@@ -647,19 +611,19 @@ const disconnect = async () => {
 }
 
 /**
- * @function getJWSSigner
- *
- *
- * @description Get the JWS signer if enabled
- *
- * @returns {Object} - returns JWS signer if enabled else returns undefined
- */
+  * @function getJWSSigner
+  *
+  *
+  * @description Get the JWS signer if enabled
+  *
+  * @returns {Object} - returns JWS signer if enabled else returns undefined
+  */
 const getJWSSigner = (from) => {
   let jwsSigner
   if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
     const logger = Logger
     logger.log = logger.info
-    Logger.isInfoEnabled && Logger.info('Notification::getJWSSigner: get JWS signer')
+    Logger.isDebugEnabled && Logger.debug('Notification::getJWSSigner: get JWS signer')
     jwsSigner = new JwsSigner({
       logger,
       signingKey: Config.JWS_SIGNING_KEY

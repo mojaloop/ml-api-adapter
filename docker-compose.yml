@@ -61,18 +61,20 @@ services:
   central-ledger:
     image: mojaloop/central-ledger:latest
     container_name: ml_central-ledger
-    command: sh -c "/opt/central-ledger/wait4/wait4.js central-ledger && node src/api/index.js"
+    command: sh -c "/opt/app/wait4/wait4.js central-ledger && node src/api/index.js"
     links:
       - mysql
       - kafka
     ports:
       - "3001:3001"
     volumes:
-      - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
-      - ./docker/wait4:/opt/central-ledger/wait4
+      - ./docker/central-ledger/default.json:/opt/app/config/default.json
+      - ./docker/wait4:/opt/app/wait4
     depends_on:
-      - mysql
-      - kafka
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
       - CLEDG_SIDECAR__DISABLED=true
     networks:
@@ -130,6 +132,33 @@ services:
       retries: 10
       start_period: 40s
       interval: 30s
+
+  kafka-provisioning:
+    container_name: kafka-provisioning
+    networks:
+      - ml-mojaloop-net
+    image: docker.io/bitnami/kafka:3.4.0
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics.sh --bootstrap-server kafka:29092 --list
+      echo -e 'Creating kafka topics'
+      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-prepare --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-position --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-fulfil --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-notification-event --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-get --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-admin-transfer --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-prepare --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-fulfil --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-processing --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-get --replication-factor 1 --partitions 1
+      echo -e 'Successfully created the following topics:'
+      kafka-topics.sh --bootstrap-server kafka:29092 --list
+      "
 
   simulator:
     image: mojaloop/simulator:latest
