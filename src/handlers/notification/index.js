@@ -85,12 +85,11 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   * @returns {boolean} Returns true on success and throws error on failure
   */
 const startConsumer = async () => {
-  Logger.isDebugEnabled && Logger.debug('Notification::startConsumer')
   let topicName
   try {
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
     topicName = topicConfig.topicName
-    Logger.isDebugEnabled && Logger.debug(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
+    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
     const config = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, ENUM.Kafka.Config.CONSUMER, ENUM.Events.Event.Type.NOTIFICATION.toUpperCase(), ENUM.Events.Event.Action.EVENT.toUpperCase())
     config.rdkafkaConf['client.id'] = topicName
 
@@ -99,9 +98,9 @@ const startConsumer = async () => {
     }
     notificationConsumer = new Consumer([topicName], config)
     await notificationConsumer.connect()
-    Logger.isDebugEnabled && Logger.debug(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
+    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
     await notificationConsumer.consume(consumeMessage)
-    Logger.isDebugEnabled && Logger.debug(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
+    Logger.isInfoEnabled && Logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
     return true
   } catch (err) {
     Logger.isErrorEnabled && Logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
