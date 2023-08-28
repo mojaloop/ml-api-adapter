@@ -79,7 +79,7 @@
     "@mojaloop/event-sdk": "12.0.1",
     "@mojaloop/sdk-standard-components": "17.1.2",
     "@now-ims/hapi-now-auth": "2.1.0",
-    "axios": "1.4.0",
+    "axios": "1.5.0",
     "blipp": "4.0.2",
     "commander": "11.0.0",
     "docdash": "2.0.1",
