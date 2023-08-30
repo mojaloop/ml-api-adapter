@@ -369,8 +369,14 @@ jobs:
       - run:
           name: Execute Integration Tests
           command: |
+            # check service health
             curl localhost:3000/health && \
-            npm run test:int
+
+            # run integration tests
+            npm run test:int > ./test/results/test-int.log && \
+            
+            # Lets print out the log
+            cat ./test/results/test-int.log
           environment:
             ENDPOINT_URL: http://localhost:4545/notification
       - store_artifacts:
