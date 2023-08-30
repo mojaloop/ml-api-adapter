@@ -336,6 +336,7 @@ jobs:
           name: Update NPM install
           command: |
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
             npm ci
       - run:
           name: Create dir for test results
@@ -369,6 +370,8 @@ jobs:
       - run:
           name: Execute Integration Tests
           command: |
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
             # check service health
             curl localhost:3000/health && \
 
@@ -406,7 +409,8 @@ jobs:
           command: docker load -i /tmp/docker-image.tar
       - run:
           name: Execute functional tests
-          command: npm -s run test:functional
+          command: |
+            npm run test:functional | tee ./test/results/test-func.log
       - store_artifacts:
           path: ./test/results
           destination: test
