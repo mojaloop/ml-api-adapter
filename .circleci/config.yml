@@ -373,10 +373,7 @@ jobs:
             curl localhost:3000/health && \
 
             # run integration tests
-            npm run test:int > ./test/results/test-int.log && \
-            
-            # Lets print out the log
-            cat ./test/results/test-int.log
+            npm run test:int | ./test/results/test-int.log
           environment:
             ENDPOINT_URL: http://localhost:4545/notification
       - store_artifacts:
