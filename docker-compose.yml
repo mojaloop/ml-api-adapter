@@ -6,9 +6,10 @@ networks:
 
 services:
   ml-api-adapter:
+    image: mojaloop/ml-api-adapter:local
+    container_name: ml_ml-api-adapter
     build:
       context: .
-    container_name: ml_ml-api-adapter
     command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
     ports:
       - "3000:3000"
