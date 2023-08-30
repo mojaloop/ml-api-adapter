@@ -320,6 +320,9 @@ jobs:
   test-integration:
     executor: default-machine
     steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_machine_Dependencies
       - checkout
       - run:
           <<: *defaults_configure_nvm
