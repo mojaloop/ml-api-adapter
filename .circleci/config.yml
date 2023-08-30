@@ -345,10 +345,10 @@ jobs:
       #     name: Build docker-compose
       #     command: |
       #       docker-compose build
-      - run:
-          name: Pull docker containers
-          command: |
-            docker-compose pull
+      # - run:
+      #     name: Pull docker containers
+      #     command: |
+      #       docker-compose pull
       - run:
           name: Start docker-compose
           command: |
