@@ -142,7 +142,7 @@ defaults_environment: &defaults_environment
   ## env var for nx to set main branch
   MAIN_BRANCH_NAME: main
   ## Disable LIBRDKAFKA build since we install it via general dependencies
-  BUILD_LIBRDKAFKA: 0
+  # BUILD_LIBRDKAFKA: 0
 
 ##
 # Executors
