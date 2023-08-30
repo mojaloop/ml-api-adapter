@@ -19,16 +19,16 @@ orbs:
 # YAML defaults templates, in alphabetical order
 ##
 # TODO: REMOVE
-# defaults_Dependencies: &defaults_Dependencies |
-#   apk --no-cache add bash
-#   apk --no-cache add git
-#   apk --no-cache add ca-certificates
-#   apk --no-cache add curl
-#   apk --no-cache add openssh-client
-#   apk add --no-cache -t build-dependencies make gcc g++ python3 libtool autoconf automake jq
-#   apk add --no-cache -t openssl ncurses coreutils libgcc linux-headers grep util-linux binutils findutils
-#   npm config set unsafe-perm true
-#   npm install -g node-gyp
+defaults_Dependencies: &defaults_Dependencies |
+  apk --no-cache add bash
+  apk --no-cache add git
+  apk --no-cache add ca-certificates
+  apk --no-cache add curl
+  apk --no-cache add openssh-client
+  apk add --no-cache -t build-dependencies make gcc g++ python3 libtool autoconf automake jq
+  apk add --no-cache -t openssl ncurses coreutils libgcc linux-headers grep util-linux binutils findutils
+  npm config set unsafe-perm true
+  npm install -g node-gyp
 
 ## Default 'default-docker' executor dependencies
 defaults_docker_Dependencies: &defaults_docker_Dependencies |
