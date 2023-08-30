@@ -34,9 +34,10 @@ services:
 
   # a special server for testing integration callbacks
   ml-api-adapter-endpoint:
+    image: mojaloop/ml-api-adapter:local
+    container_name: ml_ml-api-adapter-endpoint
     build:
       context: .
-    container_name: ml_ml-api-adapter-endpoint
     command: sh -c "node test/integration/server/index.js"
     ports:
       - "4545:4545"
