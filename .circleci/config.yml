@@ -440,6 +440,21 @@ jobs:
       - run:
           name: stub
           command: echo "hello world"
+      - run:
+          <<: *defaults_configure_nvm
+      - run:
+          <<: *defaults_display_versions
+      - run:
+          name: stub
+          command: |
+            echo "1111111"
+            node -v
+            echo "2222222"
+            nvm list
+            echo "3333333"
+            nvm use default
+            echo "4444444"
+            node -v
 
   # vulnerability-check:
   #   executor: default-docker
