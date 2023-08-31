@@ -264,7 +264,7 @@ jobs:
           path: ./test/results
           destination: test
       - store_test_results:
-          path: ./test/results/*.xml
+          path: ./test/results
 
   test-coverage:
     executor: default-docker
@@ -383,7 +383,7 @@ jobs:
           path: ./test/results
           destination: test
       - store_test_results:
-          path: ./test/results/*.xml
+          path: ./test/results
 
   test-functional:
     executor: default-machine
