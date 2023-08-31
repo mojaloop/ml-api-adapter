@@ -90,6 +90,32 @@ export ENDPOINT_URL=http://localhost:4545/notification
 npm run test:int
 ```
 
+### Running Functional Tests
+
+If you want to run functional tests locally utilizing the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness), you can run the following commands:
+
+```bash
+git clone --depth 1 --branch v1.1.0 https://github.com/mojaloop/ml-core-test-harness.git ./IGNORE/ml-core-test-harness
+```
+
+```bash
+docker build -t mojaloop/ml-api-adapter:local .
+```
+
+```bash
+cd IGNORE/ml-core-test-harness
+export ML_API_ADAPTER_VERSION=local
+docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
+```
+
+Check test container logs for test results
+
+Or access TTK UI using the following URI: <http://localhost:9660>
+
+TTK Test files:
+    - Test Collection: ./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json
+    - Env Config: ./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/environments/default-env.json
+
 ## Auditing Dependencies
 
 We use `npm-audit-resolver` along with `npm audit` to check dependencies for node vulnerabilities, and keep track of resolved dependencies with an `audit-resolve.json` file.
