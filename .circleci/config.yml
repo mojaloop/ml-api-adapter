@@ -441,8 +441,8 @@ jobs:
       - attach_workspace:
           at: /tmp
       - run:
-          name: Load the pre-built docker local image from workspace
-          command: docker load -i /tmp/docker-image-local.tar
+          name: Load the pre-built docker image from workspace
+          command: docker load -i /tmp/docker-image.tar
       - run:
           name: Download the mojaloop/ml-core-test-harness repo
           command: |
@@ -455,9 +455,8 @@ jobs:
             export ML_API_ADAPTER_VERSION=local
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
             bash wait-for-container.sh ttk-func-ttk-tests-1
-            docker logs ttk-func-ttk-tests-1 > ./reports/ttk-tests-console.log
+            docker logs ttk-func-ttk-tests-1 | tee ./reports/ttk-tests-console.log
             docker-compose -p ttk-func --ansi never down
-            cat ./reports/ttk-tests-console.log
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
           destination: test
