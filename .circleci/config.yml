@@ -97,9 +97,9 @@ defaults_configure_nvm: &defaults_configure_nvm
     echo "1. Check/Set NVM_DIR env variable"
     if [ -z "$NVM_DIR" ]; then
       export NVM_DIR="$HOME/.nvm"
-      echo "NVM_DIR has been exported - $NVM_DIR"
+      echo "==> NVM_DIR has been exported - $NVM_DIR"
     else
-      echo "NVM_DIR already exists - $NVM_DIR"
+      echo "==> NVM_DIR already exists - $NVM_DIR"
     fi
 
     echo "2. Check/Set NVMRC_VERSION env variable"
@@ -133,12 +133,18 @@ defaults_configure_nvm: &defaults_configure_nvm
       source $ENV_DOT_PROFILE
     fi
 
-    echo "6. Installing Node version: $NVMRC_VERSION"
-    nvm install $NVMRC_VERSION
-    nvm alias default $NVMRC_VERSION
-    nvm use $NVMRC_VERSION
+    echo "6. Setup Node version"
+    if [! -z "$NVMRC_VERSION" ]; then
+      echo "==> Installing Node version: $NVMRC_VERSION"
+      nvm install $NVMRC_VERSION
+      nvm alias default $NVMRC_VERSION
+      nvm use $NVMRC_VERSION
 
-    cd $CIRCLE_WORKING_DIRECTORY
+      cd $CIRCLE_WORKING_DIRECTORY
+    else
+      echo "==> ERROR - NVMRC_VERSION has not been set! - NVMRC_VERSION: $NVMRC_VERSION"
+      exit 1
+    fi
 
 defaults_display_versions: &defaults_display_versions
   name: Display Versions
