@@ -473,7 +473,7 @@ jobs:
 
             ## Copy the test results
             # docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
-             docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME > ./reports/ttk-tests-console.log
+            docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME > ./reports/ttk-tests-console.log
 
             ## Grab the exit code
             export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
