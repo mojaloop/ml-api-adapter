@@ -490,6 +490,7 @@ jobs:
   vulnerability-check:
     executor: default-machine
     steps:
+      - checkout
       - run:
           name: stub
           command: echo "hello world"
