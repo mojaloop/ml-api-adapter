@@ -95,7 +95,12 @@ defaults_configure_nvm: &defaults_configure_nvm
     touch $ENV_DOT_PROFILE
 
     echo "1. Export env variable"
-    export NVM_DIR="$HOME/.nvm"
+    if [ -z "$NVMRC_VERSION" ]; then
+      export NVM_DIR="$HOME/.nvm"
+    else
+      echo "NVM_DIR already exists - $NVM_DIR"
+    fi
+
     if [ -z "$NVMRC_VERSION" ]; then
       echo "==> Configuring NVMRC_VERSION!"
       export NVMRC_VERSION=$(cat $CIRCLE_WORKING_DIRECTORY/.nvmrc)
