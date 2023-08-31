@@ -436,6 +436,10 @@ jobs:
 
   test-functional:
     executor: default-machine
+    environment:
+      ML_API_ADAPTER_VERSION: local
+      ML_CORE_TEST_HARNESS_VERSION: v1.1.0
+      ML_CORE_TEST_HARNESS_GIT: https://github.com/mojaloop/ml-core-test-harness.git
     steps:
       - checkout
       - attach_workspace:
@@ -446,11 +450,10 @@ jobs:
       - run:
           name: Download the mojaloop/ml-core-test-harness repo
           command: |
-            git clone --depth 1 --branch v1.1.0 https://github.com/mojaloop/ml-core-test-harness.git /tmp/ml-core-test-harness
+            echo "Cloning $ML_CORE_TEST_HARNESS_GIT:$ML_CORE_TEST_HARNESS_VERSION"
+            git clone --depth 1 --branch $ML_CORE_TEST_HARNESS_VERSION $ML_CORE_TEST_HARNESS_GIT /tmp/ml-core-test-harness
       - run:
           name: Execute TTK functional tests
-          environment:
-            ML_API_ADAPTER_VERSION: local
           command: |
             cp -f ./docker/config-modifier/*.* /tmp/ml-core-test-harness/docker/config-modifier/configs/
             cd /tmp/ml-core-test-harness
