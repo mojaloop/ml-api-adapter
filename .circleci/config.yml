@@ -440,6 +440,7 @@ jobs:
       ML_API_ADAPTER_VERSION: local
       ML_CORE_TEST_HARNESS_VERSION: v1.1.0
       ML_CORE_TEST_HARNESS_GIT: https://github.com/mojaloop/ml-core-test-harness.git
+      ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME: ttk-func-ttk-tests-1
     steps:
       - checkout
       - attach_workspace:
@@ -458,11 +459,11 @@ jobs:
             cp -f ./docker/config-modifier/*.* /tmp/ml-core-test-harness/docker/config-modifier/configs/
             cd /tmp/ml-core-test-harness
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
-            bash wait-for-container.sh ttk-func-ttk-tests-1
-            docker logs ttk-func-ttk-tests-1 | tee ./reports/ttk-tests-console.log
-            # docker-compose -p ttk-func --ansi never down
-            export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect ttk-func-ttk-tests-1 --format='{{.State.ExitCode}}')
+            bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
+            docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
+            export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests down -v
+            echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
             exit $TTK_FUNC_TEST_EXIT_CODE
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
