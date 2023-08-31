@@ -94,7 +94,7 @@ defaults_configure_nvm: &defaults_configure_nvm
     export ENV_DOT_PROFILE=$HOME/.profile
     touch $ENV_DOT_PROFILE
 
-    echo "1. Export env variable"
+    echo "1. Check/Set NVM_DIR env variable"
     if [ -z "$NVM_DIR" ]; then
       export NVM_DIR="$HOME/.nvm"
       echo "NVM_DIR has been exported - $NVM_DIR"
@@ -102,21 +102,26 @@ defaults_configure_nvm: &defaults_configure_nvm
       echo "NVM_DIR already exists - $NVM_DIR"
     fi
 
+    echo "2. Check/Set NVMRC_VERSION env variable"
     if [ -z "$NVMRC_VERSION" ]; then
       echo "==> Configuring NVMRC_VERSION!"
       export NVMRC_VERSION=$(cat $CIRCLE_WORKING_DIRECTORY/.nvmrc)
       echo "export NVMRC_VERSION=$NVMRC_VERSION" >> $ENV_DOT_PROFILE
     fi
 
-    if [ -f "$NVM_DIR" ]; then
-      echo "==> $NVM_DIR exists. Skipping steps 2-4!"
+    echo "3. Configure NVM"
+    ## Lets check if an existing NVM_DIR exists, if it does lets skil
+    if [ -e "$NVM_DIR" ]; then
+      echo "==> $NVM_DIR exists. Skipping steps 3!"
+      echo "5. Executing $NVM_DIR/nvm.sh"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     else
-      echo "==> $NVM_DIR does not exists. Executing steps 2-4!"
+      echo "==> $NVM_DIR does not exists. Executing steps 4-5!"
 
-      echo "2. Installing NVM"
+      echo "4. Installing NVM"
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 
-      echo "3. Executing $NVM_DIR/nvm.sh"
+      echo "5. Executing $NVM_DIR/nvm.sh"
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     fi
 
@@ -128,7 +133,7 @@ defaults_configure_nvm: &defaults_configure_nvm
       source $ENV_DOT_PROFILE
     fi
 
-    echo "4. Installing Node version: $NVMRC_VERSION"
+    echo "6. Installing Node version: $NVMRC_VERSION"
     nvm install $NVMRC_VERSION
     nvm alias default $NVMRC_VERSION
     nvm use $NVMRC_VERSION
