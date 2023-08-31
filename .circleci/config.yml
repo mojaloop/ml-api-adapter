@@ -461,8 +461,8 @@ jobs:
             bash wait-for-container.sh ttk-func-ttk-tests-1
             docker logs ttk-func-ttk-tests-1 | tee ./reports/ttk-tests-console.log
             # docker-compose -p ttk-func --ansi never down
-            docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests down -v
             export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect ttk-func-ttk-tests-1 --format='{{.State.ExitCode}}')
+            docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests down -v
             exit $TTK_FUNC_TEST_EXIT_CODE
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
