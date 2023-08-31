@@ -456,14 +456,14 @@ jobs:
       - run:
           name: Execute TTK functional tests
           command: |
-            ## Make result directory
-            mkdir ./reports
-
             ## Copy the config-modifier configs
             cp -f ./docker/config-modifier/*.* /tmp/ml-core-test-harness/docker/config-modifier/configs/
 
             ## Change to the test harness directory
             cd /tmp/ml-core-test-harness
+
+            ## Make result directory
+            mkdir ./reports
 
             ## Start the test harness
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
