@@ -134,7 +134,7 @@ defaults_configure_nvm: &defaults_configure_nvm
     fi
 
     echo "6. Setup Node version"
-    if [! -z "$NVMRC_VERSION" ]; then
+    if [ -n "$NVMRC_VERSION" ]; then
       echo "==> Installing Node version: $NVMRC_VERSION"
       nvm install $NVMRC_VERSION
       nvm alias default $NVMRC_VERSION
