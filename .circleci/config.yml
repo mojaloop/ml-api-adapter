@@ -479,7 +479,7 @@ jobs:
             export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
 
             ## Shutdown the test harness
-            docker-compose -p ttk-func --ansi never down
+            #docker-compose -p ttk-func --ansi never down
 
             ## Dump log to console
             cat ./reports/ttk-tests-console.log
