@@ -95,8 +95,9 @@ defaults_configure_nvm: &defaults_configure_nvm
     touch $ENV_DOT_PROFILE
 
     echo "1. Export env variable"
-    if [ -z "$NVMRC_VERSION" ]; then
+    if [ -z "$NVM_DIR" ]; then
       export NVM_DIR="$HOME/.nvm"
+      echo "NVM_DIR has been exported - $NVM_DIR"
     else
       echo "NVM_DIR already exists - $NVM_DIR"
     fi
@@ -109,7 +110,7 @@ defaults_configure_nvm: &defaults_configure_nvm
 
     if [ -f "$NVM_DIR" ]; then
       echo "==> $NVM_DIR exists. Skipping steps 2-4!"
-    else 
+    else
       echo "==> $NVM_DIR does not exists. Executing steps 2-4!"
 
       echo "2. Installing NVM"
