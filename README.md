@@ -33,20 +33,33 @@ The following documentation represents the services, APIs and endpoints responsi
 
 See the [Onboarding guide](Onboarding.md) for running the service locally.
 
-### Mac users and standard Python
+## Docker Image
 
-There is a need to have proper version of python 3, elsewhere `npm install` command will fail. By default, on your Mac, you have python 2.7.* installed, you need to have fresh 3.* version.
+### Official Packaged Release
 
-```bash
-brew install python
+This package is available as a pre-built docker image on Docker Hub: [https://hub.docker.com/r/mojaloop/ml-api-adapter](https://hub.docker.com/r/mojaloop/ml-api-adapter)
+
+### Build from Source
+
+You can also build it directly from source: [https://github.com/mojaloop/ml-api-adapter](https://github.com/mojaloop/ml-api-adapter)
+
+However, take note of the default argument in the [Dockerfile](./Dockerfile) for `NODE_VERSION`:
+
+```dockerfile
+ARG NODE_VERSION=lts-alpine
 ```
 
-To invoke proper version of Python, you have to update your PATH env variable in your shell profile.
+It is recommend that you set the `NODE_VERSION` argument against the version set in the local [.nvmrc](./.nvmrc).
 
-For `~/.zshrc`
+This can be done using the following command:
 
 ```bash
-echo 'export PATH="/usr/local/opt/python/libexec/bin:$PATH"' >> ~/.zshrc 
+export NODE_VERSION="$(cat .nvmrc)-alpine"
+
+docker build \
+   --build-arg NODE_VERSION=$NODE_VERSION \
+   -t mojaloop/ml-api-adapter:local \
+   .
 ```
 
 ## Configuration
@@ -108,13 +121,19 @@ export ML_API_ADAPTER_VERSION=local
 docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
 ```
 
+Monitor the `ttk-func-ttk-tests-1` container for test results, or you can use the following util script to wait for its completion:
+
+```bash
+bash wait-for-container.sh ttk-func-ttk-tests-1
+```
+
 Check test container logs for test results
 
 Or access TTK UI using the following URI: <http://localhost:9660>
 
 TTK Test files:
-    - Test Collection: ./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json
-    - Env Config: ./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/environments/default-env.json
+    - **Test Collection**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json`
+    - **Env Config**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/environments/default-env.json`
 
 ## Auditing Dependencies
 

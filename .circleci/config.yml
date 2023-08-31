@@ -472,13 +472,13 @@ jobs:
             bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
 
             ## Copy the test results
-            docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
+            docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-func-tests-report.log
 
             ## Grab the exit code
             export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
 
             ## Shutdown the test harness
-            docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests down -v
+            docker-compose -p ttk-func --ansi never down
 
             ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
