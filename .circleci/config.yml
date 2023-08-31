@@ -113,8 +113,8 @@ defaults_configure_nvm: &defaults_configure_nvm
     ## Lets check if an existing NVM_DIR exists, if it does lets skil
     if [ -e "$NVM_DIR" ]; then
       echo "==> $NVM_DIR exists. Skipping steps 3!"
-      echo "5. Executing $NVM_DIR/nvm.sh"
-      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      # echo "5. Executing $NVM_DIR/nvm.sh"
+      # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     else
       echo "==> $NVM_DIR does not exists. Executing steps 4-5!"
 
