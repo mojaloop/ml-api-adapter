@@ -456,13 +456,31 @@ jobs:
       - run:
           name: Execute TTK functional tests
           command: |
+            ## Copy the config-modifier configs
             cp -f ./docker/config-modifier/*.* /tmp/ml-core-test-harness/docker/config-modifier/configs/
+
+            ## Change to the test harness directory
             cd /tmp/ml-core-test-harness
+
+            ## Start the test harness
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
+            
+            ## Wait for the test harness to complete
             bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
+            
+            ## Make result directory
+            mkdir reports
+
+            ## Copy the test results
             docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
+
+            ## Grab the exit code
             export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
+
+            ## Shutdown the test harness
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests down -v
+
+            ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
             exit $TTK_FUNC_TEST_EXIT_CODE
       - store_artifacts:
