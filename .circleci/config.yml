@@ -469,7 +469,7 @@ jobs:
             bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
             
             ## Make result directory
-            mkdir reports
+            mkdir ./reports
 
             ## Copy the test results
             docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
