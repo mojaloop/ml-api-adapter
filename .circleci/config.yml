@@ -456,6 +456,9 @@ jobs:
       - run:
           name: Execute TTK functional tests
           command: |
+            ## Make result directory
+            mkdir ./reports
+
             ## Copy the config-modifier configs
             cp -f ./docker/config-modifier/*.* /tmp/ml-core-test-harness/docker/config-modifier/configs/
 
@@ -467,9 +470,6 @@ jobs:
             
             ## Wait for the test harness to complete
             bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
-            
-            ## Make result directory
-            mkdir ./reports
 
             ## Copy the test results
             docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
