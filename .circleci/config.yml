@@ -326,6 +326,8 @@ jobs:
 
   test-integration:
     executor: default-machine
+    environment:
+      <<: *defaults_environment
     steps:
       - run:
           name: Install general dependencies
@@ -400,6 +402,7 @@ jobs:
   test-functional:
     executor: default-machine
     environment:
+      <<: *defaults_environment
       ML_CORE_TEST_HARNESS_DIR: /tmp/ml-core-test-harness
     steps:
       - checkout
@@ -417,6 +420,8 @@ jobs:
 
   vulnerability-check:
     executor: default-docker
+    environment:
+      <<: *defaults_environment
     steps:
       - run:
           name: Install general dependencies
@@ -441,6 +446,8 @@ jobs:
 
   audit-licenses:
     executor: default-docker
+    environment:
+      <<: *defaults_environment
     steps:
       - run:
           name: Install general dependencies
@@ -460,6 +467,8 @@ jobs:
 
   license-scan:
     executor: default-machine
+    environment:
+      <<: *defaults_environment
     steps:
       - attach_workspace:
           at: /tmp
@@ -477,6 +486,13 @@ jobs:
 
   image-scan:
     executor: anchore/anchore_engine
+    shell: /bin/sh -leo pipefail ## Ref: https://circleci.com/docs/env-vars/#alpine-linux
+    environment:
+      <<: *defaults_environment
+      BASH_ENV: /etc/profile ## Ref: https://circleci.com/docs/env-vars/#alpine-linux
+      ENV: ~/.profile
+      NVM_ARCH_UNOFFICIAL_OVERRIDE: x64-musl ## Ref: https://github.com/nvm-sh/nvm/issues/1102#issuecomment-550572252
+    working_directory: *WORKING_DIR
     steps:
       - setup_remote_docker
       - attach_workspace:
@@ -546,6 +562,8 @@ jobs:
 
   release:
     executor: default-docker
+    environment:
+      <<: *defaults_environment
     steps:
       - run:
           name: Install general dependencies
@@ -578,6 +596,9 @@ jobs:
 
   github-release:
     executor: default-machine
+    shell: "/bin/bash -eo pipefail"
+    environment:
+      <<: *defaults_environment
     steps:
       - run:
           name: Install git
@@ -620,6 +641,9 @@ jobs:
 
   publish:
     executor: default-machine
+    shell: "/bin/bash -eo pipefail"
+    environment:
+      <<: *defaults_environment
     steps:
       - checkout
       - run:
@@ -679,6 +703,9 @@ jobs:
 
   publish-snapshot:
     executor: default-machine
+    shell: "/bin/bash -eo pipefail"
+    environment:
+      <<: *defaults_environment
     steps:
       - checkout
       - run:
