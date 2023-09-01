@@ -121,7 +121,7 @@ See default values as specified in the [test-functional.sh](./test/scripts/test-
 
 Check test container logs for test results into `$ML_CORE_TEST_HARNESS_DIR` directory.
 
-If you want to not have the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) shutdown automatically by the script, make sure you set the following env var `export ML_CORE_TEST_SHUTDOWN=false`.
+If you want to not have the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) shutdown automatically by the script, make sure you set the following env var `export ML_CORE_TEST_SKIP_SHUTDOWN=true`.
 
 By doing so, you are then able access TTK UI using the following URI: <http://localhost:9660>.
 
