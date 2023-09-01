@@ -26,7 +26,7 @@ COPY package.json package-lock.json* /opt/app/
 
 RUN npm ci
 
-FROM node:16.15.0-alpine
+FROM node:${NODE_VERSION}
 
 WORKDIR /opt/app
 # Create empty log file & link stdout to the application log file
