@@ -438,7 +438,7 @@ jobs:
     executor: default-machine
     environment:
       ML_API_ADAPTER_VERSION: local
-      ML_CORE_TEST_HARNESS_VERSION: v1.1.0
+      ML_CORE_TEST_HARNESS_VERSION: v1.1.1
       ML_CORE_TEST_HARNESS_GIT: https://github.com/mojaloop/ml-core-test-harness.git
       ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME: ttk-func-ttk-tests-1
     steps:
@@ -497,7 +497,7 @@ jobs:
             ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
             # exit $TTK_FUNC_TEST_EXIT_CODE
-            if  [ $TTK_FUNC_TEST_EXIT_CODE -eq 0 ]; then
+            if [[ $TTK_FUNC_TEST_EXIT_CODE -eq 0 ]]; then
               echo "Exiting functional tests with success: $TTK_FUNC_TEST_EXIT_CODE"
               exit 0
             else 
