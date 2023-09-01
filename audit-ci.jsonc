@@ -25,6 +25,8 @@
     // tap-spec>tap-out>trim
     "GHSA-w5p7-h5w8-2hfq",
     // widdershins>yargs>yargs-parser
-    "GHSA-p9pc-299p-vxgp"
+    "GHSA-p9pc-299p-vxgp",
+    // https://github.com/advisories/GHSA-8cf7-32gw-wr33
+    "GHSA-8cf7-32gw-wr33"
   ]
 }
