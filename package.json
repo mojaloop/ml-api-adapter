@@ -19,7 +19,7 @@
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
   },
   "engines": {
-    "node": ">18.x"
+    "node": ">=18.x"
   },
   "pre-commit": [
     "lint",
