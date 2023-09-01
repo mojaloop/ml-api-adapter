@@ -352,8 +352,10 @@ jobs:
       - run:
           name: Update NPM install
           command: |
+            # Set Node version to default (Note: this is needed on Ubuntu)
             nvm use default
-            node -v
+
+            # Install dependencies
             npm ci
       - run:
           name: Create dir for test results
@@ -382,6 +384,7 @@ jobs:
       - run:
           name: Wait 4 Health Services
           command: |
+            # Set Node version to default (Note: this is needed on Ubuntu)
             nvm use default
 
             # wait for services to be up and running
@@ -389,6 +392,7 @@ jobs:
       - run:
           name: Execute Integration Tests
           command: |
+            # Set Node version to default (Note: this is needed on Ubuntu)
             nvm use default
 
             # check service health
@@ -658,7 +662,8 @@ jobs:
       - run:
           name: Re-tag pre built image
           command: |
-            docker tag $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG
+            docker tag $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:local $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG
+            docker tag $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:local $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG
       - run:
           name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
           command: |
@@ -716,7 +721,8 @@ jobs:
       - run:
           name: Re-tag pre built image
           command: |
-            docker tag $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG
+            docker tag $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:local $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG
+            docker tag $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:local $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG
       - run:
           name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
           command: |
