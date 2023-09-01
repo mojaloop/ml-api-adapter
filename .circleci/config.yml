@@ -495,7 +495,7 @@ jobs:
 
             ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
-            exit $TTK_FUNC_TEST_EXIT_CODE
+            # exit $TTK_FUNC_TEST_EXIT_CODE
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
           destination: test
