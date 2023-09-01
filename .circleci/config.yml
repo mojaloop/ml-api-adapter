@@ -472,7 +472,7 @@ jobs:
             docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
             echo "P4=$?"
             
-            ## Wait for the test harness to complete
+            ## Wait for the test harness to complete, and capture the exit code
             # bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
             export TTK_FUNC_TEST_EXIT_CODE=$(bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME)
             echo "P5=$?"
@@ -496,7 +496,14 @@ jobs:
 
             ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
-            exit $TTK_FUNC_TEST_EXIT_CODE
+            # exit $TTK_FUNC_TEST_EXIT_CODE
+            if  [ "$TTK_FUNC_TEST_EXIT_CODE" -eq 0 ]; then
+              echo "Exiting functional tests with success: $TTK_FUNC_TEST_EXIT_CODE"
+              exit 0
+            else 
+              echo "Exiting functional tests with failure: $TTK_FUNC_TEST_EXIT_CODE"
+              exit 1
+            fi
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
           destination: test
