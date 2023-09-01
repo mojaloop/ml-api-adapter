@@ -474,7 +474,7 @@ jobs:
             
             ## Wait for the test harness to complete
             # bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
-            export TTK_FUNC_TEST_EXIT_CODE=$(docker wait $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME)
+            export TTK_FUNC_TEST_EXIT_CODE=$(bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME)
             echo "P5=$?"
 
             ## Copy the test results
