@@ -133,8 +133,8 @@ docker logs -f ttk-func-ttk-tests-1
 
 TTK Test files:
 
-- **Test Collection**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json`
-- **Env Config**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/environments/default-env.json`
+- **Test Collection**: `$ML_CORE_TEST_HARNESS_DIR/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json`
+- **Env Config**: `$ML_CORE_TEST_HARNESS_DIR//docker/ml-testing-toolkit/test-cases/environments/default-env.json`
 
 Configuration modifiers:
 
