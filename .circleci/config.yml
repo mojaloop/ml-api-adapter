@@ -343,6 +343,9 @@ jobs:
       - run:
           name: Update NPM install
           command: |
+            # Set Node version to default (Note: this is needed on Ubuntu)
+            nvm use default
+
             # Install dependencies
             npm ci
       - run:
@@ -372,11 +375,17 @@ jobs:
       - run:
           name: Wait 4 Health Services
           command: |
+            # Set Node version to default (Note: this is needed on Ubuntu)
+            nvm use default
+
             # wait for services to be up and running
             npm run wait-4-docker
       - run:
           name: Execute Integration Tests
           command: |
+            # Set Node version to default (Note: this is needed on Ubuntu)
+            nvm use default
+
             # check service health
             curl localhost:3000/health && \
 
