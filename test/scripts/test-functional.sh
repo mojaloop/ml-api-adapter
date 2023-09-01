@@ -8,7 +8,8 @@ ML_CORE_TEST_HARNESS_VERSION=${ML_CORE_TEST_HARNESS_VERSION:-"v1.1.1"}
 ML_CORE_TEST_HARNESS_GIT=${ML_CORE_TEST_HARNESS_GIT:-"https://github.com/mojaloop/ml-core-test-harness.git"}
 ML_CORE_TEST_HARNESS_TEST_PROV_CONT_NAME=${ML_CORE_TEST_HARNESS_TEST_PROV_CONT_NAME:-"ttk-func-ttk-provisioning-1"}
 ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME=${ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME:-"ttk-func-ttk-tests-1"}
-ML_CORE_TEST_HARNESS_DIR=${ML_CORE_TEST_HARNESS_DIR:-"/tmp/ml-core-test-harness"}
+ML_CORE_TEST_HARNESS_DIR=${ML_CORE_TEST_HARNESS_DIR:-"/tmp/ml-api-adapter-core-test-harness"}
+ML_CORE_TEST_SHUTDOWN=${ML_CORE_TEST_SHUTDOWN:-"true"}
 
 echo "==> Variables:"
 echo "====> ML_API_ADAPTER_VERSION=$ML_API_ADAPTER_VERSION"
@@ -17,6 +18,7 @@ echo "====> ML_CORE_TEST_HARNESS_GIT=$ML_CORE_TEST_HARNESS_GIT"
 echo "====> ML_CORE_TEST_HARNESS_TEST_PROV_CONT_NAME=$ML_CORE_TEST_HARNESS_TEST_PROV_CONT_NAME"
 echo "====> ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME=$ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME"
 echo "====> ML_CORE_TEST_HARNESS_DIR=$ML_CORE_TEST_HARNESS_DIR"
+echo "====> ML_CORE_TEST_SHUTDOWN=$ML_CORE_TEST_SHUTDOWN"
 
 echo "==> Cloning $ML_CORE_TEST_HARNESS_GIT:$ML_CORE_TEST_HARNESS_VERSION into dir=$ML_CORE_TEST_HARNESS_DIR"
 git clone --depth 1 --branch $ML_CORE_TEST_HARNESS_VERSION $ML_CORE_TEST_HARNESS_GIT $ML_CORE_TEST_HARNESS_DIR
@@ -50,7 +52,12 @@ pushd $ML_CORE_TEST_HARNESS_DIR
   # export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
 
   ## Shutdown the test harness
-  docker-compose -p ttk-func --ansi never down
+  if [ $ML_CORE_TEST_SHUTDOWN -eq "true" ]; then
+    echo "==> Shutting down test harness"
+    docker-compose -p ttk-func --ansi never down
+  else
+    echo "==> Skipping test harness shutdown"
+  if
 
   ## Dump log to console
   cat ./reports/ttk-tests-console.log

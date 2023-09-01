@@ -108,32 +108,37 @@ npm run test:int
 If you want to run functional tests locally utilizing the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness), you can run the following commands:
 
 ```bash
-git clone --depth 1 --branch v1.1.0 https://github.com/mojaloop/ml-core-test-harness.git ./IGNORE/ml-core-test-harness
-```
-
-```bash
 docker build -t mojaloop/ml-api-adapter:local .
 ```
 
 ```bash
-cd IGNORE/ml-core-test-harness
-export ML_API_ADAPTER_VERSION=local
-docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
+bash ./test/scripts/test-functional.sh
 ```
 
-Monitor the `ttk-func-ttk-tests-1` container for test results, or you can use the following util script to wait for its completion:
+By default this will clone the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) into `$ML_CORE_TEST_HARNESS_DIR`.
+
+See default values as specified in the [test-functional.sh](./test/scripts/test-functional.sh) script.
+
+Check test container logs for test results into `$ML_CORE_TEST_HARNESS_DIR` directory.
+
+If you want to not have the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) shutdown automatically by the script, make sure you set the following env var `export ML_CORE_TEST_SHUTDOWN=false`.
+
+By doing so, you are then able access TTK UI using the following URI: <http://localhost:9660>.
+
+Or alternatively, you can monitor the `ttk-func-ttk-tests-1` (See `ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME` in the [test-functional.sh](./test/scripts/test-functional.sh) script) container for test results with the following command:
 
 ```bash
-bash wait-for-container.sh ttk-func-ttk-tests-1
+docker logs -f ttk-func-ttk-tests-1
 ```
 
-Check test container logs for test results
-
-Or access TTK UI using the following URI: <http://localhost:9660>
-
 TTK Test files:
-    - **Test Collection**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json`
-    - **Env Config**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/environments/default-env.json`
+
+- **Test Collection**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json`
+- **Env Config**: `./IGNORE/ml-core-test-harness/docker/ml-testing-toolkit/test-cases/environments/default-env.json`
+
+Configuration modifiers:
+
+- **ml-api-adapter**: [./docker/config-modifier/ml-api-adapter.js](./docker/config-modifier/ml-api-adapter.js)
 
 ## Auditing Dependencies
 
