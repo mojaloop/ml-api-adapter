@@ -497,7 +497,7 @@ jobs:
             ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
             # exit $TTK_FUNC_TEST_EXIT_CODE
-            if  [ "$TTK_FUNC_TEST_EXIT_CODE" -eq 0 ]; then
+            if  [ "$TTK_FUNC_TEST_EXIT_CODE" -eq "0" ]; then
               echo "Exiting functional tests with success: $TTK_FUNC_TEST_EXIT_CODE"
               exit 0
             else 

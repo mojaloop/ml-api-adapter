@@ -147,7 +147,7 @@ services:
     container_name: kafka-provisioning
     networks:
       - ml-mojaloop-net
-    image: docker.io/bitnami/kafka:3.4.0
+    image: docker.io/bitnami/kafka:3.5
     depends_on:
       - kafka
     volumes:
@@ -172,4 +172,3 @@ services:
       timeout: 20s
       retries: 10
       interval: 30s
-
