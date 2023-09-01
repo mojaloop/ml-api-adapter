@@ -473,7 +473,8 @@ jobs:
             echo "P4=$?"
             
             ## Wait for the test harness to complete
-            bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
+            # bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
+            export TTK_FUNC_TEST_EXIT_CODE=$(docker wait $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME)
             echo "P5=$?"
 
             ## Copy the test results
@@ -495,7 +496,7 @@ jobs:
 
             ## Exit with the exit code from the test harness
             echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
-            # exit $TTK_FUNC_TEST_EXIT_CODE
+            exit $TTK_FUNC_TEST_EXIT_CODE
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
           destination: test

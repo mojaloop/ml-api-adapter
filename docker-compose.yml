@@ -114,22 +114,30 @@ services:
       interval: 30s
 
   kafka:
-    image: johnnypark/kafka-zookeeper:2.3.0
-    container_name: ml_kafka
-    # Disable logging as it is far too verbose for debugging locally
-    logging:
-      driver: none
-    volumes:
-      - ./docker/kafka/:/opt/kafka_2.12-2.3.0/config/
-    ports:
-      - "2181:2181"
-      - "9092:9092"
-    environment:
-      - ZOO_LOG4J_PROP=WARN
+    image: docker.io/bitnami/kafka:3.5
+    container_name: kafka
     networks:
       - ml-mojaloop-net
+    ports:
+      - "9092:9092"
+    environment:
+      # BITNAMI_DEBUG: "yes"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_CFG_LISTENERS: CONTROLLER://:9093,LISTENER_DOCKER://:29092,LISTENER_EXTERN://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: LISTENER_DOCKER://kafka:29092,LISTENER_EXTERN://localhost:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,LISTENER_DOCKER:PLAINTEXT,LISTENER_EXTERN:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_MESSAGE_MAX_BYTES: 200000000
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:9093
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_ENABLE_KRAFT: "true"
     healthcheck:
-      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","kafka:29092"]
+      test: ["CMD" ,"/opt/bitnami/kafka/bin/kafka-broker-api-versions.sh","--bootstrap-server","kafka:29092"]
       timeout: 20s
       retries: 10
       start_period: 40s
@@ -145,19 +153,41 @@ services:
     entrypoint: [ '/bin/sh', '-c' ]
     command: |
       "
+      #!/bin/bash
       # blocks until kafka is reachable
       kafka-topics.sh --bootstrap-server kafka:29092 --list
       echo -e 'Creating kafka topics'
-      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-prepare --replication-factor 1 --partitions 1
-      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-position --replication-factor 1 --partitions 1
-      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-fulfil --replication-factor 1 --partitions 1
-      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-notification-event --replication-factor 1 --partitions 1
-      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-get --replication-factor 1 --partitions 1
-      kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-admin-transfer --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-prepare --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-position --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-fulfil --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-notification-event --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-transfer-get --replication-factor 1 --partitions 1
+      # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-admin-transfer --replication-factor 1 --partitions 1
       # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-prepare --replication-factor 1 --partitions 1
       # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-fulfil --replication-factor 1 --partitions 1
       # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-processing --replication-factor 1 --partitions 1
       # kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic topic-bulk-get --replication-factor 1 --partitions 1
+
+      # List of topics to create
+      topics=(
+        "topic-transfer-prepare"
+        "topic-transfer-position"
+        "topic-transfer-fulfil"
+        "topic-notification-event"
+        "topic-transfer-get"
+        "topic-admin-transfer"
+        "topic-bulk-prepare"
+        "topic-bulk-fulfil"
+        "topic-bulk-processing"
+        "topic-bulk-get"
+      )
+
+      # Loop through the topics and create them using kafka-topics.sh
+      for topic in "${topics[@]}"
+      do
+        kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic "$topic" --replication-factor 1 --partitions 1
+      done
+
       echo -e 'Successfully created the following topics:'
       kafka-topics.sh --bootstrap-server kafka:29092 --list
       "
