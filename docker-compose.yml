@@ -115,7 +115,7 @@ services:
 
   kafka:
     image: docker.io/bitnami/kafka:3.5
-    container_name: kafka
+    container_name: ml_kafka
     networks:
       - ml-mojaloop-net
     ports:
