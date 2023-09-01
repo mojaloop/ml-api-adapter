@@ -436,6 +436,8 @@ jobs:
 
   test-functional:
     executor: default-machine
+    environment:
+      ML_CORE_TEST_HARNESS_DIR: /tmp/ml-core-test-harness
     steps:
       - checkout
       - attach_workspace:
