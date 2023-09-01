@@ -21,14 +21,13 @@ orbs:
 
 ## Default 'default-docker' executor dependencies
 defaults_docker_Dependencies: &defaults_docker_Dependencies |
-  apk --no-cache add coreutils
-  apk --no-cache add util-linux pciutils usbutils coreutils binutils findutils grep iproute2
+  apk --no-cache add bash bash-doc bash-completion
   apk --no-cache add git
   apk --no-cache add ca-certificates
   apk --no-cache add curl
   apk --no-cache add openssh-client
-  apk --no-cache add bash bash-doc bash-completion
-  apk --no-cache add -t build-dependencies make gcc g++ python3 libtool autoconf automake
+  apk --no-cache add -t build-dependencies make gcc g++ python3 libtool autoconf automake jq
+  apk --no-cache add -t openssl ncurses coreutils libgcc linux-headers grep util-linux binutils findutils
   apk --no-cache add librdkafka-dev
 
 ## Default 'default-machine' executor dependencies
@@ -37,6 +36,9 @@ defaults_machine_Dependencies: &defaults_machine_Dependencies |
   ## Ref: https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html#get-the-software
   wget -qO - https://packages.confluent.io/deb/7.4/archive.key | sudo apt-key add -
   sudo add-apt-repository -y "deb https://packages.confluent.io/clients/deb $(lsb_release -cs) main"
+
+  ## Install deps
+  sudo apt install -y librdkafka-dev curl bash
 
 defaults_awsCliDependencies: &defaults_awsCliDependencies |
     apk --no-cache add aws-cli
@@ -59,7 +61,6 @@ defaults_configure_git: &defaults_configure_git
   command: |
     git config user.email ${GIT_CI_EMAIL}
     git config user.name ${GIT_CI_USER}
-
 
 defaults_configure_nvmrc: &defaults_configure_nvmrc
   name: Configure NVMRC
@@ -170,7 +171,6 @@ executors:
     shell: "/bin/bash -leo pipefail"
     machine:
       image: ubuntu-2204:2023.04.2 # Ref: https://circleci.com/developer/machine/image/ubuntu-2204
-
 
 ##
 # Jobs
