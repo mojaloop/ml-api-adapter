@@ -6,6 +6,7 @@
   "private": true,
   "author": "ModusBox",
   "contributors": [
+    "Miguel de Barros <miguel.debarros@infitx.com>",
     "Georgi Georgiev <georgi.georgiev@modusbox.com>",
     "Miguel de Barros <miguel.debarros@modusbox.com>",
     "Murthy Kakarlamudi <murthy@modusbox.com>",
@@ -18,7 +19,7 @@
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
   },
   "engines": {
-    "node": "=16.x"
+    "node": ">18.x"
   },
   "pre-commit": [
     "lint",
@@ -73,19 +74,19 @@
     "@hapi/joi": "16.1.4",
     "@hapi/joi-date": "2.0.1",
     "@hapi/vision": "7.0.3",
-    "@mojaloop/central-services-error-handling": "12.0.6",
+    "@mojaloop/central-services-error-handling": "12.0.7",
     "@mojaloop/central-services-health": "14.0.2",
-    "@mojaloop/central-services-logger": "11.2.1",
-    "@mojaloop/central-services-metrics": "12.0.7",
+    "@mojaloop/central-services-logger": "11.2.2",
+    "@mojaloop/central-services-metrics": "12.0.8",
     "@mojaloop/central-services-shared": "17.6.2",
-    "@mojaloop/central-services-stream": "11.1.0",
-    "@mojaloop/event-sdk": "12.0.1",
-    "@mojaloop/sdk-standard-components": "17.1.2",
+    "@mojaloop/central-services-stream": "11.1.1",
+    "@mojaloop/event-sdk": "12.0.2",
+    "@mojaloop/sdk-standard-components": "17.1.3",
     "@now-ims/hapi-now-auth": "2.1.0",
     "axios": "1.5.0",
     "blipp": "4.0.2",
     "commander": "11.0.0",
-    "docdash": "2.0.1",
+    "docdash": "2.0.2",
     "fast-safe-stringify": "2.1.1",
     "glob": "8.0.3",
     "hapi-auth-bearer-token": "8.0.0",
@@ -102,7 +103,7 @@
     "license-checker": "25.0.1",
     "nodemon": "3.0.1",
     "npm-audit-resolver": "3.0.0-RC.0",
-    "npm-check-updates": "16.13.1",
+    "npm-check-updates": "16.13.2",
     "nyc": "15.1.0",
     "pre-commit": "1.2.2",
     "proxyquire": "2.1.3",
