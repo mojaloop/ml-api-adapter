@@ -436,11 +436,6 @@ jobs:
 
   test-functional:
     executor: default-machine
-    environment:
-      ML_API_ADAPTER_VERSION: local
-      ML_CORE_TEST_HARNESS_VERSION: v1.1.1
-      ML_CORE_TEST_HARNESS_GIT: https://github.com/mojaloop/ml-core-test-harness.git
-      ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME: ttk-func-ttk-tests-1
     steps:
       - checkout
       - attach_workspace:
@@ -449,61 +444,8 @@ jobs:
           name: Load the pre-built docker image from workspace
           command: docker load -i /tmp/docker-image.tar
       - run:
-          name: Download the mojaloop/ml-core-test-harness repo
-          command: |
-            echo "Cloning $ML_CORE_TEST_HARNESS_GIT:$ML_CORE_TEST_HARNESS_VERSION"
-            git clone --depth 1 --branch $ML_CORE_TEST_HARNESS_VERSION $ML_CORE_TEST_HARNESS_GIT /tmp/ml-core-test-harness
-      - run:
           name: Execute TTK functional tests
-          command: |
-            ## Copy the config-modifier configs
-            cp -f ./docker/config-modifier/*.* /tmp/ml-core-test-harness/docker/config-modifier/configs/
-            echo "P1=$?"
-
-            ## Change to the test harness directory
-            cd /tmp/ml-core-test-harness
-            echo "P2=$?"
-
-            ## Make reports directory
-            mkdir ./reports
-            echo "P3=$?"
-
-            ## Start the test harness
-            docker-compose --project-name ttk-func --ansi never --profile all-services --profile ttk-provisioning --profile ttk-tests up -d
-            echo "P4=$?"
-            
-            ## Wait for the test harness to complete, and capture the exit code
-            # bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME
-            export TTK_FUNC_TEST_EXIT_CODE=$(bash wait-for-container.sh $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME)
-            echo "P5=$?"
-
-            ## Copy the test results
-            # docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME 2>&1 | tee ./reports/ttk-tests-console.log
-            docker logs $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME > ./reports/ttk-tests-console.log
-            echo "P6=$?"
-
-            ## Grab the exit code
-            # export TTK_FUNC_TEST_EXIT_CODE=$(docker inspect $ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME --format='{{.State.ExitCode}}')
-            # echo "P7=$?"
-
-            ## Shutdown the test harness
-            docker-compose -p ttk-func --ansi never down
-            echo "P8=$?"
-
-            ## Dump log to console
-            cat ./reports/ttk-tests-console.log
-            echo "P9=$?"
-
-            ## Exit with the exit code from the test harness
-            echo "Exiting functional tests with code: $TTK_FUNC_TEST_EXIT_CODE"
-            # exit $TTK_FUNC_TEST_EXIT_CODE
-            if [[ $TTK_FUNC_TEST_EXIT_CODE -eq 0 ]]; then
-              echo "Exiting functional tests with success: $TTK_FUNC_TEST_EXIT_CODE"
-              exit 0
-            else 
-              echo "Exiting functional tests with failure: $TTK_FUNC_TEST_EXIT_CODE"
-              exit 1
-            fi
+          command: bash ./test/scripts/test-functional.sh
       - store_artifacts:
           path: /tmp/ml-core-test-harness/reports
           destination: test
