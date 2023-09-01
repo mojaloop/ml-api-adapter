@@ -352,7 +352,7 @@ jobs:
       - run:
           name: Update NPM install
           command: |
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use default
             node -v
             npm ci
       - run:
@@ -382,12 +382,14 @@ jobs:
       - run:
           name: Wait 4 Health Services
           command: |
+            nvm use default
+
             # wait for services to be up and running
             npm run wait-4-docker
       - run:
           name: Execute Integration Tests
           command: |
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use default
 
             # check service health
             curl localhost:3000/health && \
@@ -401,38 +403,6 @@ jobs:
           destination: test
       - store_test_results:
           path: ./test/results
-
-  # test-functional:
-  #   executor: default-machine
-  #   steps:
-  #     - run:
-  #         name: Install general dependencies
-  #         command: *defaults_machine_Dependencies
-  #     - checkout
-  #     - run:
-  #         <<: *defaults_configure_nvm
-  #     - run:
-  #         <<: *defaults_display_versions
-  #     - restore_cache:
-  #         name: Restore npm Package Cache
-  #         key: dependency-cache-{{ checksum "package-lock.json" }}
-  #     - run:
-  #         name: Create dir for test results
-  #         command: mkdir -p ./test/results
-  #     - attach_workspace:
-  #         at: /tmp
-  #     - run:
-  #         name: Load the pre-built docker image from workspace
-  #         command: docker load -i /tmp/docker-image.tar
-  #     - run:
-  #         name: Execute functional tests
-  #         command: |
-  #           npm run test:functional | tee ./test/results/test-func.log
-  #     - store_artifacts:
-  #         path: ./test/results
-  #         destination: test
-  #     - store_test_results:
-  #         path: ./test/results
 
   test-functional:
     executor: default-machine
@@ -453,195 +423,133 @@ jobs:
           destination: test
 
   vulnerability-check:
-    executor: default-machine
+    executor: default-docker
     steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_docker_Dependencies
       - checkout
       - run:
-          name: stub
-          command: echo "hello world"
+          <<: *defaults_configure_nvm
+      - run:
+          <<: *defaults_display_versions
+      - restore_cache:
+          name: Restore npm Package Cache
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: Create dir for test results
+          command: mkdir -p ./audit/results
+      - run:
+          name: Check for new npm vulnerabilities
+          command: npm run audit:check -- -o json > ./audit/results/auditResults.json
+      - store_artifacts:
+          path: ./audit/results
+          destination: audit
+
+  audit-licenses:
+    executor: default-docker
+    steps:
+      - run:
+          name: Install general dependencies
+          command: *defaults_docker_Dependencies
+      - checkout
+      - run:
+          <<: *defaults_license_scanner
+      - restore_cache:
+          name: Restore npm Package Cache
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && pathToRepo=$CIRCLE_WORKING_DIRECTORY make run
+      - store_artifacts:
+          path: /tmp/license-scanner/results
+          destination: licenses
+
+  license-scan:
+    executor: default-machine
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Load the pre-built docker image from workspace
+          command: docker load -i /tmp/docker-image.tar
+      - run:
+          <<: *defaults_license_scanner
+      - run:
+          name: Run the license-scanner
+          command: cd /tmp/license-scanner && mode=docker dockerImages=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
+      - store_artifacts:
+          path: /tmp/license-scanner/results
+          destination: licenses
+
+  image-scan:
+    executor: anchore/anchore_engine
+    steps:
+      - setup_remote_docker
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Install docker dependencies for anchore
+          command: |
+            apk add --update py-pip docker python3-dev libffi-dev openssl-dev gcc libc-dev make jq npm
+      - run:
+          name: Install AWS CLI dependencies
+          command: *defaults_awsCliDependencies
+      - checkout
+      - run:
+          name: Setup Slack config
+          command: |
+            echo "export SLACK_PROJECT_NAME=${CIRCLE_PROJECT_REPONAME}" >> $BASH_ENV
+            echo "export SLACK_RELEASE_TYPE='GitHub Release'" >> $BASH_ENV
+            echo "export SLACK_RELEASE_TAG='${RELEASE_TAG} on ${CIRCLE_BRANCH} branch'" >> $BASH_ENV
+            echo "export SLACK_BUILD_ID=${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+            echo "export SLACK_CI_URL=${CIRCLE_BUILD_URL}" >> $BASH_ENV
+            echo "export SLACK_CUSTOM_MSG='Anchore Image Scan failed for: \`${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}\`'" >> $BASH_ENV
       - run:
           <<: *defaults_configure_nvm
       - run:
           <<: *defaults_display_versions
       - run:
-          name: stub
+          name: Install general dependencies
+          command: *defaults_docker_Dependencies
+      - run:
+          name: Load the pre-built docker image from workspace
+          command: docker load -i /tmp/docker-image.tar
+      - run:
+          name: Download the mojaloop/ci-config repo
           command: |
-            echo "1111111"
-            node -v
-            echo "2222222"
-            nvm list
-            echo "3333333"
-            nvm use default
-            echo "4444444"
-            node -v
-
-  # vulnerability-check:
-  #   executor: default-docker
-  #   steps:
-  #     - run:
-  #         name: Install general dependencies
-  #         command: *defaults_Dependencies
-  #     - checkout
-  #     - run:
-  #         <<: *defaults_configure_nvm
-  #     - restore_cache:
-  #         name: Restore npm Package Cache
-  #         key: dependency-cache-{{ checksum "package-lock.json" }}
-  #     - run:
-  #         name: Create dir for test results
-  #         command: mkdir -p ./audit/results
-  #     - run:
-  #         name: Check for new npm vulnerabilities
-  #         command: npm run audit:check -- -o json > ./audit/results/auditResults.json
-  #     - store_artifacts:
-  #         path: ./audit/results
-  #         prefix: audit
-
-  audit-licenses:
-    executor: default-machine
-    steps:
+            git clone https://github.com/mojaloop/ci-config /tmp/ci-config
+            # Generate the mojaloop anchore-policy
+            cd /tmp/ci-config/container-scanning && ./mojaloop-policy-generator.js /tmp/mojaloop-policy.json
       - run:
-          name: stub
-          command: echo "hello world"
-
-  # audit-licenses:
-  #   executor: default-docker
-  #   steps:
-  #     - run:
-  #         name: Install general dependencies
-  #         command: *defaults_Dependencies
-  #     - run:
-  #         <<: *defaults_license_scanner
-  #     - checkout
-  #     - restore_cache:
-  #         name: Restore npm Package Cache
-  #         key: dependency-cache-{{ checksum "package-lock.json" }}
-  #     - run:
-  #         name: Run the license-scanner
-  #         command: cd /tmp/license-scanner && pathToRepo=$CIRCLE_WORKING_DIRECTORY make run
-  #     - store_artifacts:
-  #         path: /tmp/license-scanner/results
-  #         prefix: licenses
-
-  # build:
-  #   executor: default-machine
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Build Docker $CIRCLE_TAG image
-  #         command: |
-  #           echo "Building Docker image: $CIRCLE_TAG"
-  #           docker build -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG .
-  #     - run:
-  #         name: Save docker image to workspace
-  #         command: docker save -o /tmp/docker-image.tar $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG
-  #     - persist_to_workspace:
-  #         root: /tmp
-  #         paths:
-  #           - ./docker-image.tar
-
-  license-scan:
-    executor: default-machine
-    steps:
+          name: Pull base image locally
+          command: |
+            echo "Pulling docker image: node:$NVMRC_VERSION-alpine"
+            docker pull node:$NVMRC_VERSION-alpine
+      ## Analyze the base and derived image
+      ## Note: It seems images are scanned in parallel, so preloading the base image result doesn't give us any real performance gain
+      - anchore/analyze_local_image:
+          # Force the older version, version 0.7.0 was just published, and is broken
+          anchore_version: v0.6.1
+          image_name: "docker.io/node:$NVMRC_VERSION-alpine $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:local"
+          policy_failure: false
+          timeout: '500'
+          # Note: if the generated policy is invalid, this will fallback to the default policy, which we don't want!
+          policy_bundle_file_path: /tmp/mojaloop-policy.json
       - run:
-          name: stub
-          command: echo "hello world"
-
-  # license-scan:
-  #   executor: default-machine
-  #   steps:
-  #     - attach_workspace:
-  #         at: /tmp
-  #     - run:
-  #         name: Load the pre-built docker image from workspace
-  #         command: docker load -i /tmp/docker-image.tar
-  #     - run:
-  #         <<: *defaults_license_scanner
-  #     - run:
-  #         name: Run the license-scanner
-  #         command: cd /tmp/license-scanner && mode=docker dockerImages=$DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG make run
-  #     - store_artifacts:
-  #         path: /tmp/license-scanner/results
-  #         prefix: licenses
-
-
-  image-scan:
-    executor: default-machine
-    steps:
+          name: Upload Anchore reports to s3
+          command: |
+            aws s3 cp anchore-reports ${AWS_S3_DIR_ANCHORE_REPORTS}/${CIRCLE_PROJECT_REPONAME}/ --recursive
+            aws s3 rm ${AWS_S3_DIR_ANCHORE_REPORTS}/latest/ --recursive --exclude "*" --include "${CIRCLE_PROJECT_REPONAME}*"
+            aws s3 cp anchore-reports ${AWS_S3_DIR_ANCHORE_REPORTS}/latest/ --recursive
       - run:
-          name: stub
-          command: echo "hello world"
-
-  # image-scan:
-  #   executor: anchore/anchore_engine
-  #   steps:
-  #     - setup_remote_docker
-  #     - checkout
-  #     - run:
-  #         name: Setup Slack config
-  #         command: |
-  #           echo "export SLACK_PROJECT_NAME=${CIRCLE_PROJECT_REPONAME}" >> $BASH_ENV
-  #           echo "export SLACK_RELEASE_TYPE='GitHub Release'" >> $BASH_ENV
-  #           echo "export SLACK_RELEASE_TAG='${RELEASE_TAG} on ${CIRCLE_BRANCH} branch'" >> $BASH_ENV
-  #           echo "export SLACK_BUILD_ID=${CIRCLE_BUILD_NUM}" >> $BASH_ENV
-  #           echo "export SLACK_CI_URL=${CIRCLE_BUILD_URL}" >> $BASH_ENV
-  #           echo "export SLACK_CUSTOM_MSG='Anchore Image Scan failed for: \`${DOCKER_ORG}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}\`'" >> $BASH_ENV
-  #     - run:
-  #         name: Install docker dependencies for anchore
-  #         command: |
-  #           apk add --update py-pip docker python3-dev libffi-dev openssl-dev gcc libc-dev make jq npm
-  #     - run:
-  #         name: Install general dependencies
-  #         command: |
-  #           apk --no-cache add git
-  #           apk --no-cache add ca-certificates
-  #           apk --no-cache add curl
-  #           apk --no-cache add openssh-client
-  #           apk add --no-cache -t build-dependencies make gcc g++ python3 libtool autoconf automake
-  #           npm config set unsafe-perm true
-  #           npm install -g node-gyp
-  #     - run:
-  #         name: Install AWS CLI dependencies
-  #         command: *defaults_awsCliDependencies
-  #     - attach_workspace:
-  #         at: /tmp
-  #     - run:
-  #         name: Load the pre-built docker image from workspace
-  #         command: docker load -i /tmp/docker-image.tar
-  #     - run:
-  #         name: Download the mojaloop/ci-config repo
-  #         command: |
-  #           git clone https://github.com/mojaloop/ci-config /tmp/ci-config
-  #           # Generate the mojaloop anchore-policy
-  #           cd /tmp/ci-config/container-scanning && ./mojaloop-policy-generator.js /tmp/mojaloop-policy.json
-  #     - run:
-  #         name: Pull base image locally
-  #         command: |
-  #           docker pull node:16.15.0-alpine
-  #     # Analyze the base and derived image
-  #     # Note: It seems images are scanned in parallel, so preloading the base image result doesn't give us any real performance gain
-  #     - anchore/analyze_local_image:
-  #         # Force the older version, version 0.7.0 was just published, and is broken
-  #         anchore_version: v0.6.1
-  #         image_name: "docker.io/node:16.15.0-alpine $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG"
-  #         policy_failure: false
-  #         timeout: '500'
-  #         # Note: if the generated policy is invalid, this will fallback to the default policy, which we don't want!
-  #         policy_bundle_file_path: /tmp/mojaloop-policy.json
-  #     - run:
-  #         name: Upload Anchore reports to s3
-  #         command: |
-  #           aws s3 cp anchore-reports ${AWS_S3_DIR_ANCHORE_REPORTS}/${CIRCLE_PROJECT_REPONAME}/ --recursive
-  #           aws s3 rm ${AWS_S3_DIR_ANCHORE_REPORTS}/latest/ --recursive --exclude "*" --include "${CIRCLE_PROJECT_REPONAME}*"
-  #           aws s3 cp anchore-reports ${AWS_S3_DIR_ANCHORE_REPORTS}/latest/ --recursive
-  #     - run:
-  #         name: Evaluate failures
-  #         command: /tmp/ci-config/container-scanning/anchore-result-diff.js anchore-reports/node_16.15.0-alpine-policy.json anchore-reports/${CIRCLE_PROJECT_REPONAME}*-policy.json
-  #     - store_artifacts:
-  #         path: anchore-reports
-  #     - slack/notify:
-  #         event: fail
-  #         template: SLACK_TEMP_RELEASE_FAILURE
+          name: Evaluate failures
+          command: /tmp/ci-config/container-scanning/anchore-result-diff.js anchore-reports/node_${NVMRC_VERSION}-alpine-policy.json anchore-reports/${CIRCLE_PROJECT_REPONAME}*-policy.json
+      - store_artifacts:
+          path: anchore-reports
+      - slack/notify:
+          event: fail
+          template: SLACK_TEMP_RELEASE_FAILURE
 
   release:
     executor: default-docker
@@ -954,25 +862,6 @@ workflows:
               ignore:
                 - /feature*/
                 - /bugfix*/
-      # - build:
-      #     context: org-global
-      #     requires:
-      #       - setup
-      #       - test-dependencies
-      #       - test-lint
-      #       - test-unit
-      #       - test-coverage
-      #       - test-integration
-      #       - test-functional
-      #       - vulnerability-check
-      #       - audit-licenses
-      #     filters:
-      #       tags:
-      #         only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
-      #       branches:
-      #         ignore:
-      #           - /.*/
-
       - license-scan:
           context: org-global
           requires:
