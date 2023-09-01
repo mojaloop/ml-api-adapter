@@ -112,7 +112,7 @@ docker build -t mojaloop/ml-api-adapter:local .
 ```
 
 ```bash
-bash ./test/scripts/test-functional.sh
+npm run test:functional
 ```
 
 By default this will clone the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) into `$ML_CORE_TEST_HARNESS_DIR`.
