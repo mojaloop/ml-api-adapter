@@ -1,6 +1,6 @@
 # ml-api-adapter
 
-[![Git Commit](https://img.shields.io/github/last-commit/mojaloop/ml-api-adapter.svg?style=flat)](https://github.com/mojaloop/ml-api-adapter/commits/master)
+[![Git Commit](https://img.shields.io/github/last-commit/mojaloop/ml-api-adapter.svg?style=flat)](https://github.com/mojaloop/ml-api-adapter/commits/main)
 [![Git Releases](https://img.shields.io/github/release/mojaloop/ml-api-adapter.svg?style=flat)](https://github.com/mojaloop/ml-api-adapter/releases)
 [![Docker pulls](https://img.shields.io/docker/pulls/mojaloop/ml-api-adapter.svg?style=flat)](https://hub.docker.com/r/mojaloop/ml-api-adapter)
 [![CircleCI](https://circleci.com/gh/mojaloop/ml-api-adapter.svg?style=svg)](https://app.circleci.com/pipelines/github/mojaloop/ml-api-adapter)
@@ -29,25 +29,38 @@ The following documentation represents the services, APIs and endpoints responsi
   - [Auditing Dependencies](#auditing-dependencies)
   - [Container Scans](#container-scans)
 
+## Docker Image
+
+### Official Packaged Release
+
+This package is available as a pre-built docker image on Docker Hub: [https://hub.docker.com/r/mojaloop/ml-api-adapter](https://hub.docker.com/r/mojaloop/ml-api-adapter)
+
+### Build from Source
+
+You can also build it directly from source: [https://github.com/mojaloop/ml-api-adapter](https://github.com/mojaloop/ml-api-adapter)
+
+However, take note of the default argument in the [Dockerfile](./Dockerfile) for `NODE_VERSION`:
+
+```dockerfile
+ARG NODE_VERSION=lts-alpine
+```
+
+It is recommend that you set the `NODE_VERSION` argument against the version set in the local [.nvmrc](./.nvmrc).
+
+This can be done using the following command: `npm run docker:build`
+
+Or via docker build directly:
+
+```bash
+docker build \
+  --build-arg NODE_VERSION="$(cat .nvmrc)-alpine" \
+  -t mojaloop/ml-api-adapter:local \
+  .
+```
+
 ## Deployment
 
 See the [Onboarding guide](Onboarding.md) for running the service locally.
-
-### Mac users and standard Python
-
-There is a need to have proper version of python 3, elsewhere `npm install` command will fail. By default, on your Mac, you have python 2.7.* installed, you need to have fresh 3.* version.
-
-```bash
-brew install python
-```
-
-To invoke proper version of Python, you have to update your PATH env variable in your shell profile.
-
-For `~/.zshrc`
-
-```bash
-echo 'export PATH="/usr/local/opt/python/libexec/bin:$PATH"' >> ~/.zshrc 
-```
 
 ## Configuration
 
@@ -90,14 +103,51 @@ export ENDPOINT_URL=http://localhost:4545/notification
 npm run test:int
 ```
 
+### Running Functional Tests
+
+If you want to run functional tests locally utilizing the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness), you can run the following commands:
+
+```bash
+docker build -t mojaloop/ml-api-adapter:local .
+```
+
+```bash
+npm run test:functional
+```
+
+By default this will clone the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) into `$ML_CORE_TEST_HARNESS_DIR`.
+
+See default values as specified in the [test-functional.sh](./test/scripts/test-functional.sh) script.
+
+Check test container logs for test results into `$ML_CORE_TEST_HARNESS_DIR` directory.
+
+If you want to not have the [ml-core-test-harness](https://github.com/mojaloop/ml-core-test-harness) shutdown automatically by the script, make sure you set the following env var `export ML_CORE_TEST_SKIP_SHUTDOWN=true`.
+
+By doing so, you are then able access TTK UI using the following URI: <http://localhost:9660>.
+
+Or alternatively, you can monitor the `ttk-func-ttk-tests-1` (See `ML_CORE_TEST_HARNESS_TEST_FUNC_CONT_NAME` in the [test-functional.sh](./test/scripts/test-functional.sh) script) container for test results with the following command:
+
+```bash
+docker logs -f ttk-func-ttk-tests-1
+```
+
+TTK Test files:
+
+- **Test Collection**: `$ML_CORE_TEST_HARNESS_DIR/docker/ml-testing-toolkit/test-cases/collections/tests/p2p.json`
+- **Env Config**: `$ML_CORE_TEST_HARNESS_DIR//docker/ml-testing-toolkit/test-cases/environments/default-env.json`
+
+Configuration modifiers:
+
+- **ml-api-adapter**: [./docker/config-modifier/ml-api-adapter.js](./docker/config-modifier/ml-api-adapter.js)
+
 ## Auditing Dependencies
 
-We use `npm-audit-resolver` along with `npm audit` to check dependencies for node vulnerabilities, and keep track of resolved dependencies with an `audit-resolve.json` file.
+We use `audit-ci` along with `npm audit` to check dependencies for node vulnerabilities, and keep track of resolved dependencies with an `audit-ci.jsonc` file.
 
 To start a new resolution process, run:
 
 ```bash
-npm run audit:resolve
+npm run audit:fix
 ```
 
 You can then check to see if the CI will pass based on the current dependencies with:
@@ -106,7 +156,7 @@ You can then check to see if the CI will pass based on the current dependencies 
 npm run audit:check
 ```
 
-And commit the changed `audit-resolv.json` to ensure that CircleCI will build correctly.
+The [audit-ci.jsonc](./audit-ci.jsonc) contains any audit-exceptions that cannot be fixed to ensure that CircleCI will build correctly.
 
 ## Container Scans
 
