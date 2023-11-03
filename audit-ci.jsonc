@@ -27,6 +27,8 @@
     // widdershins>yargs>yargs-parser
     "GHSA-p9pc-299p-vxgp",
     // https://github.com/advisories/GHSA-8cf7-32gw-wr33
-    "GHSA-8cf7-32gw-wr33"
+    "GHSA-8cf7-32gw-wr33",
+    // https://github.com/advisories/GHSA-7fh5-64p2-3v2j
+    "GHSA-7fh5-64p2-3v2j"
   ]
 }
