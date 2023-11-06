@@ -34,28 +34,14 @@ const fulfilTransfer = (request) => {
   const maxCallbackTimeLagDilation = Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS ? Config.MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS : 0
   const completedTimestamp = new Date(request.payload.completedTimestamp)
   const now = new Date()
-  if (isValidDateObject(completedTimestamp)) {
-    Logger.isDebugEnabled && Logger.debug(`completedTimestamp: ${completedTimestamp.toISOString()}, now: ${now.toISOString()}, maxLag: ${maxLag}, maxCallbackTimeLagDilation: ${maxCallbackTimeLagDilation}`)
-    if (completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation) {
-      throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because future timestamp was provided')
-    } else if (completedTimestamp.getTime() < now.getTime() - maxLag) {
-      throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
-    }
-  }
-}
 
-/**
-* This function checks if `dateObj` is a valid "date object"
-* i.e `dateObj` was instantiated with a valid date.
-* JS does not not throw errors if a date object is instantiated with invalid parameter
-* e.g `new Date('invalid string')` will return a date object with value 'NaN'.
-* The invalid date object, however, throws an error (RangeError) when the `toISOString()` method is called on it
-* and not when `getTime()` method is called on it.
-*
-* @param {Date} dateObj
-*/
-const isValidDateObject = (dateObj) => {
-  return dateObj instanceof Date && !isNaN(dateObj)
+  Logger.isDebugEnabled && Logger.debug(`completedTimestamp: ${completedTimestamp.toISOString()}, now: ${now.toISOString()}, maxLag: ${maxLag}, maxCallbackTimeLagDilation: ${maxCallbackTimeLagDilation}`)
+
+  if (completedTimestamp.getTime() > now.getTime() + maxCallbackTimeLagDilation) {
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because future timestamp was provided')
+  } else if (completedTimestamp.getTime() < now.getTime() - maxLag) {
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.VALIDATION_ERROR, 'completedTimestamp fails because provided timestamp exceeded the maximum timeout duration')
+  }
 }
 
 module.exports = {
