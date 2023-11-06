@@ -44,6 +44,16 @@ const fulfilTransfer = (request) => {
   }
 }
 
+/**
+* This function checks if `dateObj` is a valid "date object"
+* i.e `dateObj` was instantiated with a valid date.
+* JS does not not throw errors if a date object is instantiated with invalid parameter
+* e.g `new Date('invalid string')` will return a date object with value 'NaN'.
+* The invalid date object, however, throws an error (RangeError) when the `toISOString()` method is called on it
+* and not when `getTime()` method is called on it.
+*
+* @param {Date} dateObj
+*/
 const isValidDateObject = (dateObj) => {
   return dateObj instanceof Date && !isNaN(dateObj)
 }
