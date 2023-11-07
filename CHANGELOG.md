@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [14.0.5](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.4...v14.0.5) (2023-11-07)
+
+
+### Bug Fixes
+
+* **mojaloop/#3615:** upgrade dependencies ([#516](https://github.com/mojaloop/ml-api-adapter/issues/516)) ([87084d3](https://github.com/mojaloop/ml-api-adapter/commit/87084d3ecc4d734dc3724880e41644d546e56a62)), closes [mojaloop/#3615](https://github.com/mojaloop/project/issues/3615)
+
+
+### Chore
+
+* added .versionrc [skip ci] ([#515](https://github.com/mojaloop/ml-api-adapter/issues/515)) ([7126728](https://github.com/mojaloop/ml-api-adapter/commit/7126728a4a952befb31650f37a7ea7641ea1a436))
+
 ### [14.0.4](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.3...v14.0.4) (2023-09-04)
 
 ### [14.0.3](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.2...v14.0.3) (2023-09-04)
