@@ -25,14 +25,18 @@
 'use strict'
 
 const EventSdk = require('@mojaloop/event-sdk')
-const TransferService = require('../../domain/transfer')
-const Validator = require('../../lib/validator')
 const Logger = require('@mojaloop/central-services-logger')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const Enum = require('@mojaloop/central-services-shared').Enum
+const { Enum, Util } = require('@mojaloop/central-services-shared')
 
-const { getTransferSpanTags } = require('@mojaloop/central-services-shared').Util.EventFramework
+const TransferService = require('../../domain/transfer')
+const Validator = require('../../lib/validator')
+const { logger } = require('../../shared/logger')
+
+const { getTransferSpanTags } = Util.EventFramework
+const { Type, Action } = Enum.Events.Event
+
 /**
  * @module src/api/transfers/handler
  */
@@ -50,31 +54,33 @@ const { getTransferSpanTags } = require('@mojaloop/central-services-shared').Uti
  */
 
 const create = async function (request, h) {
+  const { headers, payload, dataUri, span } = request
+
   const histTimerEnd = Metrics.getHistogram(
-    'transfer_prepare',
+    'transfer_prepare', // todo: do we need to add fxTransfer?
     'Produce a transfer prepare message to transfer prepare kafka topic',
     ['success']
   ).startTimer()
 
-  const span = request.span
-
   span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
   try {
-    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
-    Logger.isDebugEnabled && Logger.debug(`create::payload(${JSON.stringify(request.payload)})`)
-    Logger.isDebugEnabled && Logger.debug(`create::headers(${JSON.stringify(request.headers)})`)
+    logger.debug(`create::payload(${JSON.stringify(payload)})`)
+    logger.debug(`create::headers(${JSON.stringify(headers)})`)
+
+    span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.PREPARE))
     await span.audit({
-      headers: request.headers,
-      dataUri: request.dataUri,
-      payload: request.payload
+      headers,
+      dataUri,
+      payload
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.prepare(request.headers, request.dataUri, request.payload, span)
+    await TransferService.prepare(headers, dataUri, payload, span)
+
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -93,32 +99,36 @@ const create = async function (request, h) {
  */
 
 const fulfilTransfer = async function (request, h) {
+  const { headers, payload, params, dataUri, span } = request
+
   const histTimerEnd = Metrics.getHistogram(
-    'transfer_fulfil',
+    'transfer_fulfil', // todo: do we need to add fxTransfer?
     'Produce a transfer fulfil message to transfer fulfil kafka topic',
     ['success']
   ).startTimer()
 
-  const span = request.span
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
-    span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
-    Validator.fulfilTransfer(request)
-    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::payload(${JSON.stringify(request.payload)})`)
-    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::headers(${JSON.stringify(request.headers)})`)
-    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::id(${request.params.id})`)
+    Validator.fulfilTransfer({ payload })
+    logger.debug(`fulfilTransfer::payload(${JSON.stringify(payload)})`)
+    logger.debug(`fulfilTransfer::headers(${JSON.stringify(headers)})`)
+    logger.debug(`fulfilTransfer::id(${params.id})`)
+
+    span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
     await span.audit({
-      headers: request.headers,
-      dataUri: request.dataUri,
-      payload: request.payload,
-      params: request.params
+      headers,
+      payload,
+      params,
+      dataUri
     }, EventSdk.AuditEventAction.start)
-    await TransferService.fulfil(request.headers, request.dataUri, request.payload, request.params, span)
+
+    await TransferService.fulfil(headers, dataUri, payload, params, span)
+
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }

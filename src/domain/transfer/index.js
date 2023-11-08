@@ -26,14 +26,27 @@
  ******/
 'use strict'
 
-const Logger = require('@mojaloop/central-services-logger')
 const Kafka = require('@mojaloop/central-services-stream').Util
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const Config = require('../../lib/config')
 const generalEnum = require('@mojaloop/central-services-shared').Enum
 const safeStringify = require('fast-safe-stringify')
+
+const Config = require('../../lib/config')
+const { logger } = require('../../shared/logger')
+const dto = require('./dto')
+
+const { Action, Type } = generalEnum.Events.Event
+
+const makeProducerConfig = (functionality, action, logPrefix = '') => {
+  const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
+  const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, functionality.toUpperCase(), action.toUpperCase())
+  logger.debug(`${logPrefix}::topicConfig - ${safeStringify(topicConfig)}`)
+  logger.debug(`${logPrefix}::kafkaConfig - ${safeStringify(kafkaConfig)}`)
+
+  return { topicConfig, kafkaConfig }
+}
 
 /**
  * @module src/domain/transfer
@@ -52,30 +65,20 @@ const safeStringify = require('fast-safe-stringify')
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
 const prepare = async (headers, dataUri, payload, span) => {
-  Logger.isDebugEnabled && Logger.debug(`domain::transfer::prepare::start(${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+  const logPrefix = `domain::${payload.transferId ? 'transfer' : 'fxTransfer'}::prepare`
+  logger.debug(`${logPrefix}::start(${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+
   try {
-    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.PREPARE, generalEnum.Events.Event.Type.PREPARE, state)
-    const metadata = StreamingProtocol.createMetadata(payload.transferId, event)
-    let messageProtocol = StreamingProtocol.createMessageFromRequest(payload.transferId, { headers, dataUri, params: { id: payload.transferId } }, payload.payeeFsp, payload.payerFsp, metadata)
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE)
-    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::prepare::messageProtocol - ${JSON.stringify(messageProtocol)}`)
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::prepare::topicConfig - ${safeStringify(topicConfig)}`)
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::prepare::kafkaConfig - ${safeStringify(kafkaConfig)}`)
-    // TODO: re-enable once we are able to configure the log-level
-    // await span.debug({
-    //   messageProtocol,
-    //   topicName: topicConfig.topicName,
-    //   clientId: kafkaConfig.rdkafkaConf['client.id']
-    // })
+    let messageProtocol = dto.prepareMessageDto(headers, dataUri, payload, logPrefix)
     messageProtocol = await span.injectContextToMessage(messageProtocol)
+    const { topicConfig, kafkaConfig } = makeProducerConfig(Action.TRANSFER, Action.PREPARE, logPrefix)
+
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    Logger.isErrorEnabled && Logger.error(`domain::transfer::prepare::Kafka error:: ERROR:'${err}'`)
+    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     throw fspiopError
   }
 }
@@ -94,30 +97,20 @@ const prepare = async (headers, dataUri, payload, span) => {
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
 const fulfil = async (headers, dataUri, payload, params, span) => {
-  Logger.isDebugEnabled && Logger.debug(`domain::transfer::fulfil::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+  const logPrefix = `domain::${payload.transferState ? 'transfer' : 'fxTransfer'}::fulfil`
+  logger.debug(`${logPrefix}::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+
   try {
-    const action = payload.transferState === generalEnum.Transfers.TransferState.ABORTED ? generalEnum.Events.Event.Action.REJECT : (payload.transferState === generalEnum.Transfers.TransferState.RESERVED) ? generalEnum.Events.Event.Action.RESERVE : generalEnum.Events.Event.Action.COMMIT
-    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.FULFIL, action, state)
-    const metadata = StreamingProtocol.createMetadata(params.id, event)
-    let messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
-    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::fulfil::messageProtocol - ${JSON.stringify(messageProtocol)}`)
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::fulfil::topicConfig - ${safeStringify(topicConfig)}`)
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::fulfil::kafkaConfig - ${safeStringify(kafkaConfig)}`)
-    await span.debug({
-      messageProtocol,
-      topicName: topicConfig.topicName,
-      clientId: kafkaConfig.rdkafkaConf['client.id']
-    })
+    let messageProtocol = dto.fulfilMessageDto(headers, dataUri, payload, params, logPrefix)
     messageProtocol = await span.injectContextToMessage(messageProtocol)
+    const { topicConfig, kafkaConfig } = makeProducerConfig(Action.TRANSFER, Action.FULFIL, logPrefix)
+
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    Logger.isErrorEnabled && Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
+    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     throw fspiopError
   }
 }
@@ -134,30 +127,25 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
  * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
  */
 const getTransferById = async (headers, params, span) => {
-  Logger.isDebugEnabled && Logger.debug(`domain::transfer::transferById::start(${params.id}, ${JSON.stringify(headers)}`)
+  logger.debug(`domain::transfer::transferById::start(${params.id}, ${JSON.stringify(headers)}`)
   try {
-    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.GET, generalEnum.Events.Event.Type.GET, state)
+    const state = dto.eventStateDto()
+    const event = StreamingProtocol.createEventMetadata(Type.GET, Type.GET, state)
     const metadata = StreamingProtocol.createMetadata(params.id, event)
     let messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.GET)
-    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.GET.toUpperCase())
-    Logger.isInfoEnabled && Logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
-    Logger.isInfoEnabled && Logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
-    Logger.isInfoEnabled && Logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
-    // TODO: re-enable once we are able to configure the log-level
-    // await span.debug({
-    //   messageProtocol,
-    //   topicName: topicConfig.topicName,
-    //   clientId: kafkaConfig.rdkafkaConf['client.id']
-    // })
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Action.TRANSFER, Action.GET)
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, Action.TRANSFER.toUpperCase(), Action.GET.toUpperCase())
+    logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
+    logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
+    logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
+
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    Logger.isErrorEnabled && Logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
+    logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     throw fspiopError
   }
 }
@@ -176,30 +164,25 @@ const getTransferById = async (headers, params, span) => {
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
 const transferError = async (headers, dataUri, payload, params, span) => {
-  Logger.isDebugEnabled && Logger.debug(`domain::transfer::abort::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+  logger.debug(`domain::transfer::abort::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
   try {
-    const state = StreamingProtocol.createEventState(generalEnum.Events.EventStatus.SUCCESS.status, generalEnum.Events.EventStatus.SUCCESS.code, generalEnum.Events.EventStatus.SUCCESS.description)
-    const event = StreamingProtocol.createEventMetadata(generalEnum.Events.Event.Type.FULFIL, generalEnum.Events.Event.Action.ABORT, state)
+    const state = dto.eventStateDto()
+    const event = StreamingProtocol.createEventMetadata(Type.FULFIL, Action.ABORT, state)
     const metadata = StreamingProtocol.createMetadata(params.id, event)
     let messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL)
-    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
-    Logger.isDebugEnabled && Logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)
-    // TODO: re-enable once we are able to configure the log-level
-    // await span.debug({
-    //   messageProtocol,
-    //   topicName: topicConfig.topicName,
-    //   clientId: kafkaConfig.rdkafkaConf['client.id']
-    // })
+    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Action.TRANSFER, Action.FULFIL)
+    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, Action.TRANSFER.toUpperCase(), Action.FULFIL.toUpperCase())
+    logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
+    logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
+    logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)
+
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    Logger.isErrorEnabled && Logger.error(`domain::transfer::abort::Kafka error:: ERROR:'${err}'`)
+    logger.error(`domain::transfer::abort::Kafka error:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     throw fspiopError
   }
 }
