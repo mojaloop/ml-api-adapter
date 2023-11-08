@@ -1,4 +1,6 @@
 const { Enum } = require('@mojaloop/central-services-shared')
+const { validateIncomingErrorCode } = require('@mojaloop/central-services-error-handling').Handler
+
 const { ROUTES, ROUTE_IDS } = require('../../shared/constants')
 const handler = require('../transfers/handler')
 const schemas = require('../validationSchemas')
@@ -40,6 +42,26 @@ module.exports = [
       description: 'Fulfil a FX Transfer',
       tags
     }
+  },
+  {
+    method: 'PUT',
+    path: `${ROUTES.fxTransfers}/{id}/error`,
+    handler: handler.fulfilTransferError,
+    options: {
+      pre: [
+        { method: validateIncomingErrorCode }
+      ],
+      validate: {
+        headers: schemas.transferHeadersSchema,
+        payload: schemas.commonSchemas.errorCallbackPayloadSchema,
+        params: schemas.commonSchemas.pathIdParamSchema
+      },
+      payload: {
+        failAction: 'error'
+      },
+      id: ROUTE_IDS.putFxTransfersError,
+      tags,
+      description: 'Abort a FX transfer'
+    }
   }
-  // todo: add /error route
 ]

@@ -36,6 +36,16 @@ const extensionListSchema = Joi.object().keys({
     .required().min(1).max(16).description('extension')
 }).description('Extension list')
 
+const errorInfoSchema = Joi.object().keys({
+  errorCode: Joi.string().regex(/^[0-9]{4}/),
+  errorDescription: Joi.string(),
+  extensionList: extensionListSchema.optional()
+}).options({ presence: 'required' })
+
+const errorCallbackPayloadSchema = Joi.object({
+  errorInformation: errorInfoSchema.required().description('Error information')
+})
+
 module.exports = {
   Joi,
   guidSchema,
@@ -44,5 +54,6 @@ module.exports = {
   fulfilmentSchema,
   moneySchema,
   pathIdParamSchema,
-  extensionListSchema
+  extensionListSchema,
+  errorCallbackPayloadSchema
 }

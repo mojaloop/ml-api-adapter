@@ -1,5 +1,6 @@
 const MlLogger = require('@mojaloop/central-services-logger')
 
+// wrapper to avoid doing Logger.is{SomeLogLevel}Enabled checks everywhere
 class Logger {
   #log
 

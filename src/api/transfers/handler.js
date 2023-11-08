@@ -25,7 +25,6 @@
 'use strict'
 
 const EventSdk = require('@mojaloop/event-sdk')
-const Logger = require('@mojaloop/central-services-logger')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
@@ -36,6 +35,8 @@ const { logger } = require('../../shared/logger')
 
 const { getTransferSpanTags } = Util.EventFramework
 const { Type, Action } = Enum.Events.Event
+
+const FX_PREFIX = 'fx_'
 
 /**
  * @module src/api/transfers/handler
@@ -56,8 +57,9 @@ const { Type, Action } = Enum.Events.Event
 const create = async function (request, h) {
   const { headers, payload, dataUri, span } = request
 
+  const metricPrefix = payload.transferId ? '' : FX_PREFIX
   const histTimerEnd = Metrics.getHistogram(
-    'transfer_prepare', // todo: do we need to add fxTransfer?
+    `${metricPrefix}transfer_prepare`,
     'Produce a transfer prepare message to transfer prepare kafka topic',
     ['success']
   ).startTimer()
@@ -101,8 +103,9 @@ const create = async function (request, h) {
 const fulfilTransfer = async function (request, h) {
   const { headers, payload, params, dataUri, span } = request
 
+  const metricPrefix = payload.transferState ? '' : FX_PREFIX
   const histTimerEnd = Metrics.getHistogram(
-    'transfer_fulfil', // todo: do we need to add fxTransfer?
+    `${metricPrefix}transfer_fulfil`,
     'Produce a transfer fulfil message to transfer fulfil kafka topic',
     ['success']
   ).startTimer()
@@ -156,7 +159,7 @@ const getTransferById = async function (request, h) {
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    Logger.isInfoEnabled && Logger.info(`getById::id(${request.params.id})`)
+    logger.info(`getById::id(${request.params.id})`)
     await span.audit({
       headers: request.headers,
       params: request.params
@@ -166,7 +169,7 @@ const getTransferById = async function (request, h) {
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -184,30 +187,34 @@ const getTransferById = async function (request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (request, h) {
+  const { headers, payload, params, dataUri, span } = request
+
+  const metricPrefix = '' // todo: think how to determine fxErrorCallback (by contentType?)
   const histTimerEnd = Metrics.getHistogram(
-    'transfer_fulfil_error',
+    `${metricPrefix}transfer_fulfil_error`,
     'Produce a transfer fulfil error message to transfer fulfil kafka topic',
     ['success']
   ).startTimer()
 
-  const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
-    Logger.isDebugEnabled && Logger.debug(`fulfilTransferError::payload(${JSON.stringify(request.payload)})`)
-    Logger.isDebugEnabled && Logger.debug(`fulfilTransferError::headers(${JSON.stringify(request.headers)})`)
-    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::id(${request.params.id})`)
+    logger.debug(`fulfilTransferError::payload(${JSON.stringify(request.payload)})`)
+    logger.debug(`fulfilTransferError::headers(${JSON.stringify(request.headers)})`)
+    logger.debug(`fulfilTransfer::id(${request.params.id})`)
     await span.audit({
-      headers: request.headers,
-      dataUri: request.dataUri,
-      payload: request.payload,
-      params: request.params
+      headers,
+      dataUri,
+      payload,
+      params
     }, EventSdk.AuditEventAction.start)
-    await TransferService.transferError(request.headers, request.dataUri, request.payload, request.params, span)
+
+    await TransferService.transferError(headers, dataUri, payload, params, span)
+
     histTimerEnd({ success: true })
     return h.response().code(200)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }

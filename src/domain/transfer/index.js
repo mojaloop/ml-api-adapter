@@ -164,7 +164,10 @@ const getTransferById = async (headers, params, span) => {
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
 const transferError = async (headers, dataUri, payload, params, span) => {
-  logger.debug(`domain::transfer::abort::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+  // todo: determine fxTransfer
+  const logPrefix = 'domain::transfer::abort'
+
+  logger.debug(`${logPrefix}::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
   try {
     const state = dto.eventStateDto()
     const event = StreamingProtocol.createEventMetadata(Type.FULFIL, Action.ABORT, state)
@@ -172,15 +175,16 @@ const transferError = async (headers, dataUri, payload, params, span) => {
     let messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
     const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Action.TRANSFER, Action.FULFIL)
     const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, Action.TRANSFER.toUpperCase(), Action.FULFIL.toUpperCase())
-    logger.debug(`domain::transfer::abort::messageProtocol - ${messageProtocol}`)
-    logger.debug(`domain::transfer::abort::topicConfig - ${topicConfig}`)
-    logger.debug(`domain::transfer::abort::kafkaConfig - ${kafkaConfig}`)
+    logger.debug(`${logPrefix}::messageProtocol - ${messageProtocol}`)
+    logger.debug(`${logPrefix}::topicConfig - ${topicConfig}`)
+    logger.debug(`${logPrefix}::kafkaConfig - ${kafkaConfig}`)
 
     messageProtocol = await span.injectContextToMessage(messageProtocol)
+
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    logger.error(`domain::transfer::abort::Kafka error:: ERROR:'${err}'`)
+    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     logger.error(fspiopError)
     throw fspiopError
