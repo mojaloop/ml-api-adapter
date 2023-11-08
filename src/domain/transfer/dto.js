@@ -1,7 +1,9 @@
+const safeStringify = require('fast-safe-stringify')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { logger } = require('../../shared/logger')
+const { KAFKA_CONFIG } = require('../../lib/config')
 
-const { StreamingProtocol } = Util
+const { StreamingProtocol, Kafka } = Util
 const { TransferState } = Enum.Transfers
 const { Action, Type } = Enum.Events.Event
 
@@ -51,8 +53,18 @@ const fulfilMessageDto = (headers, dataUri, payload, params, logPrefix = '') => 
   return Object.freeze(messageProtocol)
 }
 
+const producerConfigDto = (functionality, action, logPrefix = '') => {
+  const topicConfig = Kafka.createGeneralTopicConf(KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
+  const kafkaConfig = Kafka.getKafkaConfig(KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, functionality.toUpperCase(), action.toUpperCase())
+  logger.debug(`${logPrefix}::topicConfig - ${safeStringify(topicConfig)}`)
+  logger.debug(`${logPrefix}::kafkaConfig - ${safeStringify(kafkaConfig)}`)
+
+  return Object.freeze({ topicConfig, kafkaConfig })
+}
+
 module.exports = {
   prepareMessageDto,
   fulfilMessageDto,
-  eventStateDto
+  eventStateDto,
+  producerConfigDto
 }

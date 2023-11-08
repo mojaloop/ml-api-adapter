@@ -31,22 +31,12 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const generalEnum = require('@mojaloop/central-services-shared').Enum
-const safeStringify = require('fast-safe-stringify')
 
 const Config = require('../../lib/config')
 const { logger } = require('../../shared/logger')
 const dto = require('./dto')
 
 const { Action, Type } = generalEnum.Events.Event
-
-const makeProducerConfig = (functionality, action, logPrefix = '') => {
-  const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
-  const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, functionality.toUpperCase(), action.toUpperCase())
-  logger.debug(`${logPrefix}::topicConfig - ${safeStringify(topicConfig)}`)
-  logger.debug(`${logPrefix}::kafkaConfig - ${safeStringify(kafkaConfig)}`)
-
-  return { topicConfig, kafkaConfig }
-}
 
 /**
  * @module src/domain/transfer
@@ -71,7 +61,7 @@ const prepare = async (headers, dataUri, payload, span) => {
   try {
     let messageProtocol = dto.prepareMessageDto(headers, dataUri, payload, logPrefix)
     messageProtocol = await span.injectContextToMessage(messageProtocol)
-    const { topicConfig, kafkaConfig } = makeProducerConfig(Action.TRANSFER, Action.PREPARE, logPrefix)
+    const { topicConfig, kafkaConfig } = dto.producerConfigDto(Action.TRANSFER, Action.PREPARE, logPrefix)
 
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
@@ -103,7 +93,7 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
   try {
     let messageProtocol = dto.fulfilMessageDto(headers, dataUri, payload, params, logPrefix)
     messageProtocol = await span.injectContextToMessage(messageProtocol)
-    const { topicConfig, kafkaConfig } = makeProducerConfig(Action.TRANSFER, Action.FULFIL, logPrefix)
+    const { topicConfig, kafkaConfig } = dto.producerConfigDto(Action.TRANSFER, Action.FULFIL, logPrefix)
 
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true

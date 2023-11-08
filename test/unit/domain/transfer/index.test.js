@@ -28,12 +28,14 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Uuid = require('uuid4')
-const Service = require('../../../../src/domain/transfer')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Kafka = require('@mojaloop/central-services-stream').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
-const Config = require('../../../../src/lib/config')
 const Logger = require('@mojaloop/central-services-logger')
+
+const Service = require('../../../../src/domain/transfer')
+const Config = require('../../../../src/lib/config')
+const mocks = require('../../mocks')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
@@ -119,6 +121,7 @@ Test('Transfer Service tests', serviceTest => {
       test.equals(result, true)
       test.end()
     })
+
     prepareTest.test('throw error if error while publishing message to kafka', async test => {
       const message = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
@@ -286,8 +289,23 @@ Test('Transfer Service tests', serviceTest => {
         test.end()
       }
     })
+
+    fulfilTest.test('execute fulfil for fxTransfer', async test => {
+      const message = mocks.mockFxFulfilPayload()
+
+      const headers = {}
+      const id = 'dfsp1'
+      Kafka.Producer.produceMessage.returns(Promise.resolve())
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const success = await Service.fulfil(headers, dataUri, message, { id }, span)
+      test.ok(success === true)
+      test.end()
+    })
+
     fulfilTest.end()
   })
+
   serviceTest.test('getById should', async getTransferByIdTest => {
     await getTransferByIdTest.test('return transfer', async test => {
       const message = {
