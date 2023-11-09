@@ -9,10 +9,7 @@ const guidSchema = Joi.string().guid({ version: 'uuidv4' }).label('Must be in a 
 
 const dfspIdSchema = Joi.string().min(1).max(32).label('A valid DFSP number must be supplied.')
 
-const baseConditionFulfillmentSchema = Joi.string()
-  .regex(/^[A-Za-z0-9-_]{43}$/)
-  .max(48)
-  .trim()
+const baseConditionFulfillmentSchema = Joi.string().regex(/^[A-Za-z0-9-_]{43}$/).max(48).trim()
 const conditionSchema = baseConditionFulfillmentSchema.description('ILP condition').label('A valid transfer condition must be supplied.')
 const fulfilmentSchema = baseConditionFulfillmentSchema.description('ILP fulfillment').label('Invalid transfer fulfilment description.')
 

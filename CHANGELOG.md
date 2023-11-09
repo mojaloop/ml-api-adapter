@@ -3,11 +3,11 @@
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 
-### [14.1.0](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.4...v14.0.5) (2023-11-08)
+### [14.1.0](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.5...v14.1.0) (2023-11-08)
 
 ### Features
 
-* **mojaloop/#3574:** add FX Transfers requests ([#3574](https://github.com/mojaloop/ml-api-adapter/issues/3574))
+* **mojaloop/[#3574](https://github.com/mojaloop/project/issues/3574):** add FX Transfers requests ([#517](https://github.com/mojaloop/ml-api-adapter/pull/517))
 
 
 ### [14.0.5](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.4...v14.0.5) (2023-11-07)

@@ -1,4 +1,3 @@
-const safeStringify = require('fast-safe-stringify')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { logger } = require('../../shared/logger')
 const { KAFKA_CONFIG } = require('../../lib/config')
@@ -21,7 +20,7 @@ const makeMessageMetadata = (id, type, action) => {
   return StreamingProtocol.createMetadata(id, event)
 }
 
-const prepareMessageDto = (headers, dataUri, payload, logPrefix = '') => {
+const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '' }) => {
   const isFx = !!payload.commitRequestId
   const action = isFx ? Action.FX_PREPARE : Action.PREPARE
   const id = isFx ? payload.commitRequestId : payload.transferId
@@ -30,19 +29,12 @@ const prepareMessageDto = (headers, dataUri, payload, logPrefix = '') => {
 
   const metadata = makeMessageMetadata(id, Type.PREPARE, action)
   const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri, params: { id } }, to, from, metadata)
-  logger.debug(`${logPrefix}::messageProtocol - ${JSON.stringify(messageProtocol)}`)
+  logger.debug(`${logPrefix}::messageProtocol`, messageProtocol)
 
   return Object.freeze(messageProtocol)
 }
 
-const fulfilMessageDto = (headers, dataUri, payload, params, logPrefix = '') => {
-  const isFx = !payload.transferState
-  const actionKey = payload.transferState === TransferState.ABORTED
-    ? 'REJECT'
-    : (payload.transferState === TransferState.RESERVED)
-        ? 'RESERVE'
-        : 'COMMIT'
-  const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}${actionKey}`]
+const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) => {
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
 
@@ -53,11 +45,30 @@ const fulfilMessageDto = (headers, dataUri, payload, params, logPrefix = '') => 
   return Object.freeze(messageProtocol)
 }
 
+// rename to fulfilSuccessMessageDto
+const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '' }) => {
+  const isFx = !payload.transferState
+  const actionKey = payload.transferState === TransferState.ABORTED
+    ? 'REJECT'
+    : (payload.transferState === TransferState.RESERVED)
+        ? 'RESERVE'
+        : 'COMMIT'
+  const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}${actionKey}`]
+
+  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
+}
+
+const fulfilErrorMessageDto = ({ headers, dataUri, payload, params, isFx, logPrefix = '' }) => {
+  const actionKey = 'ABORT' // todo: add fxAction
+  const action = Action[actionKey]
+  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
+}
+
 const producerConfigDto = (functionality, action, logPrefix = '') => {
   const topicConfig = Kafka.createGeneralTopicConf(KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
   const kafkaConfig = Kafka.getKafkaConfig(KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, functionality.toUpperCase(), action.toUpperCase())
-  logger.debug(`${logPrefix}::topicConfig - ${safeStringify(topicConfig)}`)
-  logger.debug(`${logPrefix}::kafkaConfig - ${safeStringify(kafkaConfig)}`)
+  logger.debug(`${logPrefix}::topicConfig`, topicConfig)
+  logger.info(`${logPrefix}::kafkaConfig`, kafkaConfig)
 
   return Object.freeze({ topicConfig, kafkaConfig })
 }
@@ -65,6 +76,7 @@ const producerConfigDto = (functionality, action, logPrefix = '') => {
 module.exports = {
   prepareMessageDto,
   fulfilMessageDto,
+  fulfilErrorMessageDto,
   eventStateDto,
   producerConfigDto
 }

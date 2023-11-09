@@ -382,6 +382,7 @@ Test('Transfer Service tests', serviceTest => {
     })
     getTransferByIdTest.end()
   })
+
   serviceTest.test('transferError should', async transferErrorTest => {
     const message = {
       errorCode: '5001',
@@ -418,13 +419,21 @@ Test('Transfer Service tests', serviceTest => {
         }
       }
     }
+    const span = EventSdk.Tracer.createSpan('test_span')
 
     await transferErrorTest.test('execute function', async test => {
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
-      const span = EventSdk.Tracer.createSpan('test_span')
       const result = await Service.transferError(headers, dataUri, message, { id }, span)
+      test.equals(result, true)
+      test.end()
+    })
+
+    await transferErrorTest.test('execute function for FX', async test => {
+      Kafka.Producer.produceMessage.returns(Promise.resolve(true))
+      const isFx = true
+      const result = await Service.transferError(headers, dataUri, message, { id }, span, isFx)
       test.equals(result, true)
       test.end()
     })
@@ -433,7 +442,6 @@ Test('Transfer Service tests', serviceTest => {
       const error = new Error()
       Kafka.Producer.produceMessage.returns(Promise.reject(error))
       try {
-        const span = EventSdk.Tracer.createSpan('test_span')
         await Service.transferError(headers, dataUri, message, { id }, span)
         test.fail('error not thrown')
       } catch (e) {

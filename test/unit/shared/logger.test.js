@@ -5,8 +5,9 @@ const { logger } = require('../../../src/shared/logger')
 
 Test('Logger wrapper tests -->', loggerTest => {
   loggerTest.test('should support all log levels', test => {
-    logger.log.isPerfEnabled = true // to execute logger.perf()
-    logger.log.isSillyEnabled = true // to execute logger.silly()
+    // todo: clarify, why process.env.LOG_LEVEL = 'silly' doesn't work for coverage
+    logger.log.isPerfEnabled = true // to run logger.perf()
+    logger.log.isSillyEnabled = true // to run logger.silly()
 
     Object.keys(Logger.levels).forEach(level => {
       test.doesNotThrow(() => logger[level]())

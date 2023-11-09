@@ -56,10 +56,10 @@ const { Action, Type } = generalEnum.Events.Event
 */
 const prepare = async (headers, dataUri, payload, span) => {
   const logPrefix = `domain::${payload.transferId ? 'transfer' : 'fxTransfer'}::prepare`
-  logger.debug(`${logPrefix}::start(${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+  logger.debug(`${logPrefix}::start`, { headers, payload })
 
   try {
-    let messageProtocol = dto.prepareMessageDto(headers, dataUri, payload, logPrefix)
+    let messageProtocol = dto.prepareMessageDto({ headers, dataUri, payload, logPrefix })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     const { topicConfig, kafkaConfig } = dto.producerConfigDto(Action.TRANSFER, Action.PREPARE, logPrefix)
 
@@ -88,10 +88,10 @@ const prepare = async (headers, dataUri, payload, span) => {
 */
 const fulfil = async (headers, dataUri, payload, params, span) => {
   const logPrefix = `domain::${payload.transferState ? 'transfer' : 'fxTransfer'}::fulfil`
-  logger.debug(`${logPrefix}::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
+  logger.debug(`${logPrefix}::start(${params.id})`, { headers, payload })
 
   try {
-    let messageProtocol = dto.fulfilMessageDto(headers, dataUri, payload, params, logPrefix)
+    let messageProtocol = dto.fulfilMessageDto({ headers, dataUri, payload, params, logPrefix })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
     const { topicConfig, kafkaConfig } = dto.producerConfigDto(Action.TRANSFER, Action.FULFIL, logPrefix)
 
@@ -150,26 +150,18 @@ const getTransferById = async (headers, params, span) => {
 * @param {object} payload - the http request payload
 * @param {object} params - the http request uri parameters
 * @param {object} span - the parent event span
+* @param {boolean} isFx - is fxTransfer
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const transferError = async (headers, dataUri, payload, params, span) => {
-  // todo: determine fxTransfer
-  const logPrefix = 'domain::transfer::abort'
+const transferError = async (headers, dataUri, payload, params, span, isFx = false) => {
+  const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::abort`
+  logger.debug(`${logPrefix}::start(${params.id})`, { headers, payload })
 
-  logger.debug(`${logPrefix}::start(${params.id}, ${JSON.stringify(headers)}, ${JSON.stringify(payload)})`)
   try {
-    const state = dto.eventStateDto()
-    const event = StreamingProtocol.createEventMetadata(Type.FULFIL, Action.ABORT, state)
-    const metadata = StreamingProtocol.createMetadata(params.id, event)
-    let messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Action.TRANSFER, Action.FULFIL)
-    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, Action.TRANSFER.toUpperCase(), Action.FULFIL.toUpperCase())
-    logger.debug(`${logPrefix}::messageProtocol - ${messageProtocol}`)
-    logger.debug(`${logPrefix}::topicConfig - ${topicConfig}`)
-    logger.debug(`${logPrefix}::kafkaConfig - ${kafkaConfig}`)
-
+    let messageProtocol = dto.fulfilErrorMessageDto({ headers, dataUri, payload, params, isFx, logPrefix })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
+    const { topicConfig, kafkaConfig } = dto.producerConfigDto(Action.TRANSFER, Action.FULFIL, logPrefix)
 
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true

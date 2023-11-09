@@ -32,11 +32,10 @@ const { Enum, Util } = require('@mojaloop/central-services-shared')
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const { logger } = require('../../shared/logger')
+const { ROUTES, PROM_METRICS } = require('../../shared/constants')
 
 const { getTransferSpanTags } = Util.EventFramework
 const { Type, Action } = Enum.Events.Event
-
-const FX_PREFIX = 'fx_'
 
 /**
  * @module src/api/transfers/handler
@@ -56,19 +55,17 @@ const FX_PREFIX = 'fx_'
 
 const create = async function (request, h) {
   const { headers, payload, dataUri, span } = request
+  const isFx = !payload.transferId
 
-  const metricPrefix = payload.transferId ? '' : FX_PREFIX
+  const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
-    `${metricPrefix}transfer_prepare`,
-    'Produce a transfer prepare message to transfer prepare kafka topic',
+    metric,
+    `Produce a ${metric} message to transfer prepare kafka topic`,
     ['success']
   ).startTimer()
 
-  span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
   try {
-    logger.debug(`create::payload(${JSON.stringify(payload)})`)
-    logger.debug(`create::headers(${JSON.stringify(headers)})`)
-
+    span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.PREPARE))
     await span.audit({
       headers,
@@ -102,20 +99,18 @@ const create = async function (request, h) {
 
 const fulfilTransfer = async function (request, h) {
   const { headers, payload, params, dataUri, span } = request
+  const isFx = !payload.transferState
 
-  const metricPrefix = payload.transferState ? '' : FX_PREFIX
+  const metric = PROM_METRICS.transferFulfil(isFx)
   const histTimerEnd = Metrics.getHistogram(
-    `${metricPrefix}transfer_fulfil`,
-    'Produce a transfer fulfil message to transfer fulfil kafka topic',
+    metric,
+    `Produce a ${metric} message to transfer fulfil kafka topic`,
     ['success']
   ).startTimer()
 
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
     Validator.fulfilTransfer({ payload })
-    logger.debug(`fulfilTransfer::payload(${JSON.stringify(payload)})`)
-    logger.debug(`fulfilTransfer::headers(${JSON.stringify(headers)})`)
-    logger.debug(`fulfilTransfer::id(${params.id})`)
 
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
     await span.audit({
@@ -150,8 +145,10 @@ const fulfilTransfer = async function (request, h) {
  */
 
 const getTransferById = async function (request, h) {
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
-    'transfer_get',
+    metric,
     'Get a transfer by Id',
     ['success']
   ).startTimer()
@@ -188,19 +185,17 @@ const getTransferById = async function (request, h) {
  */
 const fulfilTransferError = async function (request, h) {
   const { headers, payload, params, dataUri, span } = request
+  const isFx = request.path?.includes(ROUTES.fxTransfers) // think, if we should use this approach in other routes
 
-  const metricPrefix = '' // todo: think how to determine fxErrorCallback (by contentType?)
+  const metric = PROM_METRICS.transferFulfilError(isFx)
   const histTimerEnd = Metrics.getHistogram(
-    `${metricPrefix}transfer_fulfil_error`,
-    'Produce a transfer fulfil error message to transfer fulfil kafka topic',
+    metric,
+    `Produce a ${metric} message to transfer fulfil kafka topic`,
     ['success']
   ).startTimer()
 
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
-    logger.debug(`fulfilTransferError::payload(${JSON.stringify(request.payload)})`)
-    logger.debug(`fulfilTransferError::headers(${JSON.stringify(request.headers)})`)
-    logger.debug(`fulfilTransfer::id(${request.params.id})`)
     await span.audit({
       headers,
       dataUri,
@@ -208,7 +203,7 @@ const fulfilTransferError = async function (request, h) {
       params
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.transferError(headers, dataUri, payload, params, span)
+    await TransferService.transferError(headers, dataUri, payload, params, span, isFx)
 
     histTimerEnd({ success: true })
     return h.response().code(200)
