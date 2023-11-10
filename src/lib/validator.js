@@ -28,7 +28,7 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../lib/config')
 
-// todo: pass only payload (not whole request object)
+// pass only payload (not whole request object)
 const fulfilTransfer = (request) => {
   if (!request.payload.completedTimestamp) return
 

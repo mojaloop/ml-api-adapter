@@ -2,7 +2,7 @@
 const safeStringify = require('fast-safe-stringify')
 const MlLogger = require('@mojaloop/central-services-logger')
 
-// todo: update Logger impl. to avoid stringify string message: https://github.com/mojaloop/central-services-logger/blob/master/src/index.js#L49
+// update Logger impl. to avoid stringify string message: https://github.com/mojaloop/central-services-logger/blob/master/src/index.js#L49
 const makeLogString = (message, meta) => meta
   ? `${message} - ${typeof meta === 'object' ? safeStringify(meta) : meta}`
   : message
@@ -19,7 +19,6 @@ class Logger {
 
   error(...args) {
     this.#log.isDebugEnabled && this.#log.debug(makeLogString(...args))
-    // todo: use Logger.isLevelEnabled('logLevel') to dynamically check if Logger.level is enabled
   }
 
   warn(...args) {

@@ -45,7 +45,6 @@ const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) 
   return Object.freeze(messageProtocol)
 }
 
-// rename to fulfilSuccessMessageDto
 const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '' }) => {
   const isFx = !payload.transferState
   const actionKey = payload.transferState === TransferState.ABORTED
@@ -58,9 +57,8 @@ const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '' })
   return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
 }
 
-const fulfilErrorMessageDto = ({ headers, dataUri, payload, params, isFx, logPrefix = '' }) => {
-  const actionKey = 'ABORT' // todo: add fxAction
-  const action = Action[actionKey]
+const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '' }) => {
+  const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}ABORT`]
   return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
 }
 

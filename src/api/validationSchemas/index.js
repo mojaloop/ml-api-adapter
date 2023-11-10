@@ -64,7 +64,7 @@ const fxTransfersSuccessCallbackPayloadSchema = Joi.object({
   extensionList: commonSchemas.extensionListSchema
 }).options({ presence: 'optional' })
 
-// todo: move all validation schemas here
+// move all validation schemas here
 
 module.exports = {
   Joi,

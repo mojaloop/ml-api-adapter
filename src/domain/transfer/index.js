@@ -172,6 +172,7 @@ const transferError = async (headers, dataUri, payload, params, span, isFx = fal
     throw fspiopError
   }
 }
+
 module.exports = {
   fulfil,
   getTransferById,
