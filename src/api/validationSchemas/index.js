@@ -41,8 +41,8 @@ const transferHeadersSchema = Joi.object({
 
 const fxTransfersPreparePayloadSchema = Joi.object({
   commitRequestId: commonSchemas.guidSchema.description('An end-to-end identifier for the confirmation request'),
-  initiatingFsp: commonSchemas.dfspIdSchema.description('Identifier for the FSP who is requesting a currency conversion'),
-  counterPartyFsp: commonSchemas.dfspIdSchema.description('Identifier for the FXP who is performing the currency conversion'),
+  initiatingFsp: commonSchemas.dfspIdSchema.description('Identifier for the FSP who is requesting a currency conversion').label('initiatingFsp'),
+  counterPartyFsp: commonSchemas.dfspIdSchema.description('Identifier for the FXP who is performing the currency conversion').label('counterPartyFsp'),
   sourceAmount: commonSchemas.moneySchema.description('The amount being offered for conversion by the requesting FSP'),
   targetAmount: commonSchemas.moneySchema.description('The amount which the FXP is to credit to the requesting FSP in the target currency'),
   condition: commonSchemas.conditionSchema.description('ILP condition received by the requesting FSP when the quote was approved'),
