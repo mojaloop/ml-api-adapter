@@ -32,6 +32,8 @@ const TransferService = require('../../../../src/domain/transfer')
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Logger = require('@mojaloop/central-services-logger')
 
+const mocks = require('../../mocks')
+
 const createRequest = (payload) => {
   const requestPayload = payload || {}
   const headers = {}
@@ -89,6 +91,15 @@ Test('transfer handler', handlerTest => {
     t.end()
   })
 
+  const createTestReply = (test, expectedCode = 202) => ({
+    response: () => ({
+      code: statusCode => {
+        test.equal(statusCode, expectedCode)
+        test.end()
+      }
+    })
+  })
+
   handlerTest.test('create should', async createTransferTest => {
     createTransferTest.test('reply with status code 202 if message is sent successfully to kafka', test => {
       const payload = {
@@ -121,16 +132,17 @@ Test('transfer handler', handlerTest => {
       TransferService.prepare.returns(Promise.resolve(true))
 
       const request = createRequest(payload)
-      const reply = {
-        response: () => {
-          return {
-            code: statusCode => {
-              test.equal(statusCode, 202)
-              test.end()
-            }
-          }
-        }
-      }
+      const reply = createTestReply(test)
+
+      Handler.create(request, reply)
+    })
+
+    createTransferTest.test('reply with status code 202 for correct fxTransfer request', test => {
+      TransferService.prepare.returns(Promise.resolve(true))
+
+      const payload = mocks.mockFxPreparePayload()
+      const request = createRequest(payload)
+      const reply = createTestReply(test)
 
       Handler.create(request, reply)
     })
@@ -216,6 +228,17 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
+
+      Handler.fulfilTransfer(request, reply)
+    })
+
+    fulfilTransferTest.test('reply with status code 200 for success PUT fxTransfer callback', test => {
+      TransferService.fulfil.returns(Promise.resolve(true))
+
+      const payload = mocks.mockFxFulfilPayload()
+      const params = { id: 'dfsp1' }
+      const request = createPutRequest(params, payload)
+      const reply = createTestReply(test, 200)
 
       Handler.fulfilTransfer(request, reply)
     })
