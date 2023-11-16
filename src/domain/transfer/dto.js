@@ -47,9 +47,10 @@ const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) 
 
 const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '' }) => {
   const isFx = !payload.transferState
-  const actionKey = payload.transferState === TransferState.ABORTED
+  const state = payload.transferState || payload.conversionState
+  const actionKey = state === TransferState.ABORTED
     ? 'REJECT'
-    : (payload.transferState === TransferState.RESERVED)
+    : (state === TransferState.RESERVED)
         ? 'RESERVE'
         : 'COMMIT'
   const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}${actionKey}`]
