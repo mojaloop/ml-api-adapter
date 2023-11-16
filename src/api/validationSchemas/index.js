@@ -46,9 +46,8 @@ const fxTransfersPreparePayloadSchema = Joi.object({
   sourceAmount: commonSchemas.moneySchema.description('The amount being offered for conversion by the requesting FSP'),
   targetAmount: commonSchemas.moneySchema.description('The amount which the FXP is to credit to the requesting FSP in the target currency'),
   condition: commonSchemas.conditionSchema.description('ILP condition received by the requesting FSP when the quote was approved'),
+  expiration: Joi.date().iso(),
   determiningTransferId: commonSchemas.guidSchema.description('The transaction ID of the transfer to which this currency conversion relates')
-    .optional(),
-  expiration: Joi.date().iso()
     .optional()
 }).options({
   presence: 'required',
@@ -57,7 +56,7 @@ const fxTransfersPreparePayloadSchema = Joi.object({
 })
 
 const fxTransfersSuccessCallbackPayloadSchema = Joi.object({
-  transferState: Joi.string().valid(...transferState).required()
+  conversionState: Joi.string().valid(...transferState).required()
     .description('The current status of the conversion request'),
   fulfilment: commonSchemas.fulfilmentSchema,
   completedTimestamp: Joi.date().iso(),
