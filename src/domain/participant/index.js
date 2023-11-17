@@ -77,6 +77,49 @@ const getEndpoint = async (fsp, endpointType, transferId = null, span = null) =>
   }
 }
 
+// TODO: The following function is a temporary fix for the FX endpoint and the getEndpoint function can be generalized to handle this
+/**
+ * @function GetFxEndpoint
+ *
+ * @description It returns the endpoint for a given fsp and type from the cache if the cache is still valid, otherwise it will refresh the cache and return the value
+ *
+ * @param {string} fsp - the id of the fsp
+ * @param {string} endpointType - the type of the endpoint
+ * @param {string} commitRequestId - optional commitRequestId
+ *
+ * @returns {string} - Returns the endpoint, throws error if failure occurs
+ */
+const getFxEndpoint = async (fsp, endpointType, commitRequestId = null, span = null) => {
+  const histTimerEnd = Metrics.getHistogram(
+    'notification_event_getFxEndpoint',
+    'Gets endpoints for notification from central ledger db',
+    ['success', 'endpointType', 'fsp']
+  ).startTimer()
+  let getEndpointSpan
+  if (span) {
+    getEndpointSpan = span.getChild(`${span.getContext().service}_getFxEndpoint`)
+    getEndpointSpan.setTags({ endpointType, fsp })
+  }
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getFxEndpoint::fsp - ${fsp}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getFxEndpoint::endpointType - ${endpointType}`)
+  Logger.isDebugEnabled && Logger.debug(`domain::participant::getFxEndpoint::commitRequestId - ${commitRequestId}`)
+
+  try {
+    const url = await Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { commitRequestId })
+    !!getEndpointSpan && await getEndpointSpan.finish()
+    histTimerEnd({ success: true, endpointType, fsp })
+    return url
+  } catch (err) {
+    Logger.isErrorEnabled && Logger.error(`participantEndpointCache::getFxEndpoint:: ERROR:'${err}'`)
+    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
+    histTimerEnd({ success: false, fsp, endpointType })
+
+    throw fspiopError
+  }
+}
+
 module.exports = {
-  getEndpoint
+  getEndpoint,
+  getFxEndpoint
 }

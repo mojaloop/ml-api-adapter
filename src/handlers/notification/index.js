@@ -270,7 +270,10 @@ const processMessage = async (msg, span) => {
       const endpointType = isFx
         ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR
         : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
-      const callbackURLTo = await Participant.getEndpoint(to, endpointType, id, span)
+      // TODO: Need to generalize the following code to handle FX 
+      const callbackURLTo = isFx
+      ? await Participant.getFxEndpoint(to, endpointType, id, span)
+      : await Participant.getEndpoint(to, endpointType, id, span)
 
       const endpointTemplate = isFx
         ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
