@@ -15,22 +15,22 @@ Test('DTO tests -->', dtoTest => {
   const headers = {}
   const dataUri = ''
 
-  dtoTest.test('prepareMessageDto test', test => {
+  dtoTest.test('prepareMessageDto FX_PREPARE test', test => {
     const payload = mocks.mockFxPreparePayload()
     const data = dto.prepareMessageDto({ headers, dataUri, payload })
     test.ok(data.metadata.event.action === Event.Action.FX_PREPARE)
     test.end()
   })
 
-  dtoTest.test('fulfilMessageDto test', test => {
+  dtoTest.test('fulfilMessageDto FX_RESERVE test', test => {
     const payload = mocks.mockFxFulfilPayload()
     const params = { id: '1234' }
     const data = dto.fulfilMessageDto({ headers, dataUri, payload, params })
-    test.ok(data.metadata.event.action === Event.Action.FX_COMMIT)
+    test.ok(data.metadata.event.action === Event.Action.FX_RESERVE)
     test.end()
   })
 
-  dtoTest.test('fulfilErrorMessageDto test', test => {
+  dtoTest.test('fulfilErrorMessageDto ABORT test', test => {
     const payload = mocks.mockFxFulfilPayload()
     const params = { id: '1234' }
     const data = dto.fulfilErrorMessageDto({ headers, dataUri, payload, params })
