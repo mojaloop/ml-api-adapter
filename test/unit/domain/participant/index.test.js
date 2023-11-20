@@ -33,7 +33,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(Promise.resolve(expected))
 
       try {
-        const result = await Service.getEndpoint(fsp, endpointType, transferId)
+        const result = await Service.getEndpoint({ fsp, endpointType, id: transferId })
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -49,7 +49,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType).returns(Promise.resolve(expected))
 
       try {
-        const result = await Service.getEndpoint(fsp, endpointType)
+        const result = await Service.getEndpoint({ fsp, endpointType })
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -65,7 +65,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
 
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).throws(new Error())
       try {
-        await Service.getEndpoint(fsp, endpointType, transferId)
+        await Service.getEndpoint({ fsp, endpointType, id: transferId })
         test.fail('should throw error')
         test.end()
       } catch (e) {

@@ -18,8 +18,14 @@ const PROM_METRICS = Object.freeze({
   transferFulfilError: (isFx) => `${isFx ? FX_METRIC_PREFIX : ''}transfer_fulfil_error`
 })
 
+const TEMPLATE_PARAMS = Object.freeze({
+  transferId: 'transferId',
+  commitRequestId: 'commitRequestId'
+})
+
 module.exports = {
   ROUTES,
   ROUTE_IDS,
-  PROM_METRICS
+  PROM_METRICS,
+  TEMPLATE_PARAMS
 }
