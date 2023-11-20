@@ -248,6 +248,8 @@ const processMessage = async (msg, span) => {
 
   const getEndpointFn = (fsp, endpointType) => Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
 
+  const getEndpointFn = (fsp, endpointType) => Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
+
   // Injected Configuration for outbound Content-Type & Accept headers.
   const protocolVersions = {
     content: Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT.toString(),
@@ -360,6 +362,7 @@ const processMessage = async (msg, span) => {
       const method = (action === Action.RESERVE) ? PATCH : PUT
       const callbackURLFrom = await getEndpointFn(from, FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT)
       logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForPayee}, ${id}, ${Enum.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
+
       callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate: FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
       const histTimerEndSendRequest2 = Metrics.getHistogram(
         'notification_event_delivery',
