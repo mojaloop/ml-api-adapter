@@ -248,8 +248,6 @@ const processMessage = async (msg, span) => {
 
   const getEndpointFn = (fsp, endpointType) => Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
 
-  const getEndpointFn = (fsp, endpointType) => Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
-
   // Injected Configuration for outbound Content-Type & Accept headers.
   const protocolVersions = {
     content: Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT.toString(),
