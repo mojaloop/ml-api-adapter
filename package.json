@@ -98,7 +98,7 @@
     "rc": "1.2.8"
   },
   "devDependencies": {
-    "@types/hapi__joi": "^17.1.13",
+    "@types/hapi__joi": "^17.1.14",
     "audit-ci": "^6.6.1",
     "get-port": "5.1.1",
     "jsdoc": "4.0.2",

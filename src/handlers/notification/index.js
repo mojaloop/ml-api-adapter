@@ -39,6 +39,7 @@ const { createCallbackHeaders } = require('../../lib/headers')
 const Participant = require('../../domain/participant')
 const Config = require('../../lib/config')
 const dto = require('./dto')
+const utils = require('./utils')
 
 const Callback = Util.Request
 const { Action } = Enum.Events.Event
@@ -189,24 +190,7 @@ const consumeMessage = async (error, message) => {
     logger.error(fspiopError)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 
-    const getRecursiveCause = (error) => {
-      if (error.cause instanceof ErrorHandler.Factory.FSPIOPError) {
-        return getRecursiveCause(error.cause)
-      } else if (error.cause instanceof Error) {
-        if (error.cause) {
-          return error.cause
-        } else {
-          return error.message
-        }
-      } else if (error.cause) {
-        return error.cause
-      } else if (error.message) {
-        return error.message
-      } else {
-        return error
-      }
-    }
-    const errCause = getRecursiveCause(err)
+    const errCause = utils.getRecursiveCause(err)
     histTimerEnd({ success: false, error: errCause })
     throw fspiopError
   }
