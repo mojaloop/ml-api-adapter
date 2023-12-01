@@ -347,7 +347,7 @@ const processMessage = async (msg, span) => {
       ['success', 'from', 'dest', 'action', 'status']
     ).startTimer()
     try {
-      if ([Action.RESERVE, Action.FX_RESERVE].includes(actionLower)) {
+      if (actionLower === Action.RESERVE) {
         callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, true)
         jwsSigner = getJWSSigner(Enum.Http.Headers.FSPIOP.SWITCH.value)
         response = await Callback.sendRequest(callbackURLTo, callbackHeaders, Enum.Http.Headers.FSPIOP.SWITCH.value, to, PUT, payloadForCallback, Enum.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
