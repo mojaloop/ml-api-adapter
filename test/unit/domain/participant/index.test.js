@@ -33,7 +33,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       const fsp = 'fsp'
       const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
-      const expected = `http://localhost:1080/transfers/${transferId}`
+      const expected = `https://localhost:1080/transfers/${transferId}`
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(Promise.resolve(expected))
 
       try {
@@ -49,7 +49,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
     getEndpointTest.test('return the endpoint when transferId is null', async (test) => {
       const fsp = 'fsp'
       const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST
-      const expected = 'http://localhost:1080/transfers'
+      const expected = 'https://localhost:1080/transfers'
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType).returns(Promise.resolve(expected))
 
       try {
@@ -69,7 +69,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       const expectedTemplateParams = {
         [TEMPLATE_PARAMS.commitRequestId]: id
       }
-      const expectedUrl = 'http://host/fxTransfers'
+      const expectedUrl = 'https://host/fxTransfers'
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp).resolves(expectedUrl)
 
       const result = await Service.getEndpoint({ fsp, endpointType, id, isFx: true })
