@@ -41,9 +41,7 @@ const transferState = [
   Enum.Transfers.TransferState.RECEIVED,
   Enum.Transfers.TransferState.RESERVED,
   Enum.Transfers.TransferState.COMMITTED,
-  Enum.Transfers.TransferState.ABORTED,
-  Enum.Transfers.TransferState.SETTLED
-  // todo: remove SETTLED value, coz based on OpenAPI spec it's not a valid value for transferState
+  Enum.Transfers.TransferState.ABORTED
 ]
 const regexAccept = Enum.Http.Headers.GENERAL.ACCEPT.regex
 const regexContentType = Enum.Http.Headers.GENERAL.ACCEPT.regex

@@ -7,12 +7,10 @@ version: 2.1
 # Orbs used in this pipeline
 ##
 orbs:
-  slack: circleci/slack@4.12.5 # Ref: https://github.com/mojaloop/ci-config/tree/master/slack-templates
+  slack: circleci/slack@4.13.1 # Ref: https://github.com/mojaloop/ci-config/tree/master/slack-templates
   pr-tools: mojaloop/pr-tools@0.1.10 # Ref: https://github.com/mojaloop/ci-config/
-  gh: circleci/github-cli@2.1.0 # Ref: https://github.com/CircleCI-Public/github-cli-orb
+  gh: circleci/github-cli@2.3.0 # Ref: https://github.com/CircleCI-Public/github-cli-orb
   anchore: anchore/anchore-engine@1.9.0
-  deploy-kube: mojaloop/deployment@0.1.6
-
 ##
 # defaults
 #
@@ -769,7 +767,6 @@ jobs:
 # CircleCI Workflow config
 ##
 workflows:
-  version: 2
   build_and_test:
     jobs:
       - pr-tools/pr-title-check:
@@ -960,8 +957,7 @@ workflows:
             - pr-tools/pr-title-check
             - test-lint
             - test-unit
-            ## TODO: re-enable these once we achieve test coverage for the fx changes
-            # - test-coverage
+            - test-coverage
             - test-integration
             - test-functional
             - vulnerability-check
