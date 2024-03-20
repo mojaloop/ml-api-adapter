@@ -5,6 +5,7 @@ const Sinon = require('sinon')
 const axios = require('axios')
 
 const Notification = require('../../../../src/handlers/notification')
+const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const Handler = require('../../../../src/api/metadata/handler')
 const {
   createRequest,
@@ -18,6 +19,7 @@ Test('route handler', (handlerTest) => {
     sandbox = Sinon.createSandbox()
 
     sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(Producer, 'isConnected')
     sandbox.stub(axios, 'get')
 
     t.end()
@@ -33,6 +35,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
+      Producer.isConnected.resolves(true)
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 200
 
@@ -49,6 +52,7 @@ Test('route handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
       Notification.isConnected.throws(new Error('Error connecting to consumer'))
+      Producer.isConnected.throws(new Error('Error connecting producer'))
       axios.get.resolves({ data: { status: 'OK' } })
 
       const expectedResponseCode = 502
