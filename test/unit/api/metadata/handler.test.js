@@ -72,6 +72,7 @@ Test('metadata handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up in API mode only (Config.HANDLERS_DISABLED=true)', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
+      Producer.isConnected.resolves(true)
 
       Config.HANDLERS_DISABLED = true
       Handler = proxyquire('../../../../src/api/metadata/handler', {})
