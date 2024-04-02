@@ -10,7 +10,7 @@ const Handler = require('../../../../src/api/metadata/handler')
 const {
   createRequest,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general')
 
 Test('route handler', (handlerTest) => {
   let sandbox

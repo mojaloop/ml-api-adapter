@@ -12,7 +12,7 @@ const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const {
   createRequest,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general')
 
 const apiTags = ['api']
 

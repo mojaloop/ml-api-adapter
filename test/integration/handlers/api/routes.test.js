@@ -38,7 +38,7 @@ const {
   createRequest,
   sleep,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general')
 
 Test('Handlers test', async handlerTest => {
   handlerTest.test('setup', async test => {

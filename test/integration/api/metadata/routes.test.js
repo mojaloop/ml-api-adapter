@@ -33,12 +33,13 @@ const Notification = require('../../../../src/handlers/notification')
 const { registerAllHandlers } = require('../../../../src/handlers/register')
 const metadataHandler = require('../../../../src/api/metadata/handler')
 const NotificationHandler = require('../../../../src/handlers/notification/index')
+const { producers: ProducerUtil } = require('../../../helpers/kafka')
 
 const {
   createRequest,
   sleep,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general')
 
 Test('Metadata handler test', async handlerTest => {
   handlerTest.test('setup', async test => {
@@ -87,6 +88,7 @@ Test('Metadata handler test', async handlerTest => {
         { name: 'broker', status: 'OK' },
         { name: 'participantEndpointService', status: 'OK' }
       ]
+      await ProducerUtil.connect(test)
 
       // Act
       const {

@@ -61,7 +61,8 @@ services:
       interval: 30s
 
   central-ledger:
-    image: mojaloop/central-ledger:latest
+    # image: mojaloop/central-ledger:latest
+    image: mojaloop/central-ledger:local
     container_name: ml_central-ledger
     command: sh -c "/opt/app/wait4/wait4.js central-ledger && node src/api/index.js"
     links:
