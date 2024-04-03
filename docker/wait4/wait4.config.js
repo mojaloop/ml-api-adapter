@@ -32,12 +32,12 @@ module.exports = {
             configPath: '../config/default.json'
           },
           retries: 60
-        },
-        {
-          description: 'MongoDB object store',
-          uri: 'mongodb://objstore:27017/mlos',
-          method: 'mongo'
         }
+        // {
+        //   description: 'MongoDB object store',
+        //   uri: 'mongodb://objstore:27017/mlos',
+        //   method: 'mongo'
+        // }
       ]
     },
     {

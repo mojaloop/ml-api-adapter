@@ -61,8 +61,8 @@ const create = async function (request, h) {
   span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE))
-    Logger.isDebugEnabled && Logger.debug('create::payload(%s)', JSON.stringify(request.payload))
-    Logger.isDebugEnabled && Logger.debug('create::headers(%s)', JSON.stringify(request.headers))
+    Logger.isDebugEnabled && Logger.debug(`create::payload(${JSON.stringify(request.payload)})`)
+    Logger.isDebugEnabled && Logger.debug(`create::headers(${JSON.stringify(request.headers)})`)
     await span.audit({
       headers: request.headers,
       dataUri: request.dataUri,
@@ -74,7 +74,7 @@ const create = async function (request, h) {
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -104,9 +104,9 @@ const fulfilTransfer = async function (request, h) {
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.FULFIL))
     Validator.fulfilTransfer(request)
-    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::payload(%s)', JSON.stringify(request.payload))
-    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::headers(%s)', JSON.stringify(request.headers))
-    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::payload(${JSON.stringify(request.payload)})`)
+    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::headers(${JSON.stringify(request.headers)})`)
+    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::id(${request.params.id})`)
     await span.audit({
       headers: request.headers,
       dataUri: request.dataUri,
@@ -118,7 +118,7 @@ const fulfilTransfer = async function (request, h) {
     return h.response().code(200)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -156,7 +156,7 @@ const getTransferById = async function (request, h) {
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }
@@ -183,9 +183,9 @@ const fulfilTransferError = async function (request, h) {
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
-    Logger.isDebugEnabled && Logger.debug('fulfilTransferError::payload(%s)', JSON.stringify(request.payload))
-    Logger.isDebugEnabled && Logger.debug('fulfilTransferError::headers(%s)', JSON.stringify(request.headers))
-    Logger.isDebugEnabled && Logger.debug('fulfilTransfer::id(%s)', request.params.id)
+    Logger.isDebugEnabled && Logger.debug(`fulfilTransferError::payload(${JSON.stringify(request.payload)})`)
+    Logger.isDebugEnabled && Logger.debug(`fulfilTransferError::headers(${JSON.stringify(request.headers)})`)
+    Logger.isDebugEnabled && Logger.debug(`fulfilTransfer::id(${request.params.id})`)
     await span.audit({
       headers: request.headers,
       dataUri: request.dataUri,
@@ -197,7 +197,7 @@ const fulfilTransferError = async function (request, h) {
     return h.response().code(200)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false })
     throw fspiopError
   }

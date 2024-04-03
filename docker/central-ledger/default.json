@@ -21,7 +21,7 @@
     "REAP_INTERVAL_MILLIS": 1000,
     "CREATE_RETRY_INTERVAL_MILLIS": 200,
     "DEBUG": true
-  },  
+  },
   "AMOUNT": {
     "PRECISION": 18,
     "SCALE": 4

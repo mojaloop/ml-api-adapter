@@ -68,9 +68,9 @@ const getEndpoint = async (fsp, endpointType, transferId = null, span = null) =>
     histTimerEnd({ success: true, endpointType, fsp })
     return url
   } catch (err) {
-    Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
+    Logger.isErrorEnabled && Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     histTimerEnd({ success: false, fsp, endpointType })
 
     throw fspiopError

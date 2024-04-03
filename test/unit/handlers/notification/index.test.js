@@ -31,7 +31,6 @@
 const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const rewire = require('rewire')
 const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
 const EncodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Logger = require('@mojaloop/central-services-logger')
@@ -45,7 +44,6 @@ const createCallbackHeaders = require(`${src}/lib/headers`).createCallbackHeader
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
 const ENUM = require('@mojaloop/central-services-shared').Enum
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 const Uuid = require('uuid4')
 const Proxyquire = require('proxyquire')
@@ -2576,89 +2574,49 @@ Test('Notification Service tests', async notificationTest => {
   })
 
   await notificationTest.test('isConnected', async isConnectedTest => {
-    await isConnectedTest.test('reject with an error if getMetadata fails', async test => {
+    await isConnectedTest.test('call base class isConnected function - true', async test => {
       // Arrange
-      const NotificationProxy = rewire(`${src}/handlers/notification`)
-      NotificationProxy.__set__('notificationConsumer', {
-        // Callback with error
-        getMetadata: (options, cb) => {
-          const error = new Error('test err message')
-          cb(error, null)
-        }
-      })
+      sandbox.stub(Consumer.prototype, 'isConnected').returns(true)
 
       // Act
-      try {
-        await NotificationProxy.isConnected()
-        test.fail('Error not thrown!')
-      } catch (err) {
-        // Assert
-        test.equal(err.message, 'Error connecting to consumer: Error: test err message', 'Error message does not match')
-        test.pass('Error successfully thrown')
-      }
-      test.end()
-    })
-
-    await isConnectedTest.test('reject with an error if client.getMetadata passes, but metadata is mising topic', async test => {
-      // Arrange
-      const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-      const topicName = topicConf.topicName
-      const NotificationProxy = rewire(`${src}/handlers/notification`)
-      const metadata = {
-        orig_broker_id: 0,
-        orig_broker_name: 'kafka:9092/0',
-        topics: [],
-        brokers: [{ id: 0, host: 'kafka', port: 9092 }]
-      }
-      NotificationProxy.__set__('notificationConsumer', {
-        // Successful callback
-        getMetadata: (options, cb) => cb(null, metadata)
-      })
-
-      // Act
-      try {
-        await NotificationProxy.isConnected()
-        test.fail('Error not thrown!')
-      } catch (err) {
-        // Assert
-        test.equal(err.message, `Connected to consumer, but ${topicName} not found.`, 'Error message does not match')
-        test.pass('Error successfully thrown')
-      }
-      test.end()
-    })
-
-    await isConnectedTest.test('pass if the topic can be found', async test => {
-      // Arrange
-      const topicConf = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, ENUM.Events.Event.Type.NOTIFICATION, ENUM.Events.Event.Action.EVENT)
-      const topicName = topicConf.topicName
-      const NotificationProxy = rewire(`${src}/handlers/notification`)
-      const metadata = {
-        orig_broker_id: 0,
-        orig_broker_name: 'kafka:9092/0',
-        topics: [
-          { name: topicName, partitions: [] }
-        ],
-        brokers: [{ id: 0, host: 'kafka', port: 9092 }]
-      }
-      NotificationProxy.__set__('notificationConsumer', {
-        // Successful callback
-        getMetadata: (options, cb) => cb(null, metadata)
-      })
-
-      // Act
-      let result
-      try {
-        result = await NotificationProxy.isConnected()
-      } catch (err) {
-        test.fail(err.message)
-      }
+      const result = await Notification.isConnected()
 
       // Assert
+      test.ok(Consumer.prototype.isConnected.calledOnce)
       test.equal(result, true, 'isConnected should return true')
       test.end()
     })
 
+    await isConnectedTest.test('call base class isConnected function - false', async test => {
+      // Arrange
+      sandbox.stub(Consumer.prototype, 'isConnected').returns(false)
+
+      // Act
+      const result = await Notification.isConnected()
+
+      // Assert
+      test.ok(Consumer.prototype.isConnected.calledOnce)
+      test.equal(result, false, 'isConnected should return false')
+      test.end()
+    })
+
     await isConnectedTest.end()
+  })
+
+  await notificationTest.test('disconnect', async disconnectTest => {
+    await disconnectTest.test('call base class disconnect function', async test => {
+      // Arrange
+      sandbox.stub(Consumer.prototype, 'disconnect')
+
+      // Act
+      await Notification.disconnect()
+
+      // Assert
+      test.ok(Consumer.prototype.disconnect.calledOnce)
+      test.end()
+    })
+
+    await disconnectTest.end()
   })
 
   await notificationTest.end()

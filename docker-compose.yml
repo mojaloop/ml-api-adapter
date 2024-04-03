@@ -6,9 +6,10 @@ networks:
 
 services:
   ml-api-adapter:
+    image: mojaloop/ml-api-adapter:local
+    container_name: ml_ml-api-adapter
     build:
       context: .
-    container_name: ml_ml-api-adapter
     command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
     ports:
       - "3000:3000"
@@ -33,9 +34,10 @@ services:
 
   # a special server for testing integration callbacks
   ml-api-adapter-endpoint:
+    image: mojaloop/ml-api-adapter:local
+    container_name: ml_ml-api-adapter-endpoint
     build:
       context: .
-    container_name: ml_ml-api-adapter-endpoint
     command: sh -c "node test/integration/server/index.js"
     ports:
       - "4545:4545"
@@ -61,18 +63,20 @@ services:
   central-ledger:
     image: mojaloop/central-ledger:latest
     container_name: ml_central-ledger
-    command: sh -c "/opt/central-ledger/wait4/wait4.js central-ledger && node src/api/index.js"
+    command: sh -c "/opt/app/wait4/wait4.js central-ledger && node src/api/index.js"
     links:
       - mysql
       - kafka
     ports:
       - "3001:3001"
     volumes:
-      - ./docker/central-ledger/default.json:/opt/central-ledger/config/default.json
-      - ./docker/wait4:/opt/central-ledger/wait4
+      - ./docker/central-ledger/default.json:/opt/app/config/default.json
+      - ./docker/wait4:/opt/app/wait4
     depends_on:
-      - mysql
-      - kafka
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
       - CLEDG_SIDECAR__DISABLED=true
     networks:
@@ -110,26 +114,45 @@ services:
       interval: 30s
 
   kafka:
-    image: johnnypark/kafka-zookeeper:2.3.0
+    image: docker.io/bitnami/kafka:3.5
     container_name: ml_kafka
-    # Disable logging as it is far too verbose for debugging locally
-    logging:
-      driver: none
-    volumes:
-      - ./docker/kafka/:/opt/kafka_2.12-2.3.0/config/
-    ports:
-      - "2181:2181"
-      - "9092:9092"
-    environment:
-      - ZOO_LOG4J_PROP=WARN
     networks:
       - ml-mojaloop-net
+    ports:
+      - "9092:9092"
+    environment:
+      # BITNAMI_DEBUG: "yes"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_CFG_LISTENERS: CONTROLLER://:9093,LISTENER_DOCKER://:29092,LISTENER_EXTERN://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: LISTENER_DOCKER://kafka:29092,LISTENER_EXTERN://localhost:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,LISTENER_DOCKER:PLAINTEXT,LISTENER_EXTERN:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_MESSAGE_MAX_BYTES: 200000000
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:9093
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_ENABLE_KRAFT: "true"
     healthcheck:
-      test: ["CMD" ,"/opt/kafka_2.12-2.3.0/bin/kafka-broker-api-versions.sh","--bootstrap-server","kafka:29092"]
+      test: ["CMD" ,"/opt/bitnami/kafka/bin/kafka-broker-api-versions.sh","--bootstrap-server","kafka:29092"]
       timeout: 20s
       retries: 10
       start_period: 40s
       interval: 30s
+
+  kafka-provisioning:
+    container_name: kafka-provisioning
+    networks:
+      - ml-mojaloop-net
+    image: docker.io/bitnami/kafka:3.5
+    depends_on:
+      - kafka
+    volumes:
+      - ./docker/kafka/scripts:/tmp/kafka/scripts
+    command: bash /tmp/kafka/scripts/provision.sh
 
   simulator:
     image: mojaloop/simulator:latest
@@ -149,4 +172,3 @@ services:
       timeout: 20s
       retries: 10
       interval: 30s
-

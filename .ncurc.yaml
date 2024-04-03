@@ -1,0 +1,9 @@
+## Add a TODO comment indicating the reason for each rejected dependency upgrade added to this list, and what should be done to resolve it (i.e. handle it through a story, etc).
+reject: [
+    # v6+ (ref: https://github.com/sindresorhus/get-port/releases/tag/v6.0.0) is an ESM library and thus not compatible with CommonJS. Future story needed to resolve.
+    # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
+    "get-port",
+    # version 11.1.2 of the stream library is causing a number of test failures. 
+    # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
+    "@mojaloop/central-services-stream"
+]

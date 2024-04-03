@@ -43,7 +43,7 @@ const deleteEndpointCache = async (request, h) => {
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.error(fspiopError)
+    Logger.isErrorEnabled && Logger.error(fspiopError)
     throw fspiopError
   }
 }
