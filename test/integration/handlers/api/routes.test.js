@@ -33,6 +33,7 @@ const Notification = require('../../../../src/handlers/notification')
 const { registerAllHandlers } = require('../../../../src/handlers/register')
 const metadataHandler = require('../../../../src/api/metadata/handler')
 const NotificationHandler = require('../../../../src/handlers/notification/index')
+const { initializeProducers } = require('../../../../src/shared/setup')
 
 const {
   createRequest,
@@ -87,6 +88,8 @@ Test('Handlers test', async handlerTest => {
         { name: 'broker', status: 'OK' },
         { name: 'participantEndpointService', status: 'OK' }
       ]
+      await registerAllHandlers()
+      await initializeProducers()
 
       // Act
       const {

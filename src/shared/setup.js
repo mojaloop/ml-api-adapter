@@ -183,6 +183,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
 
 module.exports = {
   initialize,
+  initializeProducers,
   createServer,
   getProducerConfigs
 }
