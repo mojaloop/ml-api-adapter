@@ -575,7 +575,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    await notificationTest.end()
+    notificationTest.end()
   })
   notificationHandlerTest.end()
 })
