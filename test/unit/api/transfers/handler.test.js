@@ -30,6 +30,7 @@ const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
 const Enum = require('@mojaloop/central-services-shared').Enum
+const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
 
 const mocks = require('../../mocks')
@@ -182,6 +183,7 @@ Test('transfer handler', handlerTest => {
         await Handler.create(createRequest(payload))
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
@@ -353,7 +355,8 @@ Test('transfer handler', handlerTest => {
       try {
         await Handler.fulfilTransfer(createPutRequest(params, payload))
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
@@ -419,6 +422,7 @@ Test('transfer handler', handlerTest => {
           test.fail('does not throw')
         } catch (e) {
           test.ok(e instanceof FSPIOPError)
+          test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
           test.equal(e.message, 'An error has occurred')
           test.end()
         }
@@ -480,6 +484,7 @@ Test('transfer handler', handlerTest => {
         test.fail('does not throw')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
