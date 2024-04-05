@@ -181,6 +181,7 @@ Test('transfer handler', handlerTest => {
 
       try {
         await Handler.create(createRequest(payload))
+        test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
         test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
@@ -354,6 +355,7 @@ Test('transfer handler', handlerTest => {
 
       try {
         await Handler.fulfilTransfer(createPutRequest(params, payload))
+        test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
         test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
@@ -419,7 +421,7 @@ Test('transfer handler', handlerTest => {
         TransferService.getTransferById.rejects(new Error('An error has occurred'))
         try {
           await Handler.getTransferById(request)
-          test.fail('does not throw')
+          test.fail('Expected an error to be thrown')
         } catch (e) {
           test.ok(e instanceof FSPIOPError)
           test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
@@ -481,7 +483,7 @@ Test('transfer handler', handlerTest => {
       TransferService.transferError.rejects(new Error('An error has occurred'))
       try {
         await Handler.fulfilTransferError(request)
-        test.fail('does not throw')
+        test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
         test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
