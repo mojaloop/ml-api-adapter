@@ -41,6 +41,18 @@ const endpoints = {
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}/error`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
+      value: `${ENDPOINT_HOST}/dfsp1/fxTransfers`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT',
+      value: `${ENDPOINT_HOST}/dfsp1/fxTransfers/{{transferId}}`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR',
+      value: `${ENDPOINT_HOST}/dfsp1/fxTransfers/{{transferId}}/error`
     }
   ],
   dfsp2: [
@@ -56,6 +68,20 @@ const endpoints = {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}/error`
     }
+  ],
+  fxp1: [
+    {
+      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
+      value: `${ENDPOINT_HOST}/fxp1/fxTransfers`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT',
+      value: `${ENDPOINT_HOST}/fxp1/fxTransfers/{{transferId}}`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR',
+      value: `${ENDPOINT_HOST}/fxp1/fxTransfers/{{transferId}}/error`
+    }
   ]
 }
 exports.receiveNotificationPost = async function (request, h) {
@@ -63,7 +89,7 @@ exports.receiveNotificationPost = async function (request, h) {
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
   const parsedPayload = request.payload
-  const transferId = parsedPayload.transferId
+  const transferId = parsedPayload.transferId || parsedPayload.commitRequestId
   const path = request.path
   const result = path.split('/')
   const operation = 'post'

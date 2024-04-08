@@ -59,6 +59,19 @@ module.exports = [{
 },
 {
   method: 'PUT',
+  path: '/dfsp1/fxTransfers/{transferId}/error',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'dfsp1-fx-error',
+    tags,
+    description: 'receive error notification for dfsp1',
+    payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PUT',
   path: '/dfsp2/transfers/{transferId}/error',
   handler: Handler.receiveNotificationPut,
   options: {
@@ -76,6 +89,19 @@ module.exports = [{
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp3-error',
+    tags,
+    description: 'receive error notification for dfsp3',
+    payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/fxp1/fxTransfers/{transferId}/error',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'fxp1-error',
     tags,
     description: 'receive error notification for dfsp3',
     payload: {
@@ -123,6 +149,19 @@ module.exports = [{
   }
 },
 {
+  method: 'POST',
+  path: '/fxp1/fxTransfers',
+  handler: Handler.receiveNotificationPost,
+  options: {
+    id: 'fxp1-transfers',
+    tags,
+    description: 'receive fx transfers for fxp1',
+    payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
   method: 'PUT',
   path: '/dfsp1/transfers/{transferId}',
   handler: Handler.receiveNotificationPut,
@@ -130,20 +169,6 @@ module.exports = [{
     id: 'dfsp1-put',
     tags,
     description: 'receive put notification for dfsp1',
-    payload: {
-      allow: 'application/json',
-      failAction: 'error'
-    }
-  }
-},
-{
-  method: 'PATCH',
-  path: '/dfsp1/transfers/{transferId}',
-  handler: Handler.receiveNotificationPatch,
-  options: {
-    id: 'dfsp1-patch',
-    tags,
-    description: 'receive patch notification for dfsp1',
     payload: {
       allow: 'application/json',
       failAction: 'error'
@@ -172,6 +197,48 @@ module.exports = [{
     tags,
     description: 'receive put notification for dfsp3',
     payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/fxp1/fxTransfers/{transferId}',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'fxp1-put',
+    tags,
+    description: 'receive put notification for fxp1',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PATCH',
+  path: '/dfsp1/transfers/{transferId}',
+  handler: Handler.receiveNotificationPatch,
+  options: {
+    id: 'dfsp1-patch',
+    tags,
+    description: 'receive patch notification for dfsp1',
+    payload: {
+      allow: 'application/json',
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PATCH',
+  path: '/fxp1/fxTransfers/{transferId}',
+  handler: Handler.receiveNotificationPatch,
+  options: {
+    id: 'fxp1-patch',
+    tags,
+    description: 'receive patch notification for fxp1',
+    payload: {
+      allow: 'application/json',
       failAction: 'error'
     }
   }
