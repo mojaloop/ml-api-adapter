@@ -34,6 +34,7 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Kafka = require('@mojaloop/central-services-stream').Util
 const Request = require('@mojaloop/central-services-shared').Util.Request
 const Enum = require('@mojaloop/central-services-shared').Enum
+const { Action } = Enum.Events.Event
 const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
 const EventTypes = Enum.Events.Event.Type
@@ -62,6 +63,42 @@ Test('Notification Handler', notificationHandlerTest => {
       const messageProtocol = Fixtures.createMessageProtocol(
         'prepare',
         'prepare',
+        {
+          amount: { amount: 100, currency: 'USD' },
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          payeeFsp: 'dfsp1',
+          payerFsp: 'dfsp2',
+          transferId
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const operation = 'post'
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_PREPARE message and send POST callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.FX_PREPARE,
         {
           amount: { amount: 100, currency: 'USD' },
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
