@@ -23,7 +23,6 @@
 'use strict'
 
 const EventSdk = require('@mojaloop/event-sdk')
-const uuid4 = require('uuid4')
 const Uuid = require('uuid4')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Enum = require('@mojaloop/central-services-shared').Enum
@@ -42,41 +41,6 @@ const buildTransfer = (transferId) => {
     payeeFsp: 'dfsp1',
     payerFsp: 'dfsp2',
     amount: {
-      currency: 'USD',
-      amount: '123.45'
-    },
-    ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-    condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-    expiration: '2016-05-24T08:38:08.699-04:00',
-    extensionList:
-    {
-      extension:
-      [
-        {
-          key: 'errorDescription',
-          value: 'This is a more detailed error description'
-        },
-        {
-          key: 'errorDescription',
-          value: 'This is a more detailed error description'
-        }
-      ]
-    }
-  }
-}
-
-const buildFXTransfer = () => {
-  return {
-    commitRequestId: uuid4(),
-    determiningTransferId: uuid4(),
-    initiatingFsp: 'dfsp1',
-    counterPartyFsp: 'fxp1',
-    amountType: 'SEND',
-    sourceAmount: {
-      currency: 'USD',
-      amount: '123.45'
-    },
-    targetAmount: {
       currency: 'USD',
       amount: '123.45'
     },
@@ -145,28 +109,6 @@ const buildFulfil = () => {
   }
 }
 
-const buildFXFulfil = () => {
-  return {
-    conversionState: 'RESERVED',
-    fulfilment: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-    completedTimestamp: '2024-04-06T08:38:08.699-04:00',
-    extensionList:
-    {
-      extension:
-      [
-        {
-          key: 'errorDescription',
-          value: 'This is a more detailed error description'
-        },
-        {
-          key: 'errorDescription',
-          value: 'This is a more detailed error description'
-        }
-      ]
-    }
-  }
-}
-
 const buildHeaders = {
   accept: 'application/vnd.interoperability.participants+json;version=1',
   'fspiop-destination': 'dsfp1',
@@ -215,10 +157,8 @@ const createMessageProtocol = (eventType = 'prepare', eventAction = 'prepare', p
 
 module.exports = {
   buildTransfer,
-  buildFXTransfer,
   buildTransferError,
   buildFulfil,
-  buildFXFulfil,
   buildHeaders,
   generateTransferId,
   generateParentTestSpan,

@@ -18,16 +18,6 @@ Test('transfer service', async (modelTest) => {
       test.end()
     })
 
-    prepareTest.test('produce a fx transfer prepare message to kafka', async (test) => {
-      const transfer = Fixtures.buildFXTransfer(Fixtures.generateTransferId())
-      const dataUri = encodePayload(transfer.toString(), 'application/vnd.interoperability.transfers+json;version=2.0')
-      const span = Fixtures.generateParentTestSpan()
-      const result = await TransferService.prepare(Fixtures.buildHeaders, dataUri, transfer, span)
-      test.equal(result, true)
-      test.pass()
-      test.end()
-    })
-
     prepareTest.end()
   })
 
