@@ -470,7 +470,9 @@ Test('Notification Handler', notificationHandlerTest => {
     })
 
     notificationTest.test('tear down', async test => {
-      await Kafka.Producer.disconnect()
+      try {
+        await Kafka.Producer.disconnect()
+      } catch (err) { /* ignore error */ }
       test.end()
     })
 
