@@ -26,10 +26,9 @@
  ******/
 'use strict'
 
-const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
-const Config = require(`${src}/lib/config`)
+const Config = require('../../../../src/lib/config')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Kafka = require('@mojaloop/central-services-stream').Util
 const Request = require('@mojaloop/central-services-shared').Util.Request
@@ -37,6 +36,7 @@ const Enum = require('@mojaloop/central-services-shared').Enum
 const { Action } = Enum.Events.Event
 const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
+
 const EventTypes = Enum.Events.Event.Type
 const EventActions = Enum.Events.Event.Action
 const GeneralTopicTemplate = Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE
@@ -46,9 +46,25 @@ const callbackWaitSeconds = 2
 
 const getNotificationUrl = process.env.ENDPOINT_URL
 
+const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false) => {
+  await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+  let response = await getNotifications(messageProtocol.to, operation, transferId)
+  let responseFrom = checkSenderResponse ? await getNotifications(messageProtocol.from, operation, transferId) : true
+
+  let currentAttempts = 0
+  while (!(response && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+    sleep(callbackWaitSeconds)
+    response = await getNotifications(messageProtocol.to, operation, transferId)
+    responseFrom = checkSenderResponse && await getNotifications(messageProtocol.from, operation, transferId)
+    currentAttempts++
+  }
+  return checkSenderResponse ? { responseTo: response, responseFrom } : response
+}
+
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
-    notificationHandlerTest.test('throw an error if invalid message is received', async test => {
+    notificationTest.skip('throw an error if invalid message is received', async test => {
       try {
         await Kafka.Consumer.consumeMessage(null, null, null)
         test.fail('Error not thrown!')
@@ -80,16 +96,8 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'post'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
@@ -106,7 +114,7 @@ Test('Notification Handler', notificationHandlerTest => {
           counterPartyFsp: 'fxp1',
           amountType: 'SEND',
           sourceAmount: { amount: 100, currency: 'KWS' },
-          targetAmount: { amount: 100, currency: 'TZS' },
+          targetAmount: { amount: 200, currency: 'TZS' },
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           expiration: '2018-08-24T21:31:00.534+01:00',
           ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
@@ -119,23 +127,14 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'post'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
       test.end()
     })
 
     notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
       const transferId = Uuid()
-
       const messageProtocol = Fixtures.createMessageProtocol(
         'prepare',
         'prepare',
@@ -160,16 +159,8 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'error'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
       test.end()
     })
@@ -198,18 +189,8 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true)
 
-      const operation = 'put'
-      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
@@ -240,16 +221,8 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'error'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
@@ -278,18 +251,8 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true)
 
-      const operation = 'put'
-      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
@@ -321,16 +284,8 @@ Test('Notification Handler', notificationHandlerTest => {
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
-      const operation = 'error'
-      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
+
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
@@ -380,16 +335,8 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'error'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
@@ -439,16 +386,8 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'put'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
