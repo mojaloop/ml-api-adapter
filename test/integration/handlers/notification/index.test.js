@@ -64,7 +64,7 @@ const testNotification = async (messageProtocol, operation, transferId, kafkaCon
 
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
-    notificationTest.skip('throw an error if invalid message is received', async test => {
+    notificationTest.test('throw an error if invalid message is received', async test => {
       try {
         await Kafka.Consumer.consumeMessage(null, null, null)
         test.fail('Error not thrown!')
@@ -74,7 +74,7 @@ Test('Notification Handler', notificationHandlerTest => {
       }
     })
 
-    notificationTest.skip('consume a PREPARE message and send POST callback', async test => {
+    notificationTest.test('consume a PREPARE message and send POST callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -102,7 +102,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a FX_PREPARE message and send POST callback', async test => {
+    notificationTest.test('consume a FX_PREPARE message and send POST callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -133,7 +133,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a PREPARE message and send PUT callback on error', async test => {
+    notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -197,7 +197,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a COMMIT message and send PUT callback', async test => {
+    notificationTest.test('consume a COMMIT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         'commit',
@@ -228,7 +228,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a FX_COMMIT message and send PUT callback', async test => {
+    notificationTest.test('consume a FX_COMMIT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
@@ -259,7 +259,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a COMMIT message and send PUT callback on error', async test => {
+    notificationTest.test('consume a COMMIT message and send PUT callback on error', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
@@ -290,7 +290,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a REJECT message and send PUT callback', async test => {
+    notificationTest.test('consume a REJECT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.REJECT,
@@ -321,7 +321,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a ABORT message and send PUT callback', async test => {
+    notificationTest.test('consume a ABORT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.ABORT,
@@ -354,7 +354,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a TIMEOUT-RECEIVED message and send PUT callback', async test => {
+    notificationTest.test('consume a TIMEOUT-RECEIVED message and send PUT callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
@@ -404,7 +404,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a PREPARE-DUPLICATE message and send PUT callback', async test => {
+    notificationTest.test('consume a PREPARE-DUPLICATE message and send PUT callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
@@ -455,7 +455,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
+    notificationTest.test('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(
         Config.KAFKA_CONFIG,
