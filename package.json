@@ -71,7 +71,7 @@
     "@hapi/basic": "7.0.2",
     "@hapi/boom": "10.0.1",
     "@hapi/good": "9.0.1",
-    "@hapi/hapi": "21.3.8",
+    "@hapi/hapi": "21.3.9",
     "@hapi/inert": "7.1.0",
     "@hapi/joi": "16.1.4",
     "@hapi/joi-date": "2.0.1",
