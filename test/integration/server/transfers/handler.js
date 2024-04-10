@@ -28,6 +28,21 @@
 
 const notifications = {}
 const ENDPOINT_HOST = process.env.ENDPOINT_HOST || 'http://ml-api-adapter-endpoint:4545'
+const fxTransferEndpoints = fspId => [
+  {
+    type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
+    value: `${ENDPOINT_HOST}/${fspId}/fxTransfers`
+  },
+  {
+    type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT',
+    value: `${ENDPOINT_HOST}/${fspId}/fxTransfers/{{commitRequestId}}`
+  },
+  {
+    type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR',
+    value: `${ENDPOINT_HOST}/${fspId}/fxTransfers/{{commitRequestId}}/error`
+  }
+]
+
 const endpoints = {
   dfsp1: [
     {
@@ -42,18 +57,7 @@ const endpoints = {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}/error`
     },
-    {
-      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
-      value: `${ENDPOINT_HOST}/dfsp1/fxTransfers`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT',
-      value: `${ENDPOINT_HOST}/dfsp1/fxTransfers/{{transferId}}`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR',
-      value: `${ENDPOINT_HOST}/dfsp1/fxTransfers/{{transferId}}/error`
-    }
+    ...fxTransferEndpoints('dfsp1')
   ],
   dfsp2: [
     {
@@ -67,23 +71,12 @@ const endpoints = {
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}/error`
-    }
+    },
+    ...fxTransferEndpoints('dfsp2')
   ],
-  fxp1: [
-    {
-      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
-      value: `${ENDPOINT_HOST}/fxp1/fxTransfers`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT',
-      value: `${ENDPOINT_HOST}/fxp1/fxTransfers/{{transferId}}`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR',
-      value: `${ENDPOINT_HOST}/fxp1/fxTransfers/{{transferId}}/error`
-    }
-  ]
+  fxp1: fxTransferEndpoints('fxp1')
 }
+
 exports.receiveNotificationPost = async function (request, h) {
   console.log('Received receiveNotificationPost message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))

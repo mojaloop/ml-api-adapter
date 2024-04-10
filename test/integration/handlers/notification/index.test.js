@@ -232,7 +232,7 @@ Test('Notification Handler', notificationHandlerTest => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
-        Action.COMMIT,
+        Action.FX_COMMIT,
         {
           amount: { amount: 100, currency: 'USD' },
           transferState: 'RESERVED',
