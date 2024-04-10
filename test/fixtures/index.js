@@ -64,6 +64,21 @@ const buildTransfer = (transferId) => {
   }
 }
 
+const buildFXTransfer = (commitRequestId) => {
+  return {
+    commitRequestId,
+    determiningTransferId: Uuid(),
+    initiatingFsp: 'dfsp1',
+    counterPartyFsp: 'fxp1',
+    amountType: 'SEND',
+    sourceAmount: { amount: 100, currency: 'KWS' },
+    targetAmount: { amount: 200, currency: 'TZS' },
+    condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+    expiration: '2018-08-24T21:31:00.534+01:00',
+    ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+  }
+}
+
 const buildTransferError = () => {
   return {
     errorInformation: {
@@ -157,6 +172,7 @@ const createMessageProtocol = (eventType = 'prepare', eventAction = 'prepare', p
 
 module.exports = {
   buildTransfer,
+  buildFXTransfer,
   buildTransferError,
   buildFulfil,
   buildHeaders,

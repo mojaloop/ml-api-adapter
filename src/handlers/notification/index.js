@@ -212,7 +212,9 @@ const processMessage = async (msg, span) => {
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success', 'action']
   ).startTimer()
+
   logger.debug('Notification::processMessage')
+
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
