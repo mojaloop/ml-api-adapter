@@ -232,7 +232,7 @@ Test('Notification Handler', notificationHandlerTest => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
-        Action.COMMIT,
+        Action.FX_COMMIT,
         {
           commitRequestId,
           initiatingFsp: 'dfsp1',
