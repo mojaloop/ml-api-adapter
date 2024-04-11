@@ -26,7 +26,7 @@ const tags = ['test', 'transfers']
 
 module.exports = [{
   method: 'GET',
-  path: '/notification/{fsp}/{operation}/{transferId}',
+  path: '/notification/{fsp}/{operation}/{id}',
   handler: Handler.getNotification,
   options: {
     id: 'test-getNotification',
@@ -59,7 +59,20 @@ module.exports = [{
 },
 {
   method: 'PUT',
-  path: '/dfsp1/fxTransfers/{transferId}/error',
+  path: '/dfsp1/fxTransfers/{commitRequestId}',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'dfsp1-fx-put',
+    tags,
+    description: 'receive put notification for dfsp1',
+    payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/dfsp1/fxTransfers/{commitRequestId}/error',
   handler: Handler.receiveNotificationPut,
   options: {
     id: 'dfsp1-fx-error',

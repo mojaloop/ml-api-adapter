@@ -55,7 +55,7 @@ const testNotification = async (messageProtocol, operation, transferId, kafkaCon
   let currentAttempts = 0
   while (!(response && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
     sleep(callbackWaitSeconds)
-    response = await getNotifications(messageProtocol.to, operation, transferId)
+    response = response || await getNotifications(messageProtocol.to, operation, transferId)
     responseFrom = checkSenderResponse && await getNotifications(messageProtocol.from, operation, transferId)
     currentAttempts++
   }
@@ -228,7 +228,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.skip('consume a FX_COMMIT message and send PUT callback', async test => {
+    notificationTest.test('consume a FX_COMMIT message and send PUT callback to fxp and payerfsp', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
@@ -238,12 +238,7 @@ Test('Notification Handler', notificationHandlerTest => {
           initiatingFsp: 'dfsp1',
           counterPartyFsp: 'fxp1',
           sourceAmount: { amount: 100, currency: 'ZKW' },
-          targetAmount: { amount: 200, currency: 'TZS' },
-          transferState: 'RESERVED',
-          fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-          expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+          targetAmount: { amount: 200, currency: 'TZS' }
         },
         'dfsp1',
         'fxp1'
@@ -255,8 +250,8 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payerfsp')
       test.end()
     })
 
@@ -286,6 +281,37 @@ Test('Notification Handler', notificationHandlerTest => {
       )
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_COMMIT message and send PUT callback on error', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.COMMIT,
+        Action.FX_COMMIT,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'fxp1',
+        'dfsp1'
+      )
+      messageProtocol.metadata.event.state = {
+        code: 3000,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
@@ -322,6 +348,33 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
+    notificationTest.test('consume an FX_REJECT message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.REJECT,
+        Action.FX_REJECT,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          sourceAmount: { amount: 100, currency: 'ZKW' },
+          targetAmount: { amount: 200, currency: 'TZS' }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
     notificationTest.test('consume a ABORT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
@@ -352,6 +405,35 @@ Test('Notification Handler', notificationHandlerTest => {
 
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume an FX_ABORT message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.FX_ABORT,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          sourceAmount: { amount: 100, currency: 'ZKW' },
+          targetAmount: { amount: 200, currency: 'TZS' }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
       test.end()
     })
 
