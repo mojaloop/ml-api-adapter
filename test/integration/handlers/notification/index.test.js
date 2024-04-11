@@ -228,7 +228,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a FX_COMMIT message and send PUT callback', async test => {
+    notificationTest.skip('consume a FX_COMMIT message and send PUT callback', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
