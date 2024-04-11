@@ -89,7 +89,7 @@ Test('Notification Service tests', async notificationTest => {
   })
 
   await notificationTest.test('processMessage should', async processMessageTest => {
-    await processMessageTest.test('process the message received from kafka and send out a transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
+    await processMessageTest.test('process a prepare message received from kafka and send out a transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
       const msg = {
         value: {
           metadata: {
@@ -148,7 +148,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a fx transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
+    await processMessageTest.test('process a prepare message received from kafka and send out an fx transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
       const msg = {
         value: {
           metadata: {
@@ -207,7 +207,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a transfer post callback', async test => {
+    await processMessageTest.test('process a prepare message received from kafka and send out a transfer post callback', async test => {
       const uuid = Uuid()
       const msg = {
         value: {
@@ -250,7 +250,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a fx transfer post callback', async test => {
+    await processMessageTest.test('process an fx prepare message received from kafka and send out a fx transfer post callback', async test => {
       const uuid = Uuid()
       const msg = {
         value: {
@@ -293,7 +293,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a transfer post callback with injected protocolVersions config', async test => {
+    await processMessageTest.test('process a prepare message received from kafka and send out a transfer post callback with injected protocolVersions config', async test => {
       const ConfigStub = Util.clone(Config)
       // override the PROTOCOL_VERSIONS config
       ConfigStub.PROTOCOL_VERSIONS = {
@@ -357,7 +357,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    processMessageTest.test('process the message received from kafka and send out a transfer post callback should throw', async test => {
+    processMessageTest.test('process a commit message received from kafka and send out a transfer post callback should throw', async test => {
       const payeeFsp = 'dfsp1'
       const payerFsp = 'dfsp2'
       const uuid = Uuid()
@@ -644,7 +644,7 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    processMessageTest.test('process the message received from kafka and send out a transfer post callback should throw', async test => {
+    processMessageTest.test('process a commit message received from kafka and send out a transfer post callback should throw', async test => {
       const payeeFsp = 'dfsp1'
       const payerFsp = 'dfsp2'
       const uuid = Uuid()
@@ -691,7 +691,7 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    processMessageTest.test('process the message received from kafka and send out a transfer post callback and base64 encode the payload', async test => {
+    processMessageTest.test('process a prepare message received from kafka and send out a transfer post callback and base64 encode the payload', async test => {
       const uuid = Uuid()
       const message = { transferId: uuid }
       const encodedPayload = EncodePayload(JSON.stringify(message), 'application/json')
@@ -730,7 +730,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a transfer error notification to the sender', async test => {
+    await processMessageTest.test('process a prepare message received from kafka and send out a transfer error notification to the sender', async test => {
       const uuid = Uuid()
       const msg = {
         value: {
@@ -1747,7 +1747,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a transfer error notification to the sender - JWS Sign', async test => {
+    await processMessageTest.test('process a prepare message received from kafka and send out a transfer error notification to the sender - JWS Sign', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.JWS_SIGN = true
       ConfigStub.JWS_SIGNING_KEY = 'some jws key'
@@ -1799,7 +1799,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the message received from kafka and send out a transfer post callback - JWS Sign', async test => {
+    await processMessageTest.test('process a commit message received from kafka and send out a transfer post callback - JWS Sign', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.JWS_SIGN = true
       ConfigStub.JWS_SIGNING_KEY = 'some jws key'
@@ -1862,7 +1862,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the reject message received from kafka and send out a transfer put callback - JWS Sign', async test => {
+    await processMessageTest.test('process a reject message received from kafka and send out a transfer put callback - JWS Sign', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.JWS_SIGN = true
       ConfigStub.JWS_SIGNING_KEY = 'some jws key'
@@ -1924,7 +1924,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the abort message received from kafka and send out a transfer put callback', async test => {
+    await processMessageTest.test('process a abort message received from kafka and send out a transfer put callback', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.JWS_SIGN = true
       ConfigStub.JWS_SIGNING_KEY = 'some jws key'
@@ -1985,7 +1985,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the fulfil-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
+    await processMessageTest.test('process a fulfil-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.JWS_SIGN = true
       ConfigStub.JWS_SIGNING_KEY = 'some jws key'
@@ -2043,7 +2043,7 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    await processMessageTest.test('process the abort-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
+    await processMessageTest.test('process a abort-duplicate message received from kafka and send out a transfer error callback - JWS Sign', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.JWS_SIGN = true
       ConfigStub.JWS_SIGNING_KEY = 'some jws key'
