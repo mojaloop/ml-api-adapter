@@ -48,11 +48,11 @@ const HeadersLib = require(`${src}/lib/headers`)
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
-  const url = 'http://somehost:port/'
-
   let createCallbackHeadersSpy
   let createCallbackHeaders
   let Notification
+
+  const url = 'http://somehost:port/'
 
   await notificationTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
@@ -904,6 +904,105 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('process an fx commit message received from kafka and send out callbacks to payerfsp and confirmation to fxp', async test => {
+      const payerFsp = 'dfsp1'
+      const fxp = 'fxp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'fx-commit',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': fxp
+            },
+            payload: { commitRequestId: uuid }
+          },
+          to: payerFsp,
+          from: fxp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlPayer = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
+      const urlFsp = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
+      const method = ENUM.Http.RestMethods.PUT
+      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })
+      const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true)
+      const message = { commitRequestId: uuid }
+      const expected = 200
+      Callback.sendRequest.withArgs(urlPayer, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(urlFsp, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined }))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined }))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }))
+      test.ok(createCallbackHeadersSpy.getCall(1).calledWith({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true))
+      test.ok(Callback.sendRequest.calledWith(urlPayer, payeeHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(urlFsp, payerHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process an fx commit message received from kafka ( success==false ) and send error callback to fxp', async test => {
+      const fxp = 'fxp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'fx-commit',
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': fxp,
+              'FSPIOP-Source': 'switch'
+            },
+            payload: { commitRequestId: uuid }
+          },
+          to: fxp,
+          from: 'switch',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const urlFsp = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
+      const method = ENUM.Http.RestMethods.PUT
+      const fxpHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
+      const message = { commitRequestId: uuid }
+      const expected = true
+      Callback.sendRequest.withArgs(urlFsp, fxpHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined }))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true))
+      test.ok(Callback.sendRequest.calledWith(urlFsp, fxpHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.to, method, JSON.stringify(message), ENUM.Http.ResponseTypes.JSON))
+      test.equal(result, expected)
+      test.end()
+    })
+
     await processMessageTest.test('process a commit message received from kafka and send out a transfer post callback should throw', async test => {
       const payeeFsp = 'dfsp1'
       const payerFsp = 'dfsp2'
@@ -1329,6 +1428,59 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('process an fx reject message received from kafka and send out a transfer put callback', async test => {
+      const uuid = Uuid()
+      const fxp = 'fxp'
+      const payerFsp = 'dfsp1'
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'fx-reject',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payerFsp,
+              'FSPIOP-Source': fxp
+            },
+            payload: { commitRequestId: uuid }
+          },
+          to: payerFsp,
+          from: fxp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+
+      const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
+      const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
+      const method = ENUM.Http.RestMethods.PUT
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })
+      const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true)
+      const message = { commitRequestId: uuid }
+      const expected = 200
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      createCallbackHeadersSpy.resetHistory()
+      Participant.getEndpoint.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined }))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined }))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }))
+      test.ok(createCallbackHeadersSpy.getCall(1).calledWith({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true))
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
     await processMessageTest.test('process the abort message received from kafka and send out a transfer put callback', async test => {
       const uuid = Uuid()
       const payerFsp = 'dfsp2'
@@ -1363,13 +1515,70 @@ Test('Notification Service tests', async notificationTest => {
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })
       const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = { transferId: uuid }
-
       const expected = 200
-
       Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
 
       const result = await Notification.processMessage(msg)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined }))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined }))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }))
+      test.ok(createCallbackHeadersSpy.getCall(1).calledWith({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true))
+      test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
+      test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.skip('process the fx abort message received from kafka and send out a transfer put callback', async test => {
+      const uuid = Uuid()
+      const payerFsp = 'dfsp1'
+      const fxp = 'fxp1'
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'fx-abort',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': fxp,
+              'FSPIOP-Source': payerFsp
+            },
+            payload: { commitRequestId: uuid }
+          },
+          to: payerFsp,
+          from: fxp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
+      const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
+      const method = ENUM.Http.RestMethods.PUT
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })
+      const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
+      const message = { transferId: uuid }
+      const expected = 200
+      Callback.sendRequest.withArgs(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)).returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: false, span: undefined }))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: false, span: undefined }))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }))
+      test.ok(createCallbackHeadersSpy.getCall(1).calledWith({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true))
       test.ok(Callback.sendRequest.calledWith(toUrl, toHeaders, msg.value.from, msg.value.to, method, JSON.stringify(message)))
       test.ok(Callback.sendRequest.calledWith(fromUrl, fromHeaders, ENUM.Http.Headers.FSPIOP.SWITCH.value, msg.value.from, method, JSON.stringify(message)))
       test.equal(result, expected)

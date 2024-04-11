@@ -344,10 +344,10 @@ const processMessage = async (msg, span) => {
       }
       payloadForPayee = JSON.stringify(payloadForPayee)
       const method = (action === Action.RESERVE) ? PATCH : PUT
-      const callbackURLFrom = await getEndpointFn(from, FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT)
+      const callbackURLFrom = await getEndpointFn(from, endpointType)
       logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForPayee}, ${id}, ${Enum.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
 
-      callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate: FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
+      callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
       const histTimerEndSendRequest2 = Metrics.getHistogram(
         'notification_event_delivery',
         'notification_event_delivery - metric for sending notification requests to FSPs',
