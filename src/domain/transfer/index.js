@@ -27,16 +27,13 @@
 'use strict'
 
 const Kafka = require('@mojaloop/central-services-stream').Util
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const StreamingProtocol = require('@mojaloop/central-services-shared').Util.StreamingProtocol
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const generalEnum = require('@mojaloop/central-services-shared').Enum
 
-const Config = require('../../lib/config')
 const { logger } = require('../../shared/logger')
 const dto = require('./dto')
 
-const { Action, Type } = generalEnum.Events.Event
+const { Action } = generalEnum.Events.Event
 
 /**
  * @module src/domain/transfer
@@ -116,24 +113,19 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
  *
  * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
  */
-const getTransferById = async (headers, params, span) => {
-  logger.debug(`domain::transfer::transferById::start(${params.id}, ${JSON.stringify(headers)}`)
-  try {
-    const state = dto.eventStateDto()
-    const event = StreamingProtocol.createEventMetadata(Type.GET, Type.GET, state)
-    const metadata = StreamingProtocol.createMetadata(params.id, event)
-    let messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, headers[generalEnum.Http.Headers.FSPIOP.DESTINATION], headers[generalEnum.Http.Headers.FSPIOP.SOURCE], metadata)
-    const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Action.TRANSFER, Action.GET)
-    const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, Action.TRANSFER.toUpperCase(), Action.GET.toUpperCase())
-    logger.info(`domain::transfer::get::messageProtocol - ${messageProtocol}`)
-    logger.info(`domain::transfer::get::topicConfig - ${topicConfig}`)
-    logger.info(`domain::transfer::get::kafkaConfig - ${kafkaConfig}`)
+const getTransferById = async (headers, params, span, isFx = false) => {
+  const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::get`
+  logger.debug(`${logPrefix}::start(${params.id})`, { headers })
 
+  try {
+    let messageProtocol = dto.getMessageDto({ headers, params, isFx, logPrefix })
     messageProtocol = await span.injectContextToMessage(messageProtocol)
+    const { topicConfig, kafkaConfig } = dto.producerConfigDto(Action.TRANSFER, Action.GET, logPrefix)
+
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    logger.error(`domain::transfer::fulfil::Kafka error:: ERROR:'${err}'`)
+    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     logger.error(fspiopError)
     throw fspiopError

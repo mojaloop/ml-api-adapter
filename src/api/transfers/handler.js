@@ -55,7 +55,7 @@ const { Type, Action } = Enum.Events.Event
 
 const create = async function (request, h) {
   const { headers, payload, dataUri, span } = request
-  const isFx = !payload.transferId
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
 
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -99,7 +99,7 @@ const create = async function (request, h) {
 
 const fulfilTransfer = async function (request, h) {
   const { headers, payload, params, dataUri, span } = request
-  const isFx = !payload.transferState
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
 
   const metric = PROM_METRICS.transferFulfil(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -146,7 +146,7 @@ const fulfilTransfer = async function (request, h) {
 
 const getTransferById = async function (request, h) {
   const isFx = request.path?.includes(ROUTES.fxTransfers)
-  const metric = PROM_METRICS.transferPrepare(isFx)
+  const metric = PROM_METRICS.transferGet(isFx)
   const histTimerEnd = Metrics.getHistogram(
     metric,
     'Get a transfer by Id',
@@ -161,7 +161,7 @@ const getTransferById = async function (request, h) {
       headers: request.headers,
       params: request.params
     }, EventSdk.AuditEventAction.start)
-    await TransferService.getTransferById(request.headers, request.params, span)
+    await TransferService.getTransferById(request.headers, request.params, span, isFx)
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
@@ -185,7 +185,7 @@ const getTransferById = async function (request, h) {
  */
 const fulfilTransferError = async function (request, h) {
   const { headers, payload, params, dataUri, span } = request
-  const isFx = request.path?.includes(ROUTES.fxTransfers) // think, if we should use this approach in other routes
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
 
   const metric = PROM_METRICS.transferFulfilError(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -215,9 +215,19 @@ const fulfilTransferError = async function (request, h) {
   }
 }
 
+/**
+ * @function patchTransfer
+ * @async
+ * @description Not implemented
+ */
+const patchTransfer = async function (request, h) {
+  // Not implemented yet
+}
+
 module.exports = {
   create,
   fulfilTransfer,
   getTransferById,
-  fulfilTransferError
+  fulfilTransferError,
+  patchTransfer
 }
