@@ -294,8 +294,16 @@ const processMessage = async (msg, span) => {
 
   // todo: (?) do we need to adjust it for FX?
   if (action === Action.PREPARE_DUPLICATE && isSuccess) {
-    const callbackURLTo = await getEndpointFn(to, FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT)
-    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate: FspEndpointTemplates.TRANSFERS_PUT }, fromSwitch)
+    const endpointType = isFx
+      ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT
+      : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+
+    const endpointTemplate = isFx
+      ? FspEndpointTemplates.FX_TRANSFERS_PUT
+      : FspEndpointTemplates.TRANSFERS_PUT
+
+    const callbackURLTo = await getEndpointFn(to, endpointType)
+    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, PUT, payloadForCallback, Enum.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
     return true
