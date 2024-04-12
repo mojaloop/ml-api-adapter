@@ -292,8 +292,7 @@ const processMessage = async (msg, span) => {
     return true
   }
 
-  // todo: (?) do we need to adjust it for FX?
-  if (action === Action.PREPARE_DUPLICATE && isSuccess) {
+  if ([Action.PREPARE_DUPLICATE, Action.FX_PREPARE_DUPLICATE].includes(action) && isSuccess) {
     const endpointType = isFx
       ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT
       : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
@@ -390,6 +389,7 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = isFx
       ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
       : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
     await Callback.sendRequest(callbackURLTo, callbackHeaders, from, to, PUT, payloadForCallback, Enum.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
@@ -461,10 +461,17 @@ const processMessage = async (msg, span) => {
     return true
   }
 
-  // todo: adjust for FX
-  if (action === Action.ABORT_VALIDATION) {
-    const callbackURLTo = await getEndpointFn(to, FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR)
-    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate: FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
+  if ([Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION].includes(action)) {
+    const endpointType = isFx
+      ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR
+      : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
+    const callbackURLTo = await getEndpointFn(to, endpointType)
+
+    const endpointTemplate = isFx
+      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
+      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+
+    callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     // forward the abort to the destination
     jwsSigner = getJWSSigner(Enum.Http.Headers.FSPIOP.SWITCH.value)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -472,9 +479,9 @@ const processMessage = async (msg, span) => {
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to && from !== Enum.Http.Headers.FSPIOP.SWITCH.value) {
-      const callbackURLFrom = await getEndpointFn(from, FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR)
+      const callbackURLFrom = await getEndpointFn(from, endpointType)
       logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${Enum.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
-      callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate: FspEndpointTemplates.TRANSFERS_PUT_ERROR }, fromSwitch)
+      callbackHeaders = createCallbackHeaders({ dfspId: from, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
       await Callback.sendRequest(callbackURLFrom, callbackHeaders, Enum.Http.Headers.FSPIOP.SWITCH.value, from, PUT, payloadForCallback, Enum.Http.ResponseTypes.JSON, span, jwsSigner, protocolVersions)
       histTimerEnd({ success: true, action })
       return true
