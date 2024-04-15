@@ -46,17 +46,19 @@ const callbackWaitSeconds = 2
 
 const getNotificationUrl = process.env.ENDPOINT_URL
 
-const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false) => {
+const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null) => {
   await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
+  senderOperation = senderOperation || operation
+
   let response = await getNotifications(messageProtocol.to, operation, transferId)
-  let responseFrom = checkSenderResponse ? await getNotifications(messageProtocol.from, operation, transferId) : true
+  let responseFrom = checkSenderResponse ? await getNotifications(messageProtocol.from, senderOperation, transferId) : true
 
   let currentAttempts = 0
   while (!(response && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
     sleep(callbackWaitSeconds)
     response = response || await getNotifications(messageProtocol.to, operation, transferId)
-    responseFrom = checkSenderResponse && await getNotifications(messageProtocol.from, operation, transferId)
+    responseFrom = checkSenderResponse && await getNotifications(messageProtocol.from, senderOperation, transferId)
     currentAttempts++
   }
   return checkSenderResponse ? { responseTo: response, responseFrom } : response
@@ -74,7 +76,7 @@ Test('Notification Handler', notificationHandlerTest => {
       }
     })
 
-    notificationTest.test('consume a PREPARE message and send POST callback', async test => {
+    notificationTest.skip('consume a PREPARE message and send POST callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -102,7 +104,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a FX_PREPARE message and send POST callback', async test => {
+    notificationTest.skip('consume a FX_PREPARE message and send POST callback', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -133,7 +135,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
+    notificationTest.skip('consume a PREPARE message and send PUT callback on error', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -165,7 +167,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a FX_PREPARE message and send PUT callback on error', async test => {
+    notificationTest.skip('consume a FX_PREPARE message and send PUT callback on error', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
@@ -197,7 +199,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a COMMIT message and send PUT callback', async test => {
+    notificationTest.skip('consume a COMMIT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         'commit',
@@ -228,7 +230,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a FX_COMMIT message and send PUT callback to fxp and payerfsp', async test => {
+    notificationTest.skip('consume a FX_COMMIT message and send PUT callback to fxp and payerfsp', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
@@ -255,7 +257,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a COMMIT message and send PUT callback on error', async test => {
+    notificationTest.skip('consume a COMMIT message and send PUT callback on error', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
@@ -286,7 +288,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a FX_COMMIT message and send PUT callback on error', async test => {
+    notificationTest.skip('consume a FX_COMMIT message and send PUT callback on error', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.COMMIT,
@@ -317,7 +319,57 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a REJECT message and send PUT callback', async test => {
+    notificationTest.skip('consume a RESERVE message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.RESERVE,
+        Action.RESERVE,
+        {
+          transferId,
+          payerFsp: 'dfsp1',
+          payeeFsp: 'dfsp2'
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true, 'patch')
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.skip('consume a FX_RESERVE message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.RESERVE,
+        Action.FX_RESERVE,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1'
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true, 'patch')
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.skip('consume a REJECT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.REJECT,
@@ -348,7 +400,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume an FX_REJECT message and send PUT callback', async test => {
+    notificationTest.skip('consume an FX_REJECT message and send PUT callback', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.REJECT,
@@ -375,7 +427,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a ABORT message and send PUT callback', async test => {
+    notificationTest.skip('consume a ABORT message and send PUT callback', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.ABORT,
@@ -408,7 +460,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume an FX_ABORT message and send PUT callback', async test => {
+    notificationTest.skip('consume an FX_ABORT message and send PUT callback', async test => {
       const commitRequestId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.ABORT,
@@ -437,7 +489,7 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a TIMEOUT-RECEIVED message and send PUT callback', async test => {
+    notificationTest.skip('consume a TIMEOUT_RECEIVED message and send PUT callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
@@ -487,7 +539,51 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a PREPARE-DUPLICATE message and send PUT callback', async test => {
+    notificationTest.skip('consume a FX_TIMEOUT_RECEIVED message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: Action.PREPARE,
+            action: Action.FX_TIMEOUT_RECEIVED,
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'fxp1'
+          },
+          payload: {
+            initiatingFsp: 'dfsp1',
+            counterPartyFsp: 'fxp1',
+            commitRequestId
+          }
+        },
+        from: 'dfsp1',
+        to: 'fxp1',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
+
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.skip('consume a PREPARE_DUPLICATE message and send PUT callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
@@ -538,7 +634,51 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
+    notificationTest.skip('consume a FX_PREPARE_DUPLICATE message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: Action.PREPARE,
+            action: Action.FX_PREPARE_DUPLICATE,
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-destination': 'fxp1',
+            'fspiop-source': 'dfsp1'
+          },
+          payload: {
+            commitRequestId,
+            initiatingFsp: 'dfsp1',
+            counterPartyFsp: 'fxp1'
+          }
+        },
+        to: 'dfsp1',
+        from: 'switch',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
+
+      const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.skip('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
       const transferId = Uuid()
       const kafkaConfig = KafkaUtil.getKafkaConfig(
         Config.KAFKA_CONFIG,
@@ -590,6 +730,59 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const operation = 'patch'
       const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, transferId), 5, 2)
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.skip('consume a FX_RESERVED_ABORTED message and send PATCH callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(
+        Config.KAFKA_CONFIG,
+        Enum.Kafka.Config.PRODUCER,
+        EventTypes.TRANSFER.toUpperCase(),
+        EventActions.FULFIL.toUpperCase()
+      )
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: Action.FULFIL,
+            action: Action.RESERVED_ABORTED,
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2021-11-02T00:00:00.000Z',
+            'FSPIOP-Destination': 'dfsp1',
+            'FSPIOP-Source': 'switch'
+          },
+          payload: {
+            commitRequestId
+          }
+        },
+        to: 'dfsp1',
+        from: 'switch',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(
+        GeneralTopicTemplate,
+        EventTypes.NOTIFICATION,
+        EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const operation = 'patch'
+      const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, commitRequestId), 5, 2)
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })

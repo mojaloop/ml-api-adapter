@@ -344,13 +344,13 @@ const processMessage = async (msg, span) => {
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     // todo: do we need this case for FX_RESERVE ?
-    if ((action === Action.RESERVE) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to)) {
+    if (([Action.RESERVE, Action.FX_RESERVE].includes(action)) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && from !== to)) {
       let payloadForPayee = JSON.parse(payloadForCallback)
-      if (payloadForPayee.fulfilment && action === Action.RESERVE) {
+      if (payloadForPayee.fulfilment && [Action.RESERVE, Action.FX_RESERVE].includes(action)) {
         delete payloadForPayee.fulfilment
       }
       payloadForPayee = JSON.stringify(payloadForPayee)
-      const method = (action === Action.RESERVE) ? PATCH : PUT
+      const method = [Action.RESERVE, Action.FX_RESERVE].includes(action) ? PATCH : PUT
       const callbackURLFrom = await getEndpointFn(from, endpointType)
       logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLFrom}, ${method}, ${JSON.stringify(callbackHeaders)}, ${payloadForPayee}, ${id}, ${Enum.Http.Headers.FSPIOP.SWITCH.value}, ${from})`)
 

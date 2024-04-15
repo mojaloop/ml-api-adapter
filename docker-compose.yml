@@ -10,11 +10,11 @@ services:
     container_name: ml_ml-api-adapter
     build:
       context: .
-    command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
-    # command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node --inspect-brk=0.0.0.0:9229 src/api/index.js"
+    # command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
+    command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node --inspect=0.0.0.0:9229 src/api/index.js"
     ports:
       - "3000:3000"
-      # - "9229:9229" # for debugging
+      - "9229:9229" # for debugging
     environment:
       - LOG_LEVEL=debug
       - CSL_LOG_TRANSPORT=file
