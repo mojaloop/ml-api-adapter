@@ -495,7 +495,7 @@ const processMessage = async (msg, span) => {
   // special event emitted by central-ledger when the Payee sent a status of `RESERVED` in PUT /transfers/{ID}
   // and the ledger failed to commit the transfer
   if ([Action.RESERVED_ABORTED, Action.FX_RESERVED_ABORTED].includes(action)) {
-    if (Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT !== '1.1' && Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT !== '2.0') {
+    if (parseFloat(Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT) < 1.1) {
       logger.debug(`Notification::processMessage - Action: ${action} - Skipping reserved_aborted notification callback (${from}).`)
       return
     }
