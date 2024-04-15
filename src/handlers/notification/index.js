@@ -651,8 +651,8 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await getEndpointFn(to, endpointType)
 
     const endpointTemplate = isSuccess
-      ? FspEndpointTemplates.TRANSFERS_PUT
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+      ? (isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT)
+      : (isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
 
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, callbackHeaders, payloadForCallback, id, from, to })
