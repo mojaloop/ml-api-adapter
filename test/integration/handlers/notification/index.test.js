@@ -314,7 +314,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'dfsp2'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -341,7 +341,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -373,7 +373,7 @@ Test('Notification Handler', notificationHandlerTest => {
       }
       messageProtocol.content.uriParams = { id: transferId }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -404,7 +404,7 @@ Test('Notification Handler', notificationHandlerTest => {
       }
       messageProtocol.content.uriParams = { id: commitRequestId }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -453,7 +453,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -484,7 +484,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'dfsp2'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -542,7 +542,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'dfsp2'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -571,7 +571,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -765,7 +765,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'dfsp2'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -789,7 +789,7 @@ Test('Notification Handler', notificationHandlerTest => {
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -815,7 +815,7 @@ Test('Notification Handler', notificationHandlerTest => {
       )
       messageProtocol.content.uriParams = { id: transferId }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -843,7 +843,7 @@ Test('Notification Handler', notificationHandlerTest => {
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -1134,7 +1134,7 @@ Test('Notification Handler', notificationHandlerTest => {
       )
       messageProtocol.content.uriParams = { id: transferId }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -1161,7 +1161,7 @@ Test('Notification Handler', notificationHandlerTest => {
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -1192,7 +1192,7 @@ Test('Notification Handler', notificationHandlerTest => {
         status: 'error'
       }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
@@ -1223,7 +1223,7 @@ Test('Notification Handler', notificationHandlerTest => {
         status: 'error'
       }
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
