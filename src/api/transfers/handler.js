@@ -222,6 +222,7 @@ const fulfilTransferError = async function (request, h) {
  */
 const patchTransfer = async function (request, h) {
   // Not implemented yet
+  throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.NOT_IMPLEMENTED)
 }
 
 module.exports = {

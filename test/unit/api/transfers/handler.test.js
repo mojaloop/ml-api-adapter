@@ -493,5 +493,20 @@ Test('transfer handler', handlerTest => {
     })
     fulfilTransferErrorTest.end()
   })
+
+  handlerTest.test('patchTransfer should', async patchTransferTest => {
+    await patchTransferTest.test('return error if patchTransfer is called', async test => {
+      try {
+        await Handler.patchTransfer()
+        test.fail('Expected an error to be thrown')
+      } catch (e) {
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.NOT_IMPLEMENTED.code)
+        test.end()
+      }
+    })
+    patchTransferTest.end()
+  })
+
   handlerTest.end()
 })
