@@ -248,6 +248,7 @@ const processMessage = async (msg, span) => {
           : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST
         break
       case REQUEST_TYPE.PUT:
+      case REQUEST_TYPE.PATCH:
         endpointType = isFx
           ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT
           : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
@@ -257,16 +258,31 @@ const processMessage = async (msg, span) => {
           ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR
           : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
         break
-      case REQUEST_TYPE.PATCH:
-        endpointType = isFx
-          ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT
-          : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
-        break
       default:
         throw new Error('Invalid request type')
     }
 
     return Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
+  }
+
+  const getEndpointTemplate = (requestType) => {
+    switch (requestType) {
+      case REQUEST_TYPE.POST:
+        return isFx
+          ? FspEndpointTemplates.FX_TRANSFERS_POST
+          : FspEndpointTemplates.TRANSFERS_POST
+      case REQUEST_TYPE.PUT:
+      case REQUEST_TYPE.PATCH:
+        return isFx
+          ? FspEndpointTemplates.FX_TRANSFERS_PUT
+          : FspEndpointTemplates.TRANSFERS_PUT
+      case REQUEST_TYPE.PUT_ERROR:
+        return isFx
+          ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
+          : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+      default:
+        throw new Error('Invalid request type')
+    }
   }
 
   // Injected Configuration for outbound Content-Type & Accept headers.
@@ -281,9 +297,7 @@ const processMessage = async (msg, span) => {
   if ([Action.PREPARE, Action.FX_PREPARE].includes(action)) {
     if (!isSuccess) {
       const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
-      const endpointTemplate = isFx
-        ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-        : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+      const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
       callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
 
       logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -293,9 +307,7 @@ const processMessage = async (msg, span) => {
     }
 
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.POST)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_POST
-      : FspEndpointTemplates.TRANSFERS_POST
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.POST)
     callbackHeaders = createCallbackHeaders({ headers: content.headers, httpMethod: POST, endpointTemplate })
 
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${POST}, ${JSON.stringify(content.headers)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -321,9 +333,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.PREPARE_DUPLICATE, Action.FX_PREPARE_DUPLICATE].includes(action) && isSuccess) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT
-      : FspEndpointTemplates.TRANSFERS_PUT
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
 
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -333,9 +343,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.COMMIT, Action.RESERVE, Action.FX_COMMIT, Action.FX_RESERVE].includes(action) && isSuccess) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT
-      : FspEndpointTemplates.TRANSFERS_PUT
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
 
     // forward the fulfil to the destination
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -401,9 +409,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.COMMIT, Action.FX_COMMIT].includes(action) && !isSuccess) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
 
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -418,9 +424,7 @@ const processMessage = async (msg, span) => {
       getEndpointFn(to, REQUEST_TYPE.PUT)
     ])
 
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT
-      : FspEndpointTemplates.TRANSFERS_PUT
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
     // forward the reject to the destination
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -447,9 +451,7 @@ const processMessage = async (msg, span) => {
       getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
     ])
 
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
     // forward the abort to the destination
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -472,9 +474,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION].includes(action)) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
 
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     // forward the abort to the destination
@@ -506,11 +506,7 @@ const processMessage = async (msg, span) => {
     }
     // TODO: this should possibly be address by a new endpoint-type FSPIOP_CALLBACK_URL_TRANSFER_PATCH, but for the time being lets avoid adding a new enum as we want to simplify the configurations and consolidate them instead in future.
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT)
-
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT
-      : FspEndpointTemplates.TRANSFERS_PUT
-
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
     callbackHeaders = createCallbackHeaders({
       dfspId: to,
@@ -553,15 +549,8 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.FULFIL_DUPLICATE, Action.FX_FULFIL_DUPLICATE].includes(action)) {
-    const requestType = isSuccess ? REQUEST_TYPE.PUT : REQUEST_TYPE.PUT_ERROR
-    const callbackURLTo = await getEndpointFn(to, requestType)
-
-    let endpointTemplate
-    if (isSuccess) {
-      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT
-    } else {
-      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR
-    }
+    const callbackURLTo = isSuccess ? await getEndpointFn(to, REQUEST_TYPE.PUT) : await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
+    const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
 
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -572,9 +561,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.ABORT_DUPLICATE, Action.FX_ABORT_DUPLICATE].includes(action) && isSuccess) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT
-      : FspEndpointTemplates.TRANSFERS_PUT
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
 
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -585,9 +572,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.ABORT_DUPLICATE, Action.FX_ABORT_DUPLICATE].includes(action) && !isSuccess) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
 
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -598,9 +583,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.TIMEOUT_RECEIVED, Action.FX_TIMEOUT_RECEIVED].includes(action)) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
 
     jwsSigner = getJWSSigner(Enum.Http.Headers.FSPIOP.SWITCH.value)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
@@ -612,9 +595,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.TIMEOUT_RESERVED, Action.FX_TIMEOUT_RESERVED].includes(action)) {
     const callbackURLTo = await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
-    const endpointTemplate = isFx
-      ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR
-      : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
 
     jwsSigner = getJWSSigner(Enum.Http.Headers.FSPIOP.SWITCH.value)
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
@@ -631,15 +612,9 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.GET, Action.FX_GET].includes(action)) {
-    const requestType = isSuccess ? REQUEST_TYPE.PUT : REQUEST_TYPE.PUT_ERROR
-    const callbackURLTo = await getEndpointFn(to, requestType)
+    const callbackURLTo = isSuccess ? await getEndpointFn(to, REQUEST_TYPE.PUT) : await getEndpointFn(to, REQUEST_TYPE.PUT_ERROR)
+    const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
 
-    let endpointTemplate
-    if (isSuccess) {
-      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT
-    } else {
-      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR
-    }
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
 
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, callbackHeaders, payloadForCallback, id, from, to })
