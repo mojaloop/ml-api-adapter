@@ -552,14 +552,20 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.FULFIL_DUPLICATE, Action.FX_FULFIL_DUPLICATE].includes(action)) {
-    const endpointType = isSuccess
-      ? (isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT)
-      : (isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR)
+    let endpointType
+    if (isSuccess) {
+      endpointType = isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+    } else {
+      endpointType = isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
+    }
     const callbackURLTo = await getEndpointFn(to, endpointType)
 
-    const endpointTemplate = isSuccess
-      ? (isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT)
-      : (isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR)
+    let endpointTemplate
+    if (isSuccess) {
+      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT
+    } else {
+      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    }
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
 
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(callbackHeaders)}, ${payloadForCallback}, ${id}, ${from}, ${to})`)
@@ -645,14 +651,20 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.GET, Action.FX_GET].includes(action)) {
-    const endpointType = isSuccess
-      ? (isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT)
-      : (isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR)
+    let endpointType
+    if (isSuccess) {
+      endpointType = isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+    } else {
+      endpointType = isFx ? FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR : FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR
+    }
     const callbackURLTo = await getEndpointFn(to, endpointType)
 
-    const endpointTemplate = isSuccess
-      ? (isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT)
-      : (isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR)
+    let endpointTemplate
+    if (isSuccess) {
+      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT : FspEndpointTemplates.TRANSFERS_PUT
+    } else {
+      endpointTemplate = isFx ? FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR : FspEndpointTemplates.TRANSFERS_PUT_ERROR
+    }
     callbackHeaders = createCallbackHeaders({ dfspId: to, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
 
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, callbackHeaders, payloadForCallback, id, from, to })
