@@ -232,7 +232,7 @@ const processMessage = async (msg, span) => {
     payloadForCallback
   } = dto.notificationMessageDto(msg)
 
-  const getEndpointFn = (fsp, endpointType) => Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
+  const getEndpointFn = async (fsp, endpointType) => Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
 
   // Injected Configuration for outbound Content-Type & Accept headers.
   const protocolVersions = {
