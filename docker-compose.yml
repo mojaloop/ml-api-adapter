@@ -11,8 +11,10 @@ services:
     build:
       context: .
     command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
+    # command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node --inspect=0.0.0.0:9229 src/api/index.js"
     ports:
       - "3000:3000"
+      # - "9229:9229" # for debugging
     environment:
       - LOG_LEVEL=debug
       - CSL_LOG_TRANSPORT=file
@@ -61,7 +63,8 @@ services:
       interval: 30s
 
   central-ledger:
-    image: mojaloop/central-ledger:latest
+    # image: mojaloop/central-ledger:latest
+    image: mojaloop/central-ledger:v17.7.0-snapshot.2
     container_name: ml_central-ledger
     command: sh -c "/opt/app/wait4/wait4.js central-ledger && node src/api/index.js"
     links:

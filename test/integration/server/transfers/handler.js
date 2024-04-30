@@ -28,6 +28,21 @@
 
 const notifications = {}
 const ENDPOINT_HOST = process.env.ENDPOINT_HOST || 'http://ml-api-adapter-endpoint:4545'
+const fxTransferEndpoints = fspId => [
+  {
+    type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
+    value: `${ENDPOINT_HOST}/${fspId}/fxTransfers`
+  },
+  {
+    type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT',
+    value: `${ENDPOINT_HOST}/${fspId}/fxTransfers/{{commitRequestId}}`
+  },
+  {
+    type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR',
+    value: `${ENDPOINT_HOST}/${fspId}/fxTransfers/{{commitRequestId}}/error`
+  }
+]
+
 const endpoints = {
   dfsp1: [
     {
@@ -41,7 +56,8 @@ const endpoints = {
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}/error`
-    }
+    },
+    ...fxTransferEndpoints('dfsp1')
   ],
   dfsp2: [
     {
@@ -55,23 +71,29 @@ const endpoints = {
     {
       type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
       value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}/error`
-    }
-  ]
+    },
+    ...fxTransferEndpoints('dfsp2')
+  ],
+  fxp1: fxTransferEndpoints('fxp1')
 }
+
+const idType = (isFx) => isFx ? 'commitRequestId' : 'transferId'
+
 exports.receiveNotificationPost = async function (request, h) {
   console.log('Received receiveNotificationPost message')
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
   const parsedPayload = request.payload
-  const transferId = parsedPayload.transferId
+  const isFx = request.path.includes('fxTransfers')
+  const id = parsedPayload.transferId || parsedPayload.commitRequestId
   const path = request.path
   const result = path.split('/')
   const operation = 'post'
   const fsp = result[1]
-  console.log('receiveNotificationPost::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
+  console.log('receiveNotificationPost::%s(%s),fsp(%s),operation(%s)', idType(isFx), id, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
-  notifications[fsp][operation][transferId] = {
+  notifications[fsp][operation][id] = {
     payload: request.payload,
     dataUri: request.dataUri
   }
@@ -83,16 +105,17 @@ exports.receiveNotificationPut = async function (request, h) {
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
 
-  const transferId = request.params.transferId
+  const isFx = request.path.includes('fxTransfers')
+  const id = request.params.transferId || request.params.commitRequestId
   const path = request.path
   const result = path.split('/')
   const operation = (path.includes('error') ? 'error' : 'put')
   const fsp = result[1]
   console.log('OPERATION:: ', operation)
-  console.log('receiveNotificationPut::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
+  console.log('receiveNotificationPut::%s(%s),fsp(%s),operation(%s)', idType(isFx), id, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
-  notifications[fsp][operation][transferId] = {
+  notifications[fsp][operation][id] = {
     payload: request.payload,
     dataUri: request.dataUri
   }
@@ -104,15 +127,16 @@ exports.receiveNotificationPatch = async function (request, h) {
   console.log('receiveNotification::headers(%s)', JSON.stringify(request.headers))
   console.log('receiveNotification::payload(%s)', JSON.stringify(request.payload))
 
-  const transferId = request.params.transferId
+  const isFx = request.path.includes('fxTransfers')
+  const id = request.params.transferId || request.params.commitRequestId
   const path = request.path
   const result = path.split('/')
   const operation = 'patch'
   const fsp = result[1]
-  console.log('receiveNotificationPatch::transferId(%s),fsp(%s),operation(%s)', transferId, fsp, operation)
+  console.log('receiveNotificationPatch::%s(%s),fsp(%s),operation(%s)', idType(isFx), id, fsp, operation)
   notifications[fsp] = {}
   notifications[fsp][operation] = {}
-  notifications[fsp][operation][transferId] = {
+  notifications[fsp][operation][id] = {
     payload: request.payload,
     dataUri: request.dataUri
   }
@@ -120,13 +144,13 @@ exports.receiveNotificationPatch = async function (request, h) {
 }
 
 exports.getNotification = async function (request, h) {
-  console.log('getNotification::transferId(%s),fsp(%s),operation(%s)', request.params.transferId, request.params.fsp, request.params.operation)
-  const transferId = request.params.transferId
+  const id = request.params.id
+  console.log('getNotification::id(%s),fsp(%s),operation(%s)', id, request.params.fsp, request.params.operation)
   const fsp = request.params.fsp
   const operation = request.params.operation
   let response = null
-  if (notifications[fsp] && notifications[fsp][operation] && notifications[fsp][operation][transferId]) {
-    response = notifications[fsp][operation][transferId]
+  if (notifications[fsp] && notifications[fsp][operation] && notifications[fsp][operation][id]) {
+    response = notifications[fsp][operation][id]
   }
   console.log('Response: %s', JSON.stringify(response))
   return h.response(response).code(200)

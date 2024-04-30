@@ -80,7 +80,8 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     brokerTest.test('Passes when it connects', async test => {
       // Arrange
-      Notification.isConnected.returns(Promise.resolve(true))
+      Notification.isConnected.resolves(true)
+      sandbox.stub(Producer, 'isConnected').returns(true)
       const expected = { name: serviceName.broker, status: statusEnum.OK }
 
       // Act
@@ -110,7 +111,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
     brokerTest.test('Fail when isProducerConnected throws an error', async test => {
       // Arrange
       Config.HANDLERS_DISABLED = true
-      sandbox.stub(Producer, 'isConnected').returns(Producer.stateList.DOWN)
+      sandbox.stub(Producer, 'isConnected').returns(false)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
         Config,
         Producer

@@ -39,7 +39,7 @@ module.exports = [
         failAction: 'error'
       },
       id: ROUTE_IDS.putFxTransfers,
-      description: 'Fulfil a FX Transfer',
+      description: 'Fulfil an FX Transfer',
       tags
     }
   },
@@ -61,7 +61,39 @@ module.exports = [
       },
       id: ROUTE_IDS.putFxTransfersError,
       tags,
-      description: 'Abort a FX transfer'
+      description: 'Abort an FX transfer'
+    }
+  },
+  {
+    method: 'GET',
+    path: `${ROUTES.fxTransfers}/{id}`,
+    handler: handler.getTransferById,
+    options: {
+      validate: {
+        headers: schemas.transferHeadersSchema,
+        params: schemas.commonSchemas.pathIdParamSchema
+      },
+      id: ROUTE_IDS.getFxTransfers,
+      tags,
+      description: 'Get an FX transfer'
+    }
+  },
+  {
+    method: 'PATCH',
+    path: `${ROUTES.fxTransfers}/{id}`,
+    handler: handler.patchTransfer,
+    options: {
+      validate: {
+        headers: schemas.transferHeadersSchema,
+        payload: schemas.fxTransfersPatchPayloadSchema,
+        params: schemas.commonSchemas.pathIdParamSchema
+      },
+      payload: {
+        failAction: 'error'
+      },
+      id: ROUTE_IDS.patchFxTransfers,
+      tags,
+      description: 'Patch an FX transfer'
     }
   }
 ]

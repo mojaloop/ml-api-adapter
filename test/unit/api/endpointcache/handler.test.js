@@ -41,7 +41,7 @@ const proxyquire = require('proxyquire')
 const {
   createRequest,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general.js')
 
 const SharedStub = {
   Util: {

@@ -19,9 +19,8 @@ WORKDIR /opt/app
 RUN apk --no-cache add git
 RUN apk add --no-cache -t build-dependencies make gcc g++ python3 libtool openssl-dev autoconf automake bash \
     && cd $(npm root -g)/npm
-    # && npm config set unsafe-perm true \
+    # && npm config set unsafe-perm true 
     # && npm install -g node-gyp
-
 COPY package.json package-lock.json* /opt/app/
 
 RUN npm ci
@@ -33,12 +32,13 @@ WORKDIR /opt/app
 RUN mkdir ./logs && touch ./logs/combined.log
 RUN ln -sf /dev/stdout ./logs/combined.log
 
+RUN npm prune --omit=dev
+
 # Create a non-root user: ml-user
 RUN adduser -D app-user
 USER app-user
 
 COPY --chown=app-user --from=builder /opt/app .
-RUN npm prune --production
 
 COPY src /opt/app/src
 COPY test /opt/app/test

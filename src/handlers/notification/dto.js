@@ -8,11 +8,21 @@ const { SUCCESS } = Enum.Events.EventStatus
 const { decodePayload, isDataUri } = Util.StreamingProtocol
 
 const FX_ACTIONS = [
+  Action.FX_GET,
   Action.FX_ABORT,
   Action.FX_COMMIT,
   Action.FX_PREPARE,
   Action.FX_REJECT,
-  Action.FX_RESERVE
+  Action.FX_RESERVE,
+  Action.FX_PREPARE_DUPLICATE,
+  Action.FX_ABORT,
+  Action.FX_ABORT_VALIDATION,
+  Action.FX_RESERVED_ABORTED,
+  Action.FX_FULFIL,
+  Action.FX_FULFIL_DUPLICATE,
+  Action.FX_ABORT_DUPLICATE,
+  Action.FX_TIMEOUT_RESERVED,
+  Action.FX_TIMEOUT_RECEIVED
 ]
 
 const getCallbackPayload = (content) => {

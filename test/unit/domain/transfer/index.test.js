@@ -31,11 +31,13 @@ const Uuid = require('uuid4')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const Kafka = require('@mojaloop/central-services-stream').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
+const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
 
 const Service = require('../../../../src/domain/transfer')
 const Config = require('../../../../src/lib/config')
 const mocks = require('../../mocks')
+const { FSPIOPError } = require('@mojaloop/central-services-error-handling/src/factory')
 
 const TRANSFER = 'transfer'
 const PREPARE = 'prepare'
@@ -122,7 +124,42 @@ Test('Transfer Service tests', serviceTest => {
       test.end()
     })
 
-    prepareTest.test('throw error if error while publishing message to kafka', async test => {
+    prepareTest.test('execute prepare for fxTransfer', async test => {
+      const message = mocks.mockFxPreparePayload()
+
+      const headers = {}
+
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = {
+        id: message.transferId,
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'prepare',
+            action: 'prepare',
+            createdAt: new Date(),
+            status: 'success'
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const result = await Service.prepare(headers, dataUri, message, span)
+      test.equals(result, true)
+      test.end()
+    })
+
+    prepareTest.test('throw error if error while publishing prepare message to kafka', async test => {
       const message = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
         payeeFsp: '1234',
@@ -157,8 +194,10 @@ Test('Transfer Service tests', serviceTest => {
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.prepare(headers, dataUri, message, span)
+        test.fail('Expected an error to be thrown')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.end()
       }
     })
@@ -222,7 +261,7 @@ Test('Transfer Service tests', serviceTest => {
       test.end()
     })
 
-    fulfilTest.test('execute fulfil function', async test => {
+    fulfilTest.test('throw error if error while publishing fulfil message to kafka', async test => {
       const message = {
         transferState: 'COMMITTED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -250,13 +289,15 @@ Test('Transfer Service tests', serviceTest => {
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.fulfil(headers, dataUri, message, { id }, span)
+        test.fail('Expected an error to be thrown')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.end()
       }
     })
 
-    fulfilTest.test('execute fulfil function', async test => {
+    fulfilTest.test('throw error if error while publishing fulfil (transferState==ABORTED) message to kafka', async test => {
       const message = {
         transferState: 'ABORTED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -284,8 +325,10 @@ Test('Transfer Service tests', serviceTest => {
       try {
         const span = EventSdk.Tracer.createSpan('test_span')
         await Service.fulfil(headers, dataUri, message, { id }, span)
+        test.fail('Expected an error to be thrown')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.end()
       }
     })
@@ -373,10 +416,11 @@ Test('Transfer Service tests', serviceTest => {
       Kafka.Producer.produceMessage.rejects(error)
       try {
         await Service.getTransferById(headers, { id })
-        test.fail('does not throw')
+        test.fail('Expected an error to be thrown')
         test.end()
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.end()
       }
     })
@@ -443,9 +487,10 @@ Test('Transfer Service tests', serviceTest => {
       Kafka.Producer.produceMessage.returns(Promise.reject(error))
       try {
         await Service.transferError(headers, dataUri, message, { id }, span)
-        test.fail('error not thrown')
+        test.fail('Expected an error to be thrown')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.end()
       }
     })

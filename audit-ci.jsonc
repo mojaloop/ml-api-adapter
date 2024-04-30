@@ -17,6 +17,7 @@
     "GHSA-rjqq-98f6-6j3r", // @mojaloop/central-services-shared>shins>sanitize-html
     "GHSA-rm97-x556-q36h", // @mojaloop/central-services-shared>shins>sanitize-html
     "GHSA-w5p7-h5w8-2hfq", // tap-spec>tap-out>trim
-    "GHSA-p9pc-299p-vxgp"  // widdershins>yargs>yargs-parser
+    "GHSA-p9pc-299p-vxgp", // widdershins>yargs>yargs-parser
+    "GHSA-cgfm-xwp7-2cvr"  // @mojaloop/central-services-shared>shins>sanitize-html
   ]
 }

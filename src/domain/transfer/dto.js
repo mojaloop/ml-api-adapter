@@ -63,6 +63,18 @@ const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '' 
   return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
 }
 
+const getMessageDto = ({ headers, params, isFx, logPrefix = '' }) => {
+  const action = isFx ? Action.FX_GET : Action.GET
+  const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
+  const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
+
+  const metadata = makeMessageMetadata(params.id, Type.GET, action)
+  const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, to, from, metadata)
+  logger.debug(`${logPrefix}::messageProtocol`, messageProtocol)
+
+  return Object.freeze(messageProtocol)
+}
+
 const producerConfigDto = (functionality, action, logPrefix = '') => {
   const topicConfig = Kafka.createGeneralTopicConf(KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
   const kafkaConfig = Kafka.getKafkaConfig(KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, functionality.toUpperCase(), action.toUpperCase())
@@ -77,5 +89,6 @@ module.exports = {
   fulfilMessageDto,
   fulfilErrorMessageDto,
   eventStateDto,
-  producerConfigDto
+  producerConfigDto,
+  getMessageDto
 }

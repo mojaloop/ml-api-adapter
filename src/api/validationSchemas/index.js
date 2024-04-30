@@ -63,6 +63,13 @@ const fxTransfersSuccessCallbackPayloadSchema = Joi.object({
   extensionList: commonSchemas.extensionListSchema
 }).options({ presence: 'optional' })
 
+const fxTransfersPatchPayloadSchema = Joi.object({
+  completedTimestamp: Joi.date().iso(),
+  conversionState: Joi.string().valid(...transferState).required()
+    .description('The current status of the conversion request'),
+  extensionList: commonSchemas.extensionListSchema
+}).options({ presence: 'required' })
+
 // move all validation schemas here
 
 module.exports = {
@@ -70,5 +77,6 @@ module.exports = {
   commonSchemas,
   transferHeadersSchema,
   fxTransfersPreparePayloadSchema,
-  fxTransfersSuccessCallbackPayloadSchema
+  fxTransfersSuccessCallbackPayloadSchema,
+  fxTransfersPatchPayloadSchema
 }
