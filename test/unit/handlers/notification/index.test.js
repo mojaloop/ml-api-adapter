@@ -1594,11 +1594,8 @@ Test('Notification Service tests', async notificationTest => {
 
       const expected = true
 
-      const logger = Logger
-      logger.log = logger.info
-
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
@@ -1647,11 +1644,9 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = true
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
@@ -1708,11 +1703,9 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = 200
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
@@ -1770,11 +1763,9 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = 200
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
@@ -1831,11 +1822,9 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = 200
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
@@ -1891,11 +1880,9 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = true
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
@@ -1949,11 +1936,9 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = true
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSigner({
-        logger,
+        logger: Logger,
         signingKey: ConfigStub.JWS_SIGNING_KEY
       })
 
