@@ -621,11 +621,9 @@ const disconnect = async () => {
 const getJWSSigner = (from) => {
   let jwsSigner
   if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
-    const logger = Logger
-    logger.log = logger.info
     Logger.isDebugEnabled && Logger.debug('Notification::getJWSSigner: get JWS signer')
     jwsSigner = new JwsSigner({
-      logger,
+      logger: Logger,
       signingKey: Config.JWS_SIGNING_KEY
     })
   }

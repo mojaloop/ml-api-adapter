@@ -43,6 +43,7 @@ const regexContentType = Enum.Http.Headers.GENERAL.ACCEPT.regex
 
 const stripUnknown = Config.STRIP_UNKNOWN_HEADERS
 const allowUnknown = !stripUnknown
+const dateValidation = Joi.date().format('ddd, DD MMM YYYY HH:mm:ss [GMT]').required()
 
 module.exports = [{
   method: 'POST',
@@ -61,7 +62,7 @@ module.exports = [{
         accept: Joi.string().optional().regex(regexAccept),
         'content-type': Joi.string().required().regex(regexContentType),
         'content-length': Joi.number().max(5242880),
-        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: dateValidation,
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -108,7 +109,7 @@ module.exports = [{
     validate: {
       headers: Joi.object({
         'content-type': Joi.string().required().regex(regexContentType),
-        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: dateValidation,
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -150,7 +151,7 @@ module.exports = [{
     validate: {
       headers: Joi.object({
         'content-type': Joi.string().required().regex(regexContentType),
-        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: dateValidation,
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
@@ -195,7 +196,7 @@ module.exports = [{
       headers: Joi.object({
         accept: Joi.string().optional().regex(regexAccept),
         'content-type': Joi.string().required().regex(regexContentType),
-        date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+        date: dateValidation,
         'x-forwarded-for': Joi.string().optional(),
         'fspiop-source': Joi.string().required(),
         'fspiop-destination': Joi.string().optional(),
