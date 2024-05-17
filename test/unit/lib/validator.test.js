@@ -79,7 +79,7 @@ Test('validator', validatorTest => {
         const request = {
           payload: {
             // completedTimestamp: new Date(new Date().getTime() - 200)
-            completedTimestamp: new Date()
+            completedTimestamp: new Date(new Date().getTime() + 5000)
           }
         }
         ValidatorProxy.fulfilTransfer(request)
