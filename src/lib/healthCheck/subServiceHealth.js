@@ -33,7 +33,6 @@ const axios = require('axios')
 const http = require('http')
 
 axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
-axios.defaults.httpAgent.toJSON = () => ({})
 
 /**
  * @function getSubServiceHealthBroker
