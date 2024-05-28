@@ -51,11 +51,6 @@ const getProducerConfigs = () => {
   return configs
 }
 
-const getProducerTopics = () => {
-  return getProducerConfigs().map(config => config.topicConfig.topicName)
-}
-
 module.exports = {
-  getProducerConfigs,
-  getProducerTopics
+  getProducerConfigs
 }
