@@ -208,7 +208,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })
@@ -247,7 +247,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })
@@ -271,7 +271,7 @@ Test('return error if Date Header is not according to format in RFC7231 as per M
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })
@@ -282,7 +282,7 @@ Test('return error if transfer is not provided', async function (assert) {
     method: 'GET',
     payload: {},
     headers: {
-      date: 'Mon, 10 Sep 2018 20:22:01 GMT',
+      date: 'Mon, 01 Sep 2018 09:22:01 GMT',
       'fspiop-source': 'value',
       'content-type': 'application/vnd.interoperability.transfers+json;version=1.1'
     }
@@ -313,7 +313,7 @@ Test('return error if FSPIOP-Source is not provided to PUT /transfers/{id}/error
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })
@@ -337,7 +337,7 @@ Test('return error if invalid errorCode is provided to PUT /transfers/{id}/error
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })
@@ -360,7 +360,7 @@ Test('return error if errorCode is not provided to PUT /transfers/{id}/error', a
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })
@@ -383,7 +383,7 @@ Test('return error if errorDescription is not provided to PUT /transfers/{id}/er
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, D MMM YYYY H:mm:ss [GMT]]]')
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
   await server.stop()
   assert.end()
 })

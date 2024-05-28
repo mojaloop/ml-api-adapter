@@ -30,7 +30,9 @@ const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const axios = require('axios')
-const { getProducerTopics } = require('../kafka/producer')
+const http = require('http')
+
+axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
 
 /**
  * @function getSubServiceHealthBroker
@@ -47,9 +49,8 @@ const getSubServiceHealthBroker = async () => {
         throw new Error('Not connected!')
       }
     }
-
-    const results = await Promise.all(getProducerTopics().map(topic => Producer.isConnected(topic)))
-    status = results.every(result => result === true) ? statusEnum.OK : statusEnum.DOWN
+    status = await Producer.allConnected()
+    status = status === Producer.stateList.PENDING ? statusEnum.OK : status
   } catch (err) {
     Logger.isDebugEnabled && Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN
