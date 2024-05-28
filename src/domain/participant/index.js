@@ -25,11 +25,13 @@
 
 'use strict'
 
-const Logger = require('@mojaloop/central-services-logger')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
-const Config = require('../../lib/config')
 const Metrics = require('@mojaloop/central-services-metrics')
+const { Endpoints } = require('@mojaloop/central-services-shared').Util
+
+const { logger } = require('../../shared/logger')
+const { TEMPLATE_PARAMS } = require('../../shared/constants')
+const config = require('../../lib/config')
 
 /**
  *
@@ -43,34 +45,43 @@ const Metrics = require('@mojaloop/central-services-metrics')
  *
  * @param {string} fsp - the id of the fsp
  * @param {string} endpointType - the type of the endpoint
- * @param {string} transferId - optional transferId
+ * @param {string} id - optional transferId OR commitRequestId
+ * @param {boolean} isFx - optional isFx
+ * @param {Span} span - optional tracer span
  *
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
-const getEndpoint = async (fsp, endpointType, transferId = null, span = null) => {
+const getEndpoint = async ({
+  fsp, endpointType, id = '', isFx = false, span = null
+}) => {
+  const metric = `notification_event_getEndpoint${isFx ? '_fx' : ''}`
   const histTimerEnd = Metrics.getHistogram(
-    'notification_event_getEndpoint',
+    metric,
     'Gets endpoints for notification from central ledger db',
     ['success', 'endpointType', 'fsp']
   ).startTimer()
-  let getEndpointSpan
-  if (span) {
-    getEndpointSpan = span.getChild(`${span.getContext().service}_getEndpoint`)
-    getEndpointSpan.setTags({ endpointType, fsp })
-  }
-  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::fsp - ${fsp}`)
-  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::endpointType - ${endpointType}`)
-  Logger.isDebugEnabled && Logger.debug(`domain::participant::getEndpoint::transferId - ${transferId}`)
 
   try {
-    const url = await Endpoints.getEndpoint(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId })
-    !!getEndpointSpan && await getEndpointSpan.finish()
+    const templateOptions = {
+      [isFx ? TEMPLATE_PARAMS.commitRequestId : TEMPLATE_PARAMS.transferId]: id
+    }
+    logger.debug(metric, { fsp, endpointType, templateOptions })
+
+    let getEndpointSpan
+    if (span) {
+      getEndpointSpan = span.getChild(`${span.getContext().service}_getEndpoint`)
+      getEndpointSpan.setTags({ endpointType, fsp })
+    }
+
+    const url = await Endpoints.getEndpoint(config.ENDPOINT_SOURCE_URL, fsp, endpointType, templateOptions)
+    await getEndpointSpan?.finish()
     histTimerEnd({ success: true, endpointType, fsp })
+
     return url
   } catch (err) {
-    Logger.isErrorEnabled && Logger.error(`participantEndpointCache::getEndpoint:: ERROR:'${err}'`)
+    logger.error(`${metric} - ERROR:${err}`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     histTimerEnd({ success: false, fsp, endpointType })
 
     throw fspiopError

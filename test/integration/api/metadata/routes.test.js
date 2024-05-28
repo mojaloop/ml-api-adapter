@@ -28,17 +28,18 @@ const Test = require('tape')
 const Joi = require('@hapi/joi')
 
 const Logger = require('@mojaloop/central-services-logger')
-
+const Kafka = require('@mojaloop/central-services-stream').Util
 const Notification = require('../../../../src/handlers/notification')
 const { registerAllHandlers } = require('../../../../src/handlers/register')
 const metadataHandler = require('../../../../src/api/metadata/handler')
 const NotificationHandler = require('../../../../src/handlers/notification/index')
+const { initializeProducers } = require('../../../../src/shared/setup')
 
 const {
   createRequest,
   sleep,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general')
 
 Test('Metadata handler test', async handlerTest => {
   handlerTest.test('setup', async test => {
@@ -87,6 +88,7 @@ Test('Metadata handler test', async handlerTest => {
         { name: 'broker', status: 'OK' },
         { name: 'participantEndpointService', status: 'OK' }
       ]
+      await initializeProducers()
 
       // Act
       const {
@@ -105,7 +107,9 @@ Test('Metadata handler test', async handlerTest => {
 
   handlerTest.test('teardown', async test => {
     await NotificationHandler.disconnect()
-
+    try {
+      await Kafka.Producer.disconnect()
+    } catch (err) { /* no-op */ }
     test.end()
   })
 
