@@ -19,7 +19,7 @@ const MAX_CONTENT_LENGTH = 5242880
 
 const transferHeadersSchema = Joi.object({
   'content-type': Joi.string().regex(CONTENT_TYPE.regex).required(),
-  date: Joi.date().format('ddd, D MMM YYYY H:mm:ss [GMT]').required(),
+  date: Joi.date().format('ddd, DD MMM YYYY HH:mm:ss [GMT]').required(),
   'fspiop-source': Joi.string().required(),
   // the rest is optional
   accept: Joi.string().regex(ACCEPT.regex),
