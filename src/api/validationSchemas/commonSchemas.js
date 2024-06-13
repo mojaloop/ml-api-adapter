@@ -5,7 +5,7 @@ const { Util } = require('@mojaloop/central-services-shared')
 const DateExtendedJoi = RootJoi.extend(DateExtension)
 const Joi = DateExtendedJoi.extend(Util.Hapi.customCurrencyCodeValidation)
 
-const guidSchema = Joi.string().guid({ version: 'uuidv4' }).label('Must be in a valid GUID format.')
+const guidSchema = Joi.string().guid().label('Must be in a valid GUID format.')
 
 const dfspIdSchema = Joi.string().min(1).max(32).label('A valid DFSP number must be supplied.')
 
