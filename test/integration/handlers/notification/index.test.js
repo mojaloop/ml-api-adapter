@@ -29,10 +29,9 @@
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
 const Config = require('../../../../src/lib/config')
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const Kafka = require('@mojaloop/central-services-stream').Util
-const Request = require('@mojaloop/central-services-shared').Util.Request
+const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/central-services-shared').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
+const Kafka = require('@mojaloop/central-services-stream').Util
 const { Action } = Enum.Events.Event
 const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
@@ -45,6 +44,7 @@ const timeoutAttempts = 10
 const callbackWaitSeconds = 2
 
 const getNotificationUrl = process.env.ENDPOINT_URL
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null) => {
   await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
@@ -146,7 +146,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -178,7 +178,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -237,7 +237,7 @@ Test('Notification Handler', notificationHandlerTest => {
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -281,7 +281,7 @@ Test('Notification Handler', notificationHandlerTest => {
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -669,7 +669,7 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
             'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': 'switch'
+            'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
             // TODO: should we have the transferId here?
@@ -679,7 +679,7 @@ Test('Notification Handler', notificationHandlerTest => {
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -725,14 +725,14 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
             'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': 'switch'
+            'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
             commitRequestId
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -1129,7 +1129,7 @@ Test('Notification Handler', notificationHandlerTest => {
           transferId,
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1156,7 +1156,7 @@ Test('Notification Handler', notificationHandlerTest => {
           sourceAmount: { amount: 100, currency: 'ZKW' },
           targetAmount: { amount: 200, currency: 'TZS' }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1182,7 +1182,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1213,7 +1213,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1257,12 +1257,13 @@ const getNotifications = async (fsp, operation, id) => {
   try {
     const url = `${getNotificationUrl}/${fsp}/${operation}/${id}`
     Logger.debug(`getNotifications: ${url}`)
-    const response = await Request.sendRequest(
+    const response = await Request.sendRequest({
       url,
-      Fixtures.buildHeaders,
-      Enum.Http.Headers.FSPIOP.SWITCH.value,
-      Enum.Http.Headers.FSPIOP.SWITCH.value
-    )
+      headers: Fixtures.buildHeaders,
+      source: Config.HUB_NAME,
+      destination: Config.HUB_NAME,
+      hubNameRegex
+    })
     return response.data
   } catch (error) {
     Logger.error(error)
