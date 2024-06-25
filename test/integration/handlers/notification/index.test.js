@@ -29,10 +29,9 @@
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
 const Config = require('../../../../src/lib/config')
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const Kafka = require('@mojaloop/central-services-stream').Util
-const Request = require('@mojaloop/central-services-shared').Util.Request
+const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/central-services-shared').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
+const Kafka = require('@mojaloop/central-services-stream').Util
 const { Action } = Enum.Events.Event
 const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
@@ -45,6 +44,7 @@ const timeoutAttempts = 10
 const callbackWaitSeconds = 2
 
 const getNotificationUrl = process.env.ENDPOINT_URL
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null) => {
   await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
@@ -1261,7 +1261,8 @@ const getNotifications = async (fsp, operation, id) => {
       url,
       headers: Fixtures.buildHeaders,
       source: Config.HUB_NAME,
-      destination: Config.HUB_NAME
+      destination: Config.HUB_NAME,
+      hubNameRegex
     })
     return response.data
   } catch (error) {
