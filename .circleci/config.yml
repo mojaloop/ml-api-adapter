@@ -1,9 +1,9 @@
 version: 2.1
 setup: true
 orbs:
-  build: kalinkrustev/build@1.0.15
+  build: kalinkrustev/build@1.0.16
 workflows:
-  build_and_test:
+  setup:
     jobs:
       - build/workflow:
           filters:
