@@ -146,7 +146,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -178,7 +178,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -237,7 +237,7 @@ Test('Notification Handler', notificationHandlerTest => {
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -281,7 +281,7 @@ Test('Notification Handler', notificationHandlerTest => {
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -669,7 +669,7 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
             'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': 'switch'
+            'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
             // TODO: should we have the transferId here?
@@ -679,7 +679,7 @@ Test('Notification Handler', notificationHandlerTest => {
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -725,14 +725,14 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
             'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': 'switch'
+            'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
             commitRequestId
           }
         },
         to: 'dfsp1',
-        from: 'switch',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
@@ -1129,7 +1129,7 @@ Test('Notification Handler', notificationHandlerTest => {
           transferId,
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1156,7 +1156,7 @@ Test('Notification Handler', notificationHandlerTest => {
           sourceAmount: { amount: 100, currency: 'ZKW' },
           targetAmount: { amount: 200, currency: 'TZS' }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1182,7 +1182,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1213,7 +1213,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'switch',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1257,12 +1257,12 @@ const getNotifications = async (fsp, operation, id) => {
   try {
     const url = `${getNotificationUrl}/${fsp}/${operation}/${id}`
     Logger.debug(`getNotifications: ${url}`)
-    const response = await Request.sendRequest(
+    const response = await Request.sendRequest({
       url,
-      Fixtures.buildHeaders,
-      Enum.Http.Headers.FSPIOP.SWITCH.value,
-      Enum.Http.Headers.FSPIOP.SWITCH.value
-    )
+      headers: Fixtures.buildHeaders,
+      source: Config.HUB_NAME,
+      destination: Config.HUB_NAME
+    })
     return response.data
   } catch (error) {
     Logger.error(error)

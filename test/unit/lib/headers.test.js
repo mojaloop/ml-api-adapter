@@ -26,7 +26,7 @@
 const Test = require('tapes')(require('tape'))
 const Headers = require('../../../src/lib/headers')
 const Mustache = require('mustache')
-const Enums = require('@mojaloop/central-services-shared').Enum
+const Config = require('../../../src/lib/config')
 
 Test('Headers tests', headersTest => {
   let sandbox
@@ -57,7 +57,7 @@ Test('Headers tests', headersTest => {
       const expected = {
         'fspiop-http-method': 'POST',
         'fspiop-uri': '/transfers',
-        'fspiop-source': Enums.Http.Headers.FSPIOP.SWITCH.value,
+        'fspiop-source': Config.HUB_NAME,
         'fspiop-destination': 'payee'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)
@@ -79,7 +79,7 @@ Test('Headers tests', headersTest => {
       const expected = {
         'fspiop-http-method': 'PUT',
         'fspiop-uri': '/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error',
-        'fspiop-source': Enums.Http.Headers.FSPIOP.SWITCH.value,
+        'fspiop-source': Config.HUB_NAME,
         'fspiop-destination': 'payee'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)
@@ -102,7 +102,7 @@ Test('Headers tests', headersTest => {
       const expected = {
         'fspiop-http-method': 'PUT',
         'fspiop-uri': '/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error',
-        'fspiop-source': Enums.Http.Headers.FSPIOP.SWITCH.value,
+        'fspiop-source': Config.HUB_NAME,
         'fspiop-destination': 'payee'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)

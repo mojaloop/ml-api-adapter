@@ -27,13 +27,15 @@
 
 const Test = require('tape')
 const Base = require('../../base')
-const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const { Endpoints, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Config = require('../../../../src/lib/config.js')
+
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 Test('return error if required fields are missing on prepare', async function (assert) {
   const req = Base.buildRequest({ url: '/endpointcache', method: 'DELETE', payload: {}, headers: { date: 'Mon, 28 Oct 2019 20:22:01 GMT' } })
   const server = await Base.setup()
-  await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+  await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
   const res = await server.inject(req)
   await server.stop()
   assert.equal(202, res.statusCode)
