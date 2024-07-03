@@ -58,7 +58,7 @@ const testNotification = async (messageProtocol, operation, transferId, kafkaCon
   while (!(response && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
     sleep(callbackWaitSeconds)
     response = response || await getNotifications(messageProtocol.to, operation, transferId)
-    responseFrom = checkSenderResponse && await getNotifications(messageProtocol.from, senderOperation, transferId)
+    responseFrom = responseFrom || checkSenderResponse ? await getNotifications(messageProtocol.from, senderOperation, transferId) : true
     currentAttempts++
   }
   return checkSenderResponse ? { responseTo: response, responseFrom } : response
