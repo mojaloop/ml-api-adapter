@@ -1,4 +1,8 @@
 {
+  "PROXY": {
+    "host": "redis",
+    "port": 6379
+  },
   "HUB_PARTICIPANT": {
     "ID": 1,
     "NAME": "Hub"

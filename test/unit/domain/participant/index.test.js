@@ -74,8 +74,7 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
 
       const result = await Service.getEndpoint({ fsp, endpointType, id, isFx: true })
       test.equal(result, expectedUrl, 'The url matches')
-      const { lastArg } = Facade.getEndpoint.firstCall
-      test.same(lastArg, expectedTemplateParams)
+      test.same(Facade.getEndpoint.firstCall.args[3], expectedTemplateParams)
       test.end()
     })
 

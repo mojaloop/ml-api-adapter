@@ -64,6 +64,7 @@ const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) 
 
 // Set config object to be returned
 const config = {
+  PROXY: RC.PROXY,
   HUB_ID: RC.HUB_PARTICIPANT.ID,
   HUB_NAME: RC.HUB_PARTICIPANT.NAME,
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),

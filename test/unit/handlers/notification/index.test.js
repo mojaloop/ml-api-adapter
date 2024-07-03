@@ -56,6 +56,7 @@ Test('Notification Service tests', async notificationTest => {
   const match = Sinon.match
 
   const url = 'http://somehost:port/'
+  const proxyUrl = 'http://proxyhost:port/'
 
   await notificationTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
@@ -65,7 +66,10 @@ Test('Notification Service tests', async notificationTest => {
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'consume').returns(Promise.resolve(true)) // .callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(Promise.resolve(true))
-    sandbox.stub(Participant, 'getEndpoint').returns(Promise.resolve(url))
+    sandbox.stub(Participant, 'getEndpoint').callsFake(({ fsp, proxy }) => {
+      const result = fsp.includes('proxied') ? proxyUrl : url
+      return Promise.resolve(proxy ? { url: result } : result)
+    })
 
     sandbox.stub(Logger)
     sandbox.stub(Logger, 'isErrorEnabled').value(true)
@@ -246,6 +250,50 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg)
 
+      test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })))
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process a prepare message received from kafka and send out a transfer post callback to proxy', async test => {
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {
+              transferId: uuid
+            }
+          },
+          to: 'proxied',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.POST
+      const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId })
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
+      const message = { transferId: uuid }
+      const expected = true
+      Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
+      createCallbackHeadersSpy.resetHistory()
+      Participant.getEndpoint.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+
+      test.equal(url, proxyUrl)
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })))

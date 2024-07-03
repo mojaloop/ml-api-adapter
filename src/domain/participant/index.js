@@ -52,7 +52,7 @@ const config = require('../../lib/config')
  * @returns {string} - Returns the endpoint, throws error if failure occurs
  */
 const getEndpoint = async ({
-  fsp, endpointType, id = '', isFx = false, span = null
+  fsp, endpointType, id = '', isFx = false, span = null, proxy
 }) => {
   const metric = `notification_event_getEndpoint${isFx ? '_fx' : ''}`
   const histTimerEnd = Metrics.getHistogram(
@@ -73,11 +73,13 @@ const getEndpoint = async ({
       getEndpointSpan.setTags({ endpointType, fsp })
     }
 
-    const url = await Endpoints.getEndpoint(config.ENDPOINT_SOURCE_URL, fsp, endpointType, templateOptions)
+    const url = await Endpoints.getEndpoint(config.ENDPOINT_SOURCE_URL, fsp, endpointType, templateOptions, config.PROXY)
     await getEndpointSpan?.finish()
     histTimerEnd({ success: true, endpointType, fsp })
 
-    return url
+    return proxy
+      ? typeof url === 'string' ? { url } : url
+      : typeof url === 'string' ? url : url?.url
   } catch (err) {
     logger.error(`${metric} - ERROR:${err}`)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)

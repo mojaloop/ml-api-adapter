@@ -175,3 +175,12 @@ services:
       timeout: 20s
       retries: 10
       interval: 30s
+  redis:
+    image: redis:6.2.4-alpine
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_PORT=6379
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_TLS_ENABLED=no
+    ports:
+      - "6379:6379"

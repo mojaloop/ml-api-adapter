@@ -48,8 +48,9 @@
     "test:coverage-check": "npm run test:coverage && nyc check-coverage",
     "test:int": "npx tape 'test/integration/**/*.test.js'",
     "test:int:spec": "npm run test:int | tap-spec",
+    "test:integration": "./test/scripts/test-integration.sh",
     "test:xint": "npm run test:int | tap-xunit > ./test/results/xunit-integration.xml",
-    "test:functional": "sh ./test/scripts/test-functional.sh",
+    "test:functional": "./test/scripts/test-functional.sh",
     "docker:build": "docker build --build-arg NODE_VERSION=\"$(cat .nvmrc)-alpine\" -t mojaloop/ml-api-adapter:local .",
     "docker:up": "docker-compose -f docker-compose.yml up",
     "docker:stop": "docker-compose -f docker-compose.yml stop",
@@ -68,6 +69,7 @@
     "wait-4-docker": "node ./scripts/_wait4_all.js"
   },
   "overrides": {
+    "@mojaloop/central-services-shared": ">=18.6.0-proxy.1 <=18.6.0-proxy.999",
     "shins": {
       "ejs": "^3.1.7",
       "sanitize-html": "2.12.1",
@@ -90,10 +92,10 @@
     "@mojaloop/central-services-health": "15.0.0",
     "@mojaloop/central-services-logger": "11.3.1",
     "@mojaloop/central-services-metrics": "12.0.8",
-    "@mojaloop/central-services-shared": "18.5.0-snapshot.4",
+    "@mojaloop/central-services-shared": ">=18.6.0-proxy.1 <=18.6.0-proxy.999",
     "@mojaloop/central-services-stream": "11.3.1",
     "@mojaloop/event-sdk": "14.1.1",
-    "@mojaloop/sdk-standard-components": "18.2.0",
+    "@mojaloop/sdk-standard-components": "18.2.1",
     "@now-ims/hapi-now-auth": "2.1.0",
     "axios": "1.7.2",
     "blipp": "4.0.2",

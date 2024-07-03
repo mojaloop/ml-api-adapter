@@ -159,6 +159,7 @@ exports.getNotification = async function (request, h) {
 exports.getEndpoints = async function (request, h) {
   console.log('getEndpoints::fsp(%s)', request.params.fsp)
   const fsp = request.params.fsp
+  if (!endpoints[fsp]) return h.response({}).code(404)
   console.log('Response: %s', JSON.stringify(endpoints[fsp]))
   return h.response(JSON.stringify(endpoints[fsp])).code(200)
 }
