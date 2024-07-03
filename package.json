@@ -49,7 +49,7 @@
     "test:int": "npx tape 'test/integration/**/*.test.js'",
     "test:int:spec": "npm run test:int | tap-spec",
     "test:integration": "./test/scripts/test-integration.sh",
-    "test:xint": "npm run test:int | tap-xunit > ./test/results/xunit-integration.xml",
+    "test:xint": "npm run test:int | tee /dev/tty | tap-xunit > ./test/results/xunit-integration.xml",
     "test:functional": "./test/scripts/test-functional.sh",
     "docker:build": "docker build --build-arg NODE_VERSION=\"$(cat .nvmrc)-alpine\" -t mojaloop/ml-api-adapter:local .",
     "docker:up": "docker-compose -f docker-compose.yml up",
