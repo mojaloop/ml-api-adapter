@@ -35,6 +35,7 @@ const Kafka = require('@mojaloop/central-services-stream').Util
 const { Action } = Enum.Events.Event
 const Fixtures = require('../../../fixtures/index')
 const Logger = require('@mojaloop/central-services-logger')
+const proxyLib = require('@mojaloop/inter-scheme-proxy-cache-lib')
 
 const EventTypes = Enum.Events.Event.Type
 const EventActions = Enum.Events.Event.Action
@@ -66,6 +67,17 @@ const testNotification = async (messageProtocol, operation, transferId, kafkaCon
 
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
+    let proxy
+    notificationTest.test('connect proxy lib', async test => {
+      proxy = proxyLib.createProxyCache('redis', {
+        host: 'localhost',
+        port: 6379
+      })
+      await proxy.connect()
+      test.pass('Connected proxy lib')
+      test.end()
+    })
+
     notificationTest.test('throw an error if invalid message is received', async test => {
       try {
         await Kafka.Consumer.consumeMessage(null, null, null)
@@ -99,6 +111,35 @@ Test('Notification Handler', notificationHandlerTest => {
       )
 
       const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a PREPARE message and send POST callback to proxy', async test => {
+      proxy.addDfspIdToProxyMapping('proxied2', 'dfsp2') // simulate proxy mapping
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.PREPARE,
+        {
+          amount: { amount: 100, currency: 'USD' },
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          payerFsp: 'dfsp1',
+          payeeFsp: 'proxied2',
+          transferId
+        },
+        'dfsp1',
+        'proxied2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification({ ...messageProtocol, to: 'dfsp2' }, 'post', transferId, kafkaConfig, topicConfig)
 
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
@@ -1234,6 +1275,7 @@ Test('Notification Handler', notificationHandlerTest => {
     })
 
     notificationTest.test('tear down', async test => {
+      await proxy.disconnect()
       try {
         await Kafka.Producer.disconnect()
       } catch (err) { /* ignore error */ }
