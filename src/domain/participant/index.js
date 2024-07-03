@@ -73,7 +73,7 @@ const getEndpoint = async ({
       getEndpointSpan.setTags({ endpointType, fsp })
     }
 
-    const url = await Endpoints.getEndpoint(config.ENDPOINT_SOURCE_URL, fsp, endpointType, templateOptions, config.PROXY)
+    const url = await Endpoints.getEndpoint(config.ENDPOINT_SOURCE_URL, fsp, endpointType, templateOptions, undefined, config.PROXY)
     await getEndpointSpan?.finish()
     histTimerEnd({ success: true, endpointType, fsp })
 

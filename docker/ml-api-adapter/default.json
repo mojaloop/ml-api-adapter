@@ -1,5 +1,7 @@
 {
   "PROXY": {
+    "type": "redis",
+    "lazyConnect": true,
     "host": "redis",
     "port": 6379
   },
