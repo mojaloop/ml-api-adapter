@@ -34,6 +34,13 @@ const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '' }) => {
   return Object.freeze(messageProtocol)
 }
 
+const forwardedMessageDto = (id, from, to) => Object.freeze(StreamingProtocol.createMessage(
+  id,
+  to,
+  from,
+  makeMessageMetadata(id, Type.PREPARE, 'forwarded' /* Action.FORWARDED */) // todo change to Action.FORWARDED after merging https://github.com/mojaloop/central-services-shared/pull/389
+))
+
 const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) => {
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
@@ -86,6 +93,7 @@ const producerConfigDto = (functionality, action, logPrefix = '') => {
 
 module.exports = {
   prepareMessageDto,
+  forwardedMessageDto,
   fulfilMessageDto,
   fulfilErrorMessageDto,
   eventStateDto,

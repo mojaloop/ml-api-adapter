@@ -31,7 +31,7 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
-const { Consumer, Producer } = require('@mojaloop/central-services-stream').Kafka
+const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const { Util, Enum } = require('@mojaloop/central-services-shared')
 
 const { logger } = require('../../shared/logger')
@@ -335,9 +335,7 @@ const processMessage = async (msg, span) => {
     // disable timeout
     if (isProxy) {
       const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'disableTimeout')
-      await Producer.produceMessage(dtoTransfer.prepareMessageDto({
-        payload
-      }), topicConfig, kafkaConfig)
+      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, payload), topicConfig, kafkaConfig)
     }
 
     return true
