@@ -47,18 +47,18 @@ const callbackWaitSeconds = 2
 const getNotificationUrl = process.env.ENDPOINT_URL
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
-const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null) => {
+const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null, proxy) => {
   await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
   senderOperation = senderOperation || operation
 
-  let response = await getNotifications(messageProtocol.to, operation, transferId)
+  let response = await getNotifications(proxy || messageProtocol.to, operation, transferId)
   let responseFrom = checkSenderResponse ? await getNotifications(messageProtocol.from, senderOperation, transferId) : true
 
   let currentAttempts = 0
   while (!(response && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
     sleep(callbackWaitSeconds)
-    response = response || await getNotifications(messageProtocol.to, operation, transferId)
+    response = response || await getNotifications(proxy || messageProtocol.to, operation, transferId)
     responseFrom = responseFrom || checkSenderResponse ? await getNotifications(messageProtocol.from, senderOperation, transferId) : true
     currentAttempts++
   }
@@ -139,7 +139,7 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      const response = await testNotification({ ...messageProtocol, to: 'dfsp2' }, 'post', transferId, kafkaConfig, topicConfig)
+      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig, undefined, undefined, 'dfsp2')
 
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
