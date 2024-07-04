@@ -34,11 +34,13 @@ const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '' }) => {
   return Object.freeze(messageProtocol)
 }
 
-const forwardedMessageDto = (id, from, to) => Object.freeze(StreamingProtocol.createMessage(
+const forwardedMessageDto = (id, from, to, payload) => Object.freeze(StreamingProtocol.createMessage(
   id,
   to,
   from,
-  makeMessageMetadata(id, Type.PREPARE, 'forwarded' /* Action.FORWARDED */) // todo change to Action.FORWARDED after merging https://github.com/mojaloop/central-services-shared/pull/389
+  makeMessageMetadata(id, Type.PREPARE, Action.FORWARDED),
+  undefined,
+  payload
 ))
 
 const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) => {

@@ -310,7 +310,7 @@ const processMessage = async (msg, span) => {
       return true
     }
 
-    const { url: callbackURLTo, isProxy } = await getEndpointFn(destination, REQUEST_TYPE.POST, true)
+    const { url: callbackURLTo, proxyId } = await getEndpointFn(destination, REQUEST_TYPE.POST, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.POST)
     headers = createCallbackHeaders({ headers: content.headers, httpMethod: POST, endpointTemplate })
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${POST}, ${JSON.stringify(content.headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
@@ -333,9 +333,9 @@ const processMessage = async (msg, span) => {
     histTimerEnd({ success: true, action })
 
     // disable timeout
-    if (isProxy) {
-      const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'disableTimeout')
-      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, payload), topicConfig, kafkaConfig)
+    if (proxyId) {
+      const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'forward')
+      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, { proxyId }), topicConfig, kafkaConfig)
     }
 
     return true
