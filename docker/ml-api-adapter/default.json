@@ -1,8 +1,11 @@
 {
-  "PROXY": {
+  "PROXY_CACHE": {
+    "enabled": true,
     "type": "redis",
-    "host": "redis",
-    "port": 6379
+    "proxyConfig": {
+      "host": "redis",
+      "port": 6379
+    }
   },
   "HUB_PARTICIPANT": {
     "ID": 1,
