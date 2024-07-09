@@ -31,14 +31,19 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
   endpointTest.test('getEndpoint should', async (getEndpointTest) => {
     getEndpointTest.test('return the endpoint', async (test) => {
       const fsp = 'fsp'
+      const proxy = 'proxy'
       const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
       const expected = `https://localhost:1080/transfers/${transferId}`
+      const expectedProxy = { url: expected }
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(Promise.resolve(expected))
+      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, proxy, endpointType, { transferId }).returns(Promise.resolve(expectedProxy))
 
       try {
-        const result = await Service.getEndpoint({ fsp, endpointType, id: transferId })
-        test.equal(result, expected, 'The results match')
+        test.deepEqual(await Service.getEndpoint({ fsp, endpointType, id: transferId }), expected, 'Return string')
+        test.deepEqual(await Service.getEndpoint({ fsp: proxy, endpointType, id: transferId }), expected, 'Return string when proxy is configured')
+        test.deepEqual(await Service.getEndpoint({ fsp, endpointType, id: transferId, proxy: true }), expectedProxy, 'Return object when proxy:true and proxy is not configured')
+        test.deepEqual(await Service.getEndpoint({ fsp: proxy, endpointType, id: transferId, proxy: true }), expectedProxy, 'Return object when proxy:true and proxy is not configured')
         test.end()
       } catch (err) {
         test.fail('Error thrown', err)
