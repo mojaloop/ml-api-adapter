@@ -55,8 +55,8 @@ Test('Notification Service tests', async notificationTest => {
   const hubNameRegex = Util.HeaderValidation.getHubNameRegex(Config.HUB_NAME)
   const match = Sinon.match
 
-  const url = 'http://somehost:port/'
-  const proxyUrl = 'http://proxyhost:port/'
+  const url = 'https://somehost:port/'
+  const proxyUrl = 'https://proxyhost:port/'
 
   await notificationTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
