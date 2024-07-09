@@ -31,9 +31,11 @@ const Uuid = require('uuid4')
 const Config = require('../../../../src/lib/config')
 const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/central-services-shared').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
+const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Kafka = require('@mojaloop/central-services-stream').Util
 const { Action } = Enum.Events.Event
 const Fixtures = require('../../../fixtures/index')
+const { prepare } = require('../../../../src/domain/transfer/index')
 const Logger = require('@mojaloop/central-services-logger')
 const proxyLib = require('@mojaloop/inter-scheme-proxy-cache-lib')
 
@@ -119,20 +121,30 @@ Test('Notification Handler', notificationHandlerTest => {
     notificationTest.test('consume a PREPARE message and send POST callback to proxy', async test => {
       proxy.addDfspIdToProxyMapping('proxied2', 'dfsp2') // simulate proxy mapping
       const transferId = Uuid()
+      const payload = {
+        amount: { amount: 1, currency: 'USD' },
+        condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+        expiration: '2040-01-01T00:00:00.000',
+        ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+        payerFsp: 'dfsp1',
+        payeeFsp: 'proxied2',
+        transferId
+      }
+      await prepare(
+        {
+          'fspiop-source': payload.payerFsp,
+          'fspiop-destination': payload.payeeFsp
+        },
+        encodePayload(JSON.stringify(payload), 'application/vnd.interoperability.transfers+json;version=1.1'),
+        payload,
+        { injectContextToMessage: msg => msg }
+      )
       const messageProtocol = Fixtures.createMessageProtocol(
         Action.PREPARE,
         Action.PREPARE,
-        {
-          amount: { amount: 100, currency: 'USD' },
-          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-          expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-          payerFsp: 'dfsp1',
-          payeeFsp: 'proxied2',
-          transferId
-        },
-        'dfsp1',
-        'proxied2'
+        payload,
+        payload.payerFsp,
+        payload.payeeFsp
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
         Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
