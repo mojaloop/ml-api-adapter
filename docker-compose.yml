@@ -176,7 +176,7 @@ services:
       retries: 10
       interval: 30s
   redis:
-    image: redis:6.2.4-alpine
+    image: redis:7.2.5
     container_name: redis
     networks:
       - ml-mojaloop-net

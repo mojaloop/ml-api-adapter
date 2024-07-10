@@ -14,7 +14,7 @@ if [[ "$CWD" =~ ^(.*)\.sh$ ]];
 then
     CWD="."
 fi
-$CWD/populateTestData.sh
+# $CWD/populateTestData.sh
 
 INTEGRATION_TEST_EXIT_CODE=0
 npm run test:xint || INTEGRATION_TEST_EXIT_CODE="$?"
