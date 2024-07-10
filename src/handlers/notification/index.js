@@ -335,7 +335,7 @@ const processMessage = async (msg, span) => {
     // disable timeout
     if (proxyId) {
       const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'forward')
-      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, { proxyId }), topicConfig, kafkaConfig)
+      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, { proxyId, transferId: id }), topicConfig, kafkaConfig)
     }
 
     return true

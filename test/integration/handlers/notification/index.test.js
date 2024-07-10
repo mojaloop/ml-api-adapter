@@ -28,7 +28,9 @@
 
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
+const db = require('@mojaloop/database-lib').Db
 const Config = require('../../../../src/lib/config')
+const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
 const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/central-services-shared').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
 const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
@@ -150,8 +152,25 @@ Test('Notification Handler', notificationHandlerTest => {
         Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
-
+      await new Promise(resolve => setTimeout(resolve, 5000)) // wait for RESERVED
       const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig, undefined, undefined, 'dfsp2')
+      await new Promise(resolve => setTimeout(resolve, 5000)) // wait for RESERVED_FORWARDED
+      await db.connect({
+        client: centralLedgerConfig.DATABASE.DIALECT,
+        connection: {
+          host: 'localhost',
+          port: centralLedgerConfig.DATABASE.PORT,
+          user: centralLedgerConfig.DATABASE.USER,
+          password: centralLedgerConfig.DATABASE.PASSWORD,
+          database: centralLedgerConfig.DATABASE.SCHEMA
+        }
+      })
+      try {
+        const stateChange = await db.from('transferStateChange').findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
+        test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
+      } finally {
+        await db.disconnect()
+      }
 
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
