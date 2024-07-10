@@ -147,7 +147,7 @@ module.exports = [{
         failAction: 'error'
       }
     }
-  }]),
+  }]).flat(),
 {
   method: 'PUT',
   path: '/fxp1/fxTransfers/{transferId}/error',
