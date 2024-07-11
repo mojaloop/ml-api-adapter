@@ -1121,6 +1121,18 @@ Test('Notification Handler', notificationHandlerTest => {
         EventActions.PREPARE.toUpperCase()
       )
       const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: Action.NOTIFICATION,
+            action: Action.FORWARDED,
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
         content: {
           headers: {
             'content-length': 1038,

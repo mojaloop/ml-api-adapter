@@ -2284,7 +2284,6 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await processMessageTest.test('process the `forwarded` error message received from kafka and send out a transfer error put callback', async test => {
-      const uuid = Uuid()
       const payerFsp = 'dfsp1'
       const proxyFsp = 'proxyFsp'
 
@@ -2294,8 +2293,8 @@ Test('Notification Service tests', async notificationTest => {
             event: {
               id: Uuid(),
               createdAt: new Date(),
-              type: Action.NOTIFICATION,
-              action: Action.FORWARDED,
+              type: 'notification',
+              action: 'forwarded',
               state: {
                 status: 'error',
                 code: 1
@@ -2314,7 +2313,7 @@ Test('Notification Service tests', async notificationTest => {
               }
             },
           },
-          to: payeeFsp,
+          to: proxyFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
