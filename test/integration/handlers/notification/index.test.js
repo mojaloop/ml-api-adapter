@@ -1090,7 +1090,7 @@ Test('Notification Handler', notificationHandlerTest => {
           payload: {
             errorInformation: {
               errorCode: '3000',
-              errorDescription: 'Generic validation error'
+              errorDescription: 'Generic error'
             }
           },
           uriParams: {
@@ -1121,18 +1121,6 @@ Test('Notification Handler', notificationHandlerTest => {
         EventActions.PREPARE.toUpperCase()
       )
       const messageProtocol = {
-        metadata: {
-          event: {
-            id: Uuid(),
-            createdAt: new Date(),
-            type: Action.PREPARE,
-            action: Action.FORWARDED,
-            state: {
-              status: 'error',
-              code: 1
-            }
-          }
-        },
         content: {
           headers: {
             'content-length': 1038,

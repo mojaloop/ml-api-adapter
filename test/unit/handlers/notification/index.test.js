@@ -2283,6 +2283,60 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('process the `forwarded` error message received from kafka and send out a transfer error put callback', async test => {
+      const uuid = Uuid()
+      const payerFsp = 'dfsp1'
+      const proxyFsp = 'proxyFsp'
+
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              id: Uuid(),
+              createdAt: new Date(),
+              type: Action.NOTIFICATION,
+              action: Action.FORWARDED,
+              state: {
+                status: 'error',
+                code: 1
+              }
+            }
+          },
+          content: {
+            headers: {
+              'fspiop-destination': proxyFsp,
+              'fspiop-source': payerFsp
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '3000',
+                errorDescription: 'Generic error'
+              }
+            },
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      const method = ENUM.Http.RestMethods.PUT
+      const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
+      const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
+      const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+      const fromHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
+
+      const expected = true
+
+      Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
+
+      const result = await Notification.processMessage(msg)
+      test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex })))
+      test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })))
+      test.equal(result, expected)
+      test.end()
+    })
+
     await processMessageTest.test('process the prepare-duplicate message received from kafka and send out a transfer put callback', async test => {
       const uuid = Uuid()
       const payerFsp = 'dfsp2'
