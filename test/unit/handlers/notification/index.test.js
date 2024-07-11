@@ -2311,7 +2311,7 @@ Test('Notification Service tests', async notificationTest => {
                 errorCode: '3000',
                 errorDescription: 'Generic error'
               }
-            },
+            }
           },
           to: proxyFsp,
           from: payerFsp,
