@@ -74,6 +74,21 @@ const endpoints = {
     },
     ...fxTransferEndpoints('dfsp2')
   ],
+  proxyFsp: [
+    {
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
+      value: `${ENDPOINT_HOST}/proxyFsp/transfers`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
+      value: `${ENDPOINT_HOST}/proxyFsp/transfers/{{transferId}}`
+    },
+    {
+      type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
+      value: `${ENDPOINT_HOST}/proxyFsp/transfers/{{transferId}}/error`
+    },
+    ...fxTransferEndpoints('proxyFsp')
+  ],
   fxp1: fxTransferEndpoints('fxp1')
 }
 

@@ -278,5 +278,44 @@ module.exports = [{
       failAction: 'error'
     }
   }
+},
+{
+  method: 'POST',
+  path: '/proxyFsp/transfers',
+  handler: Handler.receiveNotificationPost,
+  options: {
+    id: 'proxyFsp-transfers',
+    tags,
+    description: 'receive -transfers for proxyFsp',
+    payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/proxyFsp/transfers/{transferId}/error',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'proxyFsp-error',
+    tags,
+    description: 'receive error notification for proxyFsp',
+    payload: {
+      failAction: 'error'
+    }
+  }
+},
+{
+  method: 'PUT',
+  path: '/proxyFsp/transfers/{transferId}',
+  handler: Handler.receiveNotificationPut,
+  options: {
+    id: 'proxyFsp-put',
+    tags,
+    description: 'receive put notification for proxyFsp',
+    payload: {
+      failAction: 'error'
+    }
+  }
 }
 ]

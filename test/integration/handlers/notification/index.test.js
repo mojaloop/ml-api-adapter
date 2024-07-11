@@ -1125,7 +1125,7 @@ Test('Notification Handler', notificationHandlerTest => {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: Action.NOTIFICATION,
+            type: EventTypes.NOTIFICATION,
             action: Action.FORWARDED,
             state: {
               status: 'error',
@@ -1156,7 +1156,6 @@ Test('Notification Handler', notificationHandlerTest => {
       }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
-
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
