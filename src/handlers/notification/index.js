@@ -31,7 +31,7 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
-const { Consumer } = require('@mojaloop/central-services-stream').Kafka
+const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const { Util, Enum } = require('@mojaloop/central-services-shared')
 
 const { logger } = require('../../shared/logger')
@@ -39,6 +39,7 @@ const { createCallbackHeaders } = require('../../lib/headers')
 const Participant = require('../../domain/participant')
 const Config = require('../../lib/config')
 const dto = require('./dto')
+const dtoTransfer = require('../../domain/transfer/dto')
 const utils = require('./utils')
 
 const Callback = Util.Request
@@ -57,7 +58,7 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   if (timeApiPrepare && !timeApiFulfil) {
     const histTracePrepareTimerEnd = Metrics.getHistogram(
       'tx_transfer_prepare',
-      'Tranxaction metrics for Transfers - Prepare Flow',
+      'Transaction metrics for Transfers - Prepare Flow',
       ['success']
     )
     histTracePrepareTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
@@ -65,7 +66,7 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   if (timeApiFulfil) {
     const histTraceFulfilTimerEnd = Metrics.getHistogram(
       'tx_transfer_fulfil',
-      'Tranxaction metrics for Transfers - Fulfil Flow',
+      'Transaction metrics for Transfers - Fulfil Flow',
       ['success']
     )
     histTraceFulfilTimerEnd.observe({ success }, (endTime - timeApiFulfil) / 1000)
@@ -73,7 +74,7 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   if (timeApiPrepare && timeApiFulfil) {
     const histTraceEnd2EndTimerEnd = Metrics.getHistogram(
       'tx_transfer',
-      'Tranxaction metrics for Transfers - End-to-end Flow',
+      'Transaction metrics for Transfers - End-to-end Flow',
       ['success']
     )
     histTraceEnd2EndTimerEnd.observe({ success }, (endTime - timeApiPrepare) / 1000)
@@ -243,7 +244,7 @@ const processMessage = async (msg, span) => {
     PATCH: 'PATCH'
   }
 
-  const getEndpointFn = async (fsp, requestType) => {
+  const getEndpointFn = async (fsp, requestType, proxy) => {
     let endpointType
     switch (requestType) {
       case REQUEST_TYPE.POST:
@@ -266,7 +267,7 @@ const processMessage = async (msg, span) => {
         throw new Error('Invalid request type')
     }
 
-    return Participant.getEndpoint({ fsp, endpointType, id, isFx, span })
+    return Participant.getEndpoint({ fsp, endpointType, id, isFx, span, proxy })
   }
 
   const getEndpointTemplate = (requestType) => {
@@ -309,7 +310,7 @@ const processMessage = async (msg, span) => {
       return true
     }
 
-    const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.POST)
+    const { url: callbackURLTo, proxyId } = await getEndpointFn(destination, REQUEST_TYPE.POST, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.POST)
     headers = createCallbackHeaders({ headers: content.headers, httpMethod: POST, endpointTemplate })
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${POST}, ${JSON.stringify(content.headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
@@ -330,6 +331,13 @@ const processMessage = async (msg, span) => {
     }
     histTimerEndSendRequest({ success: true, from: source, dest: destination, action, status: response.status })
     histTimerEnd({ success: true, action })
+
+    // disable timeout
+    if (proxyId) {
+      const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'forward')
+      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, { proxyId, transferId: id }), topicConfig, kafkaConfig)
+    }
+
     return true
   }
 

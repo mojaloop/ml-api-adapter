@@ -30,6 +30,18 @@ const notifications = {}
 const ENDPOINT_HOST = process.env.ENDPOINT_HOST || 'http://ml-api-adapter-endpoint:4545'
 const fxTransferEndpoints = fspId => [
   {
+    type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
+    value: `${ENDPOINT_HOST}/${fspId}/transfers`
+  },
+  {
+    type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
+    value: `${ENDPOINT_HOST}/${fspId}/transfers/{{transferId}}`
+  },
+  {
+    type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
+    value: `${ENDPOINT_HOST}/${fspId}/transfers/{{transferId}}/error`
+  },
+  {
     type: 'FSPIOP_CALLBACK_URL_FX_TRANSFER_POST',
     value: `${ENDPOINT_HOST}/${fspId}/fxTransfers`
   },
@@ -44,36 +56,10 @@ const fxTransferEndpoints = fspId => [
 ]
 
 const endpoints = {
-  dfsp1: [
-    {
-      type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
-      value: `${ENDPOINT_HOST}/dfsp1/transfers`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-      value: `${ENDPOINT_HOST}/dfsp1/transfers/{{transferId}}/error`
-    },
-    ...fxTransferEndpoints('dfsp1')
-  ],
-  dfsp2: [
-    {
-      type: 'FSPIOP_CALLBACK_URL_TRANSFER_POST',
-      value: `${ENDPOINT_HOST}/dfsp2/transfers`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_TRANSFER_PUT',
-      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}`
-    },
-    {
-      type: 'FSPIOP_CALLBACK_URL_TRANSFER_ERROR',
-      value: `${ENDPOINT_HOST}/dfsp2/transfers/{{transferId}}/error`
-    },
-    ...fxTransferEndpoints('dfsp2')
-  ],
+  dfsp1: fxTransferEndpoints('dfsp1'),
+  dfsp2: fxTransferEndpoints('dfsp2'),
+  dfsp3: fxTransferEndpoints('dfsp3'),
+  dfsp4: fxTransferEndpoints('dfsp4'),
   fxp1: fxTransferEndpoints('fxp1')
 }
 
@@ -159,6 +145,7 @@ exports.getNotification = async function (request, h) {
 exports.getEndpoints = async function (request, h) {
   console.log('getEndpoints::fsp(%s)', request.params.fsp)
   const fsp = request.params.fsp
+  if (!endpoints[fsp]) return h.response({}).code(404)
   console.log('Response: %s', JSON.stringify(endpoints[fsp]))
   return h.response(JSON.stringify(endpoints[fsp])).code(200)
 }

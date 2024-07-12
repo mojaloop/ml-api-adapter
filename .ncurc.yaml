@@ -2,5 +2,7 @@
 reject: [
     # v6+ (ref: https://github.com/sindresorhus/get-port/releases/tag/v6.0.0) is an ESM library and thus not compatible with CommonJS. Future story needed to resolve.
     # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
-    "get-port"
+    "get-port",
+    # glob >= 11 requires node >= 20
+    "glob"
 ]
