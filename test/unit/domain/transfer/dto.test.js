@@ -22,6 +22,32 @@ Test('DTO tests -->', dtoTest => {
     test.end()
   })
 
+  dtoTest.test('forwardedMessageDto test', test => {
+    const expected = {
+      id: 1,
+      to: 'to',
+      from: 'from',
+      type: 'application/json',
+      content: {
+        uriParams: undefined,
+        headers: undefined,
+        payload: { id: 1, from: 'from' }
+      },
+      metadata: {
+        correlationId: 1,
+        event: {
+          type: 'prepare',
+          action: 'forwarded',
+          state: { status: 'success', code: 0, description: 'action successful' }
+        }
+      }
+    }
+    const message = dto.forwardedMessageDto(expected.id, expected.from, expected.to, expected.content.payload)
+    expected.metadata.event.createdAt = message.metadata.event.createdAt
+    test.deepEquals(message, expected, 'forwardedMessageDto should match')
+    test.end()
+  })
+
   dtoTest.test('fulfilMessageDto FX_RESERVE test', test => {
     const payload = mocks.mockFxFulfilPayload()
     const params = { id: '1234' }
