@@ -60,6 +60,7 @@ const endpoints = {
   dfsp2: fxTransferEndpoints('dfsp2'),
   dfsp3: fxTransferEndpoints('dfsp3'),
   dfsp4: fxTransferEndpoints('dfsp4'),
+  proxyFsp: fxTransferEndpoints('proxyFsp'),
   fxp1: fxTransferEndpoints('fxp1')
 }
 

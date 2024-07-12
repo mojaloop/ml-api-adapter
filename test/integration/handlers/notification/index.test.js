@@ -1162,7 +1162,7 @@ Test('Notification Handler', notificationHandlerTest => {
           payload: {
             errorInformation: {
               errorCode: '3000',
-              errorDescription: 'Generic validation error'
+              errorDescription: 'Generic error'
             }
           },
           uriParams: {
@@ -1181,6 +1181,57 @@ Test('Notification Handler', notificationHandlerTest => {
 
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a FORWARDED error message and send PUT callback to `to` and `from` participants', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(
+        Config.KAFKA_CONFIG,
+        Enum.Kafka.Config.PRODUCER,
+        EventTypes.TRANSFER.toUpperCase(),
+        EventActions.PREPARE.toUpperCase()
+      )
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: EventTypes.NOTIFICATION,
+            action: Action.FORWARDED,
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'proxyFsp'
+          },
+          payload: {
+            errorInformation: {
+              errorCode: '3000',
+              errorDescription: 'Generic validation error'
+            }
+          },
+          uriParams: { id: transferId }
+        },
+        from: 'dfsp1',
+        to: 'proxyFsp',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
       test.end()
     })
 
