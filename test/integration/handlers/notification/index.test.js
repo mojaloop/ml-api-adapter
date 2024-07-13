@@ -121,7 +121,7 @@ Test('Notification Handler', notificationHandlerTest => {
     })
 
     notificationTest.test('consume a PREPARE message and send POST callback to proxy', async test => {
-      proxy.addDfspIdToProxyMapping('proxied2', 'dfsp2') // simulate proxy mapping
+      await proxy.addDfspIdToProxyMapping('proxied2', 'dfsp2') // simulate proxy mapping
       const transferId = Uuid()
       const payload = {
         amount: { amount: 1, currency: 'USD' },
