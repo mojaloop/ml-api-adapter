@@ -4,6 +4,14 @@ networks:
   ml-mojaloop-net:
     name: ml-mojaloop-net
 
+x-redis-node: &REDIS_NODE
+  image: docker.io/bitnami/redis-cluster:6.2.14
+  environment: &REDIS_ENVS
+    ALLOW_EMPTY_PASSWORD: yes
+    REDIS_NODES: redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5
+  networks:
+    - ml-mojaloop-net
+
 services:
   ml-api-adapter:
     image: mojaloop/ml-api-adapter:local
@@ -175,15 +183,28 @@ services:
       timeout: 20s
       retries: 10
       interval: 30s
-  redis:
-    image: redis:7.2.5
-    container_name: redis
-    networks:
-      - ml-mojaloop-net
+
+  redis-node-0:
+    <<: *REDIS_NODE
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_PORT=6379
-      - REDIS_REPLICATION_MODE=master
-      - REDIS_TLS_ENABLED=no
+      <<: *REDIS_ENVS
+      REDIS_CLUSTER_CREATOR: yes
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
     ports:
       - "6379:6379"
+
+  redis-node-1:
+    <<: *REDIS_NODE
+  redis-node-2:
+    <<: *REDIS_NODE
+  redis-node-3:
+    <<: *REDIS_NODE
+  redis-node-4:
+    <<: *REDIS_NODE
+  redis-node-5:
+    <<: *REDIS_NODE
