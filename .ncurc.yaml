@@ -4,6 +4,5 @@ reject: [
     # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
     "get-port",
     # glob >= 11 requires node >= 20
-    "glob",
-    "@mojaloop/inter-scheme-proxy-cache-lib"
+    "glob"
 ]
