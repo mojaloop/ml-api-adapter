@@ -29,18 +29,19 @@
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
 const db = require('@mojaloop/database-lib').Db
-const Config = require('../../../../src/lib/config')
-const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
+const Logger = require('@mojaloop/central-services-logger')
+const proxyLib = require('@mojaloop/inter-scheme-proxy-cache-lib')
 const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/central-services-shared').Util
 const Enum = require('@mojaloop/central-services-shared').Enum
 const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Kafka = require('@mojaloop/central-services-stream').Util
-const { Action } = Enum.Events.Event
-const Fixtures = require('../../../fixtures/index')
-const { prepare } = require('../../../../src/domain/transfer/index')
-const Logger = require('@mojaloop/central-services-logger')
-const proxyLib = require('@mojaloop/inter-scheme-proxy-cache-lib')
 
+const Config = require('../../../../src/lib/config')
+const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
+const { prepare } = require('../../../../src/domain/transfer/index')
+const Fixtures = require('../../../fixtures')
+
+const { Action } = Enum.Events.Event
 const EventTypes = Enum.Events.Event.Type
 const EventActions = Enum.Events.Event.Action
 const GeneralTopicTemplate = Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE
@@ -73,10 +74,8 @@ Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
     let proxy
     notificationTest.test('connect proxy lib', async test => {
-      proxy = proxyLib.createProxyCache('redis', {
-        host: 'localhost',
-        port: 6379
-      })
+      const { type, proxyConfig } = Fixtures.proxyCacheConfigDto()
+      proxy = proxyLib.createProxyCache(type, proxyConfig)
       await proxy.connect()
       test.pass('Connected proxy lib')
       test.end()
