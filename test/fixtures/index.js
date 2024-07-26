@@ -170,6 +170,15 @@ const createMessageProtocol = (eventType = 'prepare', eventAction = 'prepare', p
   }
 }
 
+const proxyCacheConfigDto = ({ host = 'localhost' } = {}) => ({
+  type: 'redis',
+  proxyConfig: {
+    cluster: [
+      { host, port: 6379 }
+    ]
+  }
+})
+
 module.exports = {
   buildTransfer,
   buildFXTransfer,
@@ -179,5 +188,6 @@ module.exports = {
   generateTransferId,
   generateParentTestSpan,
   createMessageProtocol,
-  createProducerConfig
+  createProducerConfig,
+  proxyCacheConfigDto
 }
