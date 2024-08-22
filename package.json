@@ -84,7 +84,7 @@
     "@hapi/good": "9.0.1",
     "@hapi/hapi": "21.3.10",
     "@hapi/inert": "7.1.0",
-    "@hapi/joi": "16.1.4",
+    "@hapi/joi": "17.1.1",
     "@hapi/joi-date": "2.0.1",
     "@hapi/vision": "7.0.3",
     "@mojaloop/central-services-error-handling": "13.0.1",
