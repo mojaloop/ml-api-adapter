@@ -25,7 +25,8 @@
 const EventSdk = require('@mojaloop/event-sdk')
 const Uuid = require('uuid4')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const Enum = require('@mojaloop/central-services-shared').Enum
+const { Enum } = require('@mojaloop/central-services-shared')
+const { STORAGE_TYPES } = require('@mojaloop/inter-scheme-proxy-cache-lib')
 
 const generateTransferId = () => {
   return Uuid()
@@ -171,7 +172,7 @@ const createMessageProtocol = (eventType = 'prepare', eventAction = 'prepare', p
 }
 
 const proxyCacheConfigDto = ({ host = 'localhost' } = {}) => ({
-  type: 'redis',
+  type: STORAGE_TYPES.redisCluster,
   proxyConfig: {
     cluster: [
       { host, port: 6379 }
