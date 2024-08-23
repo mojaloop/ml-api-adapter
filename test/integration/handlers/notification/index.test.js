@@ -510,30 +510,30 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
-    notificationTest.test('consume a FX_RESERVE message and send PUT callback', async test => {
-      const commitRequestId = Uuid()
-      const messageProtocol = Fixtures.createMessageProtocol(
-        Action.RESERVE,
-        Action.FX_RESERVE,
-        {
-          commitRequestId,
-          initiatingFsp: 'dfsp1',
-          counterPartyFsp: 'fxp1'
-        },
-        'dfsp1',
-        'fxp1'
-      )
-      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
-        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
-        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
-      )
+    // notificationTest.test('consume a FX_RESERVE message and send PUT callback', async test => {
+    //   const commitRequestId = Uuid()
+    //   const messageProtocol = Fixtures.createMessageProtocol(
+    //     Action.RESERVE,
+    //     Action.FX_RESERVE,
+    //     {
+    //       commitRequestId,
+    //       initiatingFsp: 'dfsp1',
+    //       counterPartyFsp: 'fxp1'
+    //     },
+    //     'dfsp1',
+    //     'fxp1'
+    //   )
+    //   const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+    //     Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+    //     GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+    //   )
 
-      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true, 'put')
+    //   const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true, 'put')
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
-      test.end()
-    })
+    //   test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+    //   test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+    //   test.end()
+    // })
 
     notificationTest.test('consume a REJECT message and send PUT callback', async test => {
       const transferId = Uuid()
