@@ -1,5 +1,3 @@
-version: "3.7"
-
 networks:
   ml-mojaloop-net:
     name: ml-mojaloop-net

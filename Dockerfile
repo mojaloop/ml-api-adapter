@@ -11,7 +11,7 @@ ARG NODE_VERSION=18.20.3-alpine3.19
 #
 
 # Build Image
-FROM node:${NODE_VERSION} as builder
+FROM node:${NODE_VERSION} AS builder
 USER root
 
 WORKDIR /opt/app
