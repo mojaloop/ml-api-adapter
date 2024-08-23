@@ -29,7 +29,7 @@ const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '' }) => {
 
   const metadata = makeMessageMetadata(id, Type.PREPARE, action)
   const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri, params: { id } }, to, from, metadata)
-  logger.debug(`${logPrefix}::messageProtocol`, messageProtocol)
+  logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
 }
@@ -49,7 +49,7 @@ const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) 
 
   const metadata = makeMessageMetadata(params.id, Type.FULFIL, action)
   const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params }, to, from, metadata)
-  logger.debug(`${logPrefix}::messageProtocol - ${JSON.stringify(messageProtocol)}`)
+  logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
 }
@@ -79,7 +79,7 @@ const getMessageDto = ({ headers, params, isFx, logPrefix = '' }) => {
 
   const metadata = makeMessageMetadata(params.id, Type.GET, action)
   const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, to, from, metadata)
-  logger.debug(`${logPrefix}::messageProtocol`, messageProtocol)
+  logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
 }
@@ -87,8 +87,7 @@ const getMessageDto = ({ headers, params, isFx, logPrefix = '' }) => {
 const producerConfigDto = (functionality, action, logPrefix = '') => {
   const topicConfig = Kafka.createGeneralTopicConf(KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
   const kafkaConfig = Kafka.getKafkaConfig(KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, functionality.toUpperCase(), action.toUpperCase())
-  logger.debug(`${logPrefix}::topicConfig`, topicConfig)
-  logger.info(`${logPrefix}::kafkaConfig`, kafkaConfig)
+  logger.debug(`${logPrefix}::topicConfig`, { topicConfig })
 
   return Object.freeze({ topicConfig, kafkaConfig })
 }

@@ -22,16 +22,18 @@
 
 'use strict'
 
-const Package = require('../../package')
-const Config = require('../lib/config')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const CentralServices = require('@mojaloop/central-services-shared')
 
+const Package = require('../../package')
+const Config = require('../lib/config')
+const loggingPlugin = require('./loggingPlugin')
+
 /**
- * @module src/shared/plugin
+ * @module src/shared/plugins
  */
 
 const registerPlugins = async (server) => {
@@ -43,6 +45,10 @@ const registerPlugins = async (server) => {
         version: Package.version
       }
     }
+  })
+
+  await server.register({
+    plugin: loggingPlugin
   })
 
   await server.register({

@@ -63,10 +63,8 @@ const prepare = async (headers, dataUri, payload, span) => {
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
-    throw fspiopError
+    logger.error(`${logPrefix} failed with error:`, err)
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
   }
 }
 
@@ -85,7 +83,7 @@ const prepare = async (headers, dataUri, payload, span) => {
 */
 const fulfil = async (headers, dataUri, payload, params, span) => {
   const logPrefix = `domain::${payload.transferState ? 'transfer' : 'fxTransfer'}::fulfil`
-  logger.debug(`${logPrefix}::start(${params.id})`, { headers, payload })
+  logger.debug(`${logPrefix}::start(${params.id})`, { headers, params, payload })
 
   try {
     let messageProtocol = dto.fulfilMessageDto({ headers, dataUri, payload, params, logPrefix })
@@ -95,10 +93,8 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
-    throw fspiopError
+    logger.error(`${logPrefix} failed with error:`, err)
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
   }
 }
 
@@ -115,7 +111,7 @@ const fulfil = async (headers, dataUri, payload, params, span) => {
  */
 const getTransferById = async (headers, params, span, isFx = false) => {
   const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::get`
-  logger.debug(`${logPrefix}::start(${params.id})`, { headers })
+  logger.debug(`${logPrefix}::start(${params.id})`, { headers, params })
 
   try {
     let messageProtocol = dto.getMessageDto({ headers, params, isFx, logPrefix })
@@ -125,10 +121,8 @@ const getTransferById = async (headers, params, span, isFx = false) => {
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
-    throw fspiopError
+    logger.error(`${logPrefix} failed with error:`, err)
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
   }
 }
 
@@ -148,7 +142,7 @@ const getTransferById = async (headers, params, span, isFx = false) => {
 */
 const transferError = async (headers, dataUri, payload, params, span, isFx = false) => {
   const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::abort`
-  logger.debug(`${logPrefix}::start(${params.id})`, { headers, payload })
+  logger.debug(`${logPrefix}::start(${params.id})`, { headers, params, payload })
 
   try {
     let messageProtocol = dto.fulfilErrorMessageDto({ headers, dataUri, payload, params, isFx, logPrefix })
@@ -158,10 +152,8 @@ const transferError = async (headers, dataUri, payload, params, span, isFx = fal
     await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
     return true
   } catch (err) {
-    logger.error(`${logPrefix}::Kafka error:: ERROR:'${err}'`)
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
-    throw fspiopError
+    logger.error(`${logPrefix} failed with error:`, err)
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
   }
 }
 
