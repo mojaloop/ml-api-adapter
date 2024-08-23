@@ -528,7 +528,7 @@ Test('Notification Handler', notificationHandlerTest => {
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true, 'patch')
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true, 'put')
 
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
