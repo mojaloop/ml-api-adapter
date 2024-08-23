@@ -362,7 +362,7 @@ const processMessage = async (msg, span) => {
       ['success', 'from', 'dest', 'action', 'status']
     ).startTimer()
     try {
-      if ([Action.RESERVE, Action.FX_RESERVE].includes(action)) {
+      if (action === Action.RESERVE) {
         headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, true)
         jwsSigner = getJWSSigner(Config.HUB_NAME)
         response = await Callback.sendRequest({ url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
@@ -379,13 +379,13 @@ const processMessage = async (msg, span) => {
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     // todo: do we need this case for FX_RESERVE ?
-    if (([Action.RESERVE, Action.FX_RESERVE].includes(action)) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination)) {
+    if ((action === Action.RESERVE) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination && action !== Action.FX_RESERVE)) {
       let payloadForPayee = JSON.parse(payload)
-      if (payloadForPayee.fulfilment && [Action.RESERVE, Action.FX_RESERVE].includes(action)) {
+      if (payloadForPayee.fulfilment && action === Action.RESERVE) {
         delete payloadForPayee.fulfilment
       }
       payloadForPayee = JSON.stringify(payloadForPayee)
-      const method = [Action.RESERVE, Action.FX_RESERVE].includes(action) ? PATCH : PUT
+      const method = action === Action.RESERVE ? PATCH : PUT
       const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT)
       logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
       headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
