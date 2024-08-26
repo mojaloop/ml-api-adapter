@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "14.1.0-snapshot.18",
+  "version": "14.1.0-snapshot.19",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -96,7 +96,7 @@
     "@mojaloop/event-sdk": "14.1.1",
     "@mojaloop/sdk-standard-components": "18.4.0",
     "@now-ims/hapi-now-auth": "2.1.0",
-    "axios": "1.7.4",
+    "axios": "1.7.5",
     "blipp": "4.0.2",
     "commander": "12.1.0",
     "docdash": "2.0.2",
