@@ -43,6 +43,15 @@ const forwardedMessageDto = (id, from, to, payload) => Object.freeze(StreamingPr
   payload
 ))
 
+const fxForwardedMessageDto = (id, from, to, payload) => Object.freeze(StreamingProtocol.createMessage(
+  id,
+  to,
+  from,
+  makeMessageMetadata(id, Type.PREPARE, Action.FX_FORWARDED),
+  undefined,
+  payload
+))
+
 const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) => {
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
@@ -95,6 +104,7 @@ const producerConfigDto = (functionality, action, logPrefix = '') => {
 module.exports = {
   prepareMessageDto,
   forwardedMessageDto,
+  fxForwardedMessageDto,
   fulfilMessageDto,
   fulfilErrorMessageDto,
   eventStateDto,
