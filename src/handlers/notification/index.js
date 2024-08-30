@@ -334,8 +334,13 @@ const processMessage = async (msg, span) => {
 
     // disable timeout
     if (proxyId) {
-      const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'forward')
-      await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, { proxyId, transferId: id }), topicConfig, kafkaConfig)
+      if (isFx) {
+        const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'fx-forward')
+        await Producer.produceMessage(dtoTransfer.fxForwardedMessageDto(id, source, destination, { proxyId, commitRequestId: id }), topicConfig, kafkaConfig)
+      } else {
+        const { topicConfig, kafkaConfig } = dtoTransfer.producerConfigDto(Action.TRANSFER, Action.PREPARE, 'forward')
+        await Producer.produceMessage(dtoTransfer.forwardedMessageDto(id, source, destination, { proxyId, transferId: id }), topicConfig, kafkaConfig)
+      }
     }
 
     return true
@@ -593,7 +598,7 @@ const processMessage = async (msg, span) => {
     return true
   }
 
-  if ([Action.TIMEOUT_RESERVED, Action.FX_TIMEOUT_RESERVED, Action.FORWARDED].includes(action)) {
+  if ([Action.TIMEOUT_RESERVED, Action.FX_TIMEOUT_RESERVED, Action.FORWARDED, Action.FX_FORWARDED].includes(action)) {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     jwsSigner = getJWSSigner(Config.HUB_NAME)
