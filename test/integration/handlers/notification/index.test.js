@@ -206,6 +206,64 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
+    notificationTest.test('consume a FX_PREPARE message and send POST callback to proxy', async test => {
+      await proxy.addDfspIdToProxyMapping('proxied2', 'fxp1') // simulate proxy mapping
+      const commitRequestId = Uuid()
+      const payload = {
+        commitRequestId,
+        determiningTransferId: Uuid(),
+        initiatingFsp: 'dfsp1',
+        counterPartyFsp: 'proxied2',
+        amountType: 'SEND',
+        sourceAmount: { amount: 100, currency: 'USD' },
+        targetAmount: { amount: 200, currency: 'USD' },
+        condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+        expiration: new Date((new Date()).getTime() + (24 * 60 * 60 * 1000)).toISOString(), // tomorrow
+        ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+      }
+      await prepare(
+        {
+          'fspiop-source': payload.initiatingFsp,
+          'fspiop-destination': payload.counterPartyFsp
+        },
+        encodePayload(JSON.stringify(payload), 'application/vnd.interoperability.fxTransfers+json;version=1.1'),
+        payload,
+        { injectContextToMessage: msg => msg }
+      )
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.FX_PREPARE,
+        payload,
+        payload.initiatingFsp,
+        payload.counterPartyFsp
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+      await new Promise(resolve => setTimeout(resolve, 10000)) // wait for RESERVED
+      const response = await testNotification(messageProtocol, 'post', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'fxp1')
+      await new Promise(resolve => setTimeout(resolve, 5000)) // wait for RESERVED_FORWARDED
+      await db.connect({
+        client: centralLedgerConfig.DATABASE.DIALECT,
+        connection: {
+          host: 'localhost',
+          port: centralLedgerConfig.DATABASE.PORT,
+          user: centralLedgerConfig.DATABASE.USER,
+          password: centralLedgerConfig.DATABASE.PASSWORD,
+          database: centralLedgerConfig.DATABASE.SCHEMA
+        }
+      })
+      try {
+        const stateChange = await db.from('fxTransferStateChange').findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
+        test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Fx Transfer state changed to RESERVED_FORWARDED')
+      } finally {
+        await db.disconnect()
+      }
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
     notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
       const transferId = Uuid()
       const messageProtocol = Fixtures.createMessageProtocol(
