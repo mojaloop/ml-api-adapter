@@ -70,9 +70,9 @@ services:
 
   central-ledger:
     # image: mojaloop/central-ledger:latest
-    image: mojaloop/central-ledger:v17.8.0.160-snapshot.4
+    image: mojaloop/central-ledger:v17.8.0.551-snapshot.16
     container_name: ml_central-ledger
-    command: sh -c "/opt/app/wait4/wait4.js central-ledger && node src/api/index.js"
+    command: sh -c "/opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"
     links:
       - mysql
       - kafka
@@ -96,6 +96,36 @@ services:
       timeout: 20s
       retries: 10
       interval: 30s
+
+  central-handler-position-batch:
+    image: mojaloop/central-ledger:v17.8.0.551-snapshot.16
+    command: sh -c " /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node src/handlers/index.js handler --positionbatch"
+    ports:
+      - "3002:3001"
+    links:
+      - mysql
+      - kafka
+    volumes:
+      - ./docker/central-ledger/default.json:/opt/app/config/default.json
+      - ./docker/wait4:/opt/app/wait4
+    environment:
+      - LOG_LEVEL=info
+      - CLEDG_MONGODB__DISABLED=true
+      - EVENT_SDK_TRACEID_PER_VENDOR=false
+    networks:
+      - ml-mojaloop-net
+    depends_on:
+      central-ledger:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    healthcheck:
+      test: wget -q http://localhost:3001/health -O /dev/null || exit 1
+      timeout: 20s
+      retries: 30
+      interval: 30s
+      start_period: 30s
+    user: root
 
   mysql:
     image: mysql/mysql-server
@@ -181,6 +211,22 @@ services:
       timeout: 20s
       retries: 10
       interval: 30s
+
+  ## Debug utilities
+  kafka-debug-console:
+    # image: quay.io/cloudhut/kowl:v1.4.0
+    image: docker.redpanda.com/redpandadata/console:latest
+    deploy:
+      replicas: 1
+    restart: on-failure
+    hostname: kafka-debug-console
+    ports:
+    - "9080:8080"
+    networks:
+      - ml-mojaloop-net
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+
 
   redis-node-0:
     <<: *REDIS_NODE
