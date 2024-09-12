@@ -1,5 +1,11 @@
+# CircleCI v2 Config
 version: 2.1
-setup: true
+
+##
+# orbs
+#
+# Orbs used in this pipeline
+##
 orbs:
   slack: circleci/slack@4.12.5 # Ref: https://github.com/mojaloop/ci-config/tree/master/slack-templates
   pr-tools: mojaloop/pr-tools@0.1.10 # Ref: https://github.com/mojaloop/ci-config/
@@ -763,9 +769,208 @@ jobs:
 # CircleCI Workflow config
 ##
 workflows:
-  setup:
+  version: 2
+  build_and_test:
     jobs:
-      - build/workflow:
+      - pr-tools/pr-title-check:
+          context: org-global
+      - setup:
+          context: org-global
           filters:
             tags:
-              only: /v\d+(\.\d+){2}(-[a-zA-Z-][0-9a-zA-Z-]*\.\d+)?/
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-dependencies:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore:
+                - main
+      - test-lint:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-unit:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-coverage:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - build-local:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-integration:
+          context: org-global
+          requires:
+            - setup
+            - build-local
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - test-functional:
+          context: org-global
+          requires:
+            - setup
+            - build-local
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - vulnerability-check:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - audit-licenses:
+          context: org-global
+          requires:
+            - setup
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - /feature*/
+                - /bugfix*/
+      - license-scan:
+          context: org-global
+          requires:
+            - build-local
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
+            branches:
+              ignore:
+                - /.*/
+      - image-scan:
+          context: org-global
+          requires:
+            - build-local
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(\-snapshot(\.[0-9]+)?)?(\-hotfix(\.[0-9]+)?)?(\-perf(\.[0-9]+)?)?/
+            branches:
+              ignore:
+                - /.*/
+      # New commits to main release automatically
+      - release:
+          context: org-global
+          requires:
+            - build-local
+            - pr-tools/pr-title-check
+            - test-lint
+            - test-unit
+            - test-coverage
+            - test-integration
+            - test-functional
+            - vulnerability-check
+            - audit-licenses
+            - license-scan
+            - image-scan
+          filters:
+            branches:
+              only:
+                - main
+                - /release\/v.*/
+      - github-release:
+          context: org-global
+          requires:
+            - release
+          filters:
+            branches:
+              only:
+                - main
+                - /release\/v.*/
+      - publish:
+          context: org-global
+          requires:
+            - build-local
+            - pr-tools/pr-title-check
+            - test-lint
+            - test-unit
+            - test-coverage
+            - test-integration
+            - test-functional
+            - vulnerability-check
+            - audit-licenses
+            - test-integration
+            - license-scan
+            - image-scan
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
+            branches:
+              ignore:
+                - /.*/
+      - publish-snapshot:
+          context: org-global
+          requires:
+            - build-local
+            - pr-tools/pr-title-check
+            - test-lint
+            - test-unit
+            - test-coverage
+            - test-integration
+            - test-functional
+            - vulnerability-check
+            - audit-licenses
+            - test-integration
+            - license-scan
+            - image-scan
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*\-snapshot+((\.[0-9]+)?)/
+            branches:
+              ignore:
+                - /.*/
