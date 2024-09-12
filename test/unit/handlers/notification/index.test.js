@@ -2583,9 +2583,6 @@ Test('Notification Service tests', async notificationTest => {
 
       const expected = true
 
-      const logger = Logger
-      logger.log = logger.info
-
       const jwsSigner = new JwsSignerStub()
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, span: undefined, jwsSigner, hubNameRegex })).returns(Promise.resolve(200))
@@ -2643,8 +2640,6 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = true
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSignerStub()
 
@@ -2711,8 +2706,6 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = 200
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSignerStub()
 
@@ -2780,8 +2773,6 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = 200
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSignerStub()
 
@@ -2848,8 +2839,6 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = 200
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSignerStub()
 
@@ -2915,8 +2904,6 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = true
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSignerStub()
 
@@ -2980,8 +2967,6 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
 
       const expected = true
-      const logger = Logger
-      logger.log = logger.info
 
       const jwsSigner = new JwsSignerStub()
 

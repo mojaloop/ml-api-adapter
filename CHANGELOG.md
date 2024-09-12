@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [14.0.7](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.6...v14.0.7) (2024-06-11)
+
+
+### Chore
+
+* dependency updates to address security patches ([#528](https://github.com/mojaloop/ml-api-adapter/issues/528)) ([29a8caa](https://github.com/mojaloop/ml-api-adapter/commit/29a8caad4394407698637a06334da11e62b494d4))
+* **deps:** Bump @apidevtools/json-schema-ref-parser from 11.1.0 to 11.6.2 ([#526](https://github.com/mojaloop/ml-api-adapter/issues/526)) ([035e9b1](https://github.com/mojaloop/ml-api-adapter/commit/035e9b147dcc14641ecde5c8c49bf9f9d065f3fb))
+
+### [14.0.6](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.5...v14.0.6) (2024-05-17)
+
+
+### Bug Fixes
+
+* stack-overflow and date validation ([#525](https://github.com/mojaloop/ml-api-adapter/issues/525)) ([38d79b1](https://github.com/mojaloop/ml-api-adapter/commit/38d79b1ee5be6c16d163b897e850980e0dc0d3ab))
+
 ### [14.0.5](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.4...v14.0.5) (2023-11-07)
 
 
