@@ -181,7 +181,7 @@ Test('Notification Handler', notificationHandlerTest => {
             .from('transferStateChange')
             .findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED })
           if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED) {
-            return null
+            throw new Error('Transfer state not changed to RESERVED')
           }
           test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED, 'Transfer state changed to RESERVED')
           return stateChange
@@ -200,7 +200,7 @@ Test('Notification Handler', notificationHandlerTest => {
             .from('transferStateChange')
             .findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
           if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED_FORWARDED) {
-            return null
+            throw new Error('Transfer state not changed to RESERVED_FORWARDED')
           }
           test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
           return stateChange
@@ -299,7 +299,7 @@ Test('Notification Handler', notificationHandlerTest => {
             .from('fxTransferStateChange')
             .findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED })
           if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED) {
-            return null
+            throw new Error('Transfer state not changed to RESERVED')
           }
           test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED, 'Transfer state changed to RESERVED')
           return stateChange
@@ -319,7 +319,7 @@ Test('Notification Handler', notificationHandlerTest => {
             .from('fxTransferStateChange')
             .findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
           if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED_FORWARDED) {
-            return null
+            throw new Error('Transfer state not changed to RESERVED_FORWARDED')
           }
           test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
           return stateChange
