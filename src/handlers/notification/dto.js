@@ -23,7 +23,8 @@ const FX_ACTIONS = [
   Action.FX_FULFIL_DUPLICATE,
   Action.FX_ABORT_DUPLICATE,
   Action.FX_TIMEOUT_RESERVED,
-  Action.FX_TIMEOUT_RECEIVED
+  Action.FX_TIMEOUT_RECEIVED,
+  Action.FX_NOTIFY
 ]
 
 const getCallbackPayload = (content) => {

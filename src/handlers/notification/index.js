@@ -625,6 +625,39 @@ const processMessage = async (msg, span) => {
     return true
   }
 
+  if ([Action.FX_NOTIFY].includes(action)) {
+    if (!isSuccess) {
+      throw ErrorHandler.Factory.createFSPIOPError(
+        ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR,
+        'FX_NOTIFY action must be successful'
+      )
+    }
+
+    const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
+    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
+    headers = createCallbackHeaders({ headers: content.headers, httpMethod: PATCH, endpointTemplate })
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PATCH}, ${JSON.stringify(content.headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
+    let response = { status: 'unknown' }
+    const histTimerEndSendRequest = Metrics.getHistogram(
+      'notification_event_delivery',
+      'notification_event_delivery - metric for sending notification requests to FSPs',
+      ['success', 'from', 'to', 'dest', 'action', 'status']
+    ).startTimer()
+
+    try {
+      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PATCH, payload, responseType, span, protocolVersions, hubNameRegex })
+    } catch (err) {
+      logger.error(err)
+      histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
+      histTimerEnd({ success: false, action })
+      throw err
+    }
+    histTimerEndSendRequest({ success: true, from: source, dest: destination, action, status: response.status })
+    histTimerEnd({ success: true, action })
+
+    return true
+  }
+
   Logger.warn(`Unknown action received from kafka: ${action}`)
   histTimerEnd({ success: false, action: 'unknown' })
   return false

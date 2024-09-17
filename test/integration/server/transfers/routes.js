@@ -240,5 +240,18 @@ module.exports = [{
       failAction: 'error'
     }
   }
+},
+{
+  method: 'PATCH',
+  path: '/proxyFsp/fxTransfers/{transferId}',
+  handler: Handler.receiveNotificationPatch,
+  options: {
+    id: 'proxyFsp-patch',
+    tags,
+    description: 'receive patch notification for proxyFsp',
+    payload: {
+      failAction: 'error'
+    }
+  }
 }
 ]

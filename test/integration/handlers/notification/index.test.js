@@ -1412,6 +1412,55 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
+    notificationTest.test('consume a FX_NOTIFY message and send PATCH callback to fxp', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        EventTypes.NOTIFICATION,
+        Action.FX_NOTIFY,
+        {
+          commitRequestId,
+          fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        'HUB',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_NOTIFY message and send PATCH callback to proxied fxp', async test => {
+      await proxy.addDfspIdToProxyMapping('nonExistentFxp', 'proxyFsp') // simulate proxy mapping
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        EventTypes.NOTIFICATION,
+        Action.FX_NOTIFY,
+        {
+          commitRequestId,
+          fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        'HUB',
+        'nonExistentFxp'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'proxyFsp')
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
     notificationTest.test('tear down', async test => {
       await proxy.disconnect()
       try {
