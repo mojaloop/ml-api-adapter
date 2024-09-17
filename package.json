@@ -126,7 +126,7 @@
     "jsdoc": "4.0.3",
     "leaked-handles": "^5.2.0",
     "license-checker": "25.0.1",
-    "nodemon": "3.1.4",
+    "nodemon": "3.1.5",
     "npm-audit-resolver": "3.0.0-RC.0",
     "npm-check-updates": "17.1.1",
     "nyc": "17.0.0",
