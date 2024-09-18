@@ -48,6 +48,17 @@ const GeneralTopicTemplate = Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_T
 
 const timeoutAttempts = 10
 const callbackWaitSeconds = 2
+const retryDelay = process?.env?.test_INT_RETRY_DELAY || 2
+const retryCount = process?.env?.test_INT_RETRY_COUNT || 40
+const retryOpts = {
+  retries: retryCount,
+  minTimeout: retryDelay,
+  maxTimeout: retryDelay
+}
+const wrapWithRetriesConf = {
+  remainingRetries: retryOpts?.retries || 10, // default 10
+  timeout: retryOpts?.maxTimeout || 2 // default 2
+}
 
 const getNotificationUrl = process.env.ENDPOINT_URL
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
@@ -151,9 +162,7 @@ Test('Notification Handler', notificationHandlerTest => {
         Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
-      await new Promise(resolve => setTimeout(resolve, 5000)) // wait for RESERVED
-      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig, undefined, undefined, 'dfsp2')
-      await new Promise(resolve => setTimeout(resolve, 5000)) // wait for RESERVED_FORWARDED
+
       await db.connect({
         client: centralLedgerConfig.DATABASE.DIALECT,
         connection: {
@@ -164,14 +173,44 @@ Test('Notification Handler', notificationHandlerTest => {
           database: centralLedgerConfig.DATABASE.SCHEMA
         }
       })
+
+      // wait for RESERVED
       try {
-        const stateChange = await db.from('transferStateChange').findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
-        test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
-      } finally {
-        await db.disconnect()
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('transferStateChange')
+            .findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED) {
+            throw new Error('Transfer state not changed to RESERVED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED, 'Transfer state changed to RESERVED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
       }
 
+      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig, undefined, undefined, 'dfsp2')
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      // wait for RESERVED_FORWARDED
+      try {
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('transferStateChange')
+            .findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED_FORWARDED) {
+            throw new Error('Transfer state not changed to RESERVED_FORWARDED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
+      }
+
+      await db.disconnect()
       test.end()
     })
 
@@ -241,9 +280,7 @@ Test('Notification Handler', notificationHandlerTest => {
         Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
         GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
-      await new Promise(resolve => setTimeout(resolve, 10000)) // wait for RESERVED
-      const response = await testNotification(messageProtocol, 'post', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'fxp1')
-      await new Promise(resolve => setTimeout(resolve, 5000)) // wait for RESERVED_FORWARDED
+
       await db.connect({
         client: centralLedgerConfig.DATABASE.DIALECT,
         connection: {
@@ -254,13 +291,44 @@ Test('Notification Handler', notificationHandlerTest => {
           database: centralLedgerConfig.DATABASE.SCHEMA
         }
       })
+
+      // wait for RESERVED
       try {
-        const stateChange = await db.from('fxTransferStateChange').findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
-        test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Fx Transfer state changed to RESERVED_FORWARDED')
-      } finally {
-        await db.disconnect()
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('fxTransferStateChange')
+            .findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED) {
+            throw new Error('Transfer state not changed to RESERVED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED, 'Transfer state changed to RESERVED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
       }
+
+      const response = await testNotification(messageProtocol, 'post', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'fxp1')
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+
+      // wait for RESERVED_FORWARDED
+      try {
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('fxTransferStateChange')
+            .findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED_FORWARDED) {
+            throw new Error('Transfer state not changed to RESERVED_FORWARDED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
+      }
+      await db.disconnect()
       test.end()
     })
 
@@ -1412,8 +1480,58 @@ Test('Notification Handler', notificationHandlerTest => {
       test.end()
     })
 
+    notificationTest.test('consume a FX_NOTIFY message and send PATCH callback to fxp', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        EventTypes.NOTIFICATION,
+        Action.FX_NOTIFY,
+        {
+          commitRequestId,
+          fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        'HUB',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_NOTIFY message and send PATCH callback to proxied fxp', async test => {
+      await proxy.addDfspIdToProxyMapping('nonExistentFxp', 'proxyFsp') // simulate proxy mapping
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        EventTypes.NOTIFICATION,
+        Action.FX_NOTIFY,
+        {
+          commitRequestId,
+          fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        'HUB',
+        'nonExistentFxp'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'proxyFsp')
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
     notificationTest.test('tear down', async test => {
       await proxy.disconnect()
+      await db.disconnect()
       try {
         await Kafka.Producer.disconnect()
       } catch (err) { /* ignore error */ }
