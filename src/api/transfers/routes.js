@@ -79,7 +79,7 @@ module.exports = [{
         tracestate: Joi.string().optional()
       }).unknown(allowUnknown).options({ stripUnknown }),
       payload: Joi.object({
-        transferId: Joi.string().guid().required().description('Id of transfer').label('Transfer Id must be in a valid GUID format.'),
+        transferId: Joi.string().pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-7][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|[0-9A-HJKMNP-TV-Z]{26}$/).required().description('Id of transfer').label('Transfer Id must be in a valid GUID/ULID format.'),
         payeeFsp: Joi.string().required().min(1).max(32).description('Financial Service Provider of Payee').label('A valid Payee FSP number must be supplied.'),
         payerFsp: Joi.string().required().min(1).max(32).description('Financial Service Provider of Payer').label('A valid Payer FSP number must be supplied.'),
         amount: Joi.object().keys({
@@ -213,7 +213,7 @@ module.exports = [{
         tracestate: Joi.string().optional()
       }).unknown(allowUnknown).options({ stripUnknown }),
       params: Joi.object({
-        id: Joi.string().guid().required().description('path').label('Supply a valid transfer Id to continue.') // To Do : expand user friendly error msg to params as well
+        id: Joi.string().pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-7][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|[0-9A-HJKMNP-TV-Z]{26}$/).required().description('path').label('Supply a valid transfer Id to continue.') // To Do : expand user friendly error msg to params as well
       })
     }
   }
