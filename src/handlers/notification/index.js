@@ -436,10 +436,10 @@ const processMessage = async (msg, span) => {
       'notification_event_delivery - metric for sending notification requests to FSPs',
       ['success', 'from', 'dest', 'action', 'status']
     ).startTimer()
-    let rv
+    let response
     try {
       jwsSigner = getJWSSigner(Config.HUB_NAME)
-      rv = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     } catch (err) {
       histTimerEndSendRequest2({ success: false, dest: destination, action, status: response.status })
       histTimerEnd({ success: false, action })
@@ -448,8 +448,7 @@ const processMessage = async (msg, span) => {
     histTimerEndSendRequest2({ success: true, dest: destination, action, status: response.status })
 
     histTimerEnd({ success: true, action })
-    return rv
-
+    return response
   }
 
   if ([Action.COMMIT, Action.FX_COMMIT].includes(action) && !isSuccess) {
