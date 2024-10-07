@@ -645,7 +645,7 @@ const processMessage = async (msg, span) => {
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
     let response = { status: 'unknown' }
-    const histTimerEndSendRequest2 = Metrics.getHistogram(
+    const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
       'notification_event_delivery - metric for sending notification requests to FSPs',
       ['success', 'from', 'dest', 'action', 'status']
@@ -656,11 +656,11 @@ const processMessage = async (msg, span) => {
       response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
-      histTimerEndSendRequest2({ success: false, from: source, dest: destination, action, status: response.status })
+      histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
       histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest2({ success: true, dest: destination, action, status: response.status })
+    histTimerEndSendRequest({ success: true, from: source, dest: destination, action, status: response.status })
     histTimerEnd({ success: true, action })
 
     return true
