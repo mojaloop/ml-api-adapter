@@ -636,14 +636,14 @@ const processMessage = async (msg, span) => {
     const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
 
-    let payloadForPayee = JSON.parse(payload)
-    if (payloadForPayee.fulfilment) {
-      delete payloadForPayee.fulfilment
+    let payloadForFXP = JSON.parse(payload)
+    if (payloadForFXP.fulfilment) {
+      delete payloadForFXP.fulfilment
     }
-    payloadForPayee = JSON.stringify(payloadForPayee)
+    payloadForFXP = JSON.stringify(payloadForFXP)
     const method = PATCH
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForFXP}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
     let response = { status: 'unknown' }
     const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
@@ -653,7 +653,7 @@ const processMessage = async (msg, span) => {
 
     try {
       jwsSigner = getJWSSigner(Config.HUB_NAME)
-      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForFXP, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
       histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })

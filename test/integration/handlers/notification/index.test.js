@@ -1500,7 +1500,10 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      const payloadWithoutFulfilment = JSON.parse(JSON.stringify(messageProtocol.content.payload))
+      delete payloadWithoutFulfilment.fulfilment
+
+      test.deepEqual(response.payload, payloadWithoutFulfilment, 'Notification sent successfully to FXP')
       test.end()
     })
 
@@ -1525,7 +1528,9 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'proxyFsp')
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      const payloadWithoutFulfilment = JSON.parse(JSON.stringify(messageProtocol.content.payload))
+      delete payloadWithoutFulfilment.fulfilment
+      test.deepEqual(response.payload, payloadWithoutFulfilment, 'Notification sent successfully to FXP')
       test.end()
     })
 
