@@ -633,7 +633,7 @@ const processMessage = async (msg, span) => {
       )
     }
 
-    const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PATCH)
+    const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
 
     let payloadForPayee = JSON.parse(payload)
@@ -650,7 +650,7 @@ const processMessage = async (msg, span) => {
       'notification_event_delivery - metric for sending notification requests to FSPs',
       ['success', 'from', 'dest', 'action', 'status']
     ).startTimer()
-    
+
     try {
       jwsSigner = getJWSSigner(Config.HUB_NAME)
       response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
