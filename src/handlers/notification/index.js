@@ -419,38 +419,6 @@ const processMessage = async (msg, span) => {
     }
   }
 
-  if (action === Action.FX_NOTIFY) {
-    const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PATCH)
-    const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
-
-    let payloadForPayee = JSON.parse(payload)
-    if (payloadForPayee.fulfilment) {
-      delete payloadForPayee.fulfilment
-    }
-    payloadForPayee = JSON.stringify(payloadForPayee)
-    const method = PATCH
-    headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
-    const histTimerEndSendRequest2 = Metrics.getHistogram(
-      'notification_event_delivery',
-      'notification_event_delivery - metric for sending notification requests to FSPs',
-      ['success', 'from', 'dest', 'action', 'status']
-    ).startTimer()
-    let response
-    try {
-      jwsSigner = getJWSSigner(Config.HUB_NAME)
-      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
-    } catch (err) {
-      histTimerEndSendRequest2({ success: false, dest: destination, action, status: response.status })
-      histTimerEnd({ success: false, action })
-      throw err
-    }
-    histTimerEndSendRequest2({ success: true, dest: destination, action, status: response.status })
-
-    histTimerEnd({ success: true, action })
-    return response
-  }
-
   if ([Action.COMMIT, Action.FX_COMMIT].includes(action) && !isSuccess) {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
@@ -657,7 +625,7 @@ const processMessage = async (msg, span) => {
     return true
   }
 
-  if ([Action.FX_NOTIFY].includes(action)) {
+  if (action === Action.FX_NOTIFY) {
     if (!isSuccess) {
       throw ErrorHandler.Factory.createFSPIOPError(
         ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR,
@@ -665,26 +633,34 @@ const processMessage = async (msg, span) => {
       )
     }
 
-    const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
+    const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PATCH)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
-    headers = createCallbackHeaders({ headers: content.headers, httpMethod: PATCH, endpointTemplate })
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PATCH}, ${JSON.stringify(content.headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
+
+    let payloadForPayee = JSON.parse(payload)
+    if (payloadForPayee.fulfilment) {
+      delete payloadForPayee.fulfilment
+    }
+    payloadForPayee = JSON.stringify(payloadForPayee)
+    const method = PATCH
+    headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
     let response = { status: 'unknown' }
-    const histTimerEndSendRequest = Metrics.getHistogram(
+    const histTimerEndSendRequest2 = Metrics.getHistogram(
       'notification_event_delivery',
       'notification_event_delivery - metric for sending notification requests to FSPs',
-      ['success', 'from', 'to', 'dest', 'action', 'status']
+      ['success', 'from', 'dest', 'action', 'status']
     ).startTimer()
-
+    
     try {
-      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PATCH, payload, responseType, span, protocolVersions, hubNameRegex })
+      jwsSigner = getJWSSigner(Config.HUB_NAME)
+      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
-      histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
+      histTimerEndSendRequest2({ success: false, from: source, dest: destination, action, status: response.status })
       histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, from: source, dest: destination, action, status: response.status })
+    histTimerEndSendRequest2({ success: true, dest: destination, action, status: response.status })
     histTimerEnd({ success: true, action })
 
     return true
