@@ -643,6 +643,8 @@ const processMessage = async (msg, span) => {
     payloadForFXP = JSON.stringify(payloadForFXP)
     const method = PATCH
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
+    headers['content-type'] = `application/vnd.interoperability.fxTransfers+json;version=${Util.resourceVersions[Enum.Http.HeaderResources.FX_TRANSFERS].contentVersion}`
+
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForFXP}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
     let response = { status: 'unknown' }
     const histTimerEndSendRequest = Metrics.getHistogram(
