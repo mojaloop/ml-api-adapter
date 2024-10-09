@@ -625,7 +625,7 @@ const processMessage = async (msg, span) => {
     return true
   }
 
-  if ([Action.FX_NOTIFY].includes(action)) {
+  if (action === Action.FX_NOTIFY) {
     if (!isSuccess) {
       throw ErrorHandler.Factory.createFSPIOPError(
         ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR,
@@ -635,17 +635,27 @@ const processMessage = async (msg, span) => {
 
     const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
-    headers = createCallbackHeaders({ headers: content.headers, httpMethod: PATCH, endpointTemplate })
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PATCH}, ${JSON.stringify(content.headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
+
+    let payloadForFXP = JSON.parse(payload)
+    if (payloadForFXP.fulfilment) {
+      delete payloadForFXP.fulfilment
+    }
+    payloadForFXP = JSON.stringify(payloadForFXP)
+    const method = PATCH
+    headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
+    headers['content-type'] = `application/vnd.interoperability.fxTransfers+json;version=${Util.resourceVersions[Enum.Http.HeaderResources.FX_TRANSFERS].contentVersion}`
+
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForFXP}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
     let response = { status: 'unknown' }
     const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
       'notification_event_delivery - metric for sending notification requests to FSPs',
-      ['success', 'from', 'to', 'dest', 'action', 'status']
+      ['success', 'from', 'dest', 'action', 'status']
     ).startTimer()
 
     try {
-      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PATCH, payload, responseType, span, protocolVersions, hubNameRegex })
+      jwsSigner = getJWSSigner(Config.HUB_NAME)
+      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForFXP, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
       histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
