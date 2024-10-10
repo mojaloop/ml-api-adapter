@@ -35,7 +35,7 @@ services:
       - central-ledger
       - kafka
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:3000/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:3000/health"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -63,7 +63,7 @@ services:
       - central-ledger
       - kafka
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:4545/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:4545"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -72,7 +72,7 @@ services:
     # image: mojaloop/central-ledger:latest
     image: mojaloop/central-ledger:v17.8.0-snapshot.34
     container_name: ml_central-ledger
-    command: sh -c "/opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"
     links:
       - mysql
       - kafka
@@ -92,14 +92,14 @@ services:
       - ml-mojaloop-net
     user: 'root'
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:3001/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:3001/health"]
       timeout: 20s
       retries: 10
       interval: 30s
 
   central-handler-position-batch:
     image: mojaloop/central-ledger:v17.8.0-snapshot.34
-    command: sh -c " /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node src/handlers/index.js handler --positionbatch"
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node src/handlers/index.js handler --positionbatch"
     ports:
       - "3002:3001"
     links:
@@ -207,7 +207,7 @@ services:
     networks:
       - ml-mojaloop-net
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:8444/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:8444/health"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -229,6 +229,7 @@ services:
 
 
   redis-node-0:
+    container_name: redis-node-0
     <<: *REDIS_NODE
     environment:
       <<: *REDIS_ENVS
@@ -243,12 +244,17 @@ services:
       - "6379:6379"
 
   redis-node-1:
+    container_name: redis-node-1
     <<: *REDIS_NODE
   redis-node-2:
+    container_name: redis-node-2
     <<: *REDIS_NODE
   redis-node-3:
+    container_name: redis-node-3
     <<: *REDIS_NODE
   redis-node-4:
+    container_name: redis-node-4
     <<: *REDIS_NODE
   redis-node-5:
+    container_name: redis-node-5
     <<: *REDIS_NODE
