@@ -63,7 +63,7 @@ services:
       - central-ledger
       - kafka
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:4545/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:4545"]
       timeout: 20s
       retries: 10
       interval: 30s
