@@ -36,7 +36,8 @@ Test('setup', setupTest => {
       method: sandbox.stub(),
       info: {
         uri: sandbox.stub()
-      }
+      },
+      route: sandbox.stub().returns([])
     }
 
     HapiStub = {
@@ -80,7 +81,8 @@ Test('setup', setupTest => {
       serverStub = {
         register: sandbox.stub(),
         start: sandbox.stub().throws(errorToThrow),
-        info: { uri: 'http://server-info-uri' }
+        info: { uri: 'http://server-info-uri' },
+        route: sandbox.stub().returns([])
       }
 
       HapiStub = {
