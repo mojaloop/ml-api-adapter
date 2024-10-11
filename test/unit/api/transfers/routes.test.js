@@ -387,3 +387,85 @@ Test('return error if errorDescription is not provided to PUT /transfers/{id}/er
   await server.stop()
   assert.end()
 })
+
+Test('return error if required fields are missing on PUT /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'PUT',
+    payload: {},
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on PUT /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'PUT',
+    payload: { transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069' },
+    headers: {}
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date is required]. child "fspiop-source" fails because [fspiop-source is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if transferId is not a guid on PUT /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'PUT',
+    payload: { transferId: 'invalid transfer id' },
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid GUID]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required fields are missing on GET /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'GET',
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on GET /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'GET',
+    headers: {}
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date is required]. child "fspiop-source" fails because [fspiop-source is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if transferId is not a guid on GET /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'GET',
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid GUID]')
+  await server.stop()
+  assert.end()
+})
+
