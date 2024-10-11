@@ -30,7 +30,10 @@ const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
 const Enum = require('@mojaloop/central-services-shared').Enum
+const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
+
+const mocks = require('../../mocks')
 
 const createRequest = (payload) => {
   const requestPayload = payload || {}
@@ -89,6 +92,15 @@ Test('transfer handler', handlerTest => {
     t.end()
   })
 
+  const createTestReply = (test, expectedCode = 202) => ({
+    response: () => ({
+      code: statusCode => {
+        test.equal(statusCode, expectedCode)
+        test.end()
+      }
+    })
+  })
+
   handlerTest.test('create should', async createTransferTest => {
     createTransferTest.test('reply with status code 202 if message is sent successfully to kafka', test => {
       const payload = {
@@ -121,16 +133,17 @@ Test('transfer handler', handlerTest => {
       TransferService.prepare.returns(Promise.resolve(true))
 
       const request = createRequest(payload)
-      const reply = {
-        response: () => {
-          return {
-            code: statusCode => {
-              test.equal(statusCode, 202)
-              test.end()
-            }
-          }
-        }
-      }
+      const reply = createTestReply(test)
+
+      Handler.create(request, reply)
+    })
+
+    createTransferTest.test('reply with status code 202 for correct fxTransfer request', test => {
+      TransferService.prepare.returns(Promise.resolve(true))
+
+      const payload = mocks.mockFxPreparePayload()
+      const request = createRequest(payload)
+      const reply = createTestReply(test)
 
       Handler.create(request, reply)
     })
@@ -168,8 +181,10 @@ Test('transfer handler', handlerTest => {
 
       try {
         await Handler.create(createRequest(payload))
+        test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
@@ -216,6 +231,17 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
+
+      Handler.fulfilTransfer(request, reply)
+    })
+
+    fulfilTransferTest.test('reply with status code 200 for success PUT fxTransfer callback', test => {
+      TransferService.fulfil.returns(Promise.resolve(true))
+
+      const payload = mocks.mockFxFulfilPayload()
+      const params = { id: 'dfsp1' }
+      const request = createPutRequest(params, payload)
+      const reply = createTestReply(test, 200)
 
       Handler.fulfilTransfer(request, reply)
     })
@@ -329,8 +355,10 @@ Test('transfer handler', handlerTest => {
 
       try {
         await Handler.fulfilTransfer(createPutRequest(params, payload))
+        test.fail('Expected an error to be thrown')
       } catch (e) {
-        test.ok(e instanceof Error)
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
@@ -393,9 +421,10 @@ Test('transfer handler', handlerTest => {
         TransferService.getTransferById.rejects(new Error('An error has occurred'))
         try {
           await Handler.getTransferById(request)
-          test.fail('does not throw')
+          test.fail('Expected an error to be thrown')
         } catch (e) {
           test.ok(e instanceof FSPIOPError)
+          test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
           test.equal(e.message, 'An error has occurred')
           test.end()
         }
@@ -454,14 +483,30 @@ Test('transfer handler', handlerTest => {
       TransferService.transferError.rejects(new Error('An error has occurred'))
       try {
         await Handler.fulfilTransferError(request)
-        test.fail('does not throw')
+        test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
     })
     fulfilTransferErrorTest.end()
   })
+
+  handlerTest.test('patchTransfer should', async patchTransferTest => {
+    await patchTransferTest.test('return error if patchTransfer is called', async test => {
+      try {
+        await Handler.patchTransfer()
+        test.fail('Expected an error to be thrown')
+      } catch (e) {
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.NOT_IMPLEMENTED.code)
+        test.end()
+      }
+    })
+    patchTransferTest.end()
+  })
+
   handlerTest.end()
 })

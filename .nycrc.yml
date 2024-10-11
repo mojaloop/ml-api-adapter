@@ -16,5 +16,6 @@ reporter: [
 exclude: [
   "**/node_modules/**",
   '**/migrations/**',
-  '**/docs/**'
+  '**/docs/**',
+  "src/shared/loggingPlugin.js" # should be moved to a separate package
 ]

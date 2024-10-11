@@ -1,8 +1,14 @@
-version: "3.7"
-
 networks:
   ml-mojaloop-net:
     name: ml-mojaloop-net
+
+x-redis-node: &REDIS_NODE
+  image: docker.io/bitnami/redis-cluster:6.2.14
+  environment: &REDIS_ENVS
+    ALLOW_EMPTY_PASSWORD: yes
+    REDIS_NODES: redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5
+  networks:
+    - ml-mojaloop-net
 
 services:
   ml-api-adapter:
@@ -10,9 +16,11 @@ services:
     container_name: ml_ml-api-adapter
     build:
       context: .
-    command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
+    command: sh -c "node /opt/app/wait4/wait4.js ml-api-adapter && node src/api/index.js"
+    # command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node --inspect=0.0.0.0:9229 src/api/index.js"
     ports:
       - "3000:3000"
+      # - "9229:9229" # for debugging
     environment:
       - LOG_LEVEL=debug
       - CSL_LOG_TRANSPORT=file
@@ -27,7 +35,7 @@ services:
       - central-ledger
       - kafka
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3000/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:3000/health"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -55,15 +63,16 @@ services:
       - central-ledger
       - kafka
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:4545/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:4545"]
       timeout: 20s
       retries: 10
       interval: 30s
 
   central-ledger:
-    image: mojaloop/central-ledger:latest
+    # image: mojaloop/central-ledger:latest
+    image: mojaloop/central-ledger:v17.8.0-snapshot.34
     container_name: ml_central-ledger
-    command: sh -c "/opt/app/wait4/wait4.js central-ledger && node src/api/index.js"
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"
     links:
       - mysql
       - kafka
@@ -83,10 +92,40 @@ services:
       - ml-mojaloop-net
     user: 'root'
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:3001/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:3001/health"]
       timeout: 20s
       retries: 10
       interval: 30s
+
+  central-handler-position-batch:
+    image: mojaloop/central-ledger:v17.8.0-snapshot.34
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node src/handlers/index.js handler --positionbatch"
+    ports:
+      - "3002:3001"
+    links:
+      - mysql
+      - kafka
+    volumes:
+      - ./docker/central-ledger/default.json:/opt/app/config/default.json
+      - ./docker/wait4:/opt/app/wait4
+    environment:
+      - LOG_LEVEL=info
+      - CLEDG_MONGODB__DISABLED=true
+      - EVENT_SDK_TRACEID_PER_VENDOR=false
+    networks:
+      - ml-mojaloop-net
+    depends_on:
+      central-ledger:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    healthcheck:
+      test: wget -q http://localhost:3001/health -O /dev/null || exit 1
+      timeout: 20s
+      retries: 30
+      interval: 30s
+      start_period: 30s
+    user: root
 
   mysql:
     image: mysql/mysql-server
@@ -168,7 +207,54 @@ services:
     networks:
       - ml-mojaloop-net
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "http://localhost:8444/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:8444/health"]
       timeout: 20s
       retries: 10
       interval: 30s
+
+  ## Debug utilities
+  kafka-debug-console:
+    # image: quay.io/cloudhut/kowl:v1.4.0
+    image: docker.redpanda.com/redpandadata/console:latest
+    deploy:
+      replicas: 1
+    restart: on-failure
+    hostname: kafka-debug-console
+    ports:
+    - "9080:8080"
+    networks:
+      - ml-mojaloop-net
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+
+
+  redis-node-0:
+    container_name: redis-node-0
+    <<: *REDIS_NODE
+    environment:
+      <<: *REDIS_ENVS
+      REDIS_CLUSTER_CREATOR: yes
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+    ports:
+      - "6379:6379"
+
+  redis-node-1:
+    container_name: redis-node-1
+    <<: *REDIS_NODE
+  redis-node-2:
+    container_name: redis-node-2
+    <<: *REDIS_NODE
+  redis-node-3:
+    container_name: redis-node-3
+    <<: *REDIS_NODE
+  redis-node-4:
+    container_name: redis-node-4
+    <<: *REDIS_NODE
+  redis-node-5:
+    container_name: redis-node-5
+    <<: *REDIS_NODE

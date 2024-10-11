@@ -1,4 +1,17 @@
 {
+  "HUB_PARTICIPANT": {
+    "ID": 1,
+    "NAME": "Hub"
+  },
+  "PROXY_CACHE": {
+    "enabled": true,
+    "type": "redis-cluster",
+    "proxyConfig": {
+      "cluster": [
+        { "host": "redis-node-0", "port": 6379 }
+      ]
+    }
+  },
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
   "ENDPOINT_SOURCE_URL": "http://localhost:3001",
@@ -30,7 +43,6 @@
     },
     "JWS": {
       "JWS_SIGN": false,
-      "FSPIOP_SOURCE_TO_SIGN": "switch",
       "JWS_SIGNING_KEY_PATH": "secrets/jwsSigningKey.key"
     }
   },

@@ -80,7 +80,8 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     brokerTest.test('Passes when it connects', async test => {
       // Arrange
-      Notification.isConnected.returns(Promise.resolve(true))
+      Notification.isConnected.resolves(true)
+      sandbox.stub(Producer, 'isConnected').returns(true)
       const expected = { name: serviceName.broker, status: statusEnum.OK }
 
       // Act

@@ -26,8 +26,10 @@
 
 const Logger = require('@mojaloop/central-services-logger')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const ParticipantEndpointCache = require('@mojaloop/central-services-shared').Util.Endpoints
+const { Endpoints: ParticipantEndpointCache, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Config = require('../../lib/config.js')
+
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 /**
   * summary: DELETE Reset Endpoint Cache
@@ -39,7 +41,7 @@ const Config = require('../../lib/config.js')
 const deleteEndpointCache = async (request, h) => {
   try {
     await ParticipantEndpointCache.stopCache()
-    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
