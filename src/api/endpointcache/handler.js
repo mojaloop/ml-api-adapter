@@ -38,7 +38,7 @@ const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
   * produces: application/json
   * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
   */
-const deleteEndpointCache = async (request, h) => {
+const deleteEndpointCache = async (context, request, h) => {
   try {
     await ParticipantEndpointCache.stopCache()
     await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })

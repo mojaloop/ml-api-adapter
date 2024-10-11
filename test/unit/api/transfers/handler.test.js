@@ -135,7 +135,7 @@ Test('transfer handler', handlerTest => {
       const request = createRequest(payload)
       const reply = createTestReply(test)
 
-      Handler.create(request, reply)
+      Handler.create({}, request, reply)
     })
 
     createTransferTest.test('reply with status code 202 for correct fxTransfer request', test => {
@@ -145,7 +145,7 @@ Test('transfer handler', handlerTest => {
       const request = createRequest(payload)
       const reply = createTestReply(test)
 
-      Handler.create(request, reply)
+      Handler.create({}, request, reply)
     })
 
     createTransferTest.test('return error if transfer create throws', async test => {
@@ -180,7 +180,7 @@ Test('transfer handler', handlerTest => {
       TransferService.prepare.returns(Promise.reject(error))
 
       try {
-        await Handler.create(createRequest(payload))
+        await Handler.create({}, createRequest(payload))
         test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
@@ -232,7 +232,7 @@ Test('transfer handler', handlerTest => {
         }
       }
 
-      Handler.fulfilTransfer(request, reply)
+      Handler.fulfilTransfer({}, request, reply)
     })
 
     fulfilTransferTest.test('reply with status code 200 for success PUT fxTransfer callback', test => {
@@ -243,7 +243,7 @@ Test('transfer handler', handlerTest => {
       const request = createPutRequest(params, payload)
       const reply = createTestReply(test, 200)
 
-      Handler.fulfilTransfer(request, reply)
+      Handler.fulfilTransfer({}, request, reply)
     })
 
     fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', async test => {
@@ -276,7 +276,7 @@ Test('transfer handler', handlerTest => {
       const request = createPutRequest(params, payload)
 
       try {
-        await Handler.fulfilTransfer(request, {})
+        await Handler.fulfilTransfer({}, request, {})
         test.fail('Expected an error to be thrown')
       } catch (err) {
         test.ok(err instanceof FSPIOPError)
@@ -316,7 +316,7 @@ Test('transfer handler', handlerTest => {
       const request = createPutRequest(params, payload)
 
       try {
-        await Handler.fulfilTransfer(request, {})
+        await Handler.fulfilTransfer({}, request, {})
         test.fail('Expected an FSPIOPError to be thrown')
       } catch (err) {
         test.ok(err instanceof FSPIOPError)
@@ -354,7 +354,7 @@ Test('transfer handler', handlerTest => {
       TransferService.fulfil.returns(Promise.reject(error))
 
       try {
-        await Handler.fulfilTransfer(createPutRequest(params, payload))
+        await Handler.fulfilTransfer({}, createPutRequest(params, payload))
         test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)
@@ -395,7 +395,7 @@ Test('transfer handler', handlerTest => {
         }
         TransferService.getTransferById.resolves()
         try {
-          await Handler.getTransferById(request, reply)
+          await Handler.getTransferById({}, request, reply)
         } catch (e) {
           test.fail()
           test.end()
@@ -420,7 +420,7 @@ Test('transfer handler', handlerTest => {
         }
         TransferService.getTransferById.rejects(new Error('An error has occurred'))
         try {
-          await Handler.getTransferById(request)
+          await Handler.getTransferById({}, request)
           test.fail('Expected an error to be thrown')
         } catch (e) {
           test.ok(e instanceof FSPIOPError)
@@ -461,7 +461,7 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
-      await Handler.fulfilTransferError(request, reply)
+      await Handler.fulfilTransferError({}, request, reply)
     })
     await fulfilTransferErrorTest.test('return error if fulfilTransfer throws', async test => {
       const headers = {}
@@ -482,7 +482,7 @@ Test('transfer handler', handlerTest => {
       }
       TransferService.transferError.rejects(new Error('An error has occurred'))
       try {
-        await Handler.fulfilTransferError(request)
+        await Handler.fulfilTransferError({}, request)
         test.fail('Expected an error to be thrown')
       } catch (e) {
         test.ok(e instanceof FSPIOPError)

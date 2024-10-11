@@ -30,11 +30,6 @@ module.exports = [
     path: `${ROUTES.fxTransfers}/{id}`,
     handler: handler.fulfilTransfer,
     options: {
-      validate: {
-        headers: schemas.transferHeadersSchema,
-        payload: schemas.fxTransfersSuccessCallbackPayloadSchema,
-        params: schemas.commonSchemas.pathIdParamSchema
-      },
       payload: {
         failAction: 'error'
       },
@@ -51,11 +46,6 @@ module.exports = [
       pre: [
         { method: validateIncomingErrorCode }
       ],
-      validate: {
-        headers: schemas.transferHeadersSchema,
-        payload: schemas.commonSchemas.errorCallbackPayloadSchema,
-        params: schemas.commonSchemas.pathIdParamSchema
-      },
       payload: {
         failAction: 'error'
       },
@@ -69,10 +59,6 @@ module.exports = [
     path: `${ROUTES.fxTransfers}/{id}`,
     handler: handler.getTransferById,
     options: {
-      validate: {
-        headers: schemas.transferHeadersSchema,
-        params: schemas.commonSchemas.pathIdParamSchema
-      },
       id: ROUTE_IDS.getFxTransfers,
       tags,
       description: 'Get an FX transfer'
@@ -83,11 +69,6 @@ module.exports = [
     path: `${ROUTES.fxTransfers}/{id}`,
     handler: handler.patchTransfer,
     options: {
-      validate: {
-        headers: schemas.transferHeadersSchema,
-        payload: schemas.fxTransfersPatchPayloadSchema,
-        params: schemas.commonSchemas.pathIdParamSchema
-      },
       payload: {
         failAction: 'error'
       },

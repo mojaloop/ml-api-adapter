@@ -1,4 +1,5 @@
 {
+  "API_TYPE": "fspiop",
   "HUB_PARTICIPANT": {
     "ID": 1,
     "NAME": "Hub"
@@ -7,6 +8,15 @@
     "enabled": true,
     "type": "redis-cluster",
     "proxyConfig": {
+      "cluster": [
+        { "host": "redis-node-0", "port": 6379 }
+      ]
+    }
+  },
+  "SHARED_CACHE": {
+    "enabled": true,
+    "type": "redis-cluster",
+    "config": {
       "cluster": [
         { "host": "redis-node-0", "port": 6379 }
       ]
@@ -22,18 +32,21 @@
   },
   "PROTOCOL_VERSIONS": {
     "CONTENT": {
-      "DEFAULT": "1.1",
+      "DEFAULT": "2.0",
       "VALIDATELIST": [
         "1.1",
-        "1.0"
+        "1.0",
+        "2.0"
       ]
     },
     "ACCEPT": {
-      "DEFAULT": "1",
+      "DEFAULT": "2",
       "VALIDATELIST": [
         "1",
         "1.0",
-        "1.1"
+        "1.1",
+        "2",
+        "2.0"
       ]
     }
   },

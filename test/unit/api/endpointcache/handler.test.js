@@ -89,7 +89,7 @@ Test('route handler', (handlerTest) => {
       // Assert
       try {
         // Act
-        await unwrapResponse((reply) => handler.deleteEndpointCache(createRequest({}), reply))
+        await unwrapResponse((reply) => handler.deleteEndpointCache({}, createRequest({}), reply))
         test.fail()
         sandbox.restore()
         test.end()
@@ -110,7 +110,7 @@ Test('route handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.deleteEndpointCache(createRequest({}), reply))
+      } = await unwrapResponse((reply) => Handler.deleteEndpointCache({}, createRequest({}), reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')

@@ -67,7 +67,7 @@ Test('metrics handler', (handlerTest) => {
         }
       }
 
-      Handler.metrics(createRequest(), reply)
+      Handler.metrics({}, createRequest(), reply)
     })
     healthTest.end()
   })

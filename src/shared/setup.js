@@ -36,7 +36,11 @@ const Metrics = require('@mojaloop/central-services-metrics')
 const Enums = require('@mojaloop/central-services-shared').Enum
 const Kafka = require('@mojaloop/central-services-stream').Util
 const { getProducerConfigs } = require('../lib/kafka/producer')
-
+const Util = require('../lib/util')
+const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
+const Handlers = require('./handlers')
+const Routes = require('../api/routes')
+const HandlerModeRoutes = require('../handlers/api/routes')
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 /**
@@ -50,10 +54,11 @@ const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
  *
  * @param {number} port Port to register the Server against
  * @param modules list of Modules to be registered
+ * @param {array} routes array of API routes
  * @returns {Promise<Server>} Returns the Server object
  */
 
-const createServer = async (port, modules) => {
+const createServer = async (port, api, routes) => {
   const server = await new Hapi.Server({
     port,
     routes: {
@@ -70,9 +75,9 @@ const createServer = async (port, modules) => {
     }
   })
 
-  await Plugins.registerPlugins(server)
-  await server.register(modules)
+  await Plugins.registerPlugins(server, api)
 
+  server.route(routes)
   await server.start()
   Logger.isDebugEnabled && Logger.debug(`Server running at: ${server.info.uri}`)
   return server
@@ -155,13 +160,17 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
   initializeInstrumentation()
   switch (service) {
     case Enums.Http.ServiceType.API: {
-      server = await createServer(port, modules)
+      const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: false })
+      const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
+      server = await createServer(port, api, Routes.APIRoutes(api))
       await initializeProducers()
       break
     }
     case Enums.Http.ServiceType.HANDLER: {
       if (!Config.HANDLERS_API_DISABLED) {
-        server = await createServer(port, modules)
+        const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: true })
+        const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
+        server = await createServer(port, api, HandlerModeRoutes.APIRoutes(api))
       }
       break
     }

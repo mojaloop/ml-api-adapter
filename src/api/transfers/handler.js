@@ -53,7 +53,7 @@ const { Type, Action } = Enum.Events.Event
  * @returns {integer} - Returns the response code 202 on success, throws error if failure occurs
  */
 
-const create = async function (request, h) {
+const create = async function (context, request, h) {
   const { headers, payload, dataUri, span } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
 
@@ -97,7 +97,7 @@ const create = async function (request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 
-const fulfilTransfer = async function (request, h) {
+const fulfilTransfer = async function (context, request, h) {
   const { headers, payload, params, dataUri, span } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
 
@@ -144,7 +144,7 @@ const fulfilTransfer = async function (request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 
-const getTransferById = async function (request, h) {
+const getTransferById = async function (context, request, h) {
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const metric = PROM_METRICS.transferGet(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -183,7 +183,7 @@ const getTransferById = async function (request, h) {
  *
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
-const fulfilTransferError = async function (request, h) {
+const fulfilTransferError = async function (context, request, h) {
   const { headers, payload, params, dataUri, span } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
 
@@ -220,7 +220,7 @@ const fulfilTransferError = async function (request, h) {
  * @async
  * @description Not implemented
  */
-const patchTransfer = async function (request, h) {
+const patchTransfer = async function (context, request, h) {
   // Not implemented yet
   throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.NOT_IMPLEMENTED)
 }

@@ -42,7 +42,7 @@ Test('route handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), {}, reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
@@ -60,7 +60,7 @@ Test('route handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
+      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), {}, reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')

@@ -26,7 +26,7 @@
 /**
  * unwrapResponse
  *
- * Use this function to unwrap the innner response body and code from an async Handler
+ * Use this function to unwrap the inner response body and code from an async Handler
  */
 const unwrapResponse = async (asyncFunction) => {
   let responseBody
