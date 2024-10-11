@@ -24,7 +24,7 @@ module.exports.ApiHandlers = {
   methodNotAllowed: OpenapiBackend.methodNotAllowed
 }
 
-module.exports.AdminHandlers = {
+module.exports.KafkaModeHandlerApiHandlers = {
   HealthGet: getHealth,
   MetadataGet: metadata,
   MetricsGet: metrics,

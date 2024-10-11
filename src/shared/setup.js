@@ -169,7 +169,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     case Enums.Http.ServiceType.HANDLER: {
       if (!Config.HANDLERS_API_DISABLED) {
         const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: true })
-        const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
+        const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.KafkaModeHandlerApiHandlers)
         server = await createServer(port, api, HandlerModeRoutes.APIRoutes(api))
       }
       break
