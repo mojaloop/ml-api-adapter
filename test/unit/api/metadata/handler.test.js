@@ -82,7 +82,7 @@ Test('metadata handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth({},createRequest({}), reply))
+      } = await unwrapResponse((reply) => Handler.getHealth({}, createRequest({}), reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
