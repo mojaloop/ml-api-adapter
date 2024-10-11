@@ -1,7 +1,7 @@
-const { getHealth, metadata } = require('../api/metadata/handler')
-const { metrics } = require('../api/metrics/handler')
-const { deleteEndpointCache } = require('../api/endpointcache/handler')
-const TransferHandler = require('../api/transfers/handler')
+const { getHealth, metadata } = require('./metadata/handler')
+const { metrics } = require('./metrics/handler')
+const { deleteEndpointCache } = require('./endpointcache/handler')
+const TransferHandler = require('./transfers/handler')
 const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
 
 module.exports.ApiHandlers = {
@@ -19,16 +19,6 @@ module.exports.ApiHandlers = {
   FxTransfersByIDPatch: TransferHandler.patchTransfer,
   FxTransfersByIDPut: TransferHandler.fulfilTransfer,
   FxTransfersByIDAndErrorPut: TransferHandler.fulfilTransferError,
-  validationFail: OpenapiBackend.validationFail,
-  notFound: OpenapiBackend.notFound,
-  methodNotAllowed: OpenapiBackend.methodNotAllowed
-}
-
-module.exports.KafkaModeHandlerApiHandlers = {
-  HealthGet: getHealth,
-  MetadataGet: metadata,
-  MetricsGet: metrics,
-  EndpointCacheDelete: deleteEndpointCache,
   validationFail: OpenapiBackend.validationFail,
   notFound: OpenapiBackend.notFound,
   methodNotAllowed: OpenapiBackend.methodNotAllowed

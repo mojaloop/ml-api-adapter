@@ -26,7 +26,7 @@ const ServerSetup = require('../../src/shared/setup')
 const Routes = require('../../src/api/routes')
 const getPort = require('get-port')
 const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
-const Handlers = require('../../src/shared/handlers')
+const Handlers = require('../../src/api/handlers')
 const Util = require('../../src/lib/util')
 
 const setupServer = async () => {

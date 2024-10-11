@@ -38,8 +38,9 @@ const Kafka = require('@mojaloop/central-services-stream').Util
 const { getProducerConfigs } = require('../lib/kafka/producer')
 const Util = require('../lib/util')
 const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
-const Handlers = require('./handlers')
+const Handlers = require('../api/handlers')
 const Routes = require('../api/routes')
+const HandlerModeHandlers = require('../handlers/api/handlers')
 const HandlerModeRoutes = require('../handlers/api/routes')
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
@@ -169,7 +170,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     case Enums.Http.ServiceType.HANDLER: {
       if (!Config.HANDLERS_API_DISABLED) {
         const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: true })
-        const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.KafkaModeHandlerApiHandlers)
+        const api = await OpenapiBackend.initialise(OpenAPISpecPath, HandlerModeHandlers.KafkaModeHandlerApiHandlers)
         server = await createServer(port, api, HandlerModeRoutes.APIRoutes(api))
       }
       break
