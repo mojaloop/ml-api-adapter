@@ -28,7 +28,10 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
+const { Hapi } = require('@mojaloop/central-services-shared').Util
 
+const Config = require('../../lib/config')
 const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const { logger } = require('../../shared/logger')
@@ -54,9 +57,24 @@ const { Type, Action } = Enum.Events.Event
  */
 
 const create = async function (context, request, h) {
-  const { headers, payload, dataUri, span } = request
+  const { headers, dataUri, span, rawPayload } = request
+  let { payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
 
+  let kafkaMessageContext
+  if (isIsoMode) {
+    if (isFx) {
+      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload.body, headers })
+    } else {
+      payload = await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload.body, headers })
+    }
+    kafkaMessageContext = {
+      originalPayload: rawPayload,
+      originalRequestId: request.info.id
+    }
+  }
+  console.log(kafkaMessageContext)
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
     metric,
@@ -73,7 +91,7 @@ const create = async function (context, request, h) {
       payload
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.prepare(headers, dataUri, payload, span)
+    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext)
 
     histTimerEnd({ success: true })
     return h.response().code(202)
@@ -98,8 +116,23 @@ const create = async function (context, request, h) {
  */
 
 const fulfilTransfer = async function (context, request, h) {
-  const { headers, payload, params, dataUri, span } = request
+  const { headers, params, dataUri, span, rawPayload } = request
+  let { payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
+  let kafkaMessageContext
+  if (isIsoMode) {
+    if (isFx) {
+      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload.body, headers })
+    } else {
+      payload = await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload.body, headers })
+    }
+
+    kafkaMessageContext = {
+      originalPayload: rawPayload,
+      originalRequestId: request.info.id
+    }
+  }
 
   const metric = PROM_METRICS.transferFulfil(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -120,7 +153,7 @@ const fulfilTransfer = async function (context, request, h) {
       dataUri
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.fulfil(headers, dataUri, payload, params, span)
+    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext)
 
     histTimerEnd({ success: true })
     return h.response().code(200)
@@ -184,8 +217,23 @@ const getTransferById = async function (context, request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (context, request, h) {
-  const { headers, payload, params, dataUri, span } = request
+  const { headers, params, dataUri, span, rawPayload } = request
+  let { payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
+  let kafkaMessageContext
+
+  if (isIsoMode) {
+    if (isFx) {
+      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload.body, headers })
+    } else {
+      payload = await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload.body, headers })
+    }
+    kafkaMessageContext = {
+      originalPayload: rawPayload,
+      originalRequestId: request.info.id
+    }
+  }
 
   const metric = PROM_METRICS.transferFulfilError(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -203,7 +251,7 @@ const fulfilTransferError = async function (context, request, h) {
       params
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.transferError(headers, dataUri, payload, params, span, isFx)
+    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext)
 
     histTimerEnd({ success: true })
     return h.response().code(200)

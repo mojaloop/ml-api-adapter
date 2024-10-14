@@ -202,6 +202,43 @@ Test('Transfer Service tests', serviceTest => {
       }
     })
 
+    prepareTest.test('execute prepare function with context', async test => {
+      const message = {}
+
+      const headers = {}
+      const context = { someContext: 'contextValue' }
+
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = {
+        id: message.transferId,
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'prepare',
+            action: 'prepare',
+            createdAt: new Date(),
+            status: 'success'
+          }
+        },
+        context
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const result = await Service.prepare(headers, dataUri, message, span, context)
+      test.equals(result, true)
+      test.ok(messageProtocol.context, 'Context should exist on the message protocol')
+      test.end()
+    })
     prepareTest.end()
   })
 
@@ -343,6 +380,45 @@ Test('Transfer Service tests', serviceTest => {
 
       const success = await Service.fulfil(headers, dataUri, message, { id }, span)
       test.ok(success === true)
+      test.end()
+    })
+
+    fulfilTest.test('execute fulfil function with context', async test => {
+      const message = {}
+      const headers = {}
+      const id = 'dfsp1'
+      const context = { someContext: 'contextValue' }
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const messageProtocol = {
+        id,
+        to: headers['fspiop-destination'],
+        from: headers['fspiop-source'],
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'fulfil',
+            action: 'commit',
+            createdAt: new Date(),
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        context
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.fulfil(headers, dataUri, message, { id }, span, context)
+      test.equals(result, true)
+      test.ok(messageProtocol.context, 'Context should exist on the message protocol')
       test.end()
     })
 
@@ -495,6 +571,55 @@ Test('Transfer Service tests', serviceTest => {
       }
     })
 
+    transferErrorTest.test('execute function with context', async test => {
+      const message = {
+        errorCode: '5001',
+        errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        extensionList: {
+          extension: [{
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }]
+        }
+      }
+      const headers = {}
+      const id = '888ec534-ee48-4575-b6a9-ead2955b8930'
+      const context = { someContext: 'contextValue' }
+      const messageProtocol = {
+        id,
+        to: headers['fspiop-destination'],
+        from: headers['fspiop-source'],
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'fulfil',
+            action: 'abort',
+            createdAt: new Date(),
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        context
+      }
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const result = await Service.transferError(headers, dataUri, message, { id }, span, false, context)
+      test.equals(result, true)
+      test.ok(messageProtocol.context, 'Context should exist on the message protocol')
+      test.end()
+    })
+
     transferErrorTest.end()
   })
 
@@ -559,7 +684,8 @@ Test('Transfer Service tests', serviceTest => {
               description: 'action successful'
             }
           }
-        }
+        },
+        context: {}
       }
 
       const span = EventSdk.Tracer.createSpan('test_span')
@@ -612,7 +738,8 @@ Test('Transfer Service tests', serviceTest => {
               description: 'action successful'
             }
           }
-        }
+        },
+        context: {}
       }
 
       const span = EventSdk.Tracer.createSpan('test_span')

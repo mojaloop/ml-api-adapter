@@ -27,6 +27,7 @@ const Uuid = require('uuid4')
 const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const { Enum } = require('@mojaloop/central-services-shared')
 const { STORAGE_TYPES } = require('@mojaloop/inter-scheme-proxy-cache-lib')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 const generateTransferId = () => {
   return Uuid()
@@ -180,6 +181,36 @@ const proxyCacheConfigDto = ({ host = 'localhost' } = {}) => ({
   }
 })
 
+const buildISOTransfer = async (transferId, headers) => {
+  const transfer = buildTransfer(transferId)
+  return await TransformFacades.FSPIOP.transfers.post({ body: transfer, headers })
+}
+
+const buildISOFxTransfer = async (commitRequestId, headers) => {
+  const fxTransfer = buildFXTransfer(commitRequestId)
+  return await TransformFacades.FSPIOP.fxTransfers.post({ body: fxTransfer, headers })
+}
+
+const buildISOTransferError = async (headers) => {
+  const error = buildTransferError()
+  return await TransformFacades.FSPIOP.transfers.putError({ body: error, headers })
+}
+
+const buildISOFxTransferError = async (headers) => {
+  const error = buildTransferError()
+  return await TransformFacades.FSPIOP.fxTransfers.putError({ body: error, headers })
+}
+
+const buildISOFulfil = async (headers) => {
+  const fulfil = buildFulfil()
+  return await TransformFacades.FSPIOP.transfers.put({ body: fulfil, headers })
+}
+
+const buildISOFxFulfil = async (headers) => {
+  const fulfil = buildFulfil()
+  return await TransformFacades.FSPIOP.fxTransfers.put({ body: fulfil, headers })
+}
+
 module.exports = {
   buildTransfer,
   buildFXTransfer,
@@ -190,5 +221,11 @@ module.exports = {
   generateParentTestSpan,
   createMessageProtocol,
   createProducerConfig,
-  proxyCacheConfigDto
+  proxyCacheConfigDto,
+  buildISOTransfer,
+  buildISOFxTransfer,
+  buildISOTransferError,
+  buildISOFxTransferError,
+  buildISOFulfil,
+  buildISOFxFulfil
 }
