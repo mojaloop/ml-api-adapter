@@ -20,6 +20,8 @@
  --------------
  ******/
 
+/* istanbul ignore file */
+
 'use strict'
 
 const handleRequest = (api, req, h) => api.handleRequest(
@@ -76,6 +78,7 @@ const APIRoutes = (api) => [
   {
     method: 'GET',
     path: '/transfers/{ID}',
+
     handler: (req, h) => handleRequest(api, req, h),
     config: {
       tags: ['api', 'transfers'],

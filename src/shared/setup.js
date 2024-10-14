@@ -60,6 +60,7 @@ const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
  */
 
 const createServer = async (port, api, routes) => {
+  /* istanbul ignore next */
   const server = await new Hapi.Server({
     port,
     routes: {

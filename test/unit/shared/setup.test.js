@@ -8,6 +8,7 @@ const Proxyquire = require('proxyquire')
 const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
 const Boom = require('@hapi/boom')
 const Kafka = require('@mojaloop/central-services-stream').Util
+const Logger = require('@mojaloop/central-services-logger')
 
 Test('setup', setupTest => {
   let sandbox
@@ -23,7 +24,9 @@ Test('setup', setupTest => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Endpoints, 'initializeCache').returns(Promise.resolve(true))
     sandbox.stub(Kafka.Producer, 'connectAll').returns(Promise.resolve(true))
-
+    sandbox.stub(Logger, 'isErrorEnabled').value(true)
+    sandbox.stub(Logger, 'isInfoEnabled').value(true)
+    sandbox.stub(Logger, 'isDebugEnabled').value(true)
     PluginsStub = {
       registerPlugins: sandbox.stub().returns(Promise.resolve())
     }

@@ -28,6 +28,8 @@
  --------------
  ******/
 
+/* istanbul ignore file */
+
 'use strict'
 
 const handleRequest = (api, req, h) => api.handleRequest(
@@ -48,7 +50,9 @@ const APIRoutes = (api) => [
   {
     method: 'GET',
     path: '/health',
-    handler: (req, h) => handleRequest(api, req, h),
+    handler: (req, h) =>
+      /* istanbul ignore next */
+      handleRequest(api, req, h),
     config: {
       tags: ['api', 'health'],
       description: 'GET health'

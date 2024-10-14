@@ -1,4 +1,4 @@
-const { getHealth  } = require('../../../src/api/metadata/handler')
+const { getHealth } = require('../../../src/api/metadata/handler')
 const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
 
 module.exports.KafkaModeHandlerApiHandlers = {

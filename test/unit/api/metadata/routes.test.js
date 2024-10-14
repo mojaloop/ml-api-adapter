@@ -4,7 +4,6 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 const Base = require('../../base')
-const Config = require('../../../../src/lib/config')
 const Notification = require('../../../../src/handlers/notification')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 
@@ -57,4 +56,4 @@ Test('metadata routes', (metadataRoutesTest) => {
   })
 
   metadataRoutesTest.end()
-});
+})
