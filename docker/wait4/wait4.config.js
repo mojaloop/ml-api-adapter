@@ -88,6 +88,17 @@ module.exports = {
           retries: 60
         }
       ]
+    },
+    {
+      name: 'ml-api-adapter-iso',
+      wait4: [
+        {
+          uri: 'kafka:29092',
+          method: 'ncat',
+          // Seems to take longer on circleci to start up
+          retries: 60
+        }
+      ]
     }
   ]
 }

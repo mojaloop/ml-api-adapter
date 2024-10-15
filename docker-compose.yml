@@ -22,11 +22,40 @@ services:
       - "3000:3000"
       # - "9229:9229" # for debugging
     environment:
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=info
       - CSL_LOG_TRANSPORT=file
       - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:
       - ./docker/ml-api-adapter/default.json:/opt/app/config/default.json
+      - ./docker/wait4:/opt/app/wait4
+    networks:
+      - ml-mojaloop-net
+    user: 'root'
+    depends_on:
+      - central-ledger
+      - kafka
+    healthcheck:
+      test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:3000/health"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+
+  ml-api-adapter-iso:
+    image: mojaloop/ml-api-adapter:local
+    container_name: ml_ml-api-adapter-iso
+    build:
+      context: .
+    command: sh -c "node /opt/app/wait4/wait4.js ml-api-adapter-iso && node src/api/index.js"
+    # command: sh -c "/opt/app/wait4/wait4.js ml-api-adapter && node --inspect=0.0.0.0:9229 src/api/index.js"
+    ports:
+      - "4000:3000"
+      # - "9229:9229" # for debugging
+    environment:
+      - LOG_LEVEL=info
+      - CSL_LOG_TRANSPORT=file
+      - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
+    volumes:
+      - ./docker/ml-api-adapter/default_iso.json:/opt/app/config/default.json
       - ./docker/wait4:/opt/app/wait4
     networks:
       - ml-mojaloop-net
@@ -50,7 +79,7 @@ services:
     ports:
       - "4545:4545"
     environment:
-      - LOG_LEVEL=info
+      - LOG_LEVEL=debug
       - CSL_LOG_TRANSPORT=file
       - ENDPOINT_PORT=4545
     volumes:

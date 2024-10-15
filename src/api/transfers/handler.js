@@ -65,9 +65,9 @@ const create = async function (context, request, h) {
   let kafkaMessageContext
   if (isIsoMode) {
     if (isFx) {
-      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload.body, headers })
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
     } else {
-      payload = await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload.body, headers })
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
     }
     kafkaMessageContext = {
       originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
@@ -122,9 +122,9 @@ const fulfilTransfer = async function (context, request, h) {
   let kafkaMessageContext
   if (isIsoMode) {
     if (isFx) {
-      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload.body, headers })
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
     } else {
-      payload = await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload.body, headers })
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
     }
     kafkaMessageContext = {
       originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
@@ -223,9 +223,9 @@ const fulfilTransferError = async function (context, request, h) {
 
   if (isIsoMode) {
     if (isFx) {
-      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload.body, headers })
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
     } else {
-      payload = await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload.body, headers })
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
     }
     kafkaMessageContext = {
       originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,

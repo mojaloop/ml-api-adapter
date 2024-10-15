@@ -54,7 +54,7 @@ const buildTransfer = (transferId, ilpPacketVersion) => {
     },
     ilpPacket: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Packet : ilpV1Packet,
     condition: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Condition : ilpV1Condition,
-    expiration: '2016-05-24T08:38:08.699-04:00',
+    expiration: new Date(new Date().getTime() + 6000),
     extensionList:
     {
       extension:
@@ -82,7 +82,7 @@ const buildFXTransfer = (commitRequestId, ilpPacketVersion) => {
     sourceAmount: { amount: 100, currency: 'KWS' },
     targetAmount: { amount: 200, currency: 'TZS' },
     condition: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Condition : ilpV1Condition,
-    expiration: '2018-08-24T21:31:00.534+01:00',
+    expiration: new Date(new Date().getTime() + 6000),
     ilpPacket: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Packet : ilpV1Packet
   }
 }
@@ -114,7 +114,7 @@ const buildFulfil = () => {
   return {
     transferState: 'RESERVED',
     fulfilment: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
-    completedTimestamp: '2024-04-06T08:38:08.699-04:00',
+    completedTimestamp: new Date().toISOString(),
     extensionList:
     {
       extension:
@@ -189,32 +189,32 @@ const proxyCacheConfigDto = ({ host = 'localhost' } = {}) => ({
 
 const buildISOTransfer = async (transferId, headers, ilpPacketVersion) => {
   const transfer = buildTransfer(transferId, ilpPacketVersion)
-  return await TransformFacades.FSPIOP.transfers.post({ body: transfer, headers })
+  return (await TransformFacades.FSPIOP.transfers.post({ body: transfer, headers })).body
 }
 
 const buildISOFxTransfer = async (commitRequestId, headers, ilpPacketVersion) => {
   const fxTransfer = buildFXTransfer(commitRequestId, ilpPacketVersion)
-  return await TransformFacades.FSPIOP.fxTransfers.post({ body: fxTransfer, headers })
+  return (await TransformFacades.FSPIOP.fxTransfers.post({ body: fxTransfer, headers })).body
 }
 
 const buildISOTransferError = async (headers) => {
   const error = buildTransferError()
-  return await TransformFacades.FSPIOP.transfers.putError({ body: error, headers })
+  return (await TransformFacades.FSPIOP.transfers.putError({ body: error, headers })).body
 }
 
 const buildISOFxTransferError = async (headers) => {
   const error = buildTransferError()
-  return await TransformFacades.FSPIOP.fxTransfers.putError({ body: error, headers })
+  return (await TransformFacades.FSPIOP.fxTransfers.putError({ body: error, headers })).body
 }
 
 const buildISOFulfil = async (headers) => {
   const fulfil = buildFulfil()
-  return await TransformFacades.FSPIOP.transfers.put({ body: fulfil, headers })
+  return (await TransformFacades.FSPIOP.transfers.put({ body: fulfil, headers })).body
 }
 
 const buildISOFxFulfil = async (headers) => {
   const fulfil = buildFulfil()
-  return await TransformFacades.FSPIOP.fxTransfers.put({ body: fulfil, headers })
+  return (await TransformFacades.FSPIOP.fxTransfers.put({ body: fulfil, headers })).body
 }
 
 module.exports = {

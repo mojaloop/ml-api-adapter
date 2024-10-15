@@ -100,7 +100,7 @@ Test('ISO transfer handler', handlerTest => {
       test.ok(TransferService.prepare.called)
       test.deepEqual(
         prepareStub.getCall(0).args[2],
-        await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload.body, headers: request.headers })
+        (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers: request.headers })).body
       )
       test.deepEqual(
         prepareStub.getCall(0).args[4],
@@ -155,7 +155,7 @@ Test('ISO transfer handler', handlerTest => {
       await Handler.fulfilTransfer({}, request, reply)
       test.deepEqual(
         fulfilStub.getCall(0).args[2],
-        await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload.body, headers: request.headers })
+        (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers: request.headers })).body
       )
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
@@ -210,7 +210,7 @@ Test('ISO transfer handler', handlerTest => {
       await Handler.fulfilTransferError({}, request, reply)
       test.deepEqual(
         transferErrorStub.getCall(0).args[2],
-        await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload.body, headers: request.headers })
+        (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers: request.headers })).body
       )
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
@@ -265,7 +265,7 @@ Test('ISO transfer handler', handlerTest => {
       await Handler.create({}, request, reply)
       test.deepEqual(
         prepareStub.getCall(0).args[2],
-        await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload.body, headers: request.headers })
+        (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers: request.headers })).body
       )
       test.deepEqual(
         prepareStub.getCall(0).args[4],
@@ -321,7 +321,7 @@ Test('ISO transfer handler', handlerTest => {
       await Handler.fulfilTransfer({}, request, reply)
       test.deepEqual(
         fulfilStub.getCall(0).args[2],
-        await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload.body, headers: request.headers })
+        (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers: request.headers })).body
       )
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
@@ -376,7 +376,7 @@ Test('ISO transfer handler', handlerTest => {
       await Handler.fulfilTransferError({}, request, reply)
       test.deepEqual(
         transferErrorStub.getCall(0).args[2],
-        await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload.body, headers: request.headers })
+        (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers: request.headers })).body
       )
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
