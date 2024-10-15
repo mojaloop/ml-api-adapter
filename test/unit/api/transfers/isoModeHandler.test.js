@@ -27,7 +27,13 @@ const uuid4 = require('uuid4')
 const createISORequest = async (payload, headers, participants) => {
   const requestPayload = payload || {}
   return {
-    headers,
+    headers: {
+      'fspiop-source': 'dfsp1',
+      'fspiop-destination': 'dfsp2',
+      'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0',
+      accept: 'application/vnd.interoperability.iso20022.transfers+json;version=2',
+      ...headers
+    },
     payload: requestPayload,
     server: {
       log: () => { }

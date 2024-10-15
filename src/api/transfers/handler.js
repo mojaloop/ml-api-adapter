@@ -73,13 +73,11 @@ const create = async function (context, request, h) {
     // Transform the payload to ISO20022
     if (isFx) {
       payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
-      headers['content-type'] = 'application/vnd.interoperability.fxTransfers+json;version=2.0'
-      headers.accept = 'application/vnd.interoperability.fxTransfers+json;version=2'
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
-      headers['content-type'] = 'application/vnd.interoperability.transfers+json;version=2.0'
-      headers.accept = 'application/vnd.interoperability.transfers+json;version=2'
     }
+    headers['content-type'] = headers['content-type'].replace('.iso20022', '')
+    headers.accept = headers.accept.replace('.iso20022', '')
     // Recreate dataUri with transformed payload
     dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
   }
@@ -140,13 +138,11 @@ const fulfilTransfer = async function (context, request, h) {
     // Transform ISO20022 message to fspiop message
     if (isFx) {
       payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
-      headers['content-type'] = 'application/vnd.interoperability.fxTransfers+json;version=2.0'
-      headers.accept = 'application/vnd.interoperability.fxTransfers+json;version=2'
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
-      headers['content-type'] = 'application/vnd.interoperability.transfers+json;version=2.0'
-      headers.accept = 'application/vnd.interoperability.transfers+json;version=2'
     }
+    headers['content-type'] = headers['content-type'].replace('.iso20022', '')
+    headers.accept = headers.accept.replace('.iso20022', '')
     // Recreate dataUri with transformed payload
     dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
   }
@@ -249,13 +245,11 @@ const fulfilTransferError = async function (context, request, h) {
     // Transform ISO20022 message to fspiop message
     if (isFx) {
       payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
-      headers['content-type'] = 'application/vnd.interoperability.fxTransfers+json;version=2.0'
-      headers.accept = 'application/vnd.interoperability.fxTransfers+json;version=2'
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
-      headers['content-type'] = 'application/vnd.interoperability.transfers+json;version=2.0'
-      headers.accept = 'application/vnd.interoperability.transfers+json;version=2'
     }
+    headers['content-type'] = headers['content-type'].replace('.iso20022', '')
+    headers.accept = headers.accept.replace('.iso20022', '')
     // Recreate dataUri with transformed payload
     dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
   }
