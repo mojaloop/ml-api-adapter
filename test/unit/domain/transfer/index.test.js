@@ -216,7 +216,8 @@ Test('Transfer Service tests', serviceTest => {
         type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
           headers,
-          payload: message
+          payload: message,
+          context
         },
         metadata: {
           event: {
@@ -226,8 +227,7 @@ Test('Transfer Service tests', serviceTest => {
             createdAt: new Date(),
             status: 'success'
           }
-        },
-        context
+        }
       }
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
@@ -236,7 +236,7 @@ Test('Transfer Service tests', serviceTest => {
 
       const result = await Service.prepare(headers, dataUri, message, span, context)
       test.equals(result, true)
-      test.ok(messageProtocol.context, 'Context should exist on the message protocol')
+      test.ok(messageProtocol.content.context, 'Context should exist on the message protocol')
       test.end()
     })
     prepareTest.end()
@@ -396,7 +396,8 @@ Test('Transfer Service tests', serviceTest => {
         type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
           headers,
-          payload: message
+          payload: message,
+          context
         },
         metadata: {
           event: {
@@ -409,8 +410,7 @@ Test('Transfer Service tests', serviceTest => {
               code: 0
             }
           }
-        },
-        context
+        }
       }
       const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
 
@@ -418,7 +418,7 @@ Test('Transfer Service tests', serviceTest => {
       const span = EventSdk.Tracer.createSpan('test_span')
       const result = await Service.fulfil(headers, dataUri, message, { id }, span, context)
       test.equals(result, true)
-      test.ok(messageProtocol.context, 'Context should exist on the message protocol')
+      test.ok(messageProtocol.content.context, 'Context should exist on the message protocol')
       test.end()
     })
 
@@ -593,7 +593,8 @@ Test('Transfer Service tests', serviceTest => {
         type: 'application/vnd.interoperability.transfers+json;version=1.1',
         content: {
           headers,
-          payload: message
+          payload: message,
+          context
         },
         metadata: {
           event: {
@@ -606,8 +607,7 @@ Test('Transfer Service tests', serviceTest => {
               code: 0
             }
           }
-        },
-        context
+        }
       }
       const span = EventSdk.Tracer.createSpan('test_span')
 
@@ -616,7 +616,7 @@ Test('Transfer Service tests', serviceTest => {
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
       const result = await Service.transferError(headers, dataUri, message, { id }, span, false, context)
       test.equals(result, true)
-      test.ok(messageProtocol.context, 'Context should exist on the message protocol')
+      test.ok(messageProtocol.content.context, 'Context should exist on the message protocol')
       test.end()
     })
 
@@ -671,7 +671,8 @@ Test('Transfer Service tests', serviceTest => {
             id: message.transferId
           },
           headers,
-          payload: {}
+          payload: {},
+          context: {}
         },
         metadata: {
           correlationId: transferId,
@@ -684,8 +685,7 @@ Test('Transfer Service tests', serviceTest => {
               description: 'action successful'
             }
           }
-        },
-        context: {}
+        }
       }
 
       const span = EventSdk.Tracer.createSpan('test_span')
@@ -725,7 +725,8 @@ Test('Transfer Service tests', serviceTest => {
             id: undefined
           },
           headers,
-          payload: {}
+          payload: {},
+          context: {}
         },
         metadata: {
           correlationId: undefined,
@@ -738,8 +739,7 @@ Test('Transfer Service tests', serviceTest => {
               description: 'action successful'
             }
           }
-        },
-        context: {}
+        }
       }
 
       const span = EventSdk.Tracer.createSpan('test_span')

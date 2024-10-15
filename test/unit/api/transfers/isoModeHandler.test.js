@@ -5,7 +5,6 @@ const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory
 const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
 const EventSdk = require('@mojaloop/event-sdk')
-const Enum = require('@mojaloop/central-services-shared').Enum
 const { Hapi } = require('@mojaloop/central-services-shared').Util
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
@@ -25,11 +24,8 @@ const {
 } = require('../../../fixtures')
 const uuid4 = require('uuid4')
 
-const createISORequest = async (payload, participants) => {
+const createISORequest = async (payload, headers, participants) => {
   const requestPayload = payload || {}
-  const headers = {}
-  headers[Enum.Http.Headers.FSPIOP.SOURCE] = participants.payerFsp
-  headers[Enum.Http.Headers.FSPIOP.DESTINATION] = participants.payeeFsp
   return {
     headers,
     payload: requestPayload,
@@ -37,15 +33,15 @@ const createISORequest = async (payload, participants) => {
       log: () => { }
     },
     span: EventSdk.Tracer.createSpan('test_span'),
-    rawPayload: JSON.stringify(requestPayload),
+    rawPayload: Buffer.from(JSON.stringify(requestPayload)),
     info: {
       id: uuid4()
     }
   }
 }
 
-const createFxISORequest = async (payload, participants) => {
-  const isoRequest = await createISORequest(payload, participants)
+const createFxISORequest = async (payload, headers) => {
+  const isoRequest = await createISORequest(payload, headers)
   return {
     ...isoRequest,
     path: '/fxTransfers'
@@ -90,7 +86,12 @@ Test('ISO transfer handler', handlerTest => {
     createTransferTest.test('reply with status code 202 if ISO message is sent successfully to kafka', async test => {
       const transferId = '12345'
       const payload = await buildISOTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
-      const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+        })
       const reply = createTestReply(test)
 
       TransferService.prepare.resolves()
@@ -104,7 +105,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         prepareStub.getCall(0).args[4],
         {
-          originalPayload: request.rawPayload,
+          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
           originalRequestId: request.info.id
         }
       )
@@ -114,7 +115,12 @@ Test('ISO transfer handler', handlerTest => {
     createTransferTest.test('return error if ISO transfer create throws', async test => {
       const transferId = '12345'
       const payload = await buildISOTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
-      const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 500)
 
       TransferService.prepare.rejects(new Error('An error has occurred'))
@@ -137,7 +143,12 @@ Test('ISO transfer handler', handlerTest => {
     fulfilTransferTest.test('reply with status code 200 if ISO message is sent successfully to kafka', async test => {
       const transferId = '12345'
       const payload = await buildISOFulfil(transferId)
-      const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 200)
       TransferService.fulfil.resolves()
 
@@ -149,7 +160,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
         {
-          originalPayload: request.rawPayload,
+          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
           originalRequestId: request.info.id
         }
       )
@@ -159,7 +170,12 @@ Test('ISO transfer handler', handlerTest => {
     fulfilTransferTest.test('return error if ISO fulfil throws', async test => {
       const transferId = '12345'
       const payload = await buildISOFulfil(transferId)
-      const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 500)
 
       TransferService.fulfil.rejects(new Error('An error has occurred'))
@@ -181,7 +197,12 @@ Test('ISO transfer handler', handlerTest => {
   handlerTest.test('transfers - transferError should', async transferErrorTest => {
     transferErrorTest.test('reply with status code 200 if ISO error message is sent successfully to kafka', async test => {
       const payload = await buildISOTransferError()
-      const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 200)
 
       TransferService.transferError.resolves()
@@ -194,7 +215,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
         {
-          originalPayload: request.rawPayload,
+          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
           originalRequestId: request.info.id
         }
       )
@@ -203,7 +224,12 @@ Test('ISO transfer handler', handlerTest => {
 
     transferErrorTest.test('return error if ISO transfer error throws', async test => {
       const payload = await buildISOTransferError()
-      const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 500)
 
       TransferService.transferError.rejects(new Error('An error has occurred'))
@@ -226,7 +252,12 @@ Test('ISO transfer handler', handlerTest => {
     createTransferTest.test('reply with status code 202 if ISO message is sent successfully to kafka', async test => {
       const transferId = '12345'
       const payload = await buildISOFxTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
-      const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+        })
       const reply = createTestReply(test)
 
       TransferService.prepare.resolves()
@@ -239,7 +270,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         prepareStub.getCall(0).args[4],
         {
-          originalPayload: request.rawPayload,
+          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
           originalRequestId: request.info.id
         }
       )
@@ -249,7 +280,12 @@ Test('ISO transfer handler', handlerTest => {
     createTransferTest.test('return error if ISO transfer create throws', async test => {
       const transferId = '12345'
       const payload = await buildISOFxTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
-      const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 500)
 
       TransferService.prepare.rejects(new Error('An error has occurred'))
@@ -272,7 +308,12 @@ Test('ISO transfer handler', handlerTest => {
     fulfilTransferTest.test('reply with status code 200 if ISO message is sent successfully to kafka', async test => {
       const transferId = '12345'
       const payload = await buildISOFxFulfil(transferId)
-      const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 200)
 
       TransferService.fulfil.resolves()
@@ -285,7 +326,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
         {
-          originalPayload: request.rawPayload,
+          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
           originalRequestId: request.info.id
         }
       )
@@ -295,7 +336,12 @@ Test('ISO transfer handler', handlerTest => {
     fulfilTransferTest.test('return error if ISO fulfil throws', async test => {
       const transferId = '12345'
       const payload = await buildISOFxFulfil(transferId)
-      const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 500)
 
       TransferService.fulfil.rejects(new Error('An error has occurred'))
@@ -317,7 +363,12 @@ Test('ISO transfer handler', handlerTest => {
   handlerTest.test('fxTransfers - transferError should', async transferErrorTest => {
     transferErrorTest.test('reply with status code 200 if ISO error message is sent successfully to kafka', async test => {
       const payload = await buildISOFxTransferError()
-      const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 200)
 
       TransferService.transferError.resolves()
@@ -330,7 +381,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
         {
-          originalPayload: request.rawPayload,
+          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
           originalRequestId: request.info.id
         }
       )
@@ -339,7 +390,12 @@ Test('ISO transfer handler', handlerTest => {
 
     transferErrorTest.test('return error if ISO transfer error throws', async test => {
       const payload = await buildISOFxTransferError()
-      const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+        })
       const reply = createTestReply(test, 500)
 
       TransferService.transferError.rejects(new Error('An error has occurred'))

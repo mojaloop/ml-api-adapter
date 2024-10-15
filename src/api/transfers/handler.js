@@ -70,7 +70,7 @@ const create = async function (context, request, h) {
       payload = await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload.body, headers })
     }
     kafkaMessageContext = {
-      originalPayload: rawPayload,
+      originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
       originalRequestId: request.info.id
     }
   }
@@ -126,9 +126,8 @@ const fulfilTransfer = async function (context, request, h) {
     } else {
       payload = await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload.body, headers })
     }
-
     kafkaMessageContext = {
-      originalPayload: rawPayload,
+      originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
       originalRequestId: request.info.id
     }
   }
@@ -229,7 +228,7 @@ const fulfilTransferError = async function (context, request, h) {
       payload = await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload.body, headers })
     }
     kafkaMessageContext = {
-      originalPayload: rawPayload,
+      originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
       originalRequestId: request.info.id
     }
   }

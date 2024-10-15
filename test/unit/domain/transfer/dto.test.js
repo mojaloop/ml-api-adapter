@@ -31,7 +31,8 @@ Test('DTO tests -->', dtoTest => {
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -40,8 +41,7 @@ Test('DTO tests -->', dtoTest => {
           action: 'forwarded',
           state: { status: 'success', code: 0, description: 'action successful' }
         }
-      },
-      context: {}
+      }
     }
     const message = dto.forwardedMessageDto(expected.id, expected.from, expected.to, expected.content.payload)
     expected.metadata.event.createdAt = message.metadata.event.createdAt
@@ -58,7 +58,8 @@ Test('DTO tests -->', dtoTest => {
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -67,8 +68,7 @@ Test('DTO tests -->', dtoTest => {
           action: 'fx-forwarded',
           state: { status: 'success', code: 0, description: 'action successful' }
         }
-      },
-      context: {}
+      }
     }
     const message = dto.fxForwardedMessageDto(expected.id, expected.from, expected.to, expected.content.payload)
     expected.metadata.event.createdAt = message.metadata.event.createdAt
