@@ -33,7 +33,7 @@ const createISORequest = async (payload, headers, participants) => {
       log: () => { }
     },
     span: EventSdk.Tracer.createSpan('test_span'),
-    rawPayload: Buffer.from(JSON.stringify(requestPayload)),
+    dataUri: 'someDataUri',
     info: {
       id: uuid4()
     }
@@ -90,7 +90,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
         })
       const reply = createTestReply(test)
 
@@ -105,7 +105,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         prepareStub.getCall(0).args[4],
         {
-          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
+          originalPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -119,7 +119,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
         })
       const reply = createTestReply(test, 500)
 
@@ -147,7 +147,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
         })
       const reply = createTestReply(test, 200)
       TransferService.fulfil.resolves()
@@ -160,7 +160,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
         {
-          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
+          originalPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -174,7 +174,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
         })
       const reply = createTestReply(test, 500)
 
@@ -201,7 +201,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
         })
       const reply = createTestReply(test, 200)
 
@@ -215,7 +215,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
         {
-          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
+          originalPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -228,7 +228,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
         })
       const reply = createTestReply(test, 500)
 
@@ -256,7 +256,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
         })
       const reply = createTestReply(test)
 
@@ -270,7 +270,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         prepareStub.getCall(0).args[4],
         {
-          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
+          originalPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -284,7 +284,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
         })
       const reply = createTestReply(test, 500)
 
@@ -312,7 +312,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
         })
       const reply = createTestReply(test, 200)
 
@@ -326,7 +326,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
         {
-          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
+          originalPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -340,7 +340,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
         })
       const reply = createTestReply(test, 500)
 
@@ -367,7 +367,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
         })
       const reply = createTestReply(test, 200)
 
@@ -381,7 +381,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
         {
-          originalPayload: `${request.headers['content-type']}${request.rawPayload.toString('base64')}`,
+          originalPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -394,7 +394,7 @@ Test('ISO transfer handler', handlerTest => {
         payload, {
           'fspiop-source': 'dfsp1',
           'fspiop-destination': 'dfsp2',
-          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
         })
       const reply = createTestReply(test, 500)
 

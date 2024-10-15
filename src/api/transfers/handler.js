@@ -30,6 +30,7 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
+const { encodePayload } = Util.StreamingProtocol
 
 const Config = require('../../lib/config')
 const TransferService = require('../../domain/transfer')
@@ -57,22 +58,30 @@ const { Type, Action } = Enum.Events.Event
  */
 
 const create = async function (context, request, h) {
-  const { headers, dataUri, span, rawPayload } = request
-  let { payload } = request
+  const { headers, span } = request
+  let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
-
   let kafkaMessageContext
+
   if (isIsoMode) {
-    if (isFx) {
-      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
-    } else {
-      payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
-    }
+    // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
+      originalPayload: dataUri,
       originalRequestId: request.info.id
     }
+    // Transform the payload to ISO20022
+    if (isFx) {
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
+      headers['content-type'] = 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+      headers.accept = 'application/vnd.interoperability.fxTransfers+json;version=2'
+    } else {
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
+      headers['content-type'] = 'application/vnd.interoperability.transfers+json;version=2.0'
+      headers.accept = 'application/vnd.interoperability.transfers+json;version=2'
+    }
+    // Recreate dataUri with transformed payload
+    dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
   }
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -115,21 +124,31 @@ const create = async function (context, request, h) {
  */
 
 const fulfilTransfer = async function (context, request, h) {
-  const { headers, params, dataUri, span, rawPayload } = request
-  let { payload } = request
+  const { headers, params, span } = request
+  let { dataUri, payload } = request
+
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
+
   if (isIsoMode) {
-    if (isFx) {
-      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
-    } else {
-      payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
-    }
+    // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
+      originalPayload: dataUri,
       originalRequestId: request.info.id
     }
+    // Transform ISO20022 message to fspiop message
+    if (isFx) {
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
+      headers['content-type'] = 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+      headers.accept = 'application/vnd.interoperability.fxTransfers+json;version=2'
+    } else {
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
+      headers['content-type'] = 'application/vnd.interoperability.transfers+json;version=2.0'
+      headers.accept = 'application/vnd.interoperability.transfers+json;version=2'
+    }
+    // Recreate dataUri with transformed payload
+    dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
   }
 
   const metric = PROM_METRICS.transferFulfil(isFx)
@@ -215,22 +234,30 @@ const getTransferById = async function (context, request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (context, request, h) {
-  const { headers, params, dataUri, span, rawPayload } = request
-  let { payload } = request
+  const { headers, params, span } = request
+  let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
 
   if (isIsoMode) {
-    if (isFx) {
-      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
-    } else {
-      payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
-    }
+    // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: `${headers['content-type']}${rawPayload.toString('base64')}`,
+      originalPayload: dataUri,
       originalRequestId: request.info.id
     }
+    // Transform ISO20022 message to fspiop message
+    if (isFx) {
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
+      headers['content-type'] = 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+      headers.accept = 'application/vnd.interoperability.fxTransfers+json;version=2'
+    } else {
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
+      headers['content-type'] = 'application/vnd.interoperability.transfers+json;version=2.0'
+      headers.accept = 'application/vnd.interoperability.transfers+json;version=2'
+    }
+    // Recreate dataUri with transformed payload
+    dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
   }
 
   const metric = PROM_METRICS.transferFulfilError(isFx)

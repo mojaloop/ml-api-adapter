@@ -43,6 +43,7 @@ paths:
       summary: Perform transfer
       tags:
         - transfers
+        - sampled
       operationId: transfers
       parameters:
         - $ref: "#/components/parameters/Accept"
@@ -103,6 +104,7 @@ paths:
       summary: Retrieve transfer information
       tags:
         - transfers
+        - sampled
       operationId: TransfersByIDGet
       parameters:
         - $ref: "#/components/parameters/Accept"
@@ -136,6 +138,7 @@ paths:
       summary: Return transfer information
       tags:
         - transfers
+        - sampled
       operationId: TransfersByIDPatch
       parameters:
         - $ref: "#/components/parameters/Content-Length"
@@ -174,6 +177,7 @@ paths:
       summary: Return transfer information
       tags:
         - transfers
+        - sampled
       operationId: TransfersByIDPut
       parameters:
         - $ref: "#/components/parameters/Content-Length"
@@ -214,6 +218,7 @@ paths:
       summary: Return transfer information error
       tags:
         - transfers
+        - sampled
       operationId: TransfersByIDAndError
       parameters:
         - $ref: "#/components/parameters/ID"
@@ -261,6 +266,7 @@ paths:
       summary: Perform FX transfer
       tags:
         - fxTransfers
+        - sampled
       operationId: FxTransfersPost
       parameters:
         - $ref: "#/components/parameters/Accept"
@@ -321,6 +327,7 @@ paths:
       summary: Retrieve FX transfer information
       tags:
         - fxTransfers
+        - sampled
       operationId: FxTransfersByIDGet
       parameters:
         - $ref: "#/components/parameters/Accept"
@@ -353,6 +360,7 @@ paths:
       summary: Return FX transfer information
       tags:
         - fxTransfers
+        - sampled
       operationId: FxTransfersByIDPatch
       parameters:
         - $ref: "#/components/parameters/Content-Length"
@@ -392,6 +400,7 @@ paths:
       summary: Return FX transfer information
       tags:
         - fxTransfers
+        - sampled
       operationId: FxTransfersByIDPut
       parameters:
         - $ref: "#/components/parameters/Content-Length"
@@ -432,6 +441,7 @@ paths:
       summary: Return FX transfer information error
       tags:
         - fxTransfers
+        - sampled
       operationId: FxTransfersByIDAndErrorPut
       parameters:
         - $ref: "#/components/parameters/ID"
@@ -475,6 +485,7 @@ paths:
     get:
       tags:
         - health
+        - sampled
       summary: Get health
       description: The HTTP request GET /health is used to return the current status
         of the Ml API Adapter
@@ -502,6 +513,7 @@ paths:
     get:
       tags:
         - metadata
+        - sampled
       summary: Get metadata
       description: The HTTP request GET / is used to return metadata
         of the Ml API Adapter
@@ -529,6 +541,7 @@ paths:
     get:
       tags:
         - metrics
+        - sampled
       responses:
         '200':
           $ref: '#/components/responses/Response200'
