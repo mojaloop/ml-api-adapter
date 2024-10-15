@@ -40,7 +40,6 @@ const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
   */
 const deleteEndpointCache = async (context, request, h) => {
   try {
-    console.log(await ParticipantEndpointCache.stopCache())
     await ParticipantEndpointCache.stopCache()
     await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
     return h.response().code(202)

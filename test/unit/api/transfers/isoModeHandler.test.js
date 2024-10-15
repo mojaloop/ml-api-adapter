@@ -1,5 +1,6 @@
 'use strict'
 
+const Ilp = require('@mojaloop/sdk-standard-components').Ilp
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
@@ -88,7 +89,7 @@ Test('ISO transfer handler', handlerTest => {
   handlerTest.test('transfers - create should', async createTransferTest => {
     createTransferTest.test('reply with status code 202 if ISO message is sent successfully to kafka', async test => {
       const transferId = '12345'
-      const payload = await buildISOTransfer(transferId)
+      const payload = await buildISOTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
       const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
       const reply = createTestReply(test)
 
@@ -112,7 +113,7 @@ Test('ISO transfer handler', handlerTest => {
 
     createTransferTest.test('return error if ISO transfer create throws', async test => {
       const transferId = '12345'
-      const payload = await buildISOTransfer(transferId)
+      const payload = await buildISOTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
       const request = await createISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
       const reply = createTestReply(test, 500)
 
@@ -224,7 +225,7 @@ Test('ISO transfer handler', handlerTest => {
   handlerTest.test('fxTransfers - create should', async createTransferTest => {
     createTransferTest.test('reply with status code 202 if ISO message is sent successfully to kafka', async test => {
       const transferId = '12345'
-      const payload = await buildISOFxTransfer(transferId)
+      const payload = await buildISOFxTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
       const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
       const reply = createTestReply(test)
 
@@ -247,7 +248,7 @@ Test('ISO transfer handler', handlerTest => {
 
     createTransferTest.test('return error if ISO transfer create throws', async test => {
       const transferId = '12345'
-      const payload = await buildISOFxTransfer(transferId)
+      const payload = await buildISOFxTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
       const request = await createFxISORequest(payload, { payerFsp: 'dfsp1', payeeFsp: 'dfsp2' })
       const reply = createTestReply(test, 500)
 

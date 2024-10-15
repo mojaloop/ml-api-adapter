@@ -13,12 +13,13 @@
       ]
     }
   },
-  "SHARED_CACHE": {
+  "ORIGINAL_PAYLOAD_STORAGE": "",
+  "PAYLOAD_CACHE": {
     "enabled": true,
     "type": "redis-cluster",
-    "config": {
+    "connectionConfig": {
       "cluster": [
-        { "host": "redis-node-0", "port": 6379 }
+        { "host": "localhost", "port": 6379 }
       ]
     }
   },

@@ -74,7 +74,6 @@ const create = async function (context, request, h) {
       originalRequestId: request.info.id
     }
   }
-  console.log(kafkaMessageContext)
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
     metric,
