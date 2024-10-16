@@ -76,8 +76,6 @@ const create = async function (context, request, h) {
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
     }
-    // nullify dataUri as it is not needed
-    dataUri = null
   }
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -95,7 +93,7 @@ const create = async function (context, request, h) {
       payload
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext)
+    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext, isIsoMode)
 
     histTimerEnd({ success: true })
     return h.response().code(202)
@@ -140,8 +138,6 @@ const fulfilTransfer = async function (context, request, h) {
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
     }
-    // nullify dataUri as it is not needed
-    dataUri = null
   }
 
   const metric = PROM_METRICS.transferFulfil(isFx)
@@ -163,7 +159,7 @@ const fulfilTransfer = async function (context, request, h) {
       dataUri
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext)
+    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext, isIsoMode)
 
     histTimerEnd({ success: true })
     return h.response().code(200)
@@ -246,8 +242,6 @@ const fulfilTransferError = async function (context, request, h) {
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
     }
-    // nullify dataUri as it is not needed
-    dataUri = null
   }
 
   const metric = PROM_METRICS.transferFulfilError(isFx)
@@ -266,7 +260,7 @@ const fulfilTransferError = async function (context, request, h) {
       params
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext)
+    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext, isIsoMode)
 
     histTimerEnd({ success: true })
     return h.response().code(200)
