@@ -30,7 +30,6 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
-const { encodePayload } = Util.StreamingProtocol
 
 const Config = require('../../lib/config')
 const TransferService = require('../../domain/transfer')
@@ -67,19 +66,18 @@ const create = async function (context, request, h) {
   if (isIsoMode) {
     // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: dataUri,
+      originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
     // Transform the payload to ISO20022
+    // We're leaving the transformed payload as an object
     if (isFx) {
       payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
     }
-    headers['content-type'] = headers['content-type'].replace('.iso20022', '')
-    headers.accept = headers.accept.replace('.iso20022', '')
-    // Recreate dataUri with transformed payload
-    dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
+    // nullify dataUri as it is not needed
+    dataUri = null
   }
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
@@ -132,19 +130,18 @@ const fulfilTransfer = async function (context, request, h) {
   if (isIsoMode) {
     // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: dataUri,
+      originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
     // Transform ISO20022 message to fspiop message
+    // We're leaving the transformed payload as an object
     if (isFx) {
       payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
     }
-    headers['content-type'] = headers['content-type'].replace('.iso20022', '')
-    headers.accept = headers.accept.replace('.iso20022', '')
-    // Recreate dataUri with transformed payload
-    dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
+    // nullify dataUri as it is not needed
+    dataUri = null
   }
 
   const metric = PROM_METRICS.transferFulfil(isFx)
@@ -239,19 +236,18 @@ const fulfilTransferError = async function (context, request, h) {
   if (isIsoMode) {
     // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: dataUri,
+      originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
     // Transform ISO20022 message to fspiop message
+    // We're leaving the transformed payload as an object
     if (isFx) {
       payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
     } else {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
     }
-    headers['content-type'] = headers['content-type'].replace('.iso20022', '')
-    headers.accept = headers.accept.replace('.iso20022', '')
-    // Recreate dataUri with transformed payload
-    dataUri = encodePayload(Buffer.from(JSON.stringify(payload)), headers['content-type'])
+    // nullify dataUri as it is not needed
+    dataUri = null
   }
 
   const metric = PROM_METRICS.transferFulfilError(isFx)

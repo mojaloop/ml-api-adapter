@@ -111,7 +111,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         prepareStub.getCall(0).args[4],
         {
-          originalPayload: 'someDataUri',
+          originalRequestPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -166,7 +166,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
         {
-          originalPayload: 'someDataUri',
+          originalRequestPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -221,7 +221,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
         {
-          originalPayload: 'someDataUri',
+          originalRequestPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -276,7 +276,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         prepareStub.getCall(0).args[4],
         {
-          originalPayload: 'someDataUri',
+          originalRequestPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -332,7 +332,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         fulfilStub.getCall(0).args[5],
         {
-          originalPayload: 'someDataUri',
+          originalRequestPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
@@ -387,7 +387,7 @@ Test('ISO transfer handler', handlerTest => {
       test.deepEqual(
         transferErrorStub.getCall(0).args[6],
         {
-          originalPayload: 'someDataUri',
+          originalRequestPayload: 'someDataUri',
           originalRequestId: request.info.id
         }
       )
