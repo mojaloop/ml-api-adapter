@@ -39,20 +39,20 @@ const getCallbackPayload = (content) => {
 
   const decodedOriginalPayload = decodePayload(originalPayload, { asParsed: false })
   // content.payload should be already parsed as per the new design and it is in fspiop format
-  const fspiopPayload = content.payload
+  const fspiopObject = content.payload
   let payloadForCallback
 
-  if (fspiopPayload.errorInformation) {
+  if (fspiopObject.errorInformation) {
     if (API_TYPE === API_TYPES.iso20022) {
       // TODO: ISO20022: construct ISO20022 error message here
     } else {
-      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopPayload.errorInformation).toApiErrorObject(ERROR_HANDLING))
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
     }
   } else {
     payloadForCallback = decodedOriginalPayload.body.toString()
   }
 
-  return { fspiopPayload, payloadForCallback }
+  return { fspiopObject, payloadForCallback }
 }
 
 const notificationMessageDto = (message) => {
@@ -66,11 +66,11 @@ const notificationMessageDto = (message) => {
 
   logger.info('Notification::processMessage - action, status: ', { actionLower, status, isFx, isSuccess })
 
-  const { payloadForCallback, fspiopPayload } = getCallbackPayload(content)
+  const { payloadForCallback, fspiopObject } = getCallbackPayload(content)
 
   let id = content.uriParams?.id
   if (!id) {
-    id = fspiopPayload.transferId || fspiopPayload.commitRequestId
+    id = fspiopObject.transferId || fspiopObject.commitRequestId
   }
 
   return Object.freeze({
@@ -81,7 +81,7 @@ const notificationMessageDto = (message) => {
     content,
     isFx,
     isSuccess,
-    fspiopPayload,
+    fspiopObject,
     payloadForCallback
   })
 }

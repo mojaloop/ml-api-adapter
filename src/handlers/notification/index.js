@@ -236,7 +236,7 @@ const processMessage = async (msg, span) => {
     content,
     isFx,
     isSuccess,
-    fspiopPayload, // Just incase if we need it
+    fspiopObject, // Just incase if we need it
     payloadForCallback: payload
   } = dto.notificationMessageDto(msg)
 
