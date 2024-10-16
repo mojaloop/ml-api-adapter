@@ -35,7 +35,7 @@ const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '', context,
       id,
       to,
       from,
-      { headers, dataUri, params: { id } },
+      metadata,
       headers,
       payload,
       { id },
@@ -86,7 +86,7 @@ const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix, co
       params.id,
       to,
       from,
-      { headers, dataUri, params: { id: params.id } },
+      metadata,
       headers,
       payload,
       { id: params.id },
@@ -99,7 +99,7 @@ const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix, co
   return Object.freeze(messageProtocol)
 }
 
-const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '', isIsoMode }) => {
+const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '', context, isIsoMode }) => {
   const isFx = !payload.transferState
   const state = payload.transferState || payload.conversionState
   const actionKey = state === TransferState.ABORTED
@@ -109,12 +109,12 @@ const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '', i
         : 'COMMIT'
   const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}${actionKey}`]
 
-  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix, payload, isIsoMode })
+  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix, payload, context, isIsoMode })
 }
 
-const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '', payload, isIsoMode }) => {
+const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '', payload, context, isIsoMode }) => {
   const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}ABORT`]
-  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix, payload, isIsoMode })
+  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix, payload, context, isIsoMode })
 }
 
 const getMessageDto = ({ headers, params, isFx, logPrefix = '', context }) => {

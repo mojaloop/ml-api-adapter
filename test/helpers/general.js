@@ -23,6 +23,8 @@
  ******/
 'use strict'
 
+const { logger } = require('../../src/shared/logger')
+
 /**
  * unwrapResponse
  *
@@ -72,8 +74,42 @@ async function sleep (seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000))
 }
 
+async function wrapWithRetries (func, remainingRetries = 10, timeout = 2) {
+  logger.warn(`wrapWithRetries remainingRetries:${remainingRetries}, timeout:${timeout}`)
+
+  try {
+    const result = await func()
+    if (!result) {
+      throw new Error('wrapWithRetries returned false of undefined response')
+    }
+    return result
+  } catch (err) {
+    if (remainingRetries === 0) {
+      logger.warn('wrapWithRetries ran out of retries')
+      throw err
+    }
+
+    await sleepPromise(timeout)
+    return wrapWithRetries(func, remainingRetries - 1, timeout)
+  }
+}
+
+/**
+ * @function sleepPromise
+ *
+ * @description A hacky method to sleep in JS. For testing purposes only.
+ *
+ * @param {number} seconds - The number of seconds to sleep for
+ *
+ * @returns {Promise<>}
+ */
+async function sleepPromise (seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000))
+}
+
 module.exports = {
   createRequest,
   sleep,
-  unwrapResponse
+  unwrapResponse,
+  wrapWithRetries
 }
