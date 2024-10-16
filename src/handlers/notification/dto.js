@@ -1,11 +1,12 @@
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { logger } = require('../../shared/logger')
-const { ERROR_HANDLING } = require('../../lib/config')
+const { ERROR_HANDLING, API_TYPE } = require('../../lib/config')
+const { API_TYPES } = require('../../shared/constants')
 
 const { Action } = Enum.Events.Event
 const { SUCCESS } = Enum.Events.EventStatus
-const { decodePayload, isDataUri } = Util.StreamingProtocol
+const { decodePayload } = Util.StreamingProtocol
 
 const FX_ACTIONS = [
   Action.FX_GET,
@@ -28,21 +29,30 @@ const FX_ACTIONS = [
 ]
 
 const getCallbackPayload = (content) => {
-  const decodedPayload = decodePayload(content.payload, { asParsed: false })
-  let payloadForCallback
-
-  if (isDataUri(content.payload)) {
-    payloadForCallback = decodedPayload.body.toString()
+  let originalPayload
+  if (msg.value.content.context.originalRequestPayload) {
+    originalPayload = msg.value.content.context.originalRequestPayload
   } else {
-    const parsedPayload = JSON.parse(decodedPayload.body)
-    if (parsedPayload.errorInformation) {
-      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation).toApiErrorObject(ERROR_HANDLING))
-    } else {
-      payloadForCallback = decodedPayload.body.toString()
-    }
+    const cacheRequestId = msg.value.content.context.originalRequestId
+    // TODO: ISO20022: get the original request from the cache
   }
 
-  return { decodedPayload, payloadForCallback }
+  const decodedOriginalPayload = decodePayload(originalPayload, { asParsed: false })
+  // content.payload should be already parsed as per the new design
+  const parsedPayload = content.payload
+  let payloadForCallback
+
+  if (parsedPayload.errorInformation) {
+    if (API_TYPE === API_TYPES.iso20022) {
+      // TODO: ISO20022: construct ISO20022 error message here
+    } else {
+      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(parsedPayload.errorInformation).toApiErrorObject(ERROR_HANDLING))
+    }
+  } else {
+    payloadForCallback = decodedOriginalPayload.body.toString()
+  }
+
+  return { parsedPayload, payloadForCallback }
 }
 
 const notificationMessageDto = (message) => {
@@ -55,12 +65,12 @@ const notificationMessageDto = (message) => {
   const isFx = FX_ACTIONS.includes(actionLower)
 
   logger.info('Notification::processMessage - action, status: ', { actionLower, status, isFx, isSuccess })
-  const { payloadForCallback, decodedPayload } = getCallbackPayload(content)
+
+  const { payloadForCallback, parsedPayload } = getCallbackPayload(content)
 
   let id = content.uriParams?.id
   if (!id) {
-    const body = JSON.parse(decodedPayload.body)
-    id = body.transferId || body.commitRequestId
+    id = parsedPayload.transferId || parsedPayload.commitRequestId
   }
 
   return Object.freeze({
@@ -71,6 +81,7 @@ const notificationMessageDto = (message) => {
     content,
     isFx,
     isSuccess,
+    parsedPayload,
     payloadForCallback
   })
 }
