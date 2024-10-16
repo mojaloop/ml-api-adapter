@@ -239,6 +239,67 @@ Test('Transfer Service tests', serviceTest => {
       test.ok(messageProtocol.content.context, 'Context should exist on the message protocol')
       test.end()
     })
+
+    prepareTest.test('execute prepare function with isIsoMode true', async test => {
+      const message = {
+        transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
+        payeeFsp: '1234',
+        payerFsp: '5678',
+        amount: {
+          currency: 'USD',
+          amount: 123.45
+        },
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+        condition: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        expiration: '2016-05-24T08:38:08.699-04:00',
+
+        extensionList:
+      {
+        extension:
+        [
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          },
+          {
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }
+        ]
+      }
+      }
+
+      const headers = {}
+
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = {
+        id: message.transferId,
+        to: message.payeeFsp,
+        from: message.payerFsp,
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'prepare',
+            action: 'prepare',
+            createdAt: new Date(),
+            status: 'success'
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.PREPARE, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+
+      const span = EventSdk.Tracer.createSpan('test_span')
+
+      const result = await Service.prepare(headers, dataUri, message, span, {}, true)
+      test.equals(result, true)
+      test.end()
+    })
     prepareTest.end()
   })
 
@@ -422,6 +483,60 @@ Test('Transfer Service tests', serviceTest => {
       test.end()
     })
 
+    fulfilTest.test('execute fulfil function with isIsoMode true', async test => {
+      const message = {
+        transferState: 'RECEIVED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const id = 'dfsp1'
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const messageProtocol = {
+        id,
+        to: headers['fspiop-destination'],
+        from: headers['fspiop-source'],
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'fulfil',
+            action: 'commit',
+            createdAt: new Date(),
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.fulfil(headers, dataUri, message, { id }, span, {}, true)
+      test.equals(result, true)
+      test.end()
+    })
     fulfilTest.end()
   })
 
@@ -620,6 +735,50 @@ Test('Transfer Service tests', serviceTest => {
       test.end()
     })
 
+    transferErrorTest.test('execute function with isIsoMode true', async test => {
+      const message = {
+        errorCode: '5001',
+        errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        extensionList: {
+          extension: [{
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }]
+        }
+      }
+      const headers = {}
+      const id = '888ec534-ee48-4575-b6a9-ead2955b8930'
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const messageProtocol = {
+        id,
+        to: headers['fspiop-destination'],
+        from: headers['fspiop-source'],
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'fulfil',
+            action: 'abort',
+            createdAt: new Date(),
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.transferError(headers, dataUri, message, { id }, span, false, {}, true)
+      test.equals(result, true)
+      test.end()
+    })
     transferErrorTest.end()
   })
 
