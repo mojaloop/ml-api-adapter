@@ -79,6 +79,10 @@ const createServer = async (port, api, routes) => {
     }
   })
 
+  if (Config.PAYLOAD_CACHE.enabled) {
+    server.app.payloadCache = initializePayloadCache()
+  }
+
   await Plugins.registerPlugins(server, api)
 
   server.route(routes)

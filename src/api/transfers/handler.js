@@ -36,6 +36,7 @@ const TransferService = require('../../domain/transfer')
 const Validator = require('../../lib/validator')
 const { logger } = require('../../shared/logger')
 const { ROUTES, PROM_METRICS } = require('../../shared/constants')
+const { setOriginalRequestPayload } = require('../../domain/transfer/dto')
 
 const { getTransferSpanTags } = Util.EventFramework
 const { Type, Action } = Enum.Events.Event
@@ -69,6 +70,15 @@ const create = async function (context, request, h) {
       originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
+
+    if (request.server?.app?.payloadCache) {
+      await setOriginalRequestPayload(
+        kafkaMessageContext,
+        request.server.app.payloadCache
+      )
+      delete kafkaMessageContext.originalRequestPayload
+    }
+
     // Transform the payload to ISO20022
     // We're leaving the transformed payload as an object
     if (isFx) {
@@ -131,6 +141,15 @@ const fulfilTransfer = async function (context, request, h) {
       originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
+
+    if (request.server.app.payloadCache) {
+      await setOriginalRequestPayload(
+        kafkaMessageContext,
+        request.server.app.payloadCache
+      )
+      delete kafkaMessageContext.originalRequestPayload
+    }
+
     // Transform ISO20022 message to fspiop message
     // We're leaving the transformed payload as an object
     if (isFx) {
@@ -235,6 +254,15 @@ const fulfilTransferError = async function (context, request, h) {
       originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
+
+    if (request.server.app.payloadCache) {
+      await setOriginalRequestPayload(
+        kafkaMessageContext,
+        request.server.app.payloadCache
+      )
+      delete kafkaMessageContext.originalRequestPayload
+    }
+
     // Transform ISO20022 message to fspiop message
     // We're leaving the transformed payload as an object
     if (isFx) {
