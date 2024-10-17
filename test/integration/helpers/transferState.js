@@ -16,40 +16,23 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
  * Gates Foundation
-
- * Juan Correa <juan.correa@modusbox.com>
-
+ - Name Surname <name.surname@gatesfoundation.com>
+ * Valentin Genev <valentin.genev@modusbox.com>
+ * Nikolay Anastasov <nikolay.anastasov@modusbox.com>
  --------------
  ******/
-
 'use strict'
 
-const Logger = require('@mojaloop/central-services-logger')
-const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const { Endpoints: ParticipantEndpointCache, HeaderValidation } = require('@mojaloop/central-services-shared').Util
-const Config = require('../../lib/config.js')
+const transferStateENUM = require('@mojaloop/central-services-shared').Enum.Transfers.TransferInternalState
 
-const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
+const transferStateResult = []
 
-/**
-  * summary: DELETE Reset Endpoint Cache
-  * description: The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.
-  * parameters:
-  * produces: application/json
-  * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
-  */
-const deleteEndpointCache = async (context, request, h) => {
-  try {
-    await ParticipantEndpointCache.stopCache()
-    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-    return h.response().code(202)
-  } catch (err) {
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
-    throw fspiopError
-  }
+for (const transferState of Object.keys(transferStateENUM)) {
+  transferStateResult.push({
+    transferStateId: transferState
+  })
 }
 
-module.exports = {
-  deleteEndpointCache
+exports.prepareData = () => {
+  return transferStateResult
 }

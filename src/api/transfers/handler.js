@@ -57,24 +57,26 @@ const { Type, Action } = Enum.Events.Event
  */
 
 const create = async function (context, request, h) {
-  const { headers, dataUri, span, rawPayload } = request
-  let { payload } = request
+  const { headers, span } = request
+  let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
-
   let kafkaMessageContext
+
   if (isIsoMode) {
-    if (isFx) {
-      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload.body, headers })
-    } else {
-      payload = await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload.body, headers })
-    }
+    // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: rawPayload,
+      originalRequestPayload: dataUri,
       originalRequestId: request.info.id
     }
+    // Transform the payload to ISO20022
+    // We're leaving the transformed payload as an object
+    if (isFx) {
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
+    } else {
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
+    }
   }
-  console.log(kafkaMessageContext)
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
     metric,
@@ -91,7 +93,7 @@ const create = async function (context, request, h) {
       payload
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext)
+    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext, isIsoMode)
 
     histTimerEnd({ success: true })
     return h.response().code(202)
@@ -116,21 +118,25 @@ const create = async function (context, request, h) {
  */
 
 const fulfilTransfer = async function (context, request, h) {
-  const { headers, params, dataUri, span, rawPayload } = request
-  let { payload } = request
+  const { headers, params, span } = request
+  let { dataUri, payload } = request
+
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
-  if (isIsoMode) {
-    if (isFx) {
-      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload.body, headers })
-    } else {
-      payload = await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload.body, headers })
-    }
 
+  if (isIsoMode) {
+    // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: rawPayload,
+      originalRequestPayload: dataUri,
       originalRequestId: request.info.id
+    }
+    // Transform ISO20022 message to fspiop message
+    // We're leaving the transformed payload as an object
+    if (isFx) {
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
+    } else {
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
     }
   }
 
@@ -153,7 +159,7 @@ const fulfilTransfer = async function (context, request, h) {
       dataUri
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext)
+    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext, isIsoMode)
 
     histTimerEnd({ success: true })
     return h.response().code(200)
@@ -217,21 +223,24 @@ const getTransferById = async function (context, request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (context, request, h) {
-  const { headers, params, dataUri, span, rawPayload } = request
-  let { payload } = request
+  const { headers, params, span } = request
+  let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
 
   if (isIsoMode) {
-    if (isFx) {
-      payload = await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload.body, headers })
-    } else {
-      payload = await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload.body, headers })
-    }
+    // dataUri is the original encoded payload
     kafkaMessageContext = {
-      originalPayload: rawPayload,
+      originalRequestPayload: dataUri,
       originalRequestId: request.info.id
+    }
+    // Transform ISO20022 message to fspiop message
+    // We're leaving the transformed payload as an object
+    if (isFx) {
+      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
+    } else {
+      payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
     }
   }
 
@@ -251,7 +260,7 @@ const fulfilTransferError = async function (context, request, h) {
       params
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext)
+    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext, isIsoMode)
 
     histTimerEnd({ success: true })
     return h.response().code(200)

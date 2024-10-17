@@ -1,5 +1,5 @@
 {
-  "API_TYPE": "fspiop",
+  "API_TYPE": "iso20022",
   "PROXY_CACHE": {
     "enabled": true,
     "type": "redis-cluster",

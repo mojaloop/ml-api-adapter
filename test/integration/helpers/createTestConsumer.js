@@ -5,6 +5,7 @@
  The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
  http://www.apache.org/licenses/LICENSE-2.0
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
  Contributors
  --------------
  This is the official list of the Mojaloop project contributors for this file.
@@ -16,40 +17,41 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
  * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
 
- * Juan Correa <juan.correa@modusbox.com>
-
+ * Eugen Klymniuk <eugen.klymniuk@infitx.com>
  --------------
- ******/
+ **********/
 
-'use strict'
-
-const Logger = require('@mojaloop/central-services-logger')
-const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const { Endpoints: ParticipantEndpointCache, HeaderValidation } = require('@mojaloop/central-services-shared').Util
-const Config = require('../../lib/config.js')
-
-const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
+const { Enum, Util } = require('@mojaloop/central-services-shared')
+const Config = require('../../../src/lib/config')
+const TestConsumer = require('./testConsumer')
 
 /**
-  * summary: DELETE Reset Endpoint Cache
-  * description: The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.
-  * parameters:
-  * produces: application/json
-  * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
-  */
-const deleteEndpointCache = async (context, request, h) => {
-  try {
-    await ParticipantEndpointCache.stopCache()
-    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-    return h.response().code(202)
-  } catch (err) {
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
-    throw fspiopError
-  }
+ * Creates a TestConsumer with handlers based on the specified types/actions configurations.
+ *
+ * @param {Array<Object>} typeActionList - An array of objects with 'type' and 'action' properties
+ *   - `type` {string} - Represents the type parameter for the topic and configuration.
+ *   - `action` {string} - Represents the action parameter for the topic and configuration.
+ *
+ * @returns {TestConsumer} An instance of TestConsumer configured with handlers derived from
+ */
+const createTestConsumer = (typeActionList) => {
+  const handlers = typeActionList.map(({ type, action }) => ({
+    topicName: Util.Kafka.transformGeneralTopicName(
+      Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE,
+      type,
+      action
+    ),
+    config: Util.Kafka.getKafkaConfig(
+      Config.KAFKA_CONFIG,
+      Enum.Kafka.Config.CONSUMER,
+      type.toUpperCase(),
+      action.toUpperCase()
+    )
+  }))
+
+  return new TestConsumer(handlers)
 }
 
-module.exports = {
-  deleteEndpointCache
-}
+module.exports = createTestConsumer

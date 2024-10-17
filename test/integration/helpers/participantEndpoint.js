@@ -16,40 +16,35 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
  * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
 
- * Juan Correa <juan.correa@modusbox.com>
-
+ * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
-const Logger = require('@mojaloop/central-services-logger')
+const Model = require('../../../src/domain/participant')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const { Endpoints: ParticipantEndpointCache, HeaderValidation } = require('@mojaloop/central-services-shared').Util
-const Config = require('../../lib/config.js')
 
-const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
-
-/**
-  * summary: DELETE Reset Endpoint Cache
-  * description: The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.
-  * parameters:
-  * produces: application/json
-  * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
-  */
-const deleteEndpointCache = async (context, request, h) => {
+exports.prepareData = async (name, endpointType, endpointValue) => {
   try {
-    await ParticipantEndpointCache.stopCache()
-    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-    return h.response().code(202)
+    const endpoint = { type: endpointType, value: endpointValue }
+    await Model.addEndpoint(name, endpoint)
+    return endpoint
   } catch (err) {
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
-    throw fspiopError
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
   }
 }
 
-module.exports = {
-  deleteEndpointCache
+exports.deletePreparedData = async (participantName) => {
+  if (!participantName) {
+    throw new Error('Please provide a valid participant name!')
+  }
+
+  try {
+    return await Model.destroyParticipantEndpointByName(participantName)
+  } catch (err) {
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
+  }
 }

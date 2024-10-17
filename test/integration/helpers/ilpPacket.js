@@ -16,40 +16,46 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
  * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
 
- * Juan Correa <juan.correa@modusbox.com>
-
+ * Georgi Georgiev <georgi.georgiev@modusbox.com>
+ * Valentin Genev <valentin.genev@modusbox.com>
+ * Nikolay Anastasov <nikolay.anastasov@modusbox.com>
  --------------
  ******/
 
 'use strict'
 
-const Logger = require('@mojaloop/central-services-logger')
+const TransferPreparationModule = require('./transferTestHelper')
+const TransferModel = require('../../../src/models/transfer/facade')
+const IlpPacketModel = require('../../../src/models/transfer/ilpPacket')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const { Endpoints: ParticipantEndpointCache, HeaderValidation } = require('@mojaloop/central-services-shared').Util
-const Config = require('../../lib/config.js')
 
-const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
-
-/**
-  * summary: DELETE Reset Endpoint Cache
-  * description: The HTTP request DELETE /endpointcache is used to reset the endpoint cache by performing an stopCache and initializeCache the Admin API.
-  * parameters:
-  * produces: application/json
-  * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
-  */
-const deleteEndpointCache = async (context, request, h) => {
+exports.prepareData = async () => {
   try {
-    await ParticipantEndpointCache.stopCache()
-    await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-    return h.response().code(202)
+    const transferResult = await TransferPreparationModule.prepareData()
+    const transfer = await TransferModel.getById(transferResult.transfer.transferId)
+    const ilp = await IlpPacketModel.getByTransferId(transferResult.transfer.transferId)
+
+    return {
+      ilp,
+      transfer,
+      participantPayer: transferResult.participantPayerResult,
+      participantPayee: transferResult.participantPayeeResult
+    }
   } catch (err) {
-    const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
-    throw fspiopError
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
   }
 }
 
-module.exports = {
-  deleteEndpointCache
+exports.deletePreparedData = async (ilpId, transferId, payerName, payeeName) => {
+  try {
+    return await IlpPacketModel.destroyByTransferId({
+      transferId
+    }).then(async () => {
+      return TransferPreparationModule.deletePreparedData(transferId, payerName, payeeName)
+    })
+  } catch (err) {
+    throw ErrorHandler.Factory.reformatFSPIOPError(err)
+  }
 }
