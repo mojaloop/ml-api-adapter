@@ -51,6 +51,7 @@ const { FspEndpointTypes, FspEndpointTemplates } = Enum.EndPoints
 
 let notificationConsumer = {}
 let autoCommitEnabled = true
+let PayloadCache
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
@@ -93,7 +94,8 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   *
   * @returns {boolean} Returns true on success and throws error on failure
   */
-const startConsumer = async () => {
+const startConsumer = async ({ payloadCache } = {}) => {
+  PayloadCache = payloadCache
   const functionality = Enum.Events.Event.Type.NOTIFICATION
   const action = Action.EVENT
 
@@ -109,6 +111,7 @@ const startConsumer = async () => {
       autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
     }
     notificationConsumer = new Consumer([topicName], config)
+    await PayloadCache?.connect()
     await notificationConsumer.connect()
     logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
     await notificationConsumer.consume(consumeMessage)
@@ -220,8 +223,8 @@ const processMessage = async (msg, span) => {
 
   logger.debug('Notification::processMessage')
 
-  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload
-      || !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
+  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload ||
+      !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
   }
@@ -236,9 +239,8 @@ const processMessage = async (msg, span) => {
     content,
     isFx,
     isSuccess,
-    fspiopObject, // Just incase if we need it
     payloadForCallback: payload
-  } = dto.notificationMessageDto(msg)
+  } = await dto.notificationMessageDto(msg, PayloadCache)
 
   const REQUEST_TYPE = {
     POST: 'POST',
@@ -388,8 +390,8 @@ const processMessage = async (msg, span) => {
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     // todo: do we need this case for FX_RESERVE ?
     if ((action === Action.RESERVE) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination && action !== Action.FX_RESERVE)) {
-      let parsedOriginalPayload = JSON.parse(payload)
-      if(Config.API_TYPE === API_TYPES.iso20022) {
+      const parsedOriginalPayload = JSON.parse(payload)
+      if (Config.API_TYPE === API_TYPES.iso20022) {
       // TODO: ISO20022: need to handle the case when the original request is ISO20022
       } else {
         if (parsedOriginalPayload.fulfilment && action === Action.RESERVE) {
@@ -643,7 +645,7 @@ const processMessage = async (msg, span) => {
     const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
 
-    let parsedOriginalPayload = JSON.parse(payload)
+    const parsedOriginalPayload = JSON.parse(payload)
     if (Config.API_TYPE === API_TYPES.iso20022) {
       // TODO: ISO20022: need to handle the case when the original request is ISO20022
     } else {
@@ -693,7 +695,7 @@ const processMessage = async (msg, span) => {
   * @returns {boolean}
   */
 const isConnected = () => {
-  return notificationConsumer.isConnected()
+  return notificationConsumer.isConnected() && PayloadCache ? PayloadCache.isConnected() : true
 }
 
 /**
@@ -710,7 +712,7 @@ const disconnect = async () => {
     throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
   }
 
-  return notificationConsumer.disconnect()
+  return Promise.all([notificationConsumer.disconnect(), PayloadCache?.disconnect()])
 }
 
 /**

@@ -1,5 +1,6 @@
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { logger } = require('../../shared/logger')
 const { ERROR_HANDLING, API_TYPE } = require('../../lib/config')
 const { API_TYPES } = require('../../shared/constants')
@@ -28,15 +29,26 @@ const FX_ACTIONS = [
   Action.FX_NOTIFY
 ]
 
-const getCallbackPayload = (content) => {
+const getOriginalPayload = async (content, payloadCache = undefined) => {
   let originalPayload
-  if (msg.value.content.context.originalRequestPayload) {
-    originalPayload = msg.value.content.context.originalRequestPayload
-  } else {
-    const cacheRequestId = msg.value.content.context.originalRequestId
-    // TODO: ISO20022: get the original request from the cache
+
+  if (content.context.originalRequestPayload) {
+    originalPayload = content.context.originalRequestPayload
+  } else if (content.context.originalRequestId && payloadCache) {
+    const cacheRequestId = content.context.originalRequestId
+    originalPayload = cacheRequestId ? await payloadCache.getPayload(cacheRequestId) : null
   }
 
+  if (!originalPayload) {
+    logger.error('Notification::processMessage - Original payload not found')
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR)
+  }
+
+  return originalPayload
+}
+
+const getCallbackPayload = async (content, payloadCache = undefined) => {
+  const originalPayload = await getOriginalPayload(content, payloadCache)
   const decodedOriginalPayload = decodePayload(originalPayload, { asParsed: false })
   // content.payload should be already parsed as per the new design and it is in fspiop format
   const fspiopObject = content.payload
@@ -44,7 +56,9 @@ const getCallbackPayload = (content) => {
 
   if (fspiopObject.errorInformation) {
     if (API_TYPE === API_TYPES.iso20022) {
-      // TODO: ISO20022: construct ISO20022 error message here
+      // ISO20022: construct ISO20022 error message
+      const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
+      payloadForCallback = JSON.stringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError.errorInformation })).body)
     } else {
       payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
     }
@@ -55,7 +69,7 @@ const getCallbackPayload = (content) => {
   return { fspiopObject, payloadForCallback }
 }
 
-const notificationMessageDto = (message) => {
+const notificationMessageDto = async (message, payloadCache = undefined) => {
   const { metadata, from, to, content } = message.value
   const { action, state } = metadata.event
 
@@ -66,7 +80,7 @@ const notificationMessageDto = (message) => {
 
   logger.info('Notification::processMessage - action, status: ', { actionLower, status, isFx, isSuccess })
 
-  const { payloadForCallback, fspiopObject } = getCallbackPayload(content)
+  const { payloadForCallback, fspiopObject } = await getCallbackPayload(content, payloadCache)
 
   let id = content.uriParams?.id
   if (!id) {
