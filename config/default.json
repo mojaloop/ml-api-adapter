@@ -1,4 +1,5 @@
 {
+  "API_TYPE": "fspiop",
   "HUB_PARTICIPANT": {
     "ID": 1,
     "NAME": "Hub"
@@ -12,6 +13,16 @@
       ]
     }
   },
+  "ORIGINAL_PAYLOAD_STORAGE": "",
+  "PAYLOAD_CACHE": {
+    "enabled": true,
+    "type": "redis-cluster",
+    "connectionConfig": {
+      "cluster": [
+        { "host": "localhost", "port": 6379 }
+      ]
+    }
+  },
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
   "ENDPOINT_SOURCE_URL": "http://localhost:3001",
@@ -22,18 +33,21 @@
   },
   "PROTOCOL_VERSIONS": {
     "CONTENT": {
-      "DEFAULT": "1.1",
+      "DEFAULT": "2.0",
       "VALIDATELIST": [
         "1.1",
-        "1.0"
+        "1.0",
+        "2.0"
       ]
     },
     "ACCEPT": {
-      "DEFAULT": "1",
+      "DEFAULT": "2",
       "VALIDATELIST": [
         "1",
         "1.0",
-        "1.1"
+        "1.1",
+        "2",
+        "2.0"
       ]
     }
   },

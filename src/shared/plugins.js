@@ -28,24 +28,16 @@ const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const CentralServices = require('@mojaloop/central-services-shared')
 
-const Package = require('../../package')
 const Config = require('../lib/config')
 const loggingPlugin = require('./loggingPlugin')
+const OpenapiBackendValidator = require('@mojaloop/central-services-shared').Util.Hapi.OpenapiBackendValidator
 
 /**
  * @module src/shared/plugins
  */
 
-const registerPlugins = async (server) => {
-  await server.register({
-    plugin: require('hapi-swagger'),
-    options: {
-      info: {
-        title: 'ml api adapter API Documentation',
-        version: Package.version
-      }
-    }
-  })
+const registerPlugins = async (server, openAPIBackend) => {
+  await server.register(OpenapiBackendValidator)
 
   await server.register({
     plugin: loggingPlugin
@@ -88,14 +80,16 @@ const registerPlugins = async (server) => {
 
     // configure FSPIOP resources
     const resources = [
-      'transfers'
+      'transfers',
+      'fxTransfers'
     ]
 
     // return FSPIOPHeaderValidation plugin options
     return {
       resources,
       supportedProtocolContentVersions,
-      supportedProtocolAcceptVersions
+      supportedProtocolAcceptVersions,
+      apiType: Config.API_TYPE
     }
   }
 
@@ -111,6 +105,20 @@ const registerPlugins = async (server) => {
       options: getOptionsForFSPIOPHeaderValidation()
     }
   ])
+
+  await server.register({
+    plugin: {
+      name: 'openapi',
+      version: '1.0.0',
+      multiple: true,
+      register: function (server, options) {
+        server.expose('openapi', options.openapi)
+      }
+    },
+    options: {
+      openapi: openAPIBackend
+    }
+  })
 }
 
 module.exports = {

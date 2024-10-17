@@ -14,8 +14,9 @@ const DEFAULT_PROTOCOL_VERSION = {
   CONTENT: {
     DEFAULT: '1.1',
     VALIDATELIST: [
+      '1.1',
       '1.0',
-      '1.1'
+      '2.0'
     ]
   },
   ACCEPT: {
@@ -23,7 +24,9 @@ const DEFAULT_PROTOCOL_VERSION = {
     VALIDATELIST: [
       '1',
       '1.0',
-      '1.1'
+      '1.1',
+      '2',
+      '2.0'
     ]
   }
 }
@@ -64,6 +67,7 @@ const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) 
 
 // Set config object to be returned
 const config = {
+  API_TYPE: RC.API_TYPE, // 'fspiop' or 'iso20022'
   PROXY: RC.PROXY_CACHE,
   HUB_ID: RC.HUB_PARTICIPANT.ID,
   HUB_NAME: RC.HUB_PARTICIPANT.NAME,

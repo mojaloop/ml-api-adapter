@@ -31,7 +31,8 @@ Test('DTO tests -->', dtoTest => {
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -57,7 +58,8 @@ Test('DTO tests -->', dtoTest => {
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: {}
       },
       metadata: {
         correlationId: 1,

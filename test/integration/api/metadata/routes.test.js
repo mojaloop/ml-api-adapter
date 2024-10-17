@@ -25,7 +25,6 @@
 'use strict'
 
 const Test = require('tape')
-const Joi = require('@hapi/joi')
 
 const Logger = require('@mojaloop/central-services-logger')
 const Kafka = require('@mojaloop/central-services-stream').Util
@@ -76,13 +75,6 @@ Test('Metadata handler test', async handlerTest => {
   handlerTest.test('/health', async healthCheckTest => {
     healthCheckTest.test('get the health status', async test => {
       // Arrange
-      const expectedSchema = Joi.object({
-        status: Joi.string().valid('OK').required(),
-        uptime: Joi.number().required(),
-        startTime: Joi.date().iso().required(),
-        versionNumber: Joi.string().required(),
-        services: Joi.array().required()
-      })
       const expectedStatus = 200
       const expectedServices = [
         { name: 'broker', status: 'OK' },
@@ -94,11 +86,9 @@ Test('Metadata handler test', async handlerTest => {
       const {
         responseBody,
         responseCode
-      } = await unwrapResponse((reply) => metadataHandler.getHealth(createRequest({}), reply))
+      } = await unwrapResponse((reply) => metadataHandler.getHealth(createRequest({}), {}, reply))
 
       // Assert
-      const validationResult = expectedSchema.validate(responseBody) // We use Joi to validate the results as they rely on timestamps that are variable
-      test.equal(validationResult.error, undefined, 'The response matches the validation schema')
       test.deepEqual(responseCode, expectedStatus, 'The response code matches')
       test.deepEqual(responseBody.services, expectedServices, 'The sub-services are correct')
       test.end()

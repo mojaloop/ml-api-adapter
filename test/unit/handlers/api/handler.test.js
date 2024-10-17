@@ -6,7 +6,7 @@ const axios = require('axios')
 
 const Notification = require('../../../../src/handlers/notification')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
-const Handler = require('../../../../src/api/metadata/handler')
+const Handler = require('../../../../src/api/handlers')
 const {
   createRequest,
   unwrapResponse
@@ -42,7 +42,7 @@ Test('route handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+      } = await unwrapResponse((reply) => Handler.ApiHandlers.HealthGet(createRequest({}), {}, reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
@@ -60,7 +60,7 @@ Test('route handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
+      } = await unwrapResponse((reply) => Handler.ApiHandlers.HealthGet(createRequest({ query: { detailed: true } }), {}, reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
