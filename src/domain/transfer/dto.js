@@ -137,6 +137,13 @@ const producerConfigDto = (functionality, action, logPrefix = '') => {
   return Object.freeze({ topicConfig, kafkaConfig })
 }
 
+const setOriginalRequestPayload = async (kafkaMessageContext, payloadCache = undefined) => {
+  await payloadCache.setPayload(
+    kafkaMessageContext.originalRequestId,
+    kafkaMessageContext.originalRequestPayload
+  )
+}
+
 module.exports = {
   prepareMessageDto,
   forwardedMessageDto,
@@ -145,5 +152,6 @@ module.exports = {
   fulfilErrorMessageDto,
   eventStateDto,
   producerConfigDto,
-  getMessageDto
+  getMessageDto,
+  setOriginalRequestPayload
 }
