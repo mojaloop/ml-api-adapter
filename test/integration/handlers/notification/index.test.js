@@ -438,6 +438,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -482,6 +483,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -879,6 +881,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -932,6 +935,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -1159,6 +1163,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1203,6 +1208,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1249,6 +1255,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1298,6 +1305,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1350,6 +1358,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
