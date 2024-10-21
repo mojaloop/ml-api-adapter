@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
+source ./docker/env.sh
+
 docker load -i /tmp/docker-image.tar
 docker-compose up -d
 docker-compose ps

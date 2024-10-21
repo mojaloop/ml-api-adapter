@@ -51,13 +51,11 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 const getCallbackPayload = async (content, payloadCache = undefined) => {
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const decodedOriginalPayload = decodePayload(originalPayload, { asParsed: false })
-  // content.payload should be already parsed as per the new design and it is in fspiop format
   const fspiopObject = content.payload
   let payloadForCallback
 
   if (fspiopObject.errorInformation) {
     if (API_TYPE === API_TYPES.iso20022) {
-      // ISO20022: construct ISO20022 error message
       const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
       payloadForCallback = JSON.stringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
     } else {
