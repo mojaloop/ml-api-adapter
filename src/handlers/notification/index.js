@@ -226,7 +226,7 @@ const processMessage = async (msg, span) => {
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload ||
       !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
     histTimerEnd({ success: false, action: 'unknown' })
-    throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
   }
 
   const fromSwitch = true

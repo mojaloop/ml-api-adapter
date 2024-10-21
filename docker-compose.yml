@@ -2,11 +2,17 @@ networks:
   ml-mojaloop-net:
     name: ml-mojaloop-net
 
+# @see https://uninterrupted.tech/blog/hassle-free-redis-cluster-deployment-using-docker/
 x-redis-node: &REDIS_NODE
   image: docker.io/bitnami/redis-cluster:6.2.14
   environment: &REDIS_ENVS
     ALLOW_EMPTY_PASSWORD: yes
-    REDIS_NODES: redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5
+    REDIS_CLUSTER_DYNAMIC_IPS: no
+    REDIS_CLUSTER_ANNOUNCE_IP: ${REDIS_CLUSTER_ANNOUNCE_IP}
+    REDIS_NODES: redis-node-0:6379 redis-node-1:9301 redis-node-2:9302 redis-node-3:9303 redis-node-4:9304 redis-node-5:9305
+  healthcheck:
+    test: [ "CMD", "redis-cli", "ping" ]
+    timeout: 2s
   networks:
     - ml-mojaloop-net
 
@@ -30,10 +36,13 @@ services:
       - ./docker/wait4:/opt/app/wait4
     networks:
       - ml-mojaloop-net
+    extra_hosts:
+      - "redis-node-0:host-gateway"
     user: 'root'
     depends_on:
       - central-ledger
       - kafka
+      - redis-node-0
     healthcheck:
       test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:3000/health"]
       timeout: 20s
@@ -59,10 +68,13 @@ services:
       - ./docker/wait4:/opt/app/wait4
     networks:
       - ml-mojaloop-net
+    extra_hosts:
+      - "redis-node-0:host-gateway"
     user: 'root'
     depends_on:
       - central-ledger
       - kafka
+      - redis-node-0
     healthcheck:
       test: ["CMD", "sh", "-c" ,"apk --no-cache add curl", ";", "curl", "--fail", "http://localhost:3000/health"]
       timeout: 20s
@@ -256,28 +268,55 @@ services:
     environment:
       - KAFKA_BROKERS=kafka:29092
 
-
   redis-node-0:
     <<: *REDIS_NODE
     environment:
       <<: *REDIS_ENVS
       REDIS_CLUSTER_CREATOR: yes
+      REDIS_PORT_NUMBER: 6379
     depends_on:
       - redis-node-1
       - redis-node-2
-      - redis-node-3
-      - redis-node-4
-      - redis-node-5
     ports:
       - "6379:6379"
-
+      - "16379:16379"
   redis-node-1:
     <<: *REDIS_NODE
+    environment:
+      <<: *REDIS_ENVS
+      REDIS_PORT_NUMBER: 9301
+    ports:
+      - "9301:9301"
+      - "19301:19301"
   redis-node-2:
     <<: *REDIS_NODE
+    environment:
+      <<: *REDIS_ENVS
+      REDIS_PORT_NUMBER: 9302
+    ports:
+      - "9302:9302"
+      - "19302:19302"
   redis-node-3:
     <<: *REDIS_NODE
+    environment:
+      <<: *REDIS_ENVS
+      REDIS_PORT_NUMBER: 9303
+    ports:
+      - "9303:9303"
+      - "19303:19303"
   redis-node-4:
     <<: *REDIS_NODE
+    environment:
+      <<: *REDIS_ENVS
+      REDIS_PORT_NUMBER: 9304
+    ports:
+      - "9304:9304"
+      - "19304:19304"
   redis-node-5:
     <<: *REDIS_NODE
+    environment:
+      <<: *REDIS_ENVS
+      REDIS_PORT_NUMBER: 9305
+    ports:
+      - "9305:9305"
+      - "19305:19305"
