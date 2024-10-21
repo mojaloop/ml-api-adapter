@@ -142,7 +142,7 @@ const fulfilTransfer = async function (context, request, h) {
       originalRequestId: request.info.id
     }
 
-    if (request.server.app.payloadCache) {
+    if (request.server?.app?.payloadCache) {
       await setOriginalRequestPayload(
         kafkaMessageContext,
         request.server.app.payloadCache
@@ -255,7 +255,7 @@ const fulfilTransferError = async function (context, request, h) {
       originalRequestId: request.info.id
     }
 
-    if (request.server.app.payloadCache) {
+    if (request.server?.app?.payloadCache) {
       await setOriginalRequestPayload(
         kafkaMessageContext,
         request.server.app.payloadCache
