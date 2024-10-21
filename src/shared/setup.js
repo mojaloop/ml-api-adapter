@@ -31,12 +31,13 @@ const Logger = require('@mojaloop/central-services-logger')
 const Boom = require('@hapi/boom')
 const RegisterHandlers = require('../handlers/register')
 const Config = require('../lib/config')
-const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const { Endpoints, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Metrics = require('@mojaloop/central-services-metrics')
 const Enums = require('@mojaloop/central-services-shared').Enum
 const Kafka = require('@mojaloop/central-services-stream').Util
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const generalEnum = require('@mojaloop/central-services-shared').Enum
+const { getProducerConfigs } = require('../lib/kafka/producer')
+
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 /**
  * @module src/shared/setup
@@ -107,7 +108,7 @@ const createHandlers = async (handlers) => {
     if (handler.enabled) {
       Logger.isInfoEnabled && Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
-        await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+        await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
         await RegisterHandlers.registerNotificationHandler()
       } else {
         const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
@@ -127,22 +128,7 @@ const initializeInstrumentation = () => {
 }
 
 const initializeProducers = async () => {
-  const configs = []
-  configs.push({
-    topicConfig: KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.PREPARE),
-    kafkaConfig: KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.PREPARE.toUpperCase())
-  })
-
-  configs.push({
-    topicConfig: KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.FULFIL),
-    kafkaConfig: KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.FULFIL.toUpperCase())
-  })
-
-  configs.push({
-    topicConfig: KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, generalEnum.Events.Event.Action.TRANSFER, generalEnum.Events.Event.Action.GET),
-    kafkaConfig: KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, generalEnum.Kafka.Config.PRODUCER, generalEnum.Events.Event.Action.TRANSFER.toUpperCase(), generalEnum.Events.Event.Action.GET.toUpperCase())
-  })
-  await Kafka.Producer.connectAll(configs)
+  await Kafka.Producer.connectAll(getProducerConfigs())
 }
 
 /**
@@ -189,7 +175,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers)
     } else {
-      await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+      await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
       await RegisterHandlers.registerAllHandlers()
     }
   }
@@ -199,5 +185,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
 
 module.exports = {
   initialize,
-  createServer
+  initializeProducers,
+  createServer,
+  getProducerConfigs
 }
