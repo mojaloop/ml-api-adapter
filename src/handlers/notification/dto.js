@@ -59,7 +59,7 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
     if (API_TYPE === API_TYPES.iso20022) {
       // ISO20022: construct ISO20022 error message
       const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-      payloadForCallback = JSON.stringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError.errorInformation })).body)
+      payloadForCallback = JSON.stringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
     } else {
       payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
     }
