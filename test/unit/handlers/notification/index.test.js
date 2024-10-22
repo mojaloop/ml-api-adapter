@@ -1805,8 +1805,8 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -1862,8 +1862,8 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))

@@ -360,6 +360,8 @@ const processMessage = async (msg, span) => {
     return true
   }
 
+  const sendToSource = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination
+
   if ([Action.COMMIT, Action.RESERVE, Action.FX_COMMIT, Action.FX_RESERVE].includes(action) && isSuccess) {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
@@ -389,7 +391,7 @@ const processMessage = async (msg, span) => {
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     // todo: do we need this case for FX_RESERVE ?
-    if ((action === Action.RESERVE) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination && action !== Action.FX_RESERVE)) {
+    if ((action === Action.RESERVE) || (sendToSource && action !== Action.FX_RESERVE)) {
       const parsedOriginalPayload = JSON.parse(payload)
 
       if (action === Action.RESERVE) {
@@ -440,55 +442,60 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.REJECT, Action.FX_REJECT].includes(action)) {
-    const [callbackURLFrom, callbackURLTo] = await Promise.all([
-      getEndpointFn(source, REQUEST_TYPE.PUT),
-      getEndpointFn(destination, REQUEST_TYPE.PUT)
-    ])
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
-    headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
-    // forward the reject to the destination
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+    const [, response] = await Promise.all([
+      (async function notifyDestination () {
+        const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
+        headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
+        // forward the reject to the destination
+        logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
+        await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+      })(),
+      // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+      (async function notifySource () {
+        if (sendToSource) {
+          const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT)
+          jwsSigner = getJWSSigner(Config.HUB_NAME)
+          logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
+          headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
+          return await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+        } else {
+          logger.info(`Notification::processMessage - Action: ${action} - Skipping notification callback to original sender (${source}) because feature is disabled in config.`)
+          return true
+        }
+      })()
+    ])
 
-    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination) {
-      jwsSigner = getJWSSigner(Config.HUB_NAME)
-      logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
-      headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-      const response = await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
-      histTimerEnd({ success: true, action })
-      return response
-    } else {
-      logger.info(`Notification::processMessage - Action: ${action} - Skipping notification callback to original sender (${source}) because feature is disabled in config.`)
-    }
     histTimerEnd({ success: true, action })
-    return true
+    return response
   }
 
   if ([Action.ABORT, Action.FX_ABORT].includes(action)) {
-    const [callbackURLFrom, callbackURLTo] = await Promise.all([
-      getEndpointFn(source, REQUEST_TYPE.PUT_ERROR),
-      getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
-    ])
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
-    headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
-    // forward the abort to the destination
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
-
-    // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination) {
-      jwsSigner = getJWSSigner(Config.HUB_NAME)
-      logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
-      headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-      const response = await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
-      histTimerEnd({ success: true, action })
-      return response
-    } else {
-      logger.info(`Notification::processMessage - Action: ${action} - Skipping notification callback to original sender (${source}).`)
-    }
+    const [, response] = await Promise.all([
+      (async function notifyDestination () {
+        const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
+        headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
+        // forward the abort to the destination
+        logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
+        await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+      })(),
+      (async function notifySource () {
+        // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
+        if (sendToSource) {
+          const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT_ERROR)
+          jwsSigner = getJWSSigner(Config.HUB_NAME)
+          logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
+          headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
+          return await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+        } else {
+          logger.info(`Notification::processMessage - Action: ${action} - Skipping notification callback to original sender (${source}).`)
+          return true
+        }
+      })()
+    ])
     histTimerEnd({ success: true, action })
-    return true
+    return response
   }
 
   if ([Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION].includes(action)) {
@@ -501,7 +508,7 @@ const processMessage = async (msg, span) => {
     await Callback.sendRequest({ url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
-    if (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination && source !== Config.HUB_NAME) {
+    if (sendToSource && source !== Config.HUB_NAME) {
       const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT_ERROR)
       logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
       headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
