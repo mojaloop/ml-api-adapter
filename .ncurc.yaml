@@ -5,5 +5,6 @@ reject: [
     "get-port",
     # glob >= 11 requires node >= 20
     "glob",
-    "@mojaloop/central-services-shared" # we need to use snapshots for now
+    "@mojaloop/central-services-shared", # we need to use snapshots for now
+    "@mojaloop/sdk-standard-components" # v19.1.0 is broken with circular dependencies on tranform-lib
 ]
