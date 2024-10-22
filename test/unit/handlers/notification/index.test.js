@@ -1676,6 +1676,23 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
+    // await processMessageTest.test('throw error if context is missing both originalRequestId & originalRequestPayload', async test => {
+    //   const msg = {}
+
+    //   try {
+    //     mockPayloadCache.getPayload.returns(Promise.resolve(msg))
+    //     Notification.startConsumer({ payloadCache: mockPayloadCache })
+    //     await Notification.processMessage(msg)
+    //     test.fail('Was expecting an error when receiving an invalid message from Kafka')
+    //     test.end()
+    //   } catch (err) {
+    //     test.ok(err instanceof FSPIOPError)
+    //     test.equal(err.message, 'Invalid message received from kafka')
+    //     test.equal(err.apiErrorCode.code, '2001')
+    //     test.end()
+    //   }
+    // })
+
     await processMessageTest.test('process the reject message received from kafka and send out a transfer put callback', async test => {
       const uuid = Uuid()
       const payerFsp = 'dfsp2'
