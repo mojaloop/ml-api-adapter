@@ -30,24 +30,7 @@ const setProp = (obj, path, value) => {
   current[pathParts[pathParts.length - 1]] = value
 }
 
-// Safely get nested property from an object
-const getProp = (obj, path) => {
-  const pathParts = path.split('.')
-  let current = obj
-
-  for (const part of pathParts) {
-    if (typeof current === 'object' && current !== null && part in current) {
-      current = (current)[part]
-    } else {
-      return undefined
-    }
-  }
-
-  return current
-}
-
 module.exports = {
   pathForInterface,
-  setProp,
-  getProp
+  setProp
 }

@@ -84,5 +84,13 @@ Test('Util', (utilTests) => {
     t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for empty string API_TYPE')
     t.end()
   })
+
+  utilTests.test('setProp should set a nested property in an object', async (t) => {
+    const obj = {}
+    Util.setProp(obj, 'a.b.c', 'value')
+    t.equal(obj.a.b.c, 'value')
+    t.end()
+  })
+
   utilTests.end()
 })

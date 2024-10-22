@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 const { logger } = require('../../shared/logger')
 const PayloadCache = require('./PayloadCache')
 const PayloadCacheError = require('./errors')

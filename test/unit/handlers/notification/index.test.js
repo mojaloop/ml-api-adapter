@@ -32,9 +32,10 @@ const Proxyquire = require('proxyquire')
 const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
+const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const EncodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Logger = require('@mojaloop/central-services-logger')
+const { logger } = require('../../../../src/shared/logger')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
 const Util = require('@mojaloop/central-services-shared').Util
@@ -48,6 +49,7 @@ const HeadersLib = require(`${src}/lib/headers`)
 const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
 const { mockPayloadCache } = require('../../mocks')
 const Fixtures = require('../../../fixtures')
+const { API_TYPES } = require('../../../../src/shared/constants')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
@@ -64,8 +66,9 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Consumer.prototype, 'constructor')
-
     sandbox.stub(Consumer.prototype, 'connect').returns(Promise.resolve(true))
+
+    sandbox.stub(Producer, 'produceMessage').returns(Promise.resolve(true))
 
     // stub out PayloadCache methods
     sandbox.stub(PayloadCache.prototype, 'connect').returns(Promise.resolve(true))
@@ -79,7 +82,7 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(Promise.resolve(true))
     sandbox.stub(Participant, 'getEndpoint').callsFake(({ fsp, proxy }) => {
       const result = fsp.includes('proxied') ? proxyUrl : url
-      return Promise.resolve(proxy ? { url: result } : result)
+      return Promise.resolve(proxy ? { url: result, proxyId: 'proxy-id' } : result)
     })
 
     sandbox.stub(Logger)
@@ -3776,23 +3779,214 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
-    // await processMessageTest.test('produce forward message for transfer prepare if participant is a proxy', async test => {
-    //   const msg = {
-    //     value: Fixtures.createMessageProtocol(
-    //       'prepare',
-    //       'prepare',
-    //       {
+    await processMessageTest.test('produce forward message for transfer prepare if participant is a proxy', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'prepare',
+          'prepare',
+          {
+            transferId: Uuid()
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      Participant.getEndpoint.returns(Promise.resolve('http://localhost:3000'))
 
-    //       })
-    //   }
-    //   mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
-    //   Notification.startConsumer({ payloadCache: mockPayloadCache })
-    //   const expected = true
-    //   const result = await Notification.processMessage(msg)
-    //   test.equal(result, expected)
-    //   test.end()
+      const expected = true
+      const result = await Notification.processMessage(msg)
+      test.equal(result, expected)
+      test.end()
+    })
 
-    // })
+    await processMessageTest.test('process fspiop message for reserve action, remove fulfilment for payee notification in fspiop mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.API_TYPE = API_TYPES.fspiop
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'reserve',
+          'reserve',
+          {
+            transferId: Uuid(),
+            fulfilment: 'fulfilment-token'
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
+      test.equal(parsedPayload.fulfilment, undefined)
+      test.equal(parsedPayload.transferId, msg.value.content.payload.transferId)
+      test.end()
+    })
+
+    await processMessageTest.test('process ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.API_TYPE = API_TYPES.iso20022
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'reserve',
+          'reserve',
+          {
+            TxInfAndSts: {
+              ExctnConf: 'fulfilment-token'
+            }
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
+      test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
+      test.end()
+    })
+
+    await processMessageTest.test('process fx-notify message', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            commitRequestId: Uuid()
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await Notification.processMessage(msg)
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('throws error if fx-prepare message is error', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            errorInformation: {
+              errorCode: 3100,
+              errorDescription: 'Client Validation Error'
+            }
+          }
+        )
+      }
+      msg.value.metadata.event.state.status = 'error'
+      msg.value.metadata.event.state.code = 400
+
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      try {
+        await Notification.processMessage(msg)
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.message, 'FX_NOTIFY action must be successful')
+      }
+
+      test.end()
+    })
+
+    await processMessageTest.test('process fspiop message for fx-notify action, remove fulfilment for payee notification in fspiop mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.API_TYPE = API_TYPES.fspiop
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            transferId: Uuid(),
+            fulfilment: 'fulfilment-token'
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[0][0].payload)
+      test.equal(parsedPayload.fulfilment, undefined)
+      test.equal(parsedPayload.transferId, msg.value.content.payload.transferId)
+      test.end()
+    })
+
+    await processMessageTest.test('process ISO message for fx-notify action, remove fulfilment for payee notification in ISO mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.API_TYPE = API_TYPES.iso20022
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            TxInfAndSts: {
+              ExctnConf: 'fulfilment-token'
+            }
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[0][0].payload)
+      test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
+      test.end()
+    })
+
+    await processMessageTest.test('fx-notify: log and re-throw error if sendRequest throws', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            commitRequestId: Uuid()
+          }
+        )
+      }
+
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      Callback.sendRequest.returns(Promise.reject(new Error('Test Error')))
+      const loggerSpy = sandbox.stub(logger, 'error')
+
+      try {
+        await Notification.processMessage(msg)
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.message, 'Test Error')
+        test.ok(loggerSpy.calledOnce)
+        test.ok(loggerSpy.calledWith(sandbox.match.instanceOf(Error).and(sandbox.match.has('message', 'Test Error'))))
+      }
+
+      Callback.sendRequest.reset()
+      test.end()
+    })
 
     await processMessageTest.end()
   })

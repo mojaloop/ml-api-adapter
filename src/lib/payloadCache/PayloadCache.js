@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 // todo: add to Utils export
 const RedisCache = require('@mojaloop/central-services-shared/src/util/redis/redisCache')
 const safeStringify = require('fast-safe-stringify')
