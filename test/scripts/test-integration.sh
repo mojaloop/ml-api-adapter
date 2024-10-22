@@ -5,6 +5,8 @@ source ./docker/env.sh
 
 export ENDPOINT_URL=http://localhost:4545/notification
 
+docker load -i /tmp/docker-image.tar
+
 docker-compose up -d
 docker-compose ps
 
