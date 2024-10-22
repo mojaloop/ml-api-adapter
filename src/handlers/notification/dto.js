@@ -36,7 +36,7 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
     originalPayload = content.context.originalRequestPayload
   } else if (content.context.originalRequestId && payloadCache) {
     const cacheRequestId = content.context.originalRequestId
-    originalPayload = cacheRequestId ? await payloadCache.getPayload(cacheRequestId) : null
+    originalPayload = await payloadCache.getPayload(cacheRequestId)
   }
 
   if (!originalPayload) {
