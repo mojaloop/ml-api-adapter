@@ -35,7 +35,6 @@ const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/centr
 const Enum = require('@mojaloop/central-services-shared').Enum
 const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Kafka = require('@mojaloop/central-services-stream').Util
-
 const Config = require('../../../../src/lib/config')
 const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
 const { prepare } = require('../../../../src/domain/transfer/index')
@@ -359,8 +358,12 @@ Test('Notification Handler', notificationHandlerTest => {
       )
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully from switch to Payer')
+      } else {
+        test.deepEqual(response, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      }
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
       test.end()
     })
 
@@ -392,7 +395,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully from switch to Payer')
+      } else {
+        test.deepEqual(response, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      }
+
       test.end()
     })
 
@@ -578,7 +586,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response, messageProtocol.content.payload, 'Error notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -609,7 +622,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response, messageProtocol.content.payload, 'Error notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -806,8 +824,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -835,8 +859,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1023,7 +1053,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1051,7 +1086,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1085,7 +1125,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1118,7 +1163,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1261,8 +1311,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1311,8 +1367,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1363,8 +1425,14 @@ Test('Notification Handler', notificationHandlerTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to dfsp1')
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to proxyFsp')
+      } else {
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      }
+
       test.end()
     })
 
@@ -1423,7 +1491,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -1454,7 +1527,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -1485,7 +1563,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (response.payload.TxInfAndSts) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 

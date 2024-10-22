@@ -1691,8 +1691,7 @@ Test('Notification Service tests', async notificationTest => {
       msg.value.content.context.originalRequestPayload = undefined
 
       try {
-        mockPayloadCache.getPayload.returns(Promise.resolve(msg))
-        Notification.startConsumer({ payloadCache: mockPayloadCache })
+        Notification.startConsumer()
         await Notification.processMessage(msg)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
@@ -3776,6 +3775,24 @@ Test('Notification Service tests', async notificationTest => {
 
       test.end()
     })
+
+    // await processMessageTest.test('produce forward message for transfer prepare if participant is a proxy', async test => {
+    //   const msg = {
+    //     value: Fixtures.createMessageProtocol(
+    //       'prepare',
+    //       'prepare',
+    //       {
+
+    //       })
+    //   }
+    //   mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+    //   Notification.startConsumer({ payloadCache: mockPayloadCache })
+    //   const expected = true
+    //   const result = await Notification.processMessage(msg)
+    //   test.equal(result, expected)
+    //   test.end()
+
+    // })
 
     await processMessageTest.end()
   })
