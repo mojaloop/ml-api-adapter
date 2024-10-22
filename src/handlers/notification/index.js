@@ -224,7 +224,7 @@ const processMessage = async (msg, span) => {
   logger.debug('Notification::processMessage')
 
   if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload ||
-      !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
+    !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
   }
@@ -391,10 +391,11 @@ const processMessage = async (msg, span) => {
     // todo: do we need this case for FX_RESERVE ?
     if ((action === Action.RESERVE) || (Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE && source !== destination && action !== Action.FX_RESERVE)) {
       const parsedOriginalPayload = JSON.parse(payload)
-      if (Config.API_TYPE === API_TYPES.iso20022) {
-      // TODO: ISO20022: need to handle the case when the original request is ISO20022
-      } else {
-        if (parsedOriginalPayload.fulfilment && action === Action.RESERVE) {
+
+      if (action === Action.RESERVE) {
+        if (Config.API_TYPE === API_TYPES.iso20022 && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
+          delete parsedOriginalPayload.TxInfAndSts.ExctnConf
+        } else if ((parsedOriginalPayload.fulfilment)) {
           delete parsedOriginalPayload.fulfilment
         }
       }
@@ -646,13 +647,13 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
 
     const parsedOriginalPayload = JSON.parse(payload)
-    if (Config.API_TYPE === API_TYPES.iso20022) {
-      // TODO: ISO20022: need to handle the case when the original request is ISO20022
-    } else {
-      if (parsedOriginalPayload.fulfilment) {
-        delete parsedOriginalPayload.fulfilment
-      }
+
+    if (Config.API_TYPE === API_TYPES.iso20022 && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
+      delete parsedOriginalPayload.TxInfAndSts.ExctnConf
+    } else if (parsedOriginalPayload.fulfilment) {
+      delete parsedOriginalPayload.fulfilment
     }
+
     const payloadForFXP = JSON.stringify(parsedOriginalPayload)
     const method = PATCH
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)

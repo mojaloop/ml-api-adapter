@@ -47,6 +47,7 @@ const Uuid = require('uuid4')
 const HeadersLib = require(`${src}/lib/headers`)
 const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
 const { mockPayloadCache } = require('../../mocks')
+const Fixtures = require('../../../fixtures')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
@@ -1676,22 +1677,32 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    // await processMessageTest.test('throw error if context is missing both originalRequestId & originalRequestPayload', async test => {
-    //   const msg = {}
+    await processMessageTest.test('throw error if context is missing both originalRequestId & originalRequestPayload', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'prepare',
+          'prepare',
+          {
+            transferId: Uuid()
+          }
+        )
+      }
+      msg.value.content.context.originalRequestId = undefined
+      msg.value.content.context.originalRequestPayload = undefined
 
-    //   try {
-    //     mockPayloadCache.getPayload.returns(Promise.resolve(msg))
-    //     Notification.startConsumer({ payloadCache: mockPayloadCache })
-    //     await Notification.processMessage(msg)
-    //     test.fail('Was expecting an error when receiving an invalid message from Kafka')
-    //     test.end()
-    //   } catch (err) {
-    //     test.ok(err instanceof FSPIOPError)
-    //     test.equal(err.message, 'Invalid message received from kafka')
-    //     test.equal(err.apiErrorCode.code, '2001')
-    //     test.end()
-    //   }
-    // })
+      try {
+        mockPayloadCache.getPayload.returns(Promise.resolve(msg))
+        Notification.startConsumer({ payloadCache: mockPayloadCache })
+        await Notification.processMessage(msg)
+        test.fail('Was expecting an error when receiving an invalid message from Kafka')
+        test.end()
+      } catch (err) {
+        test.ok(err instanceof FSPIOPError)
+        test.equal(err.message, 'Invalid message received from kafka')
+        test.equal(err.apiErrorCode.code, '2001')
+        test.end()
+      }
+    })
 
     await processMessageTest.test('process the reject message received from kafka and send out a transfer put callback', async test => {
       const uuid = Uuid()
