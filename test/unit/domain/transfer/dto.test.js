@@ -28,6 +28,7 @@ Test('DTO tests -->', dtoTest => {
       to: 'to',
       from: 'from',
       type: 'application/json',
+      context: undefined,
       content: {
         uriParams: undefined,
         headers: undefined,
@@ -55,6 +56,7 @@ Test('DTO tests -->', dtoTest => {
       to: 'to',
       from: 'from',
       type: 'application/json',
+      context: undefined,
       content: {
         uriParams: undefined,
         headers: undefined,

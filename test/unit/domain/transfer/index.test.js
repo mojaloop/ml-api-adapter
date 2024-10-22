@@ -825,6 +825,7 @@ Test('Transfer Service tests', serviceTest => {
         to: message.payeeFsp,
         from: message.payerFsp,
         type: 'application/json',
+        context: undefined,
         content: {
           uriParams: {
             id: message.transferId
@@ -879,6 +880,7 @@ Test('Transfer Service tests', serviceTest => {
         to: message.payeeFsp,
         from: message.payerFsp,
         type: 'application/json',
+        context: undefined,
         content: {
           uriParams: {
             id: undefined
