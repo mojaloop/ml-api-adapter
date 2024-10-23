@@ -1,10 +1,8 @@
-// todo: add to Utils export
 const RedisCache = require('@mojaloop/central-services-shared/src/util/redis/redisCache')
 const safeStringify = require('fast-safe-stringify')
 
 const DEFAULT_TTL_SEC = 300 // pass through config
-const KEY_PREFIX = 'iso_payload' //
-// think, if we need to add resource part: 'iso_payload:quote:....'
+const KEY_PREFIX = 'iso_payload'
 
 class PayloadCache extends RedisCache {
   async getPayload (requestId, parseJson = false) {
@@ -39,7 +37,6 @@ class PayloadCache extends RedisCache {
       return false
     }
   }
-  // todo: think, if we need deletePayload method
 
   static formatPayloadCacheKey (requestId) {
     return `${KEY_PREFIX}:${requestId}`

@@ -45,5 +45,5 @@ export API_TYPE=iso20022
 npm run test:xint || INTEGRATION_TEST_EXIT_CODE="$?"
 echo "==> integration tests with ISO adapter exited with code: $INTEGRATION_TEST_EXIT_CODE"
 
-# docker-compose down
+docker-compose down
 exit $INTEGRATION_TEST_EXIT_CODE
