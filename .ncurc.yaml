@@ -4,7 +4,5 @@ reject: [
     # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
     "get-port",
     # glob >= 11 requires node >= 20
-    "glob",
-    # circular dependency with @mojaloop/sdk-standard-components introduced in v9.1.0
-    "@mojaloop/sdk-standard-components"
+    "glob"
 ]
