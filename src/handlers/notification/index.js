@@ -42,6 +42,7 @@ const Config = require('../../lib/config')
 const dto = require('./dto')
 const dtoTransfer = require('../../domain/transfer/dto')
 const utils = require('./utils')
+const { PAYLOAD_STORAGES } = require('../../lib/payloadCache/constants')
 
 const Callback = Util.Request
 const HeaderValidation = Util.HeaderValidation
@@ -95,6 +96,9 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   * @returns {boolean} Returns true on success and throws error on failure
   */
 const startConsumer = async ({ payloadCache } = {}) => {
+  if (Config.ORIGINAL_PAYLOAD_STORAGE === PAYLOAD_STORAGES.redis && !payloadCache) {
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR, 'Payload cache not initialized')
+  }
   PayloadCache = payloadCache
   const functionality = Enum.Events.Event.Type.NOTIFICATION
   const action = Action.EVENT

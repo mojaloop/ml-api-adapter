@@ -50,6 +50,7 @@ const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
 const { mockPayloadCache } = require('../../mocks')
 const Fixtures = require('../../../fixtures')
 const { API_TYPES } = require('../../../../src/shared/constants')
+const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
@@ -3992,6 +3993,23 @@ Test('Notification Service tests', async notificationTest => {
   })
 
   await notificationTest.test('startConsumer should', async startConsumerTest => {
+    await startConsumerTest.test('throw if payloadCache is not provided when ORIGINAL_PAYLOAD_STORAGE is redis', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.ORIGINAL_PAYLOAD_STORAGE = PAYLOAD_STORAGES.redis
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      try {
+        await NotificationProxy.startConsumer()
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.message, 'Payload cache not initialized')
+      }
+
+      test.end()
+    })
+
     await startConsumerTest.test('start the consumer and consumer messages', async test => {
       test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       test.end()
