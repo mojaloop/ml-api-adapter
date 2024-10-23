@@ -37,6 +37,7 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
   } else if (content.context.originalRequestId && payloadCache) {
     const cacheRequestId = content.context.originalRequestId
     originalPayload = await payloadCache.getPayload(cacheRequestId)
+    logger.debug('Notification::processMessage - Original payload found in cache', { cacheRequestId, originalPayload })
   }
 
   if (!originalPayload) {

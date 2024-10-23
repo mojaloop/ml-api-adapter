@@ -137,7 +137,7 @@ const createHandlers = async (handlers) => {
 // Returns an instance of the PayloadCache if the feature is enabled
 const initializePayloadCache = () => {
   if (Config.PAYLOAD_CACHE.enabled && Config.ORIGINAL_PAYLOAD_STORAGE === PAYLOAD_STORAGES.redis) {
-    return createPayloadCache(Config.PAYLOAD_CACHE.connectionConfig.type, Config.PAYLOAD_CACHE.connectionConfig)
+    return createPayloadCache(Config.PAYLOAD_CACHE.type, Config.PAYLOAD_CACHE.connectionConfig)
   }
 }
 
@@ -200,7 +200,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       await createHandlers(handlers)
     } else {
       await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-      await RegisterHandlers.registerAllHandlers()
+      await RegisterHandlers.registerAllHandlers({ payloadCache: initializePayloadCache() })
     }
   }
 

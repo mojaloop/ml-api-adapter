@@ -111,6 +111,7 @@ const startConsumer = async ({ payloadCache } = {}) => {
       autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
     }
     notificationConsumer = new Consumer([topicName], config)
+
     await PayloadCache?.connect()
     await notificationConsumer.connect()
     logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
