@@ -28,14 +28,36 @@
  --------------
  ******/
 
+/* istanbul ignore file */
+
 'use strict'
 
-const MetadataHandler = require('../../api/metadata/handler')
+const handleRequest = (api, req, h) => api.handleRequest(
+  {
+    method: req.method,
+    path: req.path,
+    body: req.payload,
+    query: req.query,
+    headers: req.headers
+  }, req, h)
 
-module.exports = [
+/**
+ * Core API Routes
+ *
+ * @param {object} api OpenAPIBackend instance
+ */
+const APIRoutes = (api) => [
   {
     method: 'GET',
     path: '/health',
-    handler: MetadataHandler.getHealth
+    handler: (req, h) =>
+      /* istanbul ignore next */
+      handleRequest(api, req, h),
+    config: {
+      tags: ['api', 'health'],
+      description: 'GET health'
+    }
   }
 ]
+
+module.exports = { APIRoutes }

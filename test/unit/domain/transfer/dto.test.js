@@ -28,11 +28,11 @@ Test('DTO tests -->', dtoTest => {
       to: 'to',
       from: 'from',
       type: 'application/json',
-      context: undefined,
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -55,11 +55,11 @@ Test('DTO tests -->', dtoTest => {
       to: 'to',
       from: 'from',
       type: 'application/json',
-      context: undefined,
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -79,6 +79,14 @@ Test('DTO tests -->', dtoTest => {
   dtoTest.test('fulfilMessageDto FX_RESERVE test', test => {
     const payload = mocks.mockFxFulfilPayload()
     const params = { id: '1234' }
+    const data = dto.fulfilMessageDto({ headers, dataUri, payload, params })
+    test.ok(data.metadata.event.action === Event.Action.FX_RESERVE)
+    test.end()
+  })
+
+  dtoTest.test('fulfilMessageDto FX_RESERVE test ID', test => {
+    const payload = mocks.mockFxFulfilPayload()
+    const params = { ID: '1234' }
     const data = dto.fulfilMessageDto({ headers, dataUri, payload, params })
     test.ok(data.metadata.event.action === Event.Action.FX_RESERVE)
     test.end()

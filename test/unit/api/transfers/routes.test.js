@@ -24,6 +24,8 @@
 
 const Test = require('tape')
 const Base = require('../../base')
+const { buildFXTransfer } = require('../../../fixtures')
+const Uuid = require('uuid4')
 
 Test('return error if required fields are missing on prepare', async function (assert) {
   const req = Base.buildRequest({ url: '/transfers', method: 'POST', payload: {}, headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' } })
@@ -43,7 +45,7 @@ Test('return error if required headers are missing on prepare', async function (
   assert.end()
 })
 
-Test('return error if transferId is not a guid', async function (assert) {
+Test('return error if transferId is not a uuid', async function (assert) {
   const req = Base.buildRequest({
     url: '/transfers',
     method: 'POST',
@@ -52,7 +54,7 @@ Test('return error if transferId is not a guid', async function (assert) {
   })
   const server = await Base.setup()
   const res = await server.inject(req)
-  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid GUID]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid uuid]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
   await server.stop()
   assert.end()
 })
@@ -384,6 +386,318 @@ Test('return error if errorDescription is not provided to PUT /transfers/{id}/er
   const server = await Base.setup()
   const res = await server.inject(req)
   Base.assertBadRequestError(assert, res, 'child "date" fails because [date must be a string with one of the following formats [ddd, DD MMM YYYY HH:mm:ss [GMT]]]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required fields are missing on PUT /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'PUT',
+    payload: {},
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId is required]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on PUT /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'PUT',
+    payload: { transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069' },
+    headers: {}
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "date" fails because [date is required]. child "fspiop-source" fails because [fspiop-source is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if transferId is not a uuid on PUT /transfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/transfers/{id}',
+    method: 'PUT',
+    payload: { transferId: 'invalid transfer id' },
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res, 'child "transferId" fails because [transferId must be a valid uuid]. child "payeeFsp" fails because [payeeFsp is required]. child "payerFsp" fails because [payerFsp is required]. child "amount" fails because [amount is required]. child "ilpPacket" fails because [ilpPacket is required]. child "condition" fails because [condition is required]. child "expiration" fails because [expiration is required]')
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if errorDescription is not provided to PUT /fxTransfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+      extensionList: {
+        extension: [{
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }]
+      }
+    },
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required fields are missing on PUT /fxTransfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}',
+    method: 'PUT',
+    payload: {},
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on PUT /fxTransfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}',
+    method: 'PUT',
+    payload: { transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069' },
+    headers: {}
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if transferId is not a uuid on PUT /fxTransfers/{id}', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}',
+    method: 'PUT',
+    payload: { transferId: 'invalid transfer id' },
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required fields are missing on POST /fxTransfers', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers',
+    method: 'POST',
+    payload: {},
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on POST /fxTransfers', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers',
+    method: 'POST',
+    payload: buildFXTransfer(Uuid()),
+    headers: {}
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if commitRequestId is not a uuid on POST /fxTransfers', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers',
+    method: 'POST',
+    payload: buildFXTransfer('invalid commitRequestId'),
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if determiningTransferId is not a uuid on POST /fxTransfers', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers',
+    method: 'POST',
+    payload: {
+      ...buildFXTransfer(Uuid()),
+      determiningTransferId: 'invalid determiningTransferId'
+    },
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+Test('return error if FSPIOP-Source is not provided to PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      errorDescription: 'This is a more detailed error description'
+    },
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if invalid errorCode is provided to PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: 'invalid_code',
+      errorDescription: 'This is a more detailed error description'
+    },
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if errorCode is not provided to PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorDescription: 'This is a more detailed error description'
+    },
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if errorDescription is not provided to PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001'
+    },
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if required headers are missing on PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      errorDescription: 'This is a more detailed error description'
+    },
+    headers: {}
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if transferId is not a uuid on PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/invalid_transfer_id/error',
+    method: 'PUT',
+    payload: {
+      errorCode: '5001',
+      errorDescription: 'This is a more detailed error description'
+    },
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+Test('return error if required fields are missing on PUT /fxTransfers/{id}/error', async function (assert) {
+  const req = Base.buildRequest({
+    url: '/fxTransfers/{id}/error',
+    method: 'PUT',
+    payload: {},
+    headers: { date: 'Mon, 10 Sep 2018 20:22:01 GMT', 'fspiop-source': 'value', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if accept header is missing on GET /fxTransfers/{ID}', async function (assert) {
+  const req = Base.buildRequest({
+    url: `/fxTransfers/${Uuid()}`,
+    method: 'GET',
+    headers: {
+      date: 'Mon, 10 Sep 2018 20:22:01 GMT',
+      'fspiop-source': 'value',
+      'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0'
+    }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
+  await server.stop()
+  assert.end()
+})
+
+Test('return error if accept header is missing on GET /transfers/{ID}', async function (assert) {
+  const req = Base.buildRequest({
+    url: `/transfers/${Uuid()}`,
+    method: 'GET',
+    headers: {
+      date: 'Mon, 10 Sep 2018 20:22:01 GMT',
+      'fspiop-source': 'value',
+      'content-type': 'application/vnd.interoperability.transfers+json;version=2.0'
+    }
+  })
+  const server = await Base.setup()
+  const res = await server.inject(req)
+  Base.assertBadRequestError(assert, res)
   await server.stop()
   assert.end()
 })
