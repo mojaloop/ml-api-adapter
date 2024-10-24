@@ -125,7 +125,7 @@ const getMessageDto = ({ headers, params, isFx, logPrefix = '', context }) => {
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
 
   const metadata = makeMessageMetadata(id, Type.GET, action)
-  const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri: undefined, params }, to, from, metadata, context)
+  const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri: undefined, params: { id } }, to, from, metadata, context)
   logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
