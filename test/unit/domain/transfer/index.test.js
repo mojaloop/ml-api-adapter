@@ -395,6 +395,42 @@ Test('Transfer Service tests', serviceTest => {
       }
     })
 
+    fulfilTest.test('handle when param is capital ID', async test => {
+      const message = {
+        transferState: 'COMMITTED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: '2016-05-24T08:38:08.699-04:00',
+        extensionList:
+        {
+          extension:
+          [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            },
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+
+      const headers = {}
+      const id = 'dfsp1'
+      const error = new Error()
+      Kafka.Producer.produceMessage.returns(Promise.reject(error))
+      try {
+        const span = EventSdk.Tracer.createSpan('test_span')
+        await Service.fulfil(headers, dataUri, message, { ID: id }, span)
+        test.fail('Expected an error to be thrown')
+      } catch (e) {
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
+        test.end()
+      }
+    })
+
     fulfilTest.test('throw error if error while publishing fulfil (transferState==ABORTED) message to kafka', async test => {
       const message = {
         transferState: 'ABORTED',
@@ -615,6 +651,22 @@ Test('Transfer Service tests', serviceTest => {
         test.end()
       }
     })
+
+    await getTransferByIdTest.test('handles captilized ID', async test => {
+      const id = 'b51ec534-ee48-4575-b6a9-ead2955b8069'
+      const headers = {}
+      const error = new Error()
+      Kafka.Producer.produceMessage.rejects(error)
+      try {
+        await Service.getTransferById(headers, { ID: id })
+        test.fail('Expected an error to be thrown')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof FSPIOPError)
+        test.equal(e.apiErrorCode.code, ErrorEnums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR.code)
+        test.end()
+      }
+    })
     getTransferByIdTest.end()
   })
 
@@ -776,6 +828,51 @@ Test('Transfer Service tests', serviceTest => {
       Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
       const span = EventSdk.Tracer.createSpan('test_span')
       const result = await Service.transferError(headers, dataUri, message, { id }, span, false, {}, true)
+      test.equals(result, true)
+      test.end()
+    })
+
+    transferErrorTest.test('execute function with isIsoMode true when param is captical ID', async test => {
+      const message = {
+        errorCode: '5001',
+        errorDescription: 'Payee FSP has insufficient liquidity to perform the transfer',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        extensionList: {
+          extension: [{
+            key: 'errorDescription',
+            value: 'This is a more detailed error description'
+          }]
+        }
+      }
+      const headers = {}
+      const id = '888ec534-ee48-4575-b6a9-ead2955b8930'
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.FULFIL.toUpperCase())
+      const messageProtocol = {
+        id,
+        to: headers['fspiop-destination'],
+        from: headers['fspiop-source'],
+        type: 'application/vnd.interoperability.transfers+json;version=1.1',
+        content: {
+          headers,
+          payload: message
+        },
+        metadata: {
+          event: {
+            id: Uuid(),
+            type: 'fulfil',
+            action: 'abort',
+            createdAt: new Date(),
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        }
+      }
+      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, TRANSFER, FULFIL, null, message.transferId)
+      Kafka.Producer.produceMessage.withArgs(messageProtocol, topicConfig, kafkaConfig).returns(Promise.resolve(true))
+      const span = EventSdk.Tracer.createSpan('test_span')
+      const result = await Service.transferError(headers, dataUri, message, { ID: id }, span, false, {}, true)
       test.equals(result, true)
       test.end()
     })

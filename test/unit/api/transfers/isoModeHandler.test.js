@@ -5,7 +5,7 @@ const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory
 const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
 const EventSdk = require('@mojaloop/event-sdk')
-const { Hapi } = require('@mojaloop/central-services-shared').Util
+const { Hapi, id } = require('@mojaloop/central-services-shared').Util
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 const Sinon = require('sinon')
@@ -22,11 +22,12 @@ const {
   buildISOFxFulfil,
   buildISOFxTransferError
 } = require('../../../fixtures')
-const uuid4 = require('uuid4')
+const ulid = id({ type: 'ulid' })
 
 const createISORequest = async (payload, headers, participants) => {
   const requestPayload = payload || {}
   return {
+    params: { ID: ulid() },
     headers: {
       'fspiop-source': 'dfsp1',
       'fspiop-destination': 'dfsp2',
@@ -41,7 +42,7 @@ const createISORequest = async (payload, headers, participants) => {
     span: EventSdk.Tracer.createSpan('test_span'),
     dataUri: 'someDataUri',
     info: {
-      id: uuid4()
+      id: ulid()
     }
   }
 }

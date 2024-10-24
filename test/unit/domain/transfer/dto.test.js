@@ -84,6 +84,14 @@ Test('DTO tests -->', dtoTest => {
     test.end()
   })
 
+  dtoTest.test('fulfilMessageDto FX_RESERVE test ID', test => {
+    const payload = mocks.mockFxFulfilPayload()
+    const params = { ID: '1234' }
+    const data = dto.fulfilMessageDto({ headers, dataUri, payload, params })
+    test.ok(data.metadata.event.action === Event.Action.FX_RESERVE)
+    test.end()
+  })
+
   dtoTest.test('fulfilErrorMessageDto ABORT test', test => {
     const payload = mocks.mockFxFulfilPayload()
     const params = { id: '1234' }
