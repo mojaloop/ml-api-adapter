@@ -74,22 +74,23 @@ const fxForwardedMessageDto = (id, from, to, payload, context = {}) => Object.fr
 ))
 
 const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix, context, payload, isIsoMode }) => {
+  const id = params.id || params.ID
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
-  const metadata = makeMessageMetadata(params.id, Type.FULFIL, action)
+  const metadata = makeMessageMetadata(id, Type.FULFIL, action)
   let messageProtocol
 
   if (!isIsoMode) {
-    messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params: { id: params.id } }, to, from, metadata, context)
+    messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri, params: { id } }, to, from, metadata, context)
   } else {
     messageProtocol = StreamingProtocol.createMessage(
-      params.id,
+      id,
       to,
       from,
       metadata,
       headers,
       payload,
-      { id: params.id },
+      { id },
       undefined,
       context
     )
@@ -118,12 +119,13 @@ const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '',
 }
 
 const getMessageDto = ({ headers, params, isFx, logPrefix = '', context }) => {
+  const id = params.id || params.ID
   const action = isFx ? Action.FX_GET : Action.GET
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
 
-  const metadata = makeMessageMetadata(params.id, Type.GET, action)
-  const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, to, from, metadata, context)
+  const metadata = makeMessageMetadata(id, Type.GET, action)
+  const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri: undefined, params }, to, from, metadata, context)
   logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)

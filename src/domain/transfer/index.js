@@ -83,7 +83,7 @@ const prepare = async (headers, dataUri, payload, span, context = {}, isIsoMode)
 */
 const fulfil = async (headers, dataUri, payload, params, span, context = {}, isIsoMode) => {
   const logPrefix = `domain::${payload.transferState ? 'transfer' : 'fxTransfer'}::fulfil`
-  logger.debug(`${logPrefix}::start(${params.id})`, { headers, params, payload })
+  logger.debug(`${logPrefix}::start(${params.id || params.ID})`, { headers, params, payload })
 
   try {
     let messageProtocol = dto.fulfilMessageDto({ headers, dataUri, payload, params, logPrefix, context, isIsoMode })
@@ -111,7 +111,7 @@ const fulfil = async (headers, dataUri, payload, params, span, context = {}, isI
  */
 const getTransferById = async (headers, params, span, isFx = false) => {
   const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::get`
-  logger.debug(`${logPrefix}::start(${params.id})`, { headers, params })
+  logger.debug(`${logPrefix}::start(${params.id || params.ID})`, { headers, params })
 
   try {
     let messageProtocol = dto.getMessageDto({ headers, params, isFx, logPrefix })
@@ -142,7 +142,7 @@ const getTransferById = async (headers, params, span, isFx = false) => {
 */
 const transferError = async (headers, dataUri, payload, params, span, isFx = false, context = {}, isIsoMode) => {
   const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::abort`
-  logger.debug(`${logPrefix}::start(${params.id})`, { headers, params, payload })
+  logger.debug(`${logPrefix}::start(${params.id || params.ID})`, { headers, params, payload })
 
   try {
     let messageProtocol = dto.fulfilErrorMessageDto({ headers, dataUri, payload, params, isFx, logPrefix, context, isIsoMode })

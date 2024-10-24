@@ -195,7 +195,7 @@ const getTransferById = async function (context, request, h) {
   const span = request.span
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    logger.info(`getById::id(${request.params.id})`)
+    logger.info(`getById::id(${request.params.id || request.params.ID})`)
     await span.audit({
       headers: request.headers,
       params: request.params
