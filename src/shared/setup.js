@@ -42,6 +42,8 @@ const Handlers = require('../api/handlers')
 const Routes = require('../api/routes')
 const HandlerModeHandlers = require('../handlers/api/handlers')
 const HandlerModeRoutes = require('../handlers/api/routes')
+const { createPayloadCache } = require('../lib/payloadCache')
+const { PAYLOAD_STORAGES } = require('../lib/payloadCache/constants')
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 /**
@@ -76,6 +78,10 @@ const createServer = async (port, api, routes) => {
       }
     }
   })
+
+  if (Config.PAYLOAD_CACHE.enabled) {
+    Util.setProp(server, 'app.payloadCache', initializePayloadCache())
+  }
 
   await Plugins.registerPlugins(server, api)
 
@@ -116,7 +122,7 @@ const createHandlers = async (handlers) => {
       Logger.isInfoEnabled && Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
         await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-        await RegisterHandlers.registerNotificationHandler()
+        await RegisterHandlers.registerNotificationHandler({ payloadCache: initializePayloadCache() })
       } else {
         const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
         const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
@@ -126,6 +132,13 @@ const createHandlers = async (handlers) => {
     }
   }
   return registeredHandlers
+}
+
+// Returns an instance of the PayloadCache if the feature is enabled
+const initializePayloadCache = () => {
+  if (Config.PAYLOAD_CACHE.enabled && Config.ORIGINAL_PAYLOAD_STORAGE === PAYLOAD_STORAGES.redis) {
+    return createPayloadCache(Config.PAYLOAD_CACHE.type, Config.PAYLOAD_CACHE.connectionConfig)
+  }
 }
 
 const initializeInstrumentation = () => {
@@ -187,7 +200,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       await createHandlers(handlers)
     } else {
       await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-      await RegisterHandlers.registerAllHandlers()
+      await RegisterHandlers.registerAllHandlers({ payloadCache: initializePayloadCache() })
     }
   }
 

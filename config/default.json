@@ -9,7 +9,7 @@
     "type": "redis-cluster",
     "proxyConfig": {
       "cluster": [
-        { "host": "redis-node-0", "port": 6379 }
+        { "host": "localhost", "port": 6379 }
       ]
     }
   },

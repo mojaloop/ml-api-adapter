@@ -33,6 +33,7 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const { Util, Enum } = require('@mojaloop/central-services-shared')
+const { API_TYPES } = require('../../shared/constants')
 
 const { logger } = require('../../shared/logger')
 const { createCallbackHeaders } = require('../../lib/headers')
@@ -41,6 +42,7 @@ const Config = require('../../lib/config')
 const dto = require('./dto')
 const dtoTransfer = require('../../domain/transfer/dto')
 const utils = require('./utils')
+const { PAYLOAD_STORAGES } = require('../../lib/payloadCache/constants')
 
 const Callback = Util.Request
 const HeaderValidation = Util.HeaderValidation
@@ -50,6 +52,7 @@ const { FspEndpointTypes, FspEndpointTemplates } = Enum.EndPoints
 
 let notificationConsumer = {}
 let autoCommitEnabled = true
+let PayloadCache
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
@@ -92,7 +95,11 @@ const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   *
   * @returns {boolean} Returns true on success and throws error on failure
   */
-const startConsumer = async () => {
+const startConsumer = async ({ payloadCache } = {}) => {
+  if (Config.ORIGINAL_PAYLOAD_STORAGE === PAYLOAD_STORAGES.redis && !payloadCache) {
+    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR, 'Payload cache not initialized')
+  }
+  PayloadCache = payloadCache
   const functionality = Enum.Events.Event.Type.NOTIFICATION
   const action = Action.EVENT
 
@@ -108,6 +115,8 @@ const startConsumer = async () => {
       autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
     }
     notificationConsumer = new Consumer([topicName], config)
+
+    await PayloadCache?.connect()
     await notificationConsumer.connect()
     logger.info(`Notification::startConsumer - Kafka Consumer connected for topicNames: [${topicName}]`)
     await notificationConsumer.consume(consumeMessage)
@@ -219,9 +228,10 @@ const processMessage = async (msg, span) => {
 
   logger.debug('Notification::processMessage')
 
-  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
+  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload ||
+    !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
     histTimerEnd({ success: false, action: 'unknown' })
-    throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka')
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
   }
 
   const fromSwitch = true
@@ -235,7 +245,7 @@ const processMessage = async (msg, span) => {
     isFx,
     isSuccess,
     payloadForCallback: payload
-  } = dto.notificationMessageDto(msg)
+  } = await dto.notificationMessageDto(msg, PayloadCache)
 
   const REQUEST_TYPE = {
     POST: 'POST',
@@ -387,11 +397,16 @@ const processMessage = async (msg, span) => {
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     // todo: do we need this case for FX_RESERVE ?
     if ((action === Action.RESERVE) || (sendToSource && action !== Action.FX_RESERVE)) {
-      let payloadForPayee = JSON.parse(payload)
-      if (payloadForPayee.fulfilment && action === Action.RESERVE) {
-        delete payloadForPayee.fulfilment
+      const parsedOriginalPayload = JSON.parse(payload)
+
+      if (action === Action.RESERVE) {
+        if (Config.API_TYPE === API_TYPES.iso20022 && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
+          delete parsedOriginalPayload.TxInfAndSts.ExctnConf
+        } else if ((parsedOriginalPayload.fulfilment)) {
+          delete parsedOriginalPayload.fulfilment
+        }
       }
-      payloadForPayee = JSON.stringify(payloadForPayee)
+      const payloadForPayee = JSON.stringify(parsedOriginalPayload)
       const method = action === Action.RESERVE ? PATCH : PUT
       const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT)
       logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
@@ -643,11 +658,15 @@ const processMessage = async (msg, span) => {
     const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PATCH, true)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PATCH)
 
-    let payloadForFXP = JSON.parse(payload)
-    if (payloadForFXP.fulfilment) {
-      delete payloadForFXP.fulfilment
+    const parsedOriginalPayload = JSON.parse(payload)
+
+    if (Config.API_TYPE === API_TYPES.iso20022 && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
+      delete parsedOriginalPayload.TxInfAndSts.ExctnConf
+    } else if (parsedOriginalPayload.fulfilment) {
+      delete parsedOriginalPayload.fulfilment
     }
-    payloadForFXP = JSON.stringify(payloadForFXP)
+
+    const payloadForFXP = JSON.stringify(parsedOriginalPayload)
     const method = PATCH
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
     headers['content-type'] = `application/vnd.interoperability.fxTransfers+json;version=${Util.resourceVersions[Enum.Http.HeaderResources.FX_TRANSFERS].contentVersion}`
@@ -689,7 +708,7 @@ const processMessage = async (msg, span) => {
   * @returns {boolean}
   */
 const isConnected = () => {
-  return notificationConsumer.isConnected()
+  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected() : true)
 }
 
 /**
@@ -706,7 +725,7 @@ const disconnect = async () => {
     throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
   }
 
-  return notificationConsumer.disconnect()
+  return Promise.all([notificationConsumer.disconnect(), PayloadCache?.disconnect()])
 }
 
 /**

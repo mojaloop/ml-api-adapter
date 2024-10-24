@@ -35,11 +35,13 @@ const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/centr
 const Enum = require('@mojaloop/central-services-shared').Enum
 const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Kafka = require('@mojaloop/central-services-stream').Util
-
 const Config = require('../../../../src/lib/config')
 const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
 const { prepare } = require('../../../../src/domain/transfer/index')
 const Fixtures = require('../../../fixtures')
+const { API_TYPES } = require('../../../../src/shared/constants')
+const { createPayloadCache } = require('../../../../src/lib/payloadCache')
+const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
 
 const { Action } = Enum.Events.Event
 const EventTypes = Enum.Events.Event.Type
@@ -61,6 +63,8 @@ const wrapWithRetriesConf = {
 }
 
 const getNotificationUrl = process.env.ENDPOINT_URL
+const apiType = process.env.API_TYPE
+const originalPayloadStorage = process.env.ORIGINAL_PAYLOAD_STORAGE || ''
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null, proxy) => {
@@ -84,6 +88,7 @@ const testNotification = async (messageProtocol, operation, transferId, kafkaCon
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
     let proxy
+
     notificationTest.test('connect proxy lib', async test => {
       const { type, proxyConfig } = Fixtures.proxyCacheConfigDto()
       proxy = proxyLib.createProxyCache(type, proxyConfig)
@@ -360,7 +365,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully from switch to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      }
+
       test.end()
     })
 
@@ -392,7 +402,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully from switch to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      }
+
       test.end()
     })
 
@@ -438,6 +453,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -482,6 +498,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -576,7 +593,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -607,7 +629,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -804,8 +831,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -833,8 +866,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -879,6 +918,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -932,6 +972,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -1019,7 +1060,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1047,7 +1093,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1081,7 +1132,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1114,7 +1170,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1159,6 +1220,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1203,6 +1265,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1249,13 +1312,20 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1298,13 +1368,20 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1350,12 +1427,19 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to dfsp1')
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to proxyFsp')
+      } else {
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      }
+
       test.end()
     })
 
@@ -1415,6 +1499,7 @@ Test('Notification Handler', notificationHandlerTest => {
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
 
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+
       test.end()
     })
 
@@ -1445,7 +1530,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -1476,7 +1566,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -1531,6 +1626,61 @@ Test('Notification Handler', notificationHandlerTest => {
       const payloadWithoutFulfilment = JSON.parse(JSON.stringify(messageProtocol.content.payload))
       delete payloadWithoutFulfilment.fulfilment
       test.deepEqual(response.payload, payloadWithoutFulfilment, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('should read originalRequestPayload from payload cache and send to recipient', async test => {
+      // todo: need to find a way to dynamically update containers to use redis for payload cache
+      // and set the environment variable to use redis for payload cache
+      if (apiType !== API_TYPES.iso20022 || originalPayloadStorage !== PAYLOAD_STORAGES.redis) {
+        test.pass('Skipping test for non-ISO20022 API')
+        test.end()
+        return
+      }
+
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.PREPARE,
+        {
+          transferId: Uuid(),
+          payerFsp: 'dfsp1',
+          payeeFsp: 'dfsp2'
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      delete messageProtocol.content.context.originalRequestPayload
+      const originalRequestPayload = { ...messageProtocol.content.payload, payloadFromRedis: true }
+      const originalRequestId = Uuid()
+      messageProtocol.content.context.originalRequestId = originalRequestId
+      const operation = 'post'
+      const transferId = messageProtocol.content.payload.transferId
+
+      const payloadCache = createPayloadCache(Config.PAYLOAD_CACHE.type, Config.PAYLOAD_CACHE.connectionConfig)
+      await payloadCache.connect()
+      await payloadCache.setPayload(originalRequestId, originalRequestPayload)
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
+
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = response || await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
+
+      // Assert
+      test.ok(response, 'Notification sent successfully to Payee')
+      test.deepEqual(response.payload, originalRequestPayload, 'Notification read successfully from payload cache and sent to Payee')
+
+      await payloadCache.disconnect()
+
       test.end()
     })
 

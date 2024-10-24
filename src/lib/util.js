@@ -15,6 +15,22 @@ const pathForInterface = ({ isHandlerInterface }) => {
   return Path.resolve(__dirname, pathFolder + apiFile)
 }
 
+// Safely set nested property in an object
+const setProp = (obj, path, value) => {
+  const pathParts = path.split('.')
+  let current = obj
+
+  for (let i = 0; i < pathParts.length - 1; i++) {
+    const part = pathParts[i]
+    if (!current[part]) {
+      current[part] = {}
+    }
+    current = current[part]
+  }
+  current[pathParts[pathParts.length - 1]] = value
+}
+
 module.exports = {
-  pathForInterface
+  pathForInterface,
+  setProp
 }
