@@ -32,6 +32,7 @@ const path = require('path')
 
 Test('Util', (utilTests) => {
   utilTests.test('pathForInterface should return correct path for default API', async (t) => {
+    Config.API_TYPE = 'fspiop'
     const apiPath = Util.pathForInterface({ isHandlerInterface: false })
     const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
     t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for default API')
@@ -39,6 +40,7 @@ Test('Util', (utilTests) => {
   })
 
   utilTests.test('pathForInterface should return correct path for handler interface', async (t) => {
+    Config.API_TYPE = 'fspiop'
     const apiPath = Util.pathForInterface({ isHandlerInterface: true })
     const expectedAPIpathResult = path.join('interface', 'handler-swagger.yaml')
     t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for handler interface')

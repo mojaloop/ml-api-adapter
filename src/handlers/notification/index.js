@@ -33,7 +33,7 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const { Util, Enum } = require('@mojaloop/central-services-shared')
-const { API_TYPES } = require('../../shared/constants')
+const { Hapi } = require('@mojaloop/central-services-shared').Util
 
 const { logger } = require('../../shared/logger')
 const { createCallbackHeaders } = require('../../lib/headers')
@@ -43,6 +43,7 @@ const dto = require('./dto')
 const dtoTransfer = require('../../domain/transfer/dto')
 const utils = require('./utils')
 const { PAYLOAD_STORAGES } = require('../../lib/payloadCache/constants')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 const Callback = Util.Request
 const HeaderValidation = Util.HeaderValidation
@@ -55,6 +56,7 @@ let autoCommitEnabled = true
 let PayloadCache
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
+const API_TYPE = Config.API_TYPE
 
 const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   const endTime = Date.now()
@@ -236,6 +238,7 @@ const processMessage = async (msg, span) => {
 
   const fromSwitch = true
   const responseType = Enum.Http.ResponseTypes.JSON
+  const notificationDto = await dto.notificationMessageDto(msg, PayloadCache)
   const {
     id,
     from: source,
@@ -243,9 +246,11 @@ const processMessage = async (msg, span) => {
     action,
     content,
     isFx,
-    isSuccess,
+    isSuccess
+  } = notificationDto
+  let {
     payloadForCallback: payload
-  } = await dto.notificationMessageDto(msg, PayloadCache)
+  } = notificationDto
 
   const REQUEST_TYPE = {
     POST: 'POST',
@@ -315,7 +320,7 @@ const processMessage = async (msg, span) => {
       const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
       headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
       logger.debug(`Notification::processMessage - Callback.sendRequest({${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination}) ${hubNameRegex}}`)
-      await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+      await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
       histTimerEnd({ success: true, action })
       return true
     }
@@ -332,7 +337,7 @@ const processMessage = async (msg, span) => {
     ).startTimer()
 
     try {
-      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: POST, payload, responseType, span, protocolVersions, hubNameRegex })
+      response = await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: POST, payload, responseType, span, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
       histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
@@ -361,7 +366,7 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination})`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     return true
   }
 
@@ -382,10 +387,10 @@ const processMessage = async (msg, span) => {
       if (action === Action.RESERVE) {
         headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, true)
         jwsSigner = getJWSSigner(Config.HUB_NAME)
-        response = await Callback.sendRequest({ url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+        response = await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
       } else {
         headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, false)
-        response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+        response = await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
       }
     } catch (err) {
       histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
@@ -400,7 +405,7 @@ const processMessage = async (msg, span) => {
       const parsedOriginalPayload = JSON.parse(payload)
 
       if (action === Action.RESERVE) {
-        if (Config.API_TYPE === API_TYPES.iso20022 && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
+        if (Config.IS_ISO_MODE && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
           delete parsedOriginalPayload.TxInfAndSts.ExctnConf
         } else if ((parsedOriginalPayload.fulfilment)) {
           delete parsedOriginalPayload.fulfilment
@@ -419,7 +424,7 @@ const processMessage = async (msg, span) => {
       let rv
       try {
         jwsSigner = getJWSSigner(Config.HUB_NAME)
-        rv = await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+        rv = await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method, payload: payloadForPayee, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
       } catch (err) {
         histTimerEndSendRequest2({ success: false, dest: source, action, status: response.status })
         histTimerEnd({ success: false, action })
@@ -441,7 +446,7 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination}, ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     histTimerEnd({ success: true, action })
     return true
   }
@@ -454,7 +459,7 @@ const processMessage = async (msg, span) => {
         headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
         // forward the reject to the destination
         logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-        await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+        await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
       })(),
       // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
       (async function notifySource () {
@@ -463,7 +468,7 @@ const processMessage = async (msg, span) => {
           jwsSigner = getJWSSigner(Config.HUB_NAME)
           logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
           headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-          return await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+          return await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
         } else {
           logger.info(`Notification::processMessage - Action: ${action} - Skipping notification callback to original sender (${source}) because feature is disabled in config.`)
           return true
@@ -483,7 +488,7 @@ const processMessage = async (msg, span) => {
         headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
         // forward the abort to the destination
         logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-        await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+        await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
       })(),
       (async function notifySource () {
         // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
@@ -492,7 +497,7 @@ const processMessage = async (msg, span) => {
           jwsSigner = getJWSSigner(Config.HUB_NAME)
           logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
           headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-          return await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+          return await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
         } else {
           logger.info(`Notification::processMessage - Action: ${action} - Skipping notification callback to original sender (${source}).`)
           return true
@@ -506,18 +511,23 @@ const processMessage = async (msg, span) => {
   if ([Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION].includes(action)) {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
+    if (Config.IS_ISO_MODE && fromSwitch && Action.ABORT_VALIDATION) {
+      payload = await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })
+    } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_ABORT_VALIDATION) {
+      payload = await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })
+    }
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     // forward the abort to the destination
     jwsSigner = getJWSSigner(Config.HUB_NAME)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
 
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     if (sendToSource && source !== Config.HUB_NAME) {
       const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT_ERROR)
       logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
       headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-      await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+      await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
       histTimerEnd({ success: true, action })
       return true
     } else {
@@ -538,6 +548,11 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
+    if (Config.IS_ISO_MODE && fromSwitch && Action.RESERVED_ABORTED) {
+      payload = await TransformFacades.FSPIOP.transfers.patch({ body: JSON.parse(payload) })
+    } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_RESERVED_ABORTED) {
+      payload = await TransformFacades.FSPIOP.fxTransfers.patch({ body: JSON.parse(payload) })
+    }
     headers = createCallbackHeaders({
       dfspId: destination,
       transferId: id,
@@ -557,6 +572,7 @@ const processMessage = async (msg, span) => {
     try {
       jwsSigner = getJWSSigner(Config.HUB_NAME)
       callbackResponse = await Callback.sendRequest({
+        apiType: API_TYPE,
         url: callbackURLTo,
         headers,
         source: Config.HUB_NAME,
@@ -584,7 +600,7 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     histTimerEnd({ success: true, action })
     return true
   }
@@ -594,7 +610,7 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate })
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, protocolVersions, hubNameRegex })
     histTimerEnd({ success: true, action })
     return true
   }
@@ -604,7 +620,7 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination} ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     histTimerEnd({ success: true, action })
     return true
   }
@@ -615,7 +631,7 @@ const processMessage = async (msg, span) => {
     jwsSigner = getJWSSigner(Config.HUB_NAME)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${destination}, ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     histTimerEnd({ success: true, action })
     return true
   }
@@ -626,12 +642,12 @@ const processMessage = async (msg, span) => {
     jwsSigner = getJWSSigner(Config.HUB_NAME)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${destination}, ${hubNameRegex} })`)
-    await Callback.sendRequest({ url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
 
     const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT_ERROR)
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
     headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-    await Callback.sendRequest({ url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
 
     histTimerEnd({ success: true, action })
     return true
@@ -641,8 +657,13 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = isSuccess ? await getEndpointFn(destination, REQUEST_TYPE.PUT) : await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
+    if (Config.IS_ISO_MODE && fromSwitch && Action.GET) {
+      payload = await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })
+    } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_GET) {
+      payload = await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })
+    }
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, headers, payload, id, source, destination, hubNameRegex })
-    await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     histTimerEnd({ success: true, action })
     return true
   }
@@ -660,7 +681,7 @@ const processMessage = async (msg, span) => {
 
     const parsedOriginalPayload = JSON.parse(payload)
 
-    if (Config.API_TYPE === API_TYPES.iso20022 && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
+    if (Config.IS_ISO_MODE && parsedOriginalPayload?.TxInfAndSts?.ExctnConf) {
       delete parsedOriginalPayload.TxInfAndSts.ExctnConf
     } else if (parsedOriginalPayload.fulfilment) {
       delete parsedOriginalPayload.fulfilment
@@ -669,7 +690,11 @@ const processMessage = async (msg, span) => {
     const payloadForFXP = JSON.stringify(parsedOriginalPayload)
     const method = PATCH
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: method, endpointTemplate }, fromSwitch)
-    headers['content-type'] = `application/vnd.interoperability.fxTransfers+json;version=${Util.resourceVersions[Enum.Http.HeaderResources.FX_TRANSFERS].contentVersion}`
+    if (!Config.IS_ISO_MODE) {
+      headers['content-type'] = `application/vnd.interoperability.fxTransfers+json;version=${Util.resourceVersions[Enum.Http.HeaderResources.FX_TRANSFERS].contentVersion}`
+    } else {
+      headers['content-type'] = `application/vnd.interoperability.${Hapi.API_TYPES.iso20022}.fxTransfers+json;version=${Util.resourceVersions[Enum.Http.HeaderResources.FX_TRANSFERS].contentVersion}`
+    }
 
     logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForFXP}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
     let response = { status: 'unknown' }
@@ -681,7 +706,7 @@ const processMessage = async (msg, span) => {
 
     try {
       jwsSigner = getJWSSigner(Config.HUB_NAME)
-      response = await Callback.sendRequest({ url: callbackURLTo, headers, source, destination, method, payload: payloadForFXP, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+      response = await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method, payload: payloadForFXP, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
       histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })

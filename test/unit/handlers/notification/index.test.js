@@ -51,6 +51,7 @@ const { mockPayloadCache } = require('../../mocks')
 const Fixtures = require('../../../fixtures')
 const { API_TYPES } = require('../../../../src/shared/constants')
 const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
+const helpers = require('../../../helpers/general')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
@@ -504,7 +505,7 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', async test => {
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', helpers.tryCatchEndTest(async test => {
       // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       const ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
@@ -599,10 +600,10 @@ Test('Notification Service tests', async notificationTest => {
       const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = {
         errorInformation:
-        {
-          errorCode: '3100',
-          errorDescription: 'Generic validation error - invalid fulfilment'
-        }
+          {
+            errorCode: '3100',
+            errorDescription: 'Generic validation error - invalid fulfilment'
+          }
       }
       try {
         // callback request to PayerFSP
@@ -618,16 +619,23 @@ Test('Notification Service tests', async notificationTest => {
         test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
         test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(Callback.sendRequest.calledOnce)
-        test.ok(Callback.sendRequest.calledWith(match({ url, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
+        test.ok(Callback.sendRequest.calledWith(match({
+          url,
+          headers: payerHeaders,
+          source: Config.HUB_NAME,
+          destination: msg.value.to,
+          method,
+          payload: JSON.stringify(message),
+          hubNameRegex
+        })))
         test.equal(result, true)
-        test.end()
       } catch (e) {
         test.fail('should not throw')
-        test.end()
       }
       // Reset SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE
     })
+    )
 
     processMessageTest.test('process message with action "fx-abort-validation" action received from kafka and send out a transfer PUT error callback', async test => {
       // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
@@ -3802,7 +3810,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('process fspiop message for reserve action, remove fulfilment for payee notification in fspiop mode', async test => {
       const ConfigStub = Util.clone(Config)
-      ConfigStub.API_TYPE = API_TYPES.fspiop
+      ConfigStub.IS_ISO_MODE = true
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
       })
@@ -3830,7 +3838,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('process ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
       const ConfigStub = Util.clone(Config)
-      ConfigStub.API_TYPE = API_TYPES.iso20022
+      ConfigStub.IS_ISO_MODE = true
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
       })
@@ -3934,7 +3942,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('process ISO message for fx-notify action, remove fulfilment for payee notification in ISO mode', async test => {
       const ConfigStub = Util.clone(Config)
-      ConfigStub.API_TYPE = API_TYPES.iso20022
+      ConfigStub.IS_ISO_MODE = true
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
       })
