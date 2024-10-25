@@ -257,7 +257,6 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
-      console.log(parsedPayload)
       test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
       test.equal(result, expected)
       test.end()
