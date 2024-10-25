@@ -32,18 +32,18 @@ const FX_ACTIONS = [
 const getOriginalPayload = async (content, payloadCache = undefined) => {
   let originalPayload
 
-  if (content.context.originalRequestPayload) {
+  if (content.context?.originalRequestPayload) {
     originalPayload = content.context.originalRequestPayload
-  } else if (content.context.originalRequestId && payloadCache) {
+  } else if (content.context?.originalRequestId && payloadCache) {
     const cacheRequestId = content.context.originalRequestId
     originalPayload = await payloadCache.getPayload(cacheRequestId)
     logger.debug('Notification::processMessage - Original payload found in cache', { cacheRequestId, originalPayload })
   }
 
   if (!originalPayload) {
-    logger.error('Notification::processMessage - Original payload not found')
-    if (!payloadCache) logger.error('Notification::processMessage - Payload cache not initialized')
-    throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR)
+    logger.warn('Notification::processMessage - Original payload not found')
+    // if (!payloadCache) logger.error('Notification::processMessage - Payload cache not initialized')
+    // throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR)
   }
 
   return originalPayload
@@ -51,7 +51,10 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 
 const getCallbackPayload = async (content, payloadCache = undefined) => {
   const originalPayload = await getOriginalPayload(content, payloadCache)
-  const decodedOriginalPayload = decodePayload(originalPayload, { asParsed: false })
+  let finalPayload = content.payload
+  if (originalPayload) {
+    finalPayload = decodePayload(originalPayload, { asParsed: false }).body
+  }
   const fspiopObject = content.payload
   let payloadForCallback
   if (fspiopObject.errorInformation) {
@@ -62,7 +65,7 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
       payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
     }
   } else {
-    payloadForCallback = decodedOriginalPayload.body.toString()
+    payloadForCallback = finalPayload.toString()
   }
 
   return { fspiopObject, payloadForCallback }

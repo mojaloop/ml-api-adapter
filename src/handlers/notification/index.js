@@ -230,8 +230,26 @@ const processMessage = async (msg, span) => {
 
   logger.debug('Notification::processMessage')
 
-  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload ||
-    !msg.value.content.context || (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)) {
+  if (!msg.value || !msg.value.content || !msg.value.content.headers || !msg.value.content.payload) {
+    histTimerEnd({ success: false, action: 'unknown' })
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
+  }
+
+  // We should not validate original Request for certain actions
+  if (
+    msg.value.metadata?.event?.action &&
+    ![
+      Action.PREPARE_DUPLICATE, Action.FX_PREPARE_DUPLICATE,
+      Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION,
+      Action.RESERVED_ABORTED, Action.FX_RESERVED_ABORTED,
+      Action.FULFIL_DUPLICATE, Action.FX_FULFIL_DUPLICATE,
+      Action.TIMEOUT_RECEIVED, Action.FX_TIMEOUT_RECEIVED,
+      Action.GET, Action.FX_GET,
+      Action.FX_NOTIFY
+    ].includes(msg.value.metadata.event.action) &&
+    !msg.value.content.context &&
+    (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)
+  ) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
   }
@@ -249,7 +267,8 @@ const processMessage = async (msg, span) => {
     isSuccess
   } = notificationDto
   let {
-    payloadForCallback: payload
+    payloadForCallback: payload,
+    fspiopObject
   } = notificationDto
 
   const REQUEST_TYPE = {
@@ -653,9 +672,9 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     if (Config.IS_ISO_MODE && fromSwitch && action === Action.GET && isSuccess) {
-      payload = (await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })).body
+      payload = (await TransformFacades.FSPIOP.transfers.put({ body: fspiopObject })).body
     } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_GET && isSuccess) {
-      payload = (await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })).body
+      payload = (await TransformFacades.FSPIOP.fxTransfers.put({ body: fspiopObject })).body
     }
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, headers, payload, id, source, destination, hubNameRegex })
     await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
