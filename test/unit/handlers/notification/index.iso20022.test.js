@@ -39,28 +39,20 @@ const Util = require('@mojaloop/central-services-shared').Util
 const Callback = require('@mojaloop/central-services-shared').Util.Request
 const Config = require(`${src}/lib/config.js`)
 const Participant = require(`${src}/domain/participant`)
-const ENUM = require('@mojaloop/central-services-shared').Enum
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 const Uuid = require('uuid4')
 const HeadersLib = require(`${src}/lib/headers`)
 const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
 const { mockPayloadCache } = require('../../mocks')
-const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
   let createCallbackHeadersSpy
-  let createCallbackHeaders
   let Notification
-  const hubNameRegex = Util.HeaderValidation.getHubNameRegex(Config.HUB_NAME)
-  const match = Sinon.match
 
   const url = 'https://somehost:port/'
   const proxyUrl = 'https://proxyhost:port/'
   await notificationTest.beforeEach(t => {
-    Config.API_TYPE = Hapi.API_TYPES.iso20022
-    Config.IS_ISO_MODE = true
-
     sandbox = Sinon.createSandbox()
     sandbox.stub(Consumer.prototype, 'constructor')
     sandbox.stub(Consumer.prototype, 'connect').returns(Promise.resolve(true))
@@ -92,9 +84,16 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(JwsSigner.prototype, 'getSignature').returns(true)
 
     createCallbackHeadersSpy = sandbox.spy(HeadersLib, 'createCallbackHeaders')
-    createCallbackHeaders = HeadersLib.createCallbackHeaders
+    const ConfigStub = Util.clone(Config)
+    ConfigStub.API_TYPE = Hapi.API_TYPES.iso20022
+    ConfigStub.IS_ISO_MODE = true
+    const dto = Proxyquire('../../../../src/handlers/notification/dto', {
+      '../../lib/config': ConfigStub
+    })
     Notification = Proxyquire(`${src}/handlers/notification`, {
-      '../../lib/headers': HeadersLib
+      '../../lib/headers': HeadersLib,
+      '../../lib/config': ConfigStub,
+      './dto': dto
     })
 
     Proxyquire.callThru()
@@ -104,7 +103,6 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.afterEach(t => {
     sandbox.restore()
     mockPayloadCache.getPayload.reset()
-    Config.IS_ISO_MODE = false
     t.end()
   })
 
@@ -147,25 +145,15 @@ Test('Notification Service tests', async notificationTest => {
       }
       mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
       Notification.startConsumer({ payloadCache: mockPayloadCache })
-      const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id })
-      const method = ENUM.Http.RestMethods.PUT
-      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
-      const message = {
-        transferState: 'COMMITTED',
-        fulfilment: 'some-fulfilment',
-        completedTimestamp: '2021-01-01T00:00:00Z'
-      }
-      const expectedMessage = await TransformFacades.FSPIOP.transfers.put({ body: message })
       const expected = true
-      Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(expectedMessage), hubNameRegex })).returns(Promise.resolve(200))
+      Callback.sendRequest.returns(Promise.resolve(200))
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
       const result = await Notification.processMessage(msg)
-
-      test.ok(Callback.sendRequest.getCall(0).args[0].payload.body.TxInfAndSts.ExctnConf)
-      test.ok(Callback.sendRequest.getCall(0).args[0].payload.body.TxInfAndSts.PrcgDt)
-      test.ok(Callback.sendRequest.getCall(0).args[0].payload.body.TxInfAndSts.TxSts)
+      test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.ExctnConf)
+      test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.PrcgDt)
+      test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.TxSts)
       test.equal(result, expected)
       test.end()
     })
@@ -208,42 +196,226 @@ Test('Notification Service tests', async notificationTest => {
       }
       mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
       Notification.startConsumer({ payloadCache: mockPayloadCache })
-      const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id })
-      const method = ENUM.Http.RestMethods.PUT
-      const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
-      const message = {
-        transferState: 'COMMITTED',
-        fulfilment: 'some-fulfilment',
-        completedTimestamp: '2021-01-01T00:00:00Z'
-      }
-      const expectedMessage = await TransformFacades.FSPIOP.transfers.put({ body: message })
       const expected = true
-      Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(expectedMessage), hubNameRegex })).returns(Promise.resolve(200))
+      Callback.sendRequest.returns(Promise.resolve(200))
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
       const result = await Notification.processMessage(msg)
 
-      test.ok(Callback.sendRequest.getCall(0).args[0].payload.body.TxInfAndSts.ExctnConf)
-      test.ok(Callback.sendRequest.getCall(0).args[0].payload.body.TxInfAndSts.PrcgDt)
-      test.ok(Callback.sendRequest.getCall(0).args[0].payload.body.TxInfAndSts.TxSts)
+      test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.ExctnConf)
+      test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.PrcgDt)
+      test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.TxSts)
       test.equal(result, expected)
       test.end()
     })
 
     await processMessageTest.test('transform hub sent transfer ABORT_VALIDATION message when in iso mode', async test => {
+      const payeeFsp = 'dfsp2'
+      const payerFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'abort-validation',
+              state: {
+                status: 'error',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': 'Hub'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '5000',
+                errorDescription: 'Error'
+              }
+            },
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      Callback.sendRequest.returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+      const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
+      console.log(parsedPayload)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.equal(result, expected)
       test.end()
     })
 
     await processMessageTest.test('transform hub sent transfer FX_ABORT_VALIDATION message when in iso mode', async test => {
+      const payeeFsp = 'dfsp2'
+      const payerFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'fx-abort-validation',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': 'Hub'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '5000',
+                errorDescription: 'Error'
+              }
+            },
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      Callback.sendRequest.returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+      const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.equal(result, expected)
       test.end()
     })
 
     await processMessageTest.test('transform hub sent transfer RESERVED_ABORTED message when in iso mode', async test => {
+      const payeeFsp = 'dfsp2'
+      const payerFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'fx-abort-validation',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': 'Hub'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '5000',
+                errorDescription: 'Error'
+              }
+            },
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      Callback.sendRequest.returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+      const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.equal(result, expected)
       test.end()
     })
 
     await processMessageTest.test('transform hub sent transfer FX_RESERVED_ABORTED message when in iso mode', async test => {
+      const payeeFsp = 'dfsp2'
+      const payerFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'fx-abort-validation',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'FSPIOP-Destination': payeeFsp,
+              'FSPIOP-Source': 'Hub'
+            },
+            payload: {
+              errorInformation: {
+                errorCode: '5000',
+                errorDescription: 'Error'
+              }
+            },
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      Callback.sendRequest.returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+
+      const result = await Notification.processMessage(msg)
+      const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.equal(result, expected)
       test.end()
     })
 

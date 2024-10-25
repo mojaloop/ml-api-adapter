@@ -511,11 +511,6 @@ const processMessage = async (msg, span) => {
   if ([Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION].includes(action)) {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
-    if (Config.IS_ISO_MODE && fromSwitch && Action.ABORT_VALIDATION) {
-      payload = await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })
-    } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_ABORT_VALIDATION) {
-      payload = await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })
-    }
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     // forward the abort to the destination
     jwsSigner = getJWSSigner(Config.HUB_NAME)
@@ -658,9 +653,9 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     if (Config.IS_ISO_MODE && fromSwitch && Action.GET) {
-      payload = await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })
+      payload = (await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })).body
     } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_GET) {
-      payload = await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })
+      payload = (await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })).body
     }
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, headers, payload, id, source, destination, hubNameRegex })
     await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
