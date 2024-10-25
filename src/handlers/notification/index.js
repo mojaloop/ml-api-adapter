@@ -543,9 +543,9 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
-    if (Config.IS_ISO_MODE && fromSwitch && Action.RESERVED_ABORTED) {
+    if (Config.IS_ISO_MODE && fromSwitch && action === Action.RESERVED_ABORTED) {
       payload = await TransformFacades.FSPIOP.transfers.patch({ body: JSON.parse(payload) })
-    } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_RESERVED_ABORTED) {
+    } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_RESERVED_ABORTED) {
       payload = await TransformFacades.FSPIOP.fxTransfers.patch({ body: JSON.parse(payload) })
     }
     headers = createCallbackHeaders({
@@ -652,9 +652,9 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = isSuccess ? await getEndpointFn(destination, REQUEST_TYPE.PUT) : await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-    if (Config.IS_ISO_MODE && fromSwitch && Action.GET) {
+    if (Config.IS_ISO_MODE && fromSwitch && action === Action.GET && isSuccess) {
       payload = (await TransformFacades.FSPIOP.transfers.put({ body: JSON.parse(payload) })).body
-    } else if (Config.IS_ISO_MODE && fromSwitch && Action.FX_GET) {
+    } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_GET && isSuccess) {
       payload = (await TransformFacades.FSPIOP.fxTransfers.put({ body: JSON.parse(payload) })).body
     }
     logger.debug(`Notification::processMessage - Callback.sendRequest (${action})...`, { callbackURLTo, headers, payload, id, source, destination, hubNameRegex })

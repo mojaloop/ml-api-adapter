@@ -180,7 +180,7 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Source': 'Hub'
             },
             payload: {
-              transferState: 'COMMITTED',
+              conversionState: 'COMMITTED',
               fulfilment: 'some-fulfilment',
               completedTimestamp: '2021-01-01T00:00:00Z'
             },
