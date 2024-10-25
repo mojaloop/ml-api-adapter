@@ -383,6 +383,11 @@ const processMessage = async (msg, span) => {
   if ([Action.PREPARE_DUPLICATE, Action.FX_PREPARE_DUPLICATE].includes(action) && isSuccess) {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
+    if (Config.IS_ISO_MODE && fromSwitch && action === Action.PREPARE_DUPLICATE) {
+      payload = (await TransformFacades.FSPIOP.transfers.put({ body: fspiopObject })).body
+    } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_PREPARE_DUPLICATE) {
+      payload = (await TransformFacades.FSPIOP.fxTransfers.put({ body: fspiopObject })).body
+    }
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.debug(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination})`)
     await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
