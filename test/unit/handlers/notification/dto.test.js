@@ -30,7 +30,6 @@ const Sinon = require('sinon')
 const Util = require('@mojaloop/central-services-shared').Util
 const { notificationMessageDto } = require('../../../../src/handlers/notification/dto')
 const Fixtures = require('../../../fixtures')
-const { logger } = require('../../../../src/shared/logger')
 const { API_TYPES } = require('../../../../src/shared/constants')
 const Config = require('../../../../src/lib/config')
 const { decodePayload } = Util.StreamingProtocol
@@ -100,7 +99,7 @@ Test('notificationMessageDto', async notificationMessageDtoTest => {
     test.end()
   })
 
-  notificationMessageDtoTest.test('throw error when original payload not found', async test => {
+  notificationMessageDtoTest.test('return current message payload if original payload not found', async test => {
     // Arrange
     const message = {
       value: Fixtures.createMessageProtocol(
@@ -118,49 +117,9 @@ Test('notificationMessageDto', async notificationMessageDtoTest => {
     const payloadCache = {
       getPayload: sandbox.stub().returns(null)
     }
-    const loggerErrorSpy = sandbox.stub(logger, 'error')
-
-    // Act
-    try {
-      await notificationMessageDto(message, payloadCache)
-      test.fail('Error not thrown')
-    } catch (error) {
-      // Assert
-      test.equal(error.apiErrorCode.message, 'Internal server error')
-      test.ok(loggerErrorSpy.calledWith('Notification::processMessage - Original payload not found'))
-      test.end()
-    }
-  })
-
-  notificationMessageDtoTest.test('log error when payload cache not initialized', async test => {
-    // Arrange
-    const message = {
-      value: Fixtures.createMessageProtocol(
-        'prepare',
-        'prepare',
-        {
-          errorInformation: {
-            errorCode: '5001',
-            errorDescription: 'Internal server error'
-          }
-        }
-      )
-    }
-    message.value.content.context.originalRequestPayload = undefined
-    message.value.content.context.originalRequestId = 'request-id'
-    const loggerErrorSpy = sandbox.stub(logger, 'error')
-
-    // Act
-    try {
-      await notificationMessageDto(message, undefined)
-      test.fail('Error not thrown')
-    } catch (error) {
-      // Assert
-      test.equal(error.apiErrorCode.message, 'Internal server error')
-      test.ok(loggerErrorSpy.calledWith('Notification::processMessage - Original payload not found'))
-      test.ok(loggerErrorSpy.calledWith('Notification::processMessage - Payload cache not initialized'))
-      test.end()
-    }
+    const result = await notificationMessageDto(message, payloadCache)
+    test.deepEqual(result.content.payload, message.value.content.payload)
+    test.end()
   })
 
   notificationMessageDtoTest.test('create and trasform error payload in ISO20022', async test => {
