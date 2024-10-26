@@ -458,8 +458,11 @@ Test('Notification Handler', notificationHandlerTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
-
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.ok(response.payload.TxInfAndSts, 'ISO duplication notification sent successfully')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -489,8 +492,8 @@ Test('Notification Handler', notificationHandlerTest => {
           },
           payload: {
             commitRequestId,
-            initiatingFsp: 'dfsp1',
-            counterPartyFsp: 'fxp1'
+            conversionState: 'COMMITTED',
+            completedTimestamp: '2018-08-23T21:31:00.534+01:00'
           }
         },
         to: 'dfsp1',
@@ -503,8 +506,11 @@ Test('Notification Handler', notificationHandlerTest => {
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
-
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.ok(response.payload.TxInfAndSts, 'ISO duplication notification sent successfully')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -931,8 +937,8 @@ Test('Notification Handler', notificationHandlerTest => {
       const operation = 'patch'
       const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, transferId), 5, 2)
       if (apiType === API_TYPES.iso20022) {
-        // TODO: update assertion
         test.ok(response.payload)
+        test.equal(response.payload.TxInfAndSts.TxSts, 'ABOR', 'ISO ABORT Error notification sent successfully to Payer')
       } else {
         test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       }
@@ -969,7 +975,9 @@ Test('Notification Handler', notificationHandlerTest => {
             'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
-            commitRequestId
+            commitRequestId,
+            completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+            conversionState: 'ABORTED'
           }
         },
         to: 'dfsp1',
@@ -990,8 +998,8 @@ Test('Notification Handler', notificationHandlerTest => {
       const operation = 'patch'
       const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, commitRequestId), 5, 2)
       if (apiType === API_TYPES.iso20022) {
-        // TODO: update assertion
         test.ok(response.payload)
+        test.equal(response.payload.TxInfAndSts.TxSts, 'ABOR', 'ISO ABORT Error notification sent successfully to Payer')
       } else {
         test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       }

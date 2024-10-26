@@ -568,9 +568,9 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
     if (Config.IS_ISO_MODE && fromSwitch && action === Action.RESERVED_ABORTED) {
-      payload = await TransformFacades.FSPIOP.transfers.patch({ body: JSON.parse(payload) })
+      payload = (await TransformFacades.FSPIOP.transfers.patch({ body: JSON.parse(payload) })).body
     } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_RESERVED_ABORTED) {
-      payload = await TransformFacades.FSPIOP.fxTransfers.patch({ body: JSON.parse(payload) })
+      payload = (await TransformFacades.FSPIOP.fxTransfers.patch({ body: JSON.parse(payload) })).body
     }
     headers = createCallbackHeaders({
       dfspId: destination,
