@@ -1,5 +1,15 @@
 {
   "API_TYPE": "fspiop",
+  "ORIGINAL_PAYLOAD_STORAGE": "",
+  "PAYLOAD_CACHE": {
+    "enabled": true,
+    "type": "redis-cluster",
+    "connectionConfig": {
+      "cluster": [
+        { "host": "redis-node-0", "port": 6379 }
+      ]
+    }
+  },
   "PROXY_CACHE": {
     "enabled": true,
     "type": "redis-cluster",

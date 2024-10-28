@@ -107,9 +107,21 @@ async function sleepPromise (seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000))
 }
 
+// to use as a wrapper on Tape tests
+const tryCatchEndTest = (testFn) => async (t) => {
+  try {
+    await testFn(t)
+  } catch (err) {
+    logger.error(`error in test "${t.name}":`, err)
+    t.fail(`${t.name} failed due to error: ${err?.message}`)
+  }
+  t.end()
+}
+
 module.exports = {
   createRequest,
   sleep,
   unwrapResponse,
-  wrapWithRetries
+  wrapWithRetries,
+  tryCatchEndTest
 }

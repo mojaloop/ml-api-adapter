@@ -32,9 +32,10 @@ const Proxyquire = require('proxyquire')
 const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
-const Consumer = require('@mojaloop/central-services-stream').Kafka.Consumer
+const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const EncodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Logger = require('@mojaloop/central-services-logger')
+const { logger } = require('../../../../src/shared/logger')
 const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory.FSPIOPError
 const ErrorHandlingEnums = require('@mojaloop/central-services-error-handling').Enums.Internal
 const Util = require('@mojaloop/central-services-shared').Util
@@ -45,6 +46,12 @@ const ENUM = require('@mojaloop/central-services-shared').Enum
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
 const Uuid = require('uuid4')
 const HeadersLib = require(`${src}/lib/headers`)
+const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
+const { mockPayloadCache } = require('../../mocks')
+const Fixtures = require('../../../fixtures')
+const { API_TYPES } = require('../../../../src/shared/constants')
+const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
+const helpers = require('../../../helpers/general')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
@@ -61,14 +68,23 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Consumer.prototype, 'constructor')
-
     sandbox.stub(Consumer.prototype, 'connect').returns(Promise.resolve(true))
+
+    sandbox.stub(Producer, 'produceMessage').returns(Promise.resolve(true))
+
+    // stub out PayloadCache methods
+    sandbox.stub(PayloadCache.prototype, 'connect').returns(Promise.resolve(true))
+    sandbox.stub(PayloadCache.prototype, 'disconnect').returns(Promise.resolve(true))
+    sandbox.stub(PayloadCache.prototype, 'getPayload').returns(Promise.resolve(true))
+    sandbox.stub(PayloadCache.prototype, 'setPayload').returns(Promise.resolve(true))
+    sandbox.stub(PayloadCache.prototype, 'isConnected').returns(true)
+
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'consume').returns(Promise.resolve(true)) // .callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'commitMessageSync').returns(Promise.resolve(true))
     sandbox.stub(Participant, 'getEndpoint').callsFake(({ fsp, proxy }) => {
       const result = fsp.includes('proxied') ? proxyUrl : url
-      return Promise.resolve(proxy ? { url: result } : result)
+      return Promise.resolve(proxy ? { url: result, proxyId: 'proxy-id' } : result)
     })
 
     sandbox.stub(Logger)
@@ -92,6 +108,7 @@ Test('Notification Service tests', async notificationTest => {
 
   await notificationTest.afterEach(t => {
     sandbox.restore()
+    mockPayloadCache.getPayload.reset()
     t.end()
   })
 
@@ -125,13 +142,18 @@ Test('Notification Service tests', async notificationTest => {
                 }
               }
             },
-            uriParams: { id: 'b51ec534-ee48-4575-b6a9-ead2955b8098' }
+            uriParams: { id: 'b51ec534-ee48-4575-b6a9-ead2955b8098' },
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.uriParams.id })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -184,13 +206,18 @@ Test('Notification Service tests', async notificationTest => {
                 }
               }
             },
-            uriParams: { id: 'b51ec534-ee48-4575-b6a9-ead2955b8098' }
+            uriParams: { id: 'b51ec534-ee48-4575-b6a9-ead2955b8098' },
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.uriParams.id })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })
@@ -232,6 +259,9 @@ Test('Notification Service tests', async notificationTest => {
             headers: {},
             payload: {
               transferId: uuid
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'dfsp2',
@@ -239,6 +269,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -275,6 +307,9 @@ Test('Notification Service tests', async notificationTest => {
             headers: {},
             payload: {
               transferId: uuid
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'proxied',
@@ -282,6 +317,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -319,6 +356,9 @@ Test('Notification Service tests', async notificationTest => {
             headers: {},
             payload: {
               commitRequestId: uuid
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'fxp1',
@@ -326,6 +366,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.payload.commitRequestId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })
@@ -384,6 +426,9 @@ Test('Notification Service tests', async notificationTest => {
             headers: {},
             payload: {
               transferId: uuid
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'dfsp2',
@@ -391,7 +436,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -429,14 +475,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -455,7 +505,7 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', async test => {
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', helpers.tryCatchEndTest(async test => {
       // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       const ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
@@ -496,6 +546,9 @@ Test('Notification Service tests', async notificationTest => {
                   ]
                 }
               }
+            },
+            context: {
+              originalRequestId: '6b74834e-688b-419f-aa59-145ccb962b24'
             }
           },
           type: 'application/json',
@@ -538,7 +591,8 @@ Test('Notification Service tests', async notificationTest => {
           }
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
@@ -546,10 +600,10 @@ Test('Notification Service tests', async notificationTest => {
       const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const message = {
         errorInformation:
-        {
-          errorCode: '3100',
-          errorDescription: 'Generic validation error - invalid fulfilment'
-        }
+          {
+            errorCode: '3100',
+            errorDescription: 'Generic validation error - invalid fulfilment'
+          }
       }
       try {
         // callback request to PayerFSP
@@ -565,16 +619,23 @@ Test('Notification Service tests', async notificationTest => {
         test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
         test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(Callback.sendRequest.calledOnce)
-        test.ok(Callback.sendRequest.calledWith(match({ url, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
+        test.ok(Callback.sendRequest.calledWith(match({
+          url,
+          headers: payerHeaders,
+          source: Config.HUB_NAME,
+          destination: msg.value.to,
+          method,
+          payload: JSON.stringify(message),
+          hubNameRegex
+        })))
         test.equal(result, true)
-        test.end()
       } catch (e) {
         test.fail('should not throw')
-        test.end()
       }
       // Reset SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE
     })
+    )
 
     processMessageTest.test('process message with action "fx-abort-validation" action received from kafka and send out a transfer PUT error callback', async test => {
       // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
@@ -617,6 +678,9 @@ Test('Notification Service tests', async notificationTest => {
                   ]
                 }
               }
+            },
+            context: {
+              originalRequestId: '6b74834e-688b-419f-aa59-145ccb962b24'
             }
           },
           type: 'application/json',
@@ -659,7 +723,8 @@ Test('Notification Service tests', async notificationTest => {
           }
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlFxp = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
@@ -735,6 +800,9 @@ Test('Notification Service tests', async notificationTest => {
                   ]
                 }
               }
+            },
+            context: {
+              originalRequestId: '6b74834e-688b-419f-aa59-145ccb962b24'
             }
           },
           type: 'application/json',
@@ -777,7 +845,8 @@ Test('Notification Service tests', async notificationTest => {
           }
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
@@ -837,14 +906,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -881,14 +954,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: encodedPayload
+            payload: encodedPayload,
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -918,13 +995,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -959,13 +1041,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
@@ -999,13 +1086,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -1044,14 +1136,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1097,14 +1193,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payerFsp,
               'FSPIOP-Source': fxp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: fxp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const urlFsp = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1149,14 +1249,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': fxp,
               'FSPIOP-Source': Config.HUB_NAME
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlFsp = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
       const method = ENUM.Http.RestMethods.PUT
       const fxpHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
@@ -1196,14 +1300,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1243,14 +1351,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1290,13 +1402,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -1335,13 +1452,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -1385,14 +1507,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       let fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       let toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
@@ -1453,14 +1579,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       let fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       let toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
@@ -1519,7 +1649,10 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
@@ -1527,6 +1660,8 @@ Test('Notification Service tests', async notificationTest => {
         }
       }
       try {
+        mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+        NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
         const result = await NotificationProxy.processMessage(msg)
         test.ok(!result, 'processMessage should have returned false signalling that no action was taken')
         test.ok(CentralServicesLoggerStub.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
@@ -1541,6 +1676,8 @@ Test('Notification Service tests', async notificationTest => {
       const msg = {}
 
       try {
+        mockPayloadCache.getPayload.returns(Promise.resolve(msg))
+        Notification.startConsumer({ payloadCache: mockPayloadCache })
         await Notification.processMessage(msg)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
@@ -1573,14 +1710,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1621,14 +1762,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payerFsp,
               'FSPIOP-Source': fxp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: fxp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1674,13 +1819,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1726,13 +1876,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': fxp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: fxp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
       const method = ENUM.Http.RestMethods.PUT
@@ -1779,13 +1934,18 @@ Test('Notification Service tests', async notificationTest => {
               'fspiop-destination': payerFsp,
               'fspiop-source': payeeFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: payeeFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
@@ -1823,13 +1983,18 @@ Test('Notification Service tests', async notificationTest => {
               'fspiop-destination': payerFsp,
               'fspiop-source': fxp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: fxp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const method = ENUM.Http.RestMethods.PUT
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true)
@@ -1870,13 +2035,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payerFsp,
               'FSPIOP-Source': payeeFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: payeeFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -1920,13 +2090,18 @@ Test('Notification Service tests', async notificationTest => {
                 errorDescription: 'Generic validation error'
               }
             },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: fxp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
@@ -1967,13 +2142,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
@@ -2011,13 +2191,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': fxp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })
@@ -2058,13 +2243,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payerFsp,
               'FSPIOP-Source': payeeFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: payeeFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -2108,13 +2298,18 @@ Test('Notification Service tests', async notificationTest => {
                 errorDescription: 'Generic validation error'
               }
             },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: fxp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
@@ -2155,13 +2350,18 @@ Test('Notification Service tests', async notificationTest => {
               'fspiop-destination': payeeFsp,
               'fspiop-source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -2199,13 +2399,18 @@ Test('Notification Service tests', async notificationTest => {
               'fspiop-destination': fxp,
               'fspiop-source': payerFsp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
@@ -2246,13 +2451,18 @@ Test('Notification Service tests', async notificationTest => {
               'fspiop-destination': payeeFsp,
               'fspiop-source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
@@ -2300,13 +2510,18 @@ Test('Notification Service tests', async notificationTest => {
                 errorDescription: 'Generic validation error'
               }
             },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
@@ -2359,6 +2574,9 @@ Test('Notification Service tests', async notificationTest => {
                 errorCode: '3000',
                 errorDescription: 'Generic error'
               }
+            },
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
             }
           },
           to: proxyFsp,
@@ -2366,6 +2584,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
@@ -2412,6 +2632,9 @@ Test('Notification Service tests', async notificationTest => {
                 errorCode: '3000',
                 errorDescription: 'Generic error'
               }
+            },
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
             }
           },
           to: proxyFsp,
@@ -2419,6 +2642,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
@@ -2459,13 +2684,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
@@ -2506,13 +2736,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': fxp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { commitRequestId: uuid }
+            payload: { commitRequestId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true)
@@ -2569,13 +2804,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
@@ -2627,13 +2867,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: { 'fspiop-source': 'dfsp1', 'fspiop-destination': 'dfsp2' },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: 'dfsp2',
           from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const headers = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -2690,14 +2935,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const urlPayer = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -2757,14 +3006,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -2824,13 +3077,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payeeFsp,
               'FSPIOP-Source': payerFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const fromUrl = await Participant.getEndpoint({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const method = ENUM.Http.RestMethods.PUT
@@ -2891,13 +3149,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payerFsp,
               'FSPIOP-Source': payeeFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -2954,13 +3217,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Destination': payerFsp,
               'FSPIOP-Source': payeeFsp
             },
-            payload: { transferId: uuid }
+            payload: { transferId: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payerFsp,
           from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -3010,6 +3278,9 @@ Test('Notification Service tests', async notificationTest => {
               transferId: uuid,
               completedTimestamp: '2021-05-24T08:38:08.699-04:00',
               transferState: 'ABORTED'
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'dfsp1',
@@ -3017,6 +3288,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
 
       // Act
       const result = await NotificationProxy.processMessage(msg)
@@ -3061,6 +3334,9 @@ Test('Notification Service tests', async notificationTest => {
               transferId: uuid,
               completedTimestamp: '2021-05-24T08:38:08.699-04:00',
               transferState: 'ABORTED'
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'dfsp1',
@@ -3068,6 +3344,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const expectedHeaders = createCallbackHeaders({
         dfspId: 'dfsp1',
         transferId: uuid,
@@ -3136,6 +3414,9 @@ Test('Notification Service tests', async notificationTest => {
               commitRequestId: uuid,
               completedTimestamp: '2021-05-24T08:38:08.699-04:00',
               transferState: 'ABORTED'
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'dfsp1',
@@ -3143,6 +3424,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const expectedHeaders = createCallbackHeaders({
         dfspId: 'dfsp1',
         transferId: uuid,
@@ -3198,14 +3481,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Source': payerFsp
             },
             payload: { transferId: uuid },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
       const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
@@ -3246,14 +3533,18 @@ Test('Notification Service tests', async notificationTest => {
               'FSPIOP-Source': payerFsp
             },
             payload: { commitRequestId: uuid },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
       const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true)
@@ -3299,14 +3590,18 @@ Test('Notification Service tests', async notificationTest => {
                 errorDescription: 'Generic validation error'
               }
             },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: payeeFsp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
       const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
@@ -3352,14 +3647,18 @@ Test('Notification Service tests', async notificationTest => {
                 errorDescription: 'Generic validation error'
               }
             },
-            uriParams: { id: uuid }
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
           },
           to: fxp,
           from: payerFsp,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const urlPayee = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id })
       const method = ENUM.Http.RestMethods.PUT
       const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
@@ -3412,6 +3711,9 @@ Test('Notification Service tests', async notificationTest => {
               transferId: uuid,
               completedTimestamp: '2021-05-24T08:38:08.699-04:00',
               transferState: 'ABORTED'
+            },
+            context: {
+              originalRequestId: uuid
             }
           },
           to: 'dfsp1',
@@ -3419,6 +3721,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
       const expectedHeaders = createCallbackHeaders({
         dfspId: 'dfsp1',
         transferId: uuid,
@@ -3458,18 +3762,244 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('produce forward message for transfer prepare if participant is a proxy', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'prepare',
+          'prepare',
+          {
+            transferId: Uuid()
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      Participant.getEndpoint.returns(Promise.resolve('http://localhost:3000'))
+
+      const expected = true
+      const result = await Notification.processMessage(msg)
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('process fspiop message for reserve action, remove fulfilment for payee notification in fspiop mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.IS_ISO_MODE = true
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'reserve',
+          'reserve',
+          {
+            transferId: Uuid(),
+            fulfilment: 'fulfilment-token'
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
+      test.equal(parsedPayload.fulfilment, undefined)
+      test.equal(parsedPayload.transferId, msg.value.content.payload.transferId)
+      test.end()
+    })
+
+    await processMessageTest.test('process ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.IS_ISO_MODE = true
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'reserve',
+          'reserve',
+          {
+            TxInfAndSts: {
+              ExctnConf: 'fulfilment-token'
+            }
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
+      test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
+      test.end()
+    })
+
+    await processMessageTest.test('process fx-notify message', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            commitRequestId: Uuid()
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await Notification.processMessage(msg)
+      test.equal(result, expected)
+      test.end()
+    })
+
+    await processMessageTest.test('throws error if fx-prepare message is error', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            errorInformation: {
+              errorCode: 3100,
+              errorDescription: 'Client Validation Error'
+            }
+          }
+        )
+      }
+      msg.value.metadata.event.state.status = 'error'
+      msg.value.metadata.event.state.code = 400
+
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+
+      try {
+        await Notification.processMessage(msg)
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.message, 'FX_NOTIFY action must be successful')
+      }
+
+      test.end()
+    })
+
+    await processMessageTest.test('process fspiop message for fx-notify action, remove fulfilment for payee notification in fspiop mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.API_TYPE = API_TYPES.fspiop
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            transferId: Uuid(),
+            fulfilment: 'fulfilment-token'
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[0][0].payload)
+      test.equal(parsedPayload.fulfilment, undefined)
+      test.equal(parsedPayload.transferId, msg.value.content.payload.transferId)
+      test.end()
+    })
+
+    await processMessageTest.test('process ISO message for fx-notify action, remove fulfilment for payee notification in ISO mode', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.IS_ISO_MODE = true
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            TxInfAndSts: {
+              ExctnConf: 'fulfilment-token'
+            }
+          }
+        )
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+
+      const expected = true
+      const result = await NotificationProxy.processMessage(msg)
+      test.equal(result, expected)
+      const parsedPayload = JSON.parse(Callback.sendRequest.args[0][0].payload)
+      test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
+      test.end()
+    })
+
+    await processMessageTest.test('fx-notify: log and re-throw error if sendRequest throws', async test => {
+      const msg = {
+        value: Fixtures.createMessageProtocol(
+          'fx-notify',
+          'fx-notify',
+          {
+            commitRequestId: Uuid()
+          }
+        )
+      }
+
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      Callback.sendRequest.returns(Promise.reject(new Error('Test Error')))
+      const loggerSpy = sandbox.stub(logger, 'error')
+
+      try {
+        await Notification.processMessage(msg)
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.message, 'Test Error')
+        test.ok(loggerSpy.calledOnce)
+        test.ok(loggerSpy.calledWith(sandbox.match.instanceOf(Error).and(sandbox.match.has('message', 'Test Error'))))
+      }
+
+      Callback.sendRequest.reset()
+      test.end()
+    })
+
     await processMessageTest.end()
   })
 
   await notificationTest.test('startConsumer should', async startConsumerTest => {
+    await startConsumerTest.test('throw if payloadCache is not provided when ORIGINAL_PAYLOAD_STORAGE is redis', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.ORIGINAL_PAYLOAD_STORAGE = PAYLOAD_STORAGES.redis
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+
+      try {
+        await NotificationProxy.startConsumer()
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.message, 'Payload cache not initialized')
+      }
+
+      test.end()
+    })
+
     await startConsumerTest.test('start the consumer and consumer messages', async test => {
-      test.ok(await Notification.startConsumer())
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       test.end()
     })
 
     await startConsumerTest.test('start the consumer and consumer messages with auto-commit enabled', async test => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = undefined
-      test.ok(await Notification.startConsumer())
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       test.end()
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
@@ -3478,7 +4008,7 @@ Test('Notification Service tests', async notificationTest => {
       const error = new Error()
       Consumer.prototype.connect.returns(Promise.reject(error))
       try {
-        await Notification.startConsumer()
+        await Notification.startConsumer({ payloadCache: mockPayloadCache })
         test.fail('Was expecting an error when connecting to Kafka')
         test.end()
       } catch (e) {
@@ -3506,13 +4036,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
       const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -3534,14 +4069,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -3577,14 +4116,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -3622,14 +4165,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok((result === false))
       test.end()
@@ -3654,6 +4201,9 @@ Test('Notification Service tests', async notificationTest => {
             headers: {},
             payload: {
               fulfilment: 'test'
+            },
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
             }
           },
           to: 'dfsp2',
@@ -3661,7 +4211,8 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok((result === true))
       test.end()
@@ -3684,14 +4235,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -3714,14 +4269,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -3744,14 +4303,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      test.ok(await Notification.startConsumer())
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, [msg])
       test.ok(result)
       test.end()
@@ -3777,6 +4340,8 @@ Test('Notification Service tests', async notificationTest => {
         }
       }
       try {
+        mockPayloadCache.getPayload.returns(Promise.resolve({}))
+        test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
         await Notification.consumeMessage(null, [msg])
         test.fail('Should not have caught an error here since it should have been dealt with')
         test.end()
@@ -3806,7 +4371,8 @@ Test('Notification Service tests', async notificationTest => {
         }
       }
       try {
-        test.ok(await Notification.startConsumer())
+        mockPayloadCache.getPayload.returns(Promise.resolve({}))
+        test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
         await Notification.consumeMessage(null, [msg])
         test.fail('Should not have caught an error here since it should have been dealt with')
         test.end()
@@ -3832,13 +4398,18 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {},
-            payload: {}
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
           },
           to: 'dfsp2',
           from: 'dfsp1',
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
       const result = await Notification.consumeMessage(null, msg)
       test.ok(result === true)
       test.end()
@@ -3852,6 +4423,8 @@ Test('Notification Service tests', async notificationTest => {
       const error = new Error()
 
       try {
+        mockPayloadCache.getPayload.returns(Promise.resolve({}))
+        test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
         await Notification.consumeMessage(error, message)
         test.fail('ehe')
         test.end()
@@ -3867,7 +4440,7 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.test('isConnected', async isConnectedTest => {
     await isConnectedTest.test('call base class isConnected function - true', async test => {
       // Arrange
-      await Notification.startConsumer()
+      await Notification.startConsumer({ payloadCache: mockPayloadCache })
       sandbox.stub(Consumer.prototype, 'isConnected').returns(true)
 
       // Act
@@ -3881,7 +4454,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await isConnectedTest.test('call base class isConnected function - false', async test => {
       // Arrange
-      await Notification.startConsumer()
+      await Notification.startConsumer({ payloadCache: mockPayloadCache })
       sandbox.stub(Consumer.prototype, 'isConnected').returns(false)
 
       // Act
@@ -3899,7 +4472,7 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.test('disconnect', async disconnectTest => {
     await disconnectTest.test('call base class disconnect function', async test => {
       // Arrange
-      await Notification.startConsumer()
+      await Notification.startConsumer({ payloadCache: mockPayloadCache })
       sandbox.stub(Consumer.prototype, 'disconnect')
 
       // Act

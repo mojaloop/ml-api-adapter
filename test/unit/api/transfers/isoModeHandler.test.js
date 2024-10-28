@@ -37,7 +37,8 @@ const createISORequest = async (payload, headers, participants) => {
     },
     payload: requestPayload,
     server: {
-      log: () => { }
+      log: () => { },
+      app: {}
     },
     span: EventSdk.Tracer.createSpan('test_span'),
     dataUri: 'someDataUri',
@@ -61,7 +62,6 @@ Test('ISO transfer handler', handlerTest => {
   let fulfilStub
   let transferErrorStub
   let originalType
-
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Logger, 'isErrorEnabled').value(true)
@@ -143,6 +143,41 @@ Test('ISO transfer handler', handlerTest => {
       }
     })
 
+    createTransferTest.test('call setOriginalRequestPayload with correct arguments if payloadCache is defined for createTransfer', async test => {
+      const transferId = '12345'
+      const payload = await buildISOTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
+        })
+      request.server.app.payloadCache = {
+        setPayload: sandbox.stub()
+      }
+      const reply = createTestReply(test)
+
+      const originalRequestPayload = {
+        originalRequestPayload: 'someDataUri',
+        originalRequestId: request.info.id
+      }
+
+      TransferService.prepare.resolves()
+
+      await Handler.create({}, request, reply)
+      test.deepEqual(
+        prepareStub.getCall(0).args[4],
+        {
+          originalRequestId: originalRequestPayload.originalRequestId
+        },
+        'only originalRequestId should be attached to kafka message context when payloadCache is defined'
+      )
+      test.deepEqual(request.server.app.payloadCache.setPayload.getCall(0).args, [
+        originalRequestPayload.originalRequestId, originalRequestPayload.originalRequestPayload
+      ])
+      test.end()
+    })
+
     createTransferTest.end()
   })
 
@@ -196,6 +231,41 @@ Test('ISO transfer handler', handlerTest => {
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
+    })
+
+    fulfilTransferTest.test('call setOriginalRequestPayload with correct arguments if payloadCache is defined for fulfilTransfer', async test => {
+      const transferId = '12345'
+      const payload = await buildISOFulfil(transferId)
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
+        })
+      request.server.app.payloadCache = {
+        setPayload: sandbox.stub()
+      }
+      const reply = createTestReply(test, 200)
+
+      const originalRequestPayload = {
+        originalRequestPayload: 'someDataUri',
+        originalRequestId: request.info.id
+      }
+
+      TransferService.fulfil.resolves()
+
+      await Handler.fulfilTransfer({}, request, reply)
+      test.deepEqual(
+        fulfilStub.getCall(0).args[5],
+        {
+          originalRequestId: originalRequestPayload.originalRequestId
+        },
+        'only originalRequestId should be attached to kafka message context when payloadCache is defined'
+      )
+      test.deepEqual(request.server.app.payloadCache.setPayload.getCall(0).args, [
+        originalRequestPayload.originalRequestId, originalRequestPayload.originalRequestPayload
+      ])
+      test.end()
     })
 
     fulfilTransferTest.end()
@@ -252,6 +322,39 @@ Test('ISO transfer handler', handlerTest => {
       }
     })
 
+    transferErrorTest.test('call setOriginalRequestPayload with correct arguments if payloadCache is defined for transferError', async test => {
+      const payload = await buildISOTransferError()
+      const request = await createISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
+        })
+      request.server.app.payloadCache = {
+        setPayload: sandbox.stub()
+      }
+      const reply = createTestReply(test, 200)
+
+      const originalRequestPayload = {
+        originalRequestPayload: 'someDataUri',
+        originalRequestId: request.info.id
+      }
+
+      TransferService.transferError.resolves()
+
+      await Handler.fulfilTransferError({}, request, reply)
+      test.deepEqual(
+        transferErrorStub.getCall(0).args[6],
+        {
+          originalRequestId: originalRequestPayload.originalRequestId
+        },
+        'only originalRequestId should be attached to kafka message context when payloadCache is defined'
+      )
+      test.deepEqual(request.server.app.payloadCache.setPayload.getCall(0).args, [
+        originalRequestPayload.originalRequestId, originalRequestPayload.originalRequestPayload
+      ])
+      test.end()
+    })
     transferErrorTest.end()
   })
 
@@ -306,6 +409,41 @@ Test('ISO transfer handler', handlerTest => {
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
+    })
+
+    createTransferTest.test('call setOriginalRequestPayload with correct arguments if payloadCache is defined for createTransfer', async test => {
+      const transferId = '12345'
+      const payload = await buildISOFxTransfer(transferId, {}, Ilp.ILP_VERSIONS.v4)
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
+        })
+      request.server.app.payloadCache = {
+        setPayload: sandbox.stub()
+      }
+      const reply = createTestReply(test)
+
+      const originalRequestPayload = {
+        originalRequestPayload: 'someDataUri',
+        originalRequestId: request.info.id
+      }
+
+      TransferService.prepare.resolves()
+
+      await Handler.create({}, request, reply)
+      test.deepEqual(
+        prepareStub.getCall(0).args[4],
+        {
+          originalRequestId: originalRequestPayload.originalRequestId
+        },
+        'only originalRequestId should be attached to kafka message context when payloadCache is defined'
+      )
+      test.deepEqual(request.server.app.payloadCache.setPayload.getCall(0).args, [
+        originalRequestPayload.originalRequestId, originalRequestPayload.originalRequestPayload
+      ])
+      test.end()
     })
 
     createTransferTest.end()
@@ -364,6 +502,41 @@ Test('ISO transfer handler', handlerTest => {
       }
     })
 
+    fulfilTransferTest.test('call setOriginalRequestPayload with correct arguments if payloadCache is defined for fulfilTransfer', async test => {
+      const transferId = '12345'
+      const payload = await buildISOFxFulfil(transferId)
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
+        })
+      request.server.app.payloadCache = {
+        setPayload: sandbox.stub()
+      }
+      const reply = createTestReply(test, 200)
+
+      const originalRequestPayload = {
+        originalRequestPayload: 'someDataUri',
+        originalRequestId: request.info.id
+      }
+
+      TransferService.fulfil.resolves()
+
+      await Handler.fulfilTransfer({}, request, reply)
+      test.deepEqual(
+        fulfilStub.getCall(0).args[5],
+        {
+          originalRequestId: originalRequestPayload.originalRequestId
+        },
+        'only originalRequestId should be attached to kafka message context when payloadCache is defined'
+      )
+      test.deepEqual(request.server.app.payloadCache.setPayload.getCall(0).args, [
+        originalRequestPayload.originalRequestId, originalRequestPayload.originalRequestPayload
+      ])
+      test.end()
+    })
+
     fulfilTransferTest.end()
   })
 
@@ -416,6 +589,40 @@ Test('ISO transfer handler', handlerTest => {
         test.equal(e.message, 'An error has occurred')
         test.end()
       }
+    })
+
+    transferErrorTest.test('call setOriginalRequestPayload with correct arguments if payloadCache is defined for transferError', async test => {
+      const payload = await buildISOFxTransferError()
+      const request = await createFxISORequest(
+        payload, {
+          'fspiop-source': 'dfsp1',
+          'fspiop-destination': 'dfsp2',
+          'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
+        })
+      request.server.app.payloadCache = {
+        setPayload: sandbox.stub()
+      }
+      const reply = createTestReply(test, 200)
+
+      const originalRequestPayload = {
+        originalRequestPayload: 'someDataUri',
+        originalRequestId: request.info.id
+      }
+
+      TransferService.transferError.resolves()
+
+      await Handler.fulfilTransferError({}, request, reply)
+      test.deepEqual(
+        transferErrorStub.getCall(0).args[6],
+        {
+          originalRequestId: originalRequestPayload.originalRequestId
+        },
+        'only originalRequestId should be attached to kafka message context when payloadCache is defined'
+      )
+      test.deepEqual(request.server.app.payloadCache.setPayload.getCall(0).args, [
+        originalRequestPayload.originalRequestId, originalRequestPayload.originalRequestPayload
+      ])
+      test.end()
     })
 
     transferErrorTest.end()

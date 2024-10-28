@@ -169,7 +169,10 @@ const createMessageProtocol = (eventType = 'prepare', eventAction = 'prepare', p
         'fspiop-destination': destination,
         'fspiop-source': source
       },
-      payload
+      payload,
+      context: {
+        originalRequestPayload: payload
+      }
     },
     to: destination,
     from: source,

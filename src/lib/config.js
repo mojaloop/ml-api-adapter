@@ -68,7 +68,10 @@ const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) 
 // Set config object to be returned
 const config = {
   API_TYPE: RC.API_TYPE, // 'fspiop' or 'iso20022'
+  IS_ISO_MODE: RC.API_TYPE === 'iso20022',
   PROXY: RC.PROXY_CACHE,
+  PAYLOAD_CACHE: RC.PAYLOAD_CACHE,
+  ORIGINAL_PAYLOAD_STORAGE: RC.ORIGINAL_PAYLOAD_STORAGE,
   HUB_ID: RC.HUB_PARTICIPANT.ID,
   HUB_NAME: RC.HUB_PARTICIPANT.NAME,
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),
