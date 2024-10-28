@@ -23,10 +23,12 @@
  ******/
 'use strict'
 
+const { logger } = require('../../src/shared/logger')
+
 /**
  * unwrapResponse
  *
- * Use this function to unwrap the innner response body and code from an async Handler
+ * Use this function to unwrap the inner response body and code from an async Handler
  */
 const unwrapResponse = async (asyncFunction) => {
   let responseBody
@@ -72,8 +74,54 @@ async function sleep (seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000))
 }
 
+async function wrapWithRetries (func, remainingRetries = 10, timeout = 2) {
+  logger.warn(`wrapWithRetries remainingRetries:${remainingRetries}, timeout:${timeout}`)
+
+  try {
+    const result = await func()
+    if (!result) {
+      throw new Error('wrapWithRetries returned false of undefined response')
+    }
+    return result
+  } catch (err) {
+    if (remainingRetries === 0) {
+      logger.warn('wrapWithRetries ran out of retries')
+      throw err
+    }
+
+    await sleepPromise(timeout)
+    return wrapWithRetries(func, remainingRetries - 1, timeout)
+  }
+}
+
+/**
+ * @function sleepPromise
+ *
+ * @description A hacky method to sleep in JS. For testing purposes only.
+ *
+ * @param {number} seconds - The number of seconds to sleep for
+ *
+ * @returns {Promise<>}
+ */
+async function sleepPromise (seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000))
+}
+
+// to use as a wrapper on Tape tests
+const tryCatchEndTest = (testFn) => async (t) => {
+  try {
+    await testFn(t)
+  } catch (err) {
+    logger.error(`error in test "${t.name}":`, err)
+    t.fail(`${t.name} failed due to error: ${err?.message}`)
+  }
+  t.end()
+}
+
 module.exports = {
   createRequest,
   sleep,
-  unwrapResponse
+  unwrapResponse,
+  wrapWithRetries,
+  tryCatchEndTest
 }

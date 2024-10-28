@@ -1,0 +1,1119 @@
+openapi: 3.0.2
+info:
+  version: 2.0-draft
+  title: Open API for FSP Interoperability (FSPIOP)
+  description: >-
+    Revision date: 2023-11-23 Based on [API Definition updated on 2020-05-19
+    Version
+    1.1](https://github.com/mojaloop/mojaloop-specification/blob/main/documents/v1.1-document-set/API%20Definition_v1.1.pdf).
+
+    This is implementation friendly version of the API definition.
+
+    It includes the below definitions needed for third-party functionality. -
+    AuthenticationType
+      - U2F enum
+    - AuthenticationValue
+      - oneOf is changed to anyOf
+      - new element is added U2FPinValue
+    - New element U2FPIN
+
+    **Note:** The API supports a maximum size of 65536 bytes (64 Kilobytes) in
+    the HTTP header.
+  license:
+    name: CC BY-ND 4.0
+    url: https://github.com/mojaloop/mojaloop-specification/blob/main/LICENSE.md
+  contact:
+    name: Sam Kummary
+    url: https://github.com/mojaloop/mojaloop-specification/issues
+servers:
+  - url: protocol://hostname:<port>/switch/
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: https
+paths:
+  /transfers:
+    post:
+      description: >-
+        The HTTP request `POST /transfers` is used to request the creation of a
+        transfer for the next ledger, and a financial transaction for the Payee
+        FSP.
+      summary: Perform transfer
+      tags:
+        - transfers
+        - sampled
+      operationId: transfers
+      parameters:
+        - $ref: "#/components/parameters/Accept"
+        - $ref: "#/components/parameters/Content-Length"
+        - $ref: "#/components/parameters/Content-Type"
+        - $ref: "#/components/parameters/Date"
+        - $ref: "#/components/parameters/X-Forwarded-For"
+        - $ref: "#/components/parameters/FSPIOP-Source"
+        - $ref: "#/components/parameters/FSPIOP-Destination"
+        - $ref: "#/components/parameters/FSPIOP-Encryption"
+        - $ref: "#/components/parameters/FSPIOP-Signature"
+        - $ref: "#/components/parameters/FSPIOP-URI"
+        - $ref: "#/components/parameters/FSPIOP-HTTP-Method"
+      requestBody:
+        description: Details of the transfer to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/Execute_FIToFICustomerCreditTransferV13'
+      responses:
+        "202":
+          $ref: "#/components/responses/202"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+  /transfers/{ID}:
+    parameters:
+      - $ref: "#/components/parameters/ID"
+      - $ref: "#/components/parameters/Content-Type"
+      - $ref: "#/components/parameters/Date"
+      - $ref: "#/components/parameters/X-Forwarded-For"
+      - $ref: "#/components/parameters/FSPIOP-Source"
+      - $ref: "#/components/parameters/FSPIOP-Destination"
+      - $ref: "#/components/parameters/FSPIOP-Encryption"
+      - $ref: "#/components/parameters/FSPIOP-Signature"
+      - $ref: "#/components/parameters/FSPIOP-URI"
+      - $ref: "#/components/parameters/FSPIOP-HTTP-Method"
+    get:
+      description: >-
+        The HTTP request `GET /transfers/{ID}` is used to get information
+        regarding a transfer created or requested earlier. The `{ID}` in the URI
+        should contain the `transferId` that was used for the creation of the
+        transfer.
+      summary: Retrieve transfer information
+      tags:
+        - transfers
+        - sampled
+      operationId: TransfersByIDGet
+      parameters:
+        - $ref: "#/components/parameters/Accept"
+      responses:
+        "202":
+          $ref: "#/components/responses/202"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+    patch:
+      description: >-
+        The HTTP request PATCH /transfers/<ID> is used by a Switch to update the
+        state of a previously reserved transfer, if the Payee FSP has requested
+        a commit notification when the Switch has completed processing of the
+        transfer. The <ID> in the URI should contain the transferId that was
+        used for the creation of the transfer. Please note that this request
+        does not generate a callback.
+      summary: Return transfer information
+      tags:
+        - transfers
+        - sampled
+      operationId: TransfersByIDPatch
+      parameters:
+        - $ref: "#/components/parameters/Content-Length"
+      requestBody:
+        description: Transfer notification upon completion.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/PacsStatus_FIToFIPaymentStatusReportV15"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+    put:
+      description: >-
+        The callback `PUT /transfers/{ID}` is used to inform the client of a
+        requested or created transfer. The `{ID}` in the URI should contain the
+        `transferId` that was used for the creation of the transfer, or the
+        `{ID}` that was used in the `GET /transfers/{ID}` request.
+      summary: Return transfer information
+      tags:
+        - transfers
+        - sampled
+      operationId: TransfersByIDPut
+      parameters:
+        - $ref: "#/components/parameters/Content-Length"
+      requestBody:
+        description: Transfer information returned.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/PacsStatus_FIToFIPaymentStatusReportV15"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+  /transfers/{ID}/error:
+    put:
+      description: >-
+        If the server is unable to find or create a transfer, or another
+        processing error occurs, the error callback `PUT /transfers/{ID}/error`
+        is used. The `{ID}` in the URI should contain the `transferId` that was
+        used for the creation of the transfer, or the `{ID}` that was used in
+        the `GET /transfers/{ID}`.
+      summary: Return transfer information error
+      tags:
+        - transfers
+        - sampled
+      operationId: TransfersByIDAndError
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/Content-Length"
+        - $ref: "#/components/parameters/Content-Type"
+        - $ref: "#/components/parameters/Date"
+        - $ref: "#/components/parameters/X-Forwarded-For"
+        - $ref: "#/components/parameters/FSPIOP-Source"
+        - $ref: "#/components/parameters/FSPIOP-Destination"
+        - $ref: "#/components/parameters/FSPIOP-Encryption"
+        - $ref: "#/components/parameters/FSPIOP-Signature"
+        - $ref: "#/components/parameters/FSPIOP-URI"
+        - $ref: "#/components/parameters/FSPIOP-HTTP-Method"
+      requestBody:
+        description: Details of the error returned.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/PacsError_FIToFIPaymentStatusReportV15"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+  /fxTransfers:
+    post:
+      description: >-
+        The HTTP request `POST /fxTransfers` is used to ask an FXP to confirm
+        the execution of an agreed currency conversion.
+      summary: Perform FX transfer
+      tags:
+        - fxTransfers
+        - sampled
+      operationId: FxTransfersPost
+      parameters:
+        - $ref: "#/components/parameters/Accept"
+        - $ref: "#/components/parameters/Content-Length"
+        - $ref: "#/components/parameters/Content-Type"
+        - $ref: "#/components/parameters/Date"
+        - $ref: "#/components/parameters/X-Forwarded-For"
+        - $ref: "#/components/parameters/FSPIOP-Source"
+        - $ref: "#/components/parameters/FSPIOP-Destination"
+        - $ref: "#/components/parameters/FSPIOP-Encryption"
+        - $ref: "#/components/parameters/FSPIOP-Signature"
+        - $ref: "#/components/parameters/FSPIOP-URI"
+        - $ref: "#/components/parameters/FSPIOP-HTTP-Method"
+      requestBody:
+        description: Details of the FX transfer to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/Fxecute_FinancialInstitutionCreditTransferV12"
+      responses:
+        "202":
+          $ref: "#/components/responses/202"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+  /fxTransfers/{ID}:
+    parameters:
+      - $ref: "#/components/parameters/ID"
+      - $ref: "#/components/parameters/Content-Type"
+      - $ref: "#/components/parameters/Date"
+      - $ref: "#/components/parameters/X-Forwarded-For"
+      - $ref: "#/components/parameters/FSPIOP-Source"
+      - $ref: "#/components/parameters/FSPIOP-Destination"
+      - $ref: "#/components/parameters/FSPIOP-Encryption"
+      - $ref: "#/components/parameters/FSPIOP-Signature"
+      - $ref: "#/components/parameters/FSPIOP-URI"
+      - $ref: "#/components/parameters/FSPIOP-HTTP-Method"
+    get:
+      description: >-
+        The HTTP request `GET /fxTransfers/{ID}` s used to request information
+        regarding a request for confirmation of a currency conversion which the
+        sender has previously issued. The `{ID}` in the URI should contain the
+        `commitRequestId` that was used for the creation of the FX transfer.
+      summary: Retrieve FX transfer information
+      tags:
+        - fxTransfers
+        - sampled
+      operationId: FxTransfersByIDGet
+      parameters:
+        - $ref: "#/components/parameters/Accept"
+      responses:
+        "202":
+          $ref: "#/components/responses/202"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+    patch:
+      description: >-
+        The HTTP request PATCH /fxTransfers/<ID> is used to inform the requester
+        about the final determination by the switch of the transfer a request
+        for execution of a currency conversion. The <ID> in the URI should
+        contain the commitRequestId that was used for the creation of the FX
+        transfer. Please note that this request does not generate a callback.
+      summary: Return FX transfer information
+      tags:
+        - fxTransfers
+        - sampled
+      operationId: FxTransfersByIDPatch
+      parameters:
+        - $ref: "#/components/parameters/Content-Length"
+      requestBody:
+        description: Transfer notification upon completion.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/PacsStatus_FIToFIPaymentStatusReportV15"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+    put:
+      description: >-
+        The callback `PUT /fxTransfers/{ID}` is used to inform the requester
+        about the outcome of a request for execution of a currency conversion.
+        The `{ID}` in the URI should contain the `commitRequestId` that was used
+        for the creation of the FX transfer, or the `{ID}` that was used in the
+        `GET /fxTransfers/{ID}` request.
+      summary: Return FX transfer information
+      tags:
+        - fxTransfers
+        - sampled
+      operationId: FxTransfersByIDPut
+      parameters:
+        - $ref: "#/components/parameters/Content-Length"
+      requestBody:
+        description: Transfer information returned.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/PacsStatus_FIToFIPaymentStatusReportV15"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+  /fxTransfers/{ID}/error:
+    put:
+      description: >-
+        If the switch or FXP is unable to find or create a FX transfer, or
+        another processing error occurs, the error callback `PUT
+        /fxTransfers/{ID}/error` is used. The `{ID}` in the URI should contain
+        the `commitRequestId` that was used for the creation of the FX transfer,
+        or the `{ID}` that was used in the `GET /fxTransfers/{ID}`.
+      summary: Return FX transfer information error
+      tags:
+        - fxTransfers
+        - sampled
+      operationId: FxTransfersByIDAndErrorPut
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/Content-Length"
+        - $ref: "#/components/parameters/Content-Type"
+        - $ref: "#/components/parameters/Date"
+        - $ref: "#/components/parameters/X-Forwarded-For"
+        - $ref: "#/components/parameters/FSPIOP-Source"
+        - $ref: "#/components/parameters/FSPIOP-Destination"
+        - $ref: "#/components/parameters/FSPIOP-Encryption"
+        - $ref: "#/components/parameters/FSPIOP-Signature"
+        - $ref: "#/components/parameters/FSPIOP-URI"
+        - $ref: "#/components/parameters/FSPIOP-HTTP-Method"
+      requestBody:
+        description: Details of the error returned.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "fspiop-rest-v2.0-ISO20022_transfers.yaml#/components/schemas/PacsError_FIToFIPaymentStatusReportV15"
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "405":
+          $ref: "#/components/responses/405"
+        "406":
+          $ref: "#/components/responses/406"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+  /health:
+    get:
+      tags:
+        - health
+        - sampled
+      summary: Get health
+      description: The HTTP request GET /health is used to return the current status
+        of the Ml API Adapter
+      operationId: HealthGet
+      responses:
+        200:
+          $ref: '#/components/responses/ResponseHealth200'
+        400:
+          $ref: '#/components/responses/ErrorResponse400'
+        401:
+          $ref: '#/components/responses/ErrorResponse401'
+        403:
+          $ref: '#/components/responses/ErrorResponse403'
+        404:
+          $ref: '#/components/responses/ErrorResponse404'
+        405:
+          $ref: '#/components/responses/ErrorResponse405'
+        406:
+          $ref: '#/components/responses/ErrorResponse406'
+        501:
+          $ref: '#/components/responses/ErrorResponse501'
+        503:
+          $ref: '#/components/responses/ErrorResponse503'
+  /:
+    get:
+      tags:
+        - metadata
+        - sampled
+      summary: Get metadata
+      description: The HTTP request GET / is used to return metadata
+        of the Ml API Adapter
+      operationId: MetadataGet
+      responses:
+        200:
+          $ref: '#/components/responses/Response200'
+        400:
+          $ref: '#/components/responses/ErrorResponse400'
+        401:
+          $ref: '#/components/responses/ErrorResponse401'
+        403:
+          $ref: '#/components/responses/ErrorResponse403'
+        404:
+          $ref: '#/components/responses/ErrorResponse404'
+        405:
+          $ref: '#/components/responses/ErrorResponse405'
+        406:
+          $ref: '#/components/responses/ErrorResponse406'
+        501:
+          $ref: '#/components/responses/ErrorResponse501'
+        503:
+          $ref: '#/components/responses/ErrorResponse503'
+  /metrics:
+    get:
+      tags:
+        - metrics
+        - sampled
+      responses:
+        '200':
+          $ref: '#/components/responses/Response200'
+        '400':
+          $ref: '#/components/responses/ErrorResponse400'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+        '403':
+          $ref: '#/components/responses/ErrorResponse403'
+        '404':
+          $ref: '#/components/responses/ErrorResponse404'
+        '405':
+          $ref: '#/components/responses/ErrorResponse405'
+        '406':
+          $ref: '#/components/responses/ErrorResponse406'
+        '501':
+          $ref: '#/components/responses/ErrorResponse501'
+        '503':
+          $ref: '#/components/responses/ErrorResponse503'
+      operationId: MetricsGet
+      summary: Prometheus metrics endpoint
+      description: The HTTP request GET /metrics is used to return metrics for the API.
+  /endpointcache:
+    delete:
+      tags:
+        - cache
+        - sampled
+      summary: Endpoint Cache
+      description: The HTTP request DELETE /endpointcache is used to reset the endpoint
+        cache by performing an stopCache and initializeCache the Admin API.
+      operationId: EndpointCacheDelete
+      parameters:
+        - $ref: '#/components/parameters/Date'
+      responses:
+        202:
+          $ref: '#/components/responses/Response202'
+        400:
+          $ref: '#/components/responses/ErrorResponse400'
+        401:
+          $ref: '#/components/responses/ErrorResponse401'
+        403:
+          $ref: '#/components/responses/ErrorResponse403'
+        404:
+          $ref: '#/components/responses/ErrorResponse404'
+        405:
+          $ref: '#/components/responses/ErrorResponse405'
+        406:
+          $ref: '#/components/responses/ErrorResponse406'
+        501:
+          $ref: '#/components/responses/ErrorResponse501'
+        503:
+          $ref: '#/components/responses/ErrorResponse503'
+components:
+  parameters:
+    Accept:
+      name: Accept
+      in: header
+      required: true
+      schema:
+        type: string
+      description: >-
+        The `Accept` header field indicates the version of the API the client
+        would like the server to use.
+    Content-Length:
+      name: Content-Length
+      in: header
+      required: false
+      schema:
+        type: integer
+      description: >-
+        The `Content-Length` header field indicates the anticipated size of the
+        payload body. Only sent if there is a body.
+
+
+        **Note:** The API supports a maximum size of 5242880 bytes (5
+        Megabytes).
+    Content-Type:
+      name: Content-Type
+      in: header
+      schema:
+        type: string
+      required: true
+      description: >-
+        The `Content-Type` header indicates the specific version of the API used
+        to send the payload body.
+    Date:
+      name: Date
+      in: header
+      schema:
+        type: string
+      required: true
+      description: The `Date` header field indicates the date when the request was sent.
+    FSPIOP-Destination:
+      name: FSPIOP-Destination
+      in: header
+      schema:
+        type: string
+      required: false
+      description: >-
+        The `FSPIOP-Destination` header field is a non-HTTP standard field used
+        by the API for HTTP header based routing of requests and responses to
+        the destination. The field must be set by the original sender of the
+        request if the destination is known (valid for all services except GET
+        /parties) so that any entities between the client and the server do not
+        need to parse the payload for routing purposes. If the destination is
+        not known (valid for service GET /parties), the field should be left
+        empty.
+    FSPIOP-Encryption:
+      name: FSPIOP-Encryption
+      in: header
+      schema:
+        type: string
+      required: false
+      description: >-
+        The `FSPIOP-Encryption` header field is a non-HTTP standard field used
+        by the API for applying end-to-end encryption of the request.
+    FSPIOP-HTTP-Method:
+      name: FSPIOP-HTTP-Method
+      in: header
+      schema:
+        type: string
+      required: false
+      description: >-
+        The `FSPIOP-HTTP-Method` header field is a non-HTTP standard field used
+        by the API for signature verification, should contain the service HTTP
+        method. Required if signature verification is used, for more
+        information, see [the API Signature
+        document](https://github.com/mojaloop/docs/tree/main/Specification%20Document%20Set).
+    FSPIOP-Signature:
+      name: FSPIOP-Signature
+      in: header
+      schema:
+        type: string
+      required: false
+      description: >-
+        The `FSPIOP-Signature` header field is a non-HTTP standard field used by
+        the API for applying an end-to-end request signature.
+    FSPIOP-Source:
+      name: FSPIOP-Source
+      in: header
+      schema:
+        type: string
+      required: true
+      description: >-
+        The `FSPIOP-Source` header field is a non-HTTP standard field used by
+        the API for identifying the sender of the HTTP request. The field should
+        be set by the original sender of the request. Required for routing and
+        signature verification (see header field `FSPIOP-Signature`).
+    FSPIOP-URI:
+      name: FSPIOP-URI
+      in: header
+      schema:
+        type: string
+      required: false
+      description: >-
+        The `FSPIOP-URI` header field is a non-HTTP standard field used by the
+        API for signature verification, should contain the service URI. Required
+        if signature verification is used, for more information, see [the API
+        Signature
+        document](https://github.com/mojaloop/docs/tree/main/Specification%20Document%20Set).
+    ID:
+      name: ID
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The identifier value.
+    X-Forwarded-For:
+      name: X-Forwarded-For
+      in: header
+      schema:
+        type: string
+      required: false
+      description: >-
+        The `X-Forwarded-For` header field is an unofficially accepted standard
+        used for informational purposes of the originating client IP address, as
+        a request might pass multiple proxies, firewalls, and so on. Multiple
+        `X-Forwarded-For` values should be expected and supported by
+        implementers of the API.
+
+
+        **Note:** An alternative to `X-Forwarded-For` is defined in [RFC
+        7239](https://tools.ietf.org/html/rfc7239). However, to this point RFC
+        7239 is less-used and supported than `X-Forwarded-For`.
+  schemas:
+    ErrorCode:
+      title: ErrorCode
+      type: string
+      pattern: ^[1-9]\d{3}$
+      description: >-
+        The API data type ErrorCode is a JSON String of four characters,
+        consisting of digits only. Negative numbers are not allowed. A leading
+        zero is not allowed. Each error code in the API is a four-digit number,
+        for example, 1234, where the first number (1 in the example) represents
+        the high-level error category, the second number (2 in the example)
+        represents the low-level error category, and the last two numbers (34 in
+        the example) represent the specific error.
+      example: "5100"
+    ErrorDescription:
+      title: ErrorDescription
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Error description string.
+    ErrorInformation:
+      title: ErrorInformation
+      type: object
+      description: Data model for the complex type ErrorInformation.
+      properties:
+        errorCode:
+          $ref: "#/components/schemas/ErrorCode"
+        errorDescription:
+          $ref: "#/components/schemas/ErrorDescription"
+        extensionList:
+          $ref: "#/components/schemas/ExtensionList"
+      required:
+        - errorCode
+        - errorDescription
+    ErrorInformationResponse:
+      title: ErrorInformationResponse
+      type: object
+      description: >-
+        Data model for the complex type object that contains an optional element
+        ErrorInformation used along with 4xx and 5xx responses.
+      properties:
+        errorInformation:
+          $ref: "#/components/schemas/ErrorInformation"
+    Extension:
+      title: Extension
+      type: object
+      description: Data model for the complex type Extension.
+      properties:
+        key:
+          $ref: "#/components/schemas/ExtensionKey"
+        value:
+          $ref: "#/components/schemas/ExtensionValue"
+      required:
+        - key
+        - value
+    ExtensionKey:
+      title: ExtensionKey
+      type: string
+      minLength: 1
+      maxLength: 32
+      description: Extension key.
+    ExtensionList:
+      title: ExtensionList
+      type: object
+      description: >-
+        Data model for the complex type ExtensionList. An optional list of
+        extensions, specific to deployment.
+      properties:
+        extension:
+          type: array
+          items:
+            $ref: "#/components/schemas/Extension"
+          minItems: 1
+          maxItems: 16
+          description: Number of Extension elements.
+      required:
+        - extension
+    ExtensionValue:
+      title: ExtensionValue
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Extension value.
+    HealthStatusType:
+      title: HealthStatusType
+      type: string
+      description: Below are the allowed values for the enumeration HealthStatusType
+        - OK - DOWN
+      enum:
+        - OK
+        - DOWN
+    HealthServicesType:
+      title: HealthServicesType
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/HealthStatusType'
+      description: Data model for the complex type HealthServicesType. Contains health
+        services information.
+    Status:
+      title: Status
+      type: object
+      properties:
+        status:
+          type: string
+          description: The return status, usually "OK"
+        uptime:
+          type: number
+          description: The amount of time in seconds that the server has been up for.
+        startTime:
+          type: string
+          description: The UTC time that the server started up
+        versionNumber:
+          type: string
+          description: Current version of the API
+        services:
+          type: array
+          description: An list of the statuses of services that the API requires
+          items:
+            $ref: '#/components/schemas/HealthServicesType'
+      description: Data model for the api status.
+  responses:
+    "200":
+      description: OK
+    "202":
+      description: Accepted
+    "400":
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "401":
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "403":
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "404":
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "405":
+      description: Method Not Allowed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "406":
+      description: Not Acceptable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "501":
+      description: Not Implemented
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "503":
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    ErrorResponse400:
+      description: Bad Request - The application cannot process the request; for example,
+        due to malformed syntax or the payload exceeded size restrictions.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse401:
+      description: Unauthorized - The request requires authentication in order to
+        be processed.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse403:
+      description: Forbidden - The request was denied and will be denied in the future.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse404:
+      description: Not Found - The resource specified in the URI was not found.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse405:
+      description: Method Not Allowed - An unsupported HTTP method for the request
+        was used.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse406:
+      description: Not acceptable - The server is not capable of generating content
+        according to the Accept headers sent in the request. Used in the API to indicate
+        that the server does not support the version that the client is requesting.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse501:
+      description: Not Implemented - The server does not support the requested service.
+        The client should not retry.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse503:
+      description: Service Unavailable - The server is currently unavailable to accept
+        any new service requests. This should be a temporary state, and the client
+        should retry within a reasonable time frame.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    Response200:
+      description: OK
+      content: {}
+    Response202:
+      description: Accepted
+      content: {}
+    ResponseHealth200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Status'
+  headers:
+    Content-Length:
+      required: false
+      schema:
+        type: integer
+      description: >-
+        The `Content-Length` header field indicates the anticipated size of the
+        payload body. Only sent if there is a body.
+
+
+        **Note:** The API supports a maximum size of 5242880 bytes (5
+        Megabytes).
+    Content-Type:
+      schema:
+        type: string
+      required: true
+      description: >-
+        The `Content-Type` header indicates the specific version of the API used
+        to send the payload body.

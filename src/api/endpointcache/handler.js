@@ -24,7 +24,7 @@
 
 'use strict'
 
-const Logger = require('@mojaloop/central-services-logger')
+const { logger } = require('../../shared/logger')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Endpoints: ParticipantEndpointCache, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Config = require('../../lib/config.js')
@@ -38,14 +38,14 @@ const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
   * produces: application/json
   * responses: 202, 400, 401, 403, 404, 405, 406, 501, 503
   */
-const deleteEndpointCache = async (request, h) => {
+const deleteEndpointCache = async (context, request, h) => {
   try {
     await ParticipantEndpointCache.stopCache()
     await ParticipantEndpointCache.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
     return h.response().code(202)
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    Logger.isErrorEnabled && Logger.error(fspiopError)
+    logger.error(fspiopError)
     throw fspiopError
   }
 }
