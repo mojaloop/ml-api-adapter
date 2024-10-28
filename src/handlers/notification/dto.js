@@ -42,8 +42,6 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 
   if (!originalPayload) {
     logger.warn('Notification::processMessage - Original payload not found')
-    // if (!payloadCache) logger.error('Notification::processMessage - Payload cache not initialized')
-    // throw ErrorHandler.Factory.createFSPIOPError(ErrorHandler.Enums.FSPIOPErrorCodes.INTERNAL_SERVER_ERROR)
   }
 
   return originalPayload

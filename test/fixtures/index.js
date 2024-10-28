@@ -29,6 +29,9 @@ const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
 const { Enum } = require('@mojaloop/central-services-shared')
 const { STORAGE_TYPES } = require('@mojaloop/inter-scheme-proxy-cache-lib')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
+const { logger } = require('../../src/shared/logger')
+
+TransformFacades.FSPIOP.configure({ isTestingMode: true, logger })
 
 const generateTransferId = () => {
   return Uuid()

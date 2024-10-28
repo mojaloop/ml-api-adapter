@@ -8,6 +8,8 @@ const EventSdk = require('@mojaloop/event-sdk')
 const { Hapi, id } = require('@mojaloop/central-services-shared').Util
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
+TransformFacades.FSPIOPISO20022.configure({ isTestingMode: true, logger: Logger })
+
 const Sinon = require('sinon')
 const Test = require('tapes')(require('tape'))
 
