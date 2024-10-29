@@ -53,6 +53,7 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
   let payloadForCallback
+
   if (fspiopObject.errorInformation) {
     if (API_TYPE === API_TYPES.iso20022) {
       const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)

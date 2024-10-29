@@ -247,8 +247,8 @@ const processMessage = async (msg, span) => {
       Action.GET, Action.FX_GET,
       Action.FX_NOTIFY
     ].includes(msg.value.metadata.event.action) &&
-    !msg.value.content.context?.originalRequestId &&
-    !msg.value.content.context?.originalRequestPayload
+    !msg.value.content.context &&
+    (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)
   ) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
