@@ -1,3 +1,4 @@
+const safeStringify = require('fast-safe-stringify')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
@@ -49,21 +50,18 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 
 const getCallbackPayload = async (content, payloadCache = undefined) => {
   const originalPayload = await getOriginalPayload(content, payloadCache)
-  let finalPayload = content.payload
-  if (originalPayload) {
-    finalPayload = decodePayload(originalPayload, { asParsed: false }).body
-  }
+  const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
   let payloadForCallback
   if (fspiopObject.errorInformation) {
     if (API_TYPE === API_TYPES.iso20022) {
       const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-      payloadForCallback = JSON.stringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
+      payloadForCallback = safeStringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
     } else {
-      payloadForCallback = JSON.stringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
+      payloadForCallback = safeStringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
     }
   } else {
-    payloadForCallback = finalPayload.toString()
+    payloadForCallback = typeof finalPayload === 'string' ? finalPayload : safeStringify(finalPayload)
   }
 
   return { fspiopObject, payloadForCallback }
