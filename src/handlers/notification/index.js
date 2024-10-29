@@ -243,12 +243,13 @@ const processMessage = async (msg, span) => {
       Action.ABORT_VALIDATION, Action.FX_ABORT_VALIDATION,
       Action.RESERVED_ABORTED, Action.FX_RESERVED_ABORTED,
       Action.FULFIL_DUPLICATE, Action.FX_FULFIL_DUPLICATE,
-      Action.TIMEOUT_RECEIVED, Action.FX_TIMEOUT_RECEIVED,
       Action.GET, Action.FX_GET,
-      Action.FX_NOTIFY
+      Action.FX_NOTIFY,
+      Action.TIMEOUT_RECEIVED, Action.FX_TIMEOUT_RECEIVED,
+      Action.TIMEOUT_RESERVED, Action.FX_TIMEOUT_RESERVED
     ].includes(msg.value.metadata.event.action) &&
     !msg.value.content.context &&
-    (!msg.value.content.context.originalRequestId && !msg.value.content.context.originalRequestPayload)
+    (!msg.value.content.context?.originalRequestId && !msg.value.content.context?.originalRequestPayload)
   ) {
     histTimerEnd({ success: false, action: 'unknown' })
     throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka', { msg })
