@@ -588,6 +588,118 @@ components:
         **Note:** An alternative to `X-Forwarded-For` is defined in [RFC
         7239](https://tools.ietf.org/html/rfc7239). However, to this point RFC
         7239 is less-used and supported than `X-Forwarded-For`.
+  responses:
+    "200":
+      description: OK
+    "202":
+      description: Accepted
+    "400":
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "401":
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "403":
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "404":
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "405":
+      description: Method Not Allowed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "406":
+      description: Not Acceptable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "501":
+      description: Not Implemented
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+    "503":
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInformationResponse"
+      headers:
+        Content-Length:
+          $ref: "#/components/headers/Content-Length"
+        Content-Type:
+          $ref: "#/components/headers/Content-Type"
+  headers:
+    Content-Length:
+      required: false
+      schema:
+        type: integer
+      description: >-
+        The `Content-Length` header field indicates the anticipated size of the
+        payload body. Only sent if there is a body.
+
+
+        **Note:** The API supports a maximum size of 5242880 bytes (5
+        Megabytes).
+    Content-Type:
+      schema:
+        type: string
+      required: true
+      description: >-
+        The `Content-Type` header indicates the specific version of the API used
+        to send the payload body.
   schemas:
     AccountIdentification4Choice:
       title: AccountIdentification4Choice
@@ -684,13 +796,182 @@ components:
     ActiveCurrencyCode:
       title: ActiveCurrencyCode
       type: string
-      pattern: ^[A-Z]{3,3}$
       description: >-
         A code allocated to a currency by a Maintenance Agency under an
         international identification scheme as described in the latest edition
         of the international standard ISO 4217 "Codes for the representation of
         currencies and funds".
+
+        NOTE: This has been modified away from the original ISO20022 pattern to
+        enums.
       example: USD
+      minLength: 3
+      maxLength: 3
+      enum:
+        - AED
+        - AFN
+        - ALL
+        - AMD
+        - ANG
+        - AOA
+        - ARS
+        - AUD
+        - AWG
+        - AZN
+        - BAM
+        - BBD
+        - BDT
+        - BGN
+        - BHD
+        - BIF
+        - BMD
+        - BND
+        - BOB
+        - BRL
+        - BSD
+        - BTN
+        - BWP
+        - BYN
+        - BZD
+        - CAD
+        - CDF
+        - CHF
+        - CLP
+        - CNY
+        - COP
+        - CRC
+        - CUC
+        - CUP
+        - CVE
+        - CZK
+        - DJF
+        - DKK
+        - DOP
+        - DZD
+        - EGP
+        - ERN
+        - ETB
+        - EUR
+        - FJD
+        - FKP
+        - GBP
+        - GEL
+        - GGP
+        - GHS
+        - GIP
+        - GMD
+        - GNF
+        - GTQ
+        - GYD
+        - HKD
+        - HNL
+        - HRK
+        - HTG
+        - HUF
+        - IDR
+        - ILS
+        - IMP
+        - INR
+        - IQD
+        - IRR
+        - ISK
+        - JEP
+        - JMD
+        - JOD
+        - JPY
+        - KES
+        - KGS
+        - KHR
+        - KMF
+        - KPW
+        - KRW
+        - KWD
+        - KYD
+        - KZT
+        - LAK
+        - LBP
+        - LKR
+        - LRD
+        - LSL
+        - LYD
+        - MAD
+        - MDL
+        - MGA
+        - MKD
+        - MMK
+        - MNT
+        - MOP
+        - MRO
+        - MUR
+        - MVR
+        - MWK
+        - MXN
+        - MYR
+        - MZN
+        - NAD
+        - NGN
+        - NIO
+        - NOK
+        - NPR
+        - NZD
+        - OMR
+        - PAB
+        - PEN
+        - PGK
+        - PHP
+        - PKR
+        - PLN
+        - PYG
+        - QAR
+        - RON
+        - RSD
+        - RUB
+        - RWF
+        - SAR
+        - SBD
+        - SCR
+        - SDG
+        - SEK
+        - SGD
+        - SHP
+        - SLL
+        - SOS
+        - SPL
+        - SRD
+        - STD
+        - SVC
+        - SYP
+        - SZL
+        - THB
+        - TJS
+        - TMT
+        - TND
+        - TOP
+        - TRY
+        - TTD
+        - TVD
+        - TWD
+        - TZS
+        - UAH
+        - UGX
+        - USD
+        - UYU
+        - UZS
+        - VEF
+        - VND
+        - VUV
+        - WST
+        - XAF
+        - XCD
+        - XDR
+        - XOF
+        - XPF
+        - XTS
+        - XXX
+        - YER
+        - ZAR
+        - ZMW
+        - ZWD
     ActiveOrHistoricCurrencyAndAmount:
       title: ActiveOrHistoricCurrencyAndAmount
       type: object
@@ -732,8 +1013,177 @@ components:
         international identification scheme, as described in the latest edition
         of the international standard ISO 4217 "Codes for the representation of
         currencies and funds".
-      pattern: ^[A-Z]{3,3}$
+
+        NOTE: This has been modified away from the original ISO20022 pattern to
+        enums.
       example: USD
+      minLength: 3
+      maxLength: 3
+      enum:
+        - AED
+        - AFN
+        - ALL
+        - AMD
+        - ANG
+        - AOA
+        - ARS
+        - AUD
+        - AWG
+        - AZN
+        - BAM
+        - BBD
+        - BDT
+        - BGN
+        - BHD
+        - BIF
+        - BMD
+        - BND
+        - BOB
+        - BRL
+        - BSD
+        - BTN
+        - BWP
+        - BYN
+        - BZD
+        - CAD
+        - CDF
+        - CHF
+        - CLP
+        - CNY
+        - COP
+        - CRC
+        - CUC
+        - CUP
+        - CVE
+        - CZK
+        - DJF
+        - DKK
+        - DOP
+        - DZD
+        - EGP
+        - ERN
+        - ETB
+        - EUR
+        - FJD
+        - FKP
+        - GBP
+        - GEL
+        - GGP
+        - GHS
+        - GIP
+        - GMD
+        - GNF
+        - GTQ
+        - GYD
+        - HKD
+        - HNL
+        - HRK
+        - HTG
+        - HUF
+        - IDR
+        - ILS
+        - IMP
+        - INR
+        - IQD
+        - IRR
+        - ISK
+        - JEP
+        - JMD
+        - JOD
+        - JPY
+        - KES
+        - KGS
+        - KHR
+        - KMF
+        - KPW
+        - KRW
+        - KWD
+        - KYD
+        - KZT
+        - LAK
+        - LBP
+        - LKR
+        - LRD
+        - LSL
+        - LYD
+        - MAD
+        - MDL
+        - MGA
+        - MKD
+        - MMK
+        - MNT
+        - MOP
+        - MRO
+        - MUR
+        - MVR
+        - MWK
+        - MXN
+        - MYR
+        - MZN
+        - NAD
+        - NGN
+        - NIO
+        - NOK
+        - NPR
+        - NZD
+        - OMR
+        - PAB
+        - PEN
+        - PGK
+        - PHP
+        - PKR
+        - PLN
+        - PYG
+        - QAR
+        - RON
+        - RSD
+        - RUB
+        - RWF
+        - SAR
+        - SBD
+        - SCR
+        - SDG
+        - SEK
+        - SGD
+        - SHP
+        - SLL
+        - SOS
+        - SPL
+        - SRD
+        - STD
+        - SVC
+        - SYP
+        - SZL
+        - THB
+        - TJS
+        - TMT
+        - TND
+        - TOP
+        - TRY
+        - TTD
+        - TVD
+        - TWD
+        - TZS
+        - UAH
+        - UGX
+        - USD
+        - UYU
+        - UZS
+        - VEF
+        - VND
+        - VUV
+        - WST
+        - XAF
+        - XCD
+        - XDR
+        - XOF
+        - XPF
+        - XTS
+        - XXX
+        - YER
+        - ZAR
+        - ZMW
+        - ZWD
     AddressType2Code:
       description: |
         AddressType2Code
@@ -1828,9 +2278,12 @@ components:
     Exact32HexBinaryText:
       title: Exact32HexBinaryText
       description: |
-        Specifies a hexadecimal string with a length of 32 characters.
+        Specifies a hexadecimal string.
+
+        NOTE: This pattern is not the original ISO20022 specification.
       type: string
-      example: 1234567890ABCDEF1234567890ABCDEF
+      pattern: ^[A-Za-z0-9-_]{43}$
+      maxLength: 48
     Exact4AlphaNumericText:
       title: Exact4AlphaNumericText
       description: |
@@ -2010,21 +2463,31 @@ components:
       example: 1234
     ExternalPaymentTransactionStatus1Code:
       title: ExternalPaymentTransactionStatus1Code
-      description: |
+      description: >
         Specifies the external payment transaction status code.
 
+
         For FSPIOP transfer state enumeration mappings:
+
         {
           "COMM": "COMMITED",
           "RESV": "RESERVED",
           "RECV": "RECEIVED",
-          "ABOR": "ABORTED",
-          "SETT": "SETTLED"
+          "ABOR": "ABORTED"
         }
+
+
+        NOTE: enum enforcement is not apart of the ISO20022 specification, but
+        is added here for FSPIOP mappings.
       type: string
       minLength: 1
       maxLength: 4
-      example: SETT
+      example: COMM
+      enum:
+        - COMM
+        - RESV
+        - RECV
+        - ABOR
     ExternalPersonIdentification1Code:
       title: ExternalPersonIdentification1Code
       description: Specifies the external person identification code.
@@ -3121,7 +3584,7 @@ components:
       properties:
         InstrId:
           allOf:
-            - $ref: "#/components/schemas/Max35Text"
+            - $ref: "#/components/schemas/ULIDIdentifier"
             - description: >
                 InstructionIdentification (FSPIOP equivalent:
                 transactionRequestId)
@@ -3140,9 +3603,13 @@ components:
                 individual instruction. It can be included in
 
                 several messages related to the instruction.
+
+
+                This field has been changed from the original ISO20022
+                `Max35Text`` schema to a ULIDIdentifier schema.
         EndToEndId:
           allOf:
-            - $ref: "#/components/schemas/Max35Text"
+            - $ref: "#/components/schemas/ULIDIdentifier"
             - description: >
                 EndToEndIdentification (FSPIOP equivalent: transactionId)
 
@@ -3166,9 +3633,13 @@ components:
 
                 identification must be passed on throughout the entire
                 end-to-end chain.
+
+
+                This field has been changed from the original ISO20022
+                `Max35Text`` schema to a ULIDIdentifier schema.
         TxId:
           allOf:
-            - $ref: "#/components/schemas/Max35Text"
+            - $ref: "#/components/schemas/ULIDIdentifier"
             - description: >
                 TransactionIdentification (FSPIOP equivalent: quoteId in quote
                 request, transferId in transfer request)
@@ -3189,6 +3660,10 @@ components:
 
                 Usage: The instructing agent has to make sure that the
                 transaction identification is unique for a preagreed period.
+
+
+                This field has been changed from the original ISO20022
+                `Max35Text`` schema to a ULIDIdentifier schema.
         UETR:
           allOf:
             - $ref: "#/components/schemas/UUIDv4Identifier"
@@ -3882,46 +4357,6 @@ components:
         - COVE
         - CLRG
       example: CLRG
-    HealthStatusType:
-      title: HealthStatusType
-      type: string
-      description: Below are the allowed values for the enumeration HealthStatusType
-        - OK - DOWN
-      enum:
-        - OK
-        - DOWN
-    HealthServicesType:
-      title: HealthServicesType
-      type: object
-      properties:
-        name:
-          type: string
-        status:
-          $ref: '#/components/schemas/HealthStatusType'
-      description: Data model for the complex type HealthServicesType. Contains health
-        services information.
-    Status:
-      title: Status
-      type: object
-      properties:
-        status:
-          type: string
-          description: The return status, usually "OK"
-        uptime:
-          type: number
-          description: The amount of time in seconds that the server has been up for.
-        startTime:
-          type: string
-          description: The UTC time that the server started up
-        versionNumber:
-          type: string
-          description: Current version of the API
-        services:
-          type: array
-          description: An list of the statuses of services that the API requires
-          items:
-            $ref: '#/components/schemas/HealthServicesType'
-      description: Data model for the api status.
     StatusReason6Choice:
       title: StatusReason6Choice
       description: |
@@ -4605,6 +5040,11 @@ components:
         - HLF1
         - HLF2
       example: HLF1
+    ULIDIdentifier:
+      title: ULIDIdentifier
+      type: string
+      pattern: ^[0-9A-HJKMNP-TV-Z]{26}$
+      example: 01AN4Z07BY79KA1307SR9X4MV3
     UUIDv4Identifier:
       title: UUIDv4Identifier
       type: string
@@ -4646,120 +5086,13 @@ components:
                 #/components/schemas/BranchAndFinancialInstitutionIdentification8
             - description: |
                 Financial institution servicing an account for the creditor.
+      required:
+        - Dbtr
+        - Cdtr
+        - DbtrAgt
+        - CdtrAgt
     hexBinary:
       title: hexBinary
       type: string
       example: 4660
       pattern: ^[A-Za-z0-9-_]+[=]{0,2}$
-  responses:
-    "200":
-      description: OK
-    "202":
-      description: Accepted
-    "400":
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "401":
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "403":
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "404":
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "405":
-      description: Method Not Allowed
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "406":
-      description: Not Acceptable
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "501":
-      description: Not Implemented
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-    "503":
-      description: Service Unavailable
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorInformationResponse"
-      headers:
-        Content-Length:
-          $ref: "#/components/headers/Content-Length"
-        Content-Type:
-          $ref: "#/components/headers/Content-Type"
-  headers:
-    Content-Length:
-      required: false
-      schema:
-        type: integer
-      description: >-
-        The `Content-Length` header field indicates the anticipated size of the
-        payload body. Only sent if there is a body.
-
-
-        **Note:** The API supports a maximum size of 5242880 bytes (5
-        Megabytes).
-    Content-Type:
-      schema:
-        type: string
-      required: true
-      description: >-
-        The `Content-Type` header indicates the specific version of the API used
-        to send the payload body.
