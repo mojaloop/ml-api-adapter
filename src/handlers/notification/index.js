@@ -579,12 +579,13 @@ const processMessage = async (msg, span) => {
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
+    let payloadForPayee = fspiopObject
     if (Config.IS_ISO_MODE && fromSwitch && action === Action.RESERVED_ABORTED) {
       // In the case of a reserve, we don't want to send the original ISO payload back.
       // We want to send what the central ledger produced as the payload.
-      payload = (await TransformFacades.FSPIOP.transfers.patch({ body: fspiopObject })).body
+      payloadForPayee = (await TransformFacades.FSPIOP.transfers.patch({ body: fspiopObject })).body
     } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_RESERVED_ABORTED) {
-      payload = (await TransformFacades.FSPIOP.fxTransfers.patch({ body: fspiopObject })).body
+      payloadForPayee = (await TransformFacades.FSPIOP.fxTransfers.patch({ body: fspiopObject })).body
     }
     headers = createCallbackHeaders({
       dfspId: destination,
@@ -593,7 +594,7 @@ const processMessage = async (msg, span) => {
       httpMethod: method,
       endpointTemplate
     }, fromSwitch)
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)
 
     const histTimerEndSendRequest = Metrics.getHistogram(
       'notification_event_delivery',
@@ -611,7 +612,7 @@ const processMessage = async (msg, span) => {
         source: Config.HUB_NAME,
         destination,
         method,
-        payload,
+        payload: payloadForPayee,
         responseType,
         span,
         jwsSigner,

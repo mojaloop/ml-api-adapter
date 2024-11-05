@@ -3353,12 +3353,6 @@ Test('Notification Service tests', async notificationTest => {
         httpMethod: ENUM.Http.RestMethods.PATCH,
         endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
       }, true)
-      const expectedMessageStr = JSON.stringify({
-        // hmm I don't think this should include the transferId!
-        transferId: uuid,
-        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
-        transferState: 'ABORTED'
-      })
       const protocolVersions = { content: ConfigStub.PROTOCOL_VERSIONS.CONTENT.DEFAULT, accept: ConfigStub.PROTOCOL_VERSIONS.ACCEPT.DEFAULT }
 
       // Act
@@ -3371,7 +3365,7 @@ Test('Notification Service tests', async notificationTest => {
         source: msg.value.from,
         destination: msg.value.to,
         method: ENUM.Http.RestMethods.PATCH,
-        payload: expectedMessageStr,
+        payload: msg.value.content.payload,
         responseType: ENUM.Http.ResponseTypes.JSON,
         span: undefined,
         jwsSigner: undefined,
@@ -3433,11 +3427,6 @@ Test('Notification Service tests', async notificationTest => {
         httpMethod: ENUM.Http.RestMethods.PATCH,
         endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT
       }, true)
-      const expectedMessageStr = JSON.stringify({
-        commitRequestId: uuid,
-        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
-        transferState: 'ABORTED'
-      })
 
       // Act
       const result = await NotificationProxy.processMessage(msg)
@@ -3449,7 +3438,7 @@ Test('Notification Service tests', async notificationTest => {
         source: msg.value.from,
         destination: msg.value.to,
         method: ENUM.Http.RestMethods.PATCH,
-        payload: expectedMessageStr,
+        payload: msg.value.content.payload,
         responseType: ENUM.Http.ResponseTypes.JSON,
         span: undefined,
         jwsSigner: undefined,
@@ -3730,12 +3719,6 @@ Test('Notification Service tests', async notificationTest => {
         httpMethod: ENUM.Http.RestMethods.PATCH,
         endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT
       }, true)
-      const expectedMessageStr = JSON.stringify({
-        // hmm I don't think this should include the transferId!
-        transferId: uuid,
-        completedTimestamp: '2021-05-24T08:38:08.699-04:00',
-        transferState: 'ABORTED'
-      })
 
       // Act
       try {
@@ -3750,7 +3733,7 @@ Test('Notification Service tests', async notificationTest => {
           source: msg.value.from,
           destination: msg.value.to,
           method: ENUM.Http.RestMethods.PATCH,
-          payload: expectedMessageStr,
+          payload: msg.value.content.payload,
           responseType: ENUM.Http.ResponseTypes.JSON,
           span: undefined,
           jwsSigner: undefined,
