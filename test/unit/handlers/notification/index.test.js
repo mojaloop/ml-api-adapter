@@ -3784,7 +3784,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('process fspiop message for reserve action, remove fulfilment for payee notification in fspiop mode', async test => {
       const ConfigStub = Util.clone(Config)
-      ConfigStub.IS_ISO_MODE = true
+      ConfigStub.IS_ISO_MODE = false
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
       })
@@ -3793,7 +3793,7 @@ Test('Notification Service tests', async notificationTest => {
           'reserve',
           'reserve',
           {
-            transferId: Uuid(),
+            transferState: 'COMMITTED',
             fulfilment: 'fulfilment-token'
           }
         )
@@ -3805,12 +3805,13 @@ Test('Notification Service tests', async notificationTest => {
       const result = await NotificationProxy.processMessage(msg)
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
+      console.log(parsedPayload)
       test.equal(parsedPayload.fulfilment, undefined)
-      test.equal(parsedPayload.transferId, msg.value.content.payload.transferId)
+      test.equal(parsedPayload.transferState, msg.value.content.payload.transferState)
       test.end()
     })
 
-    await processMessageTest.test('process ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
+    await processMessageTest.test('process transform FSPIOP message to ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.IS_ISO_MODE = true
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
@@ -3821,9 +3822,9 @@ Test('Notification Service tests', async notificationTest => {
           'reserve',
           'reserve',
           {
-            TxInfAndSts: {
-              ExctnConf: 'fulfilment-token'
-            }
+            completedTimestamp: new Date().toISOString(),
+            transferState: 'COMMITTED',
+            fulfilment: 'test'
           }
         )
       }
@@ -3833,8 +3834,11 @@ Test('Notification Service tests', async notificationTest => {
       const expected = true
       const result = await NotificationProxy.processMessage(msg)
       test.equal(result, expected)
+      console.log(Callback.sendRequest.args[1][0].payload)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
+      console.log(parsedPayload)
       test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
+      test.equal(parsedPayload.TxInfAndSts.TxSts, 'COMM')
       test.end()
     })
 
