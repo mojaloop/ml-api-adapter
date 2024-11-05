@@ -921,7 +921,6 @@ Test('Notification Handler', notificationHandlerTest => {
             'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
-            // TODO: should we have the transferId here?
             transferId,
             completedTimestamp: '2021-05-24T08:38:08.699-04:00',
             transferState: 'ABORTED'
@@ -932,7 +931,8 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
-      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
+      // Make this different since the original request payload is not what we want sent in notification.
+      messageProtocol.content.context = { originalRequestPayload: { ...messageProtocol.content.payload, transferState: 'RESERVED' } }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -993,7 +993,8 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
-      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
+      // Make this different since the original request payload is not what we want sent in notification.
+      messageProtocol.content.context = { originalRequestPayload: { ...messageProtocol.content.payload, conversionState: 'RESERVED' } }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
