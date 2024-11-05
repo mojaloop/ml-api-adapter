@@ -433,18 +433,21 @@ const processMessage = async (msg, span) => {
     // send an extra notification back to the original sender (if enabled in config) and ignore this for on-us transfers
     // todo: do we need this case for FX_RESERVE ?
     if ((action === Action.RESERVE) || (sendToSource && action !== Action.FX_RESERVE)) {
+      let payloadForPayee = payload
+
       // In the case of a reserve, we don't want to send the original ISO payload back.
       // We want to send what the central ledger produced as the payload.
-      let payloadForPayee = fspiopObject
       if (action === Action.RESERVE) {
+        payloadForPayee = fspiopObject
         if (payloadForPayee.fulfilment) {
           delete payloadForPayee.fulfilment
           if (Config.IS_ISO_MODE) {
             payloadForPayee = (await TransformFacades.FSPIOP.transfers.patch({ body: payloadForPayee })).body
           }
         }
+        payloadForPayee = JSON.stringify(payloadForPayee)
       }
-      payloadForPayee = JSON.stringify(payloadForPayee)
+
       const method = action === Action.RESERVE ? PATCH : PUT
       const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT)
       logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${method}, ${JSON.stringify(headers)}, ${payloadForPayee}, ${id}, ${Config.HUB_NAME}, ${source} ${hubNameRegex} })`)

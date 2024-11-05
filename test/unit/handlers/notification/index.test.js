@@ -494,8 +494,8 @@ Test('Notification Service tests', async notificationTest => {
       const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
       try {
-        Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
-        Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType, span: undefined, jwsSigner: undefined, hubNameRegex })).returns(Promise.reject(new Error()))
+        Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
+        Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType, span: undefined, jwsSigner: undefined, hubNameRegex })).returns(Promise.reject(new Error()))
         await Notification.processMessage(msg)
         test.fail('should throw')
         test.end()
