@@ -281,15 +281,6 @@ jobs:
           name: Checking if deprecated dependencies exist 
           command: node .circleci/deprecated-check.js
 
-  test-deprecated:
-    executor: default-docker
-    environment:
-      <<: *defaults_environment
-    steps:
-      - run:
-          name: Checking if deprecated dependencies exist 
-          command: node .circleci/deprecated-check.js
-
   test-coverage:
     executor: default-docker
     environment:
