@@ -3805,7 +3805,6 @@ Test('Notification Service tests', async notificationTest => {
       const result = await NotificationProxy.processMessage(msg)
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
-      console.log(parsedPayload)
       test.equal(parsedPayload.fulfilment, undefined)
       test.equal(parsedPayload.transferState, msg.value.content.payload.transferState)
       test.end()
@@ -3834,9 +3833,7 @@ Test('Notification Service tests', async notificationTest => {
       const expected = true
       const result = await NotificationProxy.processMessage(msg)
       test.equal(result, expected)
-      console.log(Callback.sendRequest.args[1][0].payload)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
-      console.log(parsedPayload)
       test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
       test.equal(parsedPayload.TxInfAndSts.TxSts, 'COMM')
       test.end()
