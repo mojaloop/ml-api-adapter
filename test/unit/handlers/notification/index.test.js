@@ -494,8 +494,8 @@ Test('Notification Service tests', async notificationTest => {
       const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }, true)
       const message = { transferId: uuid }
       try {
-        Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
-        Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType, span: undefined, jwsSigner: undefined, hubNameRegex })).returns(Promise.reject(new Error()))
+        Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
+        Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType, span: undefined, jwsSigner: undefined, hubNameRegex })).returns(Promise.reject(new Error()))
         await Notification.processMessage(msg)
         test.fail('should throw')
         test.end()
@@ -3784,7 +3784,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('process fspiop message for reserve action, remove fulfilment for payee notification in fspiop mode', async test => {
       const ConfigStub = Util.clone(Config)
-      ConfigStub.IS_ISO_MODE = true
+      ConfigStub.IS_ISO_MODE = false
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
         '../../lib/config': ConfigStub
       })
@@ -3793,7 +3793,7 @@ Test('Notification Service tests', async notificationTest => {
           'reserve',
           'reserve',
           {
-            transferId: Uuid(),
+            transferState: 'COMMITTED',
             fulfilment: 'fulfilment-token'
           }
         )
@@ -3806,11 +3806,11 @@ Test('Notification Service tests', async notificationTest => {
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
       test.equal(parsedPayload.fulfilment, undefined)
-      test.equal(parsedPayload.transferId, msg.value.content.payload.transferId)
+      test.equal(parsedPayload.transferState, msg.value.content.payload.transferState)
       test.end()
     })
 
-    await processMessageTest.test('process ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
+    await processMessageTest.test('process transform FSPIOP message to ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.IS_ISO_MODE = true
       const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
@@ -3821,9 +3821,9 @@ Test('Notification Service tests', async notificationTest => {
           'reserve',
           'reserve',
           {
-            TxInfAndSts: {
-              ExctnConf: 'fulfilment-token'
-            }
+            completedTimestamp: new Date().toISOString(),
+            transferState: 'COMMITTED',
+            fulfilment: 'test'
           }
         )
       }
@@ -3835,6 +3835,7 @@ Test('Notification Service tests', async notificationTest => {
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
       test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
+      test.equal(parsedPayload.TxInfAndSts.TxSts, 'COMM')
       test.end()
     })
 

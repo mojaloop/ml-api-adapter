@@ -42,6 +42,7 @@ const Fixtures = require('../../../fixtures')
 const { API_TYPES } = require('../../../../src/shared/constants')
 const { createPayloadCache } = require('../../../../src/lib/payloadCache')
 const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 const { Action } = Enum.Events.Event
 const EventTypes = Enum.Events.Event.Type
@@ -651,8 +652,8 @@ Test('Notification Handler', notificationHandlerTest => {
         Action.RESERVE,
         {
           transferId,
-          payerFsp: 'dfsp1',
-          payeeFsp: 'dfsp2'
+          fulfilment: 'VFhBCqP17O5VolemGmeVeVn_ZByepYwtqBDe2F675kA',
+          transferState: 'RESERVED'
         },
         'dfsp1',
         'dfsp2'
@@ -663,9 +664,16 @@ Test('Notification Handler', notificationHandlerTest => {
       )
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true, 'patch')
-
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (apiType === API_TYPES.iso20022) {
+        const isoPayerPayload = (await TransformFacades.FSPIOP.transfers.put({ body: messageProtocol.content.payload })).body
+        const isoPayeePayload = (await TransformFacades.FSPIOP.transfers.patch({ body: messageProtocol.content.payload })).body
+        test.deepEqual(responseFrom.payload.TxInfAndSts, isoPayeePayload.TxInfAndSts, 'Notification sent successfully to Payee')
+        test.deepEqual(responseTo.payload.TxInfAndSts, isoPayerPayload.TxInfAndSts, 'Notification sent successfully to Payer')
+      } else {
+        const { fulfilment: _, ...payeePayload } = messageProtocol.content.payload
+        test.deepEqual(responseFrom.payload, payeePayload, 'Notification sent successfully to Payee')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
