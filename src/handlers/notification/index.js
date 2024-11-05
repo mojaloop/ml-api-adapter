@@ -580,9 +580,11 @@ const processMessage = async (msg, span) => {
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
     if (Config.IS_ISO_MODE && fromSwitch && action === Action.RESERVED_ABORTED) {
-      payload = (await TransformFacades.FSPIOP.transfers.patch({ body: JSON.parse(payload) })).body
+      // In the case of a reserve, we don't want to send the original ISO payload back.
+      // We want to send what the central ledger produced as the payload.
+      payload = (await TransformFacades.FSPIOP.transfers.patch({ body: fspiopObject })).body
     } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_RESERVED_ABORTED) {
-      payload = (await TransformFacades.FSPIOP.fxTransfers.patch({ body: JSON.parse(payload) })).body
+      payload = (await TransformFacades.FSPIOP.fxTransfers.patch({ body: fspiopObject })).body
     }
     headers = createCallbackHeaders({
       dfspId: destination,
