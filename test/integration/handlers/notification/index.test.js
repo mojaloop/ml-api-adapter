@@ -670,7 +670,9 @@ Test('Notification Handler', notificationHandlerTest => {
         test.deepEqual(responseFrom.payload.TxInfAndSts, isoPayeePayload.TxInfAndSts, 'Notification sent successfully to Payee')
         test.deepEqual(responseTo.payload.TxInfAndSts, isoPayerPayload.TxInfAndSts, 'Notification sent successfully to Payer')
       } else {
-        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+        const payeePayload = { ...messageProtocol.content.payload }
+        delete payeePayload.fulfilment
+        test.deepEqual(responseFrom.payload, payeePayload, 'Notification sent successfully to Payee')
         test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       }
       test.end()
