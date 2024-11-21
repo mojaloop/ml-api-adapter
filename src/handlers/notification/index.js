@@ -56,6 +56,7 @@ let notificationConsumer = {}
 let autoCommitEnabled = true
 let PayloadCache
 
+const sdkLogger = new SdkLogger()
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 const API_TYPE = Config.API_TYPE
 
@@ -800,7 +801,6 @@ const getJWSSigner = (from) => {
   let jwsSigner
   if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
     logger.debug('Notification::getJWSSigner: get JWS signer')
-    const sdkLogger = new SdkLogger()
     jwsSigner = new JwsSigner({
       logger: sdkLogger,
       signingKey: Config.JWS_SIGNING_KEY
