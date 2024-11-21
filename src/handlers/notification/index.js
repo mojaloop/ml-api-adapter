@@ -31,6 +31,7 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
+const SdkLogger = require('@mojaloop/sdk-standard-components').Logger.Logger
 const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const { Util, Enum } = require('@mojaloop/central-services-shared')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
@@ -799,8 +800,9 @@ const getJWSSigner = (from) => {
   let jwsSigner
   if (Config.JWS_SIGN && from === Config.FSPIOP_SOURCE_TO_SIGN) {
     logger.debug('Notification::getJWSSigner: get JWS signer')
+    const sdkLogger = new SdkLogger()
     jwsSigner = new JwsSigner({
-      logger: Logger,
+      logger: sdkLogger,
       signingKey: Config.JWS_SIGNING_KEY
     })
   }
