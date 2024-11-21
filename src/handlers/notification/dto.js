@@ -54,7 +54,7 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
-  let payloadForCallback
+  let payloadForCallback = finalPayload
 
   if (fspiopObject.errorInformation) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
@@ -62,8 +62,6 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
     if (isIso && !isProxied) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
     }
-  } else {
-    payloadForCallback = finalPayload
   }
 
   payloadForCallback = typeof payloadForCallback === 'string' ? payloadForCallback : safeStringify(payloadForCallback)
