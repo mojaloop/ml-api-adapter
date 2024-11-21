@@ -49,17 +49,20 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 }
 
 const getCallbackPayload = async (content, payloadCache = undefined) => {
+  const isProxied = !!content.headers['fspiop-proxy']
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
   let payloadForCallback
 
   if (fspiopObject.errorInformation) {
+    const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
+    const finalErrorPayload = isProxied && finalPayload ? finalPayload : safeStringify(fspiopError)
+
     if (API_TYPE === API_TYPES.iso20022) {
-      const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-      payloadForCallback = safeStringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
+      payloadForCallback = isProxied ? finalErrorPayload : safeStringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
     } else {
-      payloadForCallback = safeStringify(ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING))
+      payloadForCallback = finalErrorPayload
     }
   } else {
     payloadForCallback = typeof finalPayload === 'string' ? finalPayload : safeStringify(finalPayload)

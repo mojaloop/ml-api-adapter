@@ -28,6 +28,7 @@ const Proxyquire = require('proxyquire')
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Util = require('@mojaloop/central-services-shared').Util
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { notificationMessageDto } = require('../../../../src/handlers/notification/dto')
 const Fixtures = require('../../../fixtures')
 const { API_TYPES } = require('../../../../src/shared/constants')
@@ -148,6 +149,40 @@ Test('notificationMessageDto', async notificationMessageDtoTest => {
 
     // Assert
     test.equal(isoError.TxInfAndSts.StsRsnInf.Rsn.Cd, '3100')
+    test.end()
+  })
+
+  notificationMessageDtoTest.test('return original error payload if request is proxied', async test => {
+    const ConfigStub = Util.clone(Config)
+    ConfigStub.API_TYPE = API_TYPES.iso20022
+    const notificationMessageDtoProxy = Proxyquire('../../../../src/handlers/notification/dto', {
+      '../../lib/config': ConfigStub
+    }).notificationMessageDto
+
+    const putErrorSpy = sandbox.spy(TransformFacades.FSPIOP.transfers, 'putError')
+
+    // Arrange
+    const message = {
+      value: Fixtures.createMessageProtocol(
+        'prepare',
+        'prepare',
+        {
+          errorInformation: {
+            errorCode: '5001',
+            errorDescription: 'Custom internal server error'
+          }
+        }
+      )
+    }
+
+    message.value.content.headers['fspiop-proxy'] = 'proxy'
+
+    // Act
+    const result = await notificationMessageDtoProxy(message)
+
+    // Assert
+    test.deepEqual(JSON.parse(result.payloadForCallback), message.value.content.payload)
+    test.ok(putErrorSpy.notCalled)
     test.end()
   })
 
