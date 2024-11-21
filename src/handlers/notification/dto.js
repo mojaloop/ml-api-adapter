@@ -58,13 +58,15 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
 
   if (fspiopObject.errorInformation) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-    payloadForCallback = isProxied && finalPayload ? finalPayload : safeStringify(fspiopError)
+    payloadForCallback = isProxied && finalPayload ? finalPayload : fspiopError
     if (isIso && !isProxied) {
-      payloadForCallback = safeStringify((await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body)
+      payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
     }
   } else {
-    payloadForCallback = typeof finalPayload === 'string' ? finalPayload : safeStringify(finalPayload)
+    payloadForCallback = finalPayload
   }
+
+  payloadForCallback = typeof payloadForCallback === 'string' ? payloadForCallback : safeStringify(payloadForCallback)
 
   return { fspiopObject, payloadForCallback }
 }
