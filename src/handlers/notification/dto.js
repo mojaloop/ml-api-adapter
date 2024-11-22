@@ -61,9 +61,10 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
 
   if (fspiopObject.errorInformation) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-    // If we're in ISO mode and the original payload is not an ISO error, then this is a hub-generated error (in current hub) as opposed to DFSP sent error.
+    // If we're in ISO mode and the original payload is not an ISO error, then this is a hub-generated error (in current hub).
     // If so, we need to generate an ISO error to forward.
-    // For DFSP sent errors, we can just forward the error object as is in originalPayload or content.payload (i.e finalPayload).
+    // If we're in ISO mode and the original payload is an ISO error, then this is either a DFSP sent error or error from another hub from another scheme.
+    // In that case, we can just forward the error object as is in originalPayload or content.payload (i.e finalPayload).
     if (isIso && !payloadIsIsoTransferError(originalPayload)) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
     } else if (!isIso) {
