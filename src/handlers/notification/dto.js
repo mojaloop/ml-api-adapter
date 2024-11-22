@@ -62,7 +62,7 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
     // If so, we need to generate an ISO error to forward.
     if (isIsoMode && fromSwitch) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
-    } else if (!isIsoMode) {
+    } else if (!isIsoMode && fromSwitch) {
       payloadForCallback = fspiopError
     }
   }

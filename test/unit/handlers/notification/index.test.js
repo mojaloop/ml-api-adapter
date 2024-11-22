@@ -127,7 +127,9 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'fspiop-source': Config.HUB_NAME
+            },
             payload: {
               errorInformation: {
                 errorCode: '3100',
@@ -176,7 +178,7 @@ Test('Notification Service tests', async notificationTest => {
       test.equal(result, expected)
       test.end()
     })
-
+    // @note - this scenario might not happen.
     await processMessageTest.test('process a prepare message received from kafka and send out an fx transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
       const msg = {
         value: {
@@ -191,7 +193,9 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'fspiop-source': Config.HUB_NAME
+            },
             payload: {
               errorInformation: {
                 errorCode: '3100',
@@ -524,7 +528,7 @@ Test('Notification Service tests', async notificationTest => {
               date: '2021-11-08T09:35:59.000Z',
               'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
               'fspiop-http-method': 'PUT',
-              'fspiop-source': 'payeefsp',
+              'fspiop-source': Config.HUB_NAME,
               'fspiop-destination': 'payerfsp',
               'fspiop-signature': '{{fspiopSignature}}',
               authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
@@ -656,7 +660,7 @@ Test('Notification Service tests', async notificationTest => {
               date: '2021-11-08T09:35:59.000Z',
               'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
               'fspiop-http-method': 'PUT',
-              'fspiop-source': 'fxp1',
+              'fspiop-source': Config.HUB_NAME,
               'fspiop-destination': 'dfsp1',
               'fspiop-signature': '{{fspiopSignature}}',
               authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
@@ -778,7 +782,7 @@ Test('Notification Service tests', async notificationTest => {
               date: '2021-11-08T09:35:59.000Z',
               'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
               'fspiop-http-method': 'PUT',
-              'fspiop-source': 'payeefsp',
+              'fspiop-source': Config.HUB_NAME,
               'fspiop-destination': 'payerfsp',
               'fspiop-signature': '{{fspiopSignature}}',
               authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
