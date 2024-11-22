@@ -127,7 +127,9 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'fspiop-source': Config.HUB_NAME
+            },
             payload: {
               errorInformation: {
                 errorCode: '3100',
@@ -176,7 +178,7 @@ Test('Notification Service tests', async notificationTest => {
       test.equal(result, expected)
       test.end()
     })
-
+    // @note - this scenario might not happen.
     await processMessageTest.test('process a prepare message received from kafka and send out an fx transfer post callback payload with an error, but without cause entry from extensionList extension', async test => {
       const msg = {
         value: {
@@ -191,7 +193,9 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           content: {
-            headers: {},
+            headers: {
+              'fspiop-source': Config.HUB_NAME
+            },
             payload: {
               errorInformation: {
                 errorCode: '3100',
@@ -472,8 +476,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -524,7 +528,7 @@ Test('Notification Service tests', async notificationTest => {
               date: '2021-11-08T09:35:59.000Z',
               'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
               'fspiop-http-method': 'PUT',
-              'fspiop-source': 'payeefsp',
+              'fspiop-source': Config.HUB_NAME,
               'fspiop-destination': 'payerfsp',
               'fspiop-signature': '{{fspiopSignature}}',
               authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
@@ -656,7 +660,7 @@ Test('Notification Service tests', async notificationTest => {
               date: '2021-11-08T09:35:59.000Z',
               'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
               'fspiop-http-method': 'PUT',
-              'fspiop-source': 'fxp1',
+              'fspiop-source': Config.HUB_NAME,
               'fspiop-destination': 'dfsp1',
               'fspiop-signature': '{{fspiopSignature}}',
               authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
@@ -778,7 +782,7 @@ Test('Notification Service tests', async notificationTest => {
               date: '2021-11-08T09:35:59.000Z',
               'fspiop-uri': '/transfers/6b74834e-688b-419f-aa59-145ccb962b24',
               'fspiop-http-method': 'PUT',
-              'fspiop-source': 'payeefsp',
+              'fspiop-source': Config.HUB_NAME,
               'fspiop-destination': 'payerfsp',
               'fspiop-signature': '{{fspiopSignature}}',
               authorization: 'Bearer {{NORESPONSE_SIMPAYEE_BEARER_TOKEN}}',
@@ -903,8 +907,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1133,8 +1137,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1190,8 +1194,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': fxp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': fxp
             },
             payload: { commitRequestId: uuid },
             context: {
@@ -1246,8 +1250,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': fxp,
-              'FSPIOP-Source': Config.HUB_NAME
+              'fspiop-destination': fxp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: { commitRequestId: uuid },
             context: {
@@ -1297,8 +1301,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1348,8 +1352,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1399,8 +1403,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1449,8 +1453,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1504,8 +1508,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1576,8 +1580,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1707,8 +1711,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1759,8 +1763,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': fxp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': fxp
             },
             payload: { commitRequestId: uuid },
             context: {
@@ -1816,8 +1820,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -1873,8 +1877,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': fxp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': fxp,
+              'fspiop-source': payerFsp
             },
             payload: { commitRequestId: uuid },
             context: {
@@ -2032,8 +2036,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': payeeFsp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': payeeFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -2081,8 +2085,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': fxp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': fxp
             },
             payload: {
               errorInformation: {
@@ -2139,8 +2143,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -2188,8 +2192,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': fxp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': fxp,
+              'fspiop-source': payerFsp
             },
             payload: { commitRequestId: uuid },
             context: {
@@ -2240,8 +2244,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': payeeFsp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': payeeFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -2289,8 +2293,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': fxp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': fxp
             },
             payload: {
               errorInformation: {
@@ -2681,8 +2685,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -2733,8 +2737,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': fxp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': fxp,
+              'fspiop-source': payerFsp
             },
             payload: { commitRequestId: uuid },
             context: {
@@ -2801,8 +2805,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -2932,8 +2936,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -3003,8 +3007,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -3074,8 +3078,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -3146,8 +3150,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': payeeFsp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': payeeFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -3214,8 +3218,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payerFsp,
-              'FSPIOP-Source': payeeFsp
+              'fspiop-destination': payerFsp,
+              'fspiop-source': payeeFsp
             },
             payload: { transferId: uuid },
             context: {
@@ -3270,8 +3274,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': 'dfsp1',
-              'FSPIOP-Source': Config.HUB_NAME
+              'fspiop-destination': 'dfsp1',
+              'fspiop-source': Config.HUB_NAME
             },
             // TODO: double check - is this a valid payload?
             payload: {
@@ -3326,8 +3330,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': 'dfsp1',
-              'FSPIOP-Source': Config.HUB_NAME
+              'fspiop-destination': 'dfsp1',
+              'fspiop-source': Config.HUB_NAME
             },
             // TODO: double check - is this a valid payload?
             payload: {
@@ -3401,8 +3405,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': 'dfsp1',
-              'FSPIOP-Source': Config.HUB_NAME
+              'fspiop-destination': 'dfsp1',
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               commitRequestId: uuid,
@@ -3466,8 +3470,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: { transferId: uuid },
             uriParams: { id: uuid },
@@ -3518,8 +3522,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': fxp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': fxp,
+              'fspiop-source': payerFsp
             },
             payload: { commitRequestId: uuid },
             uriParams: { id: uuid },
@@ -3570,8 +3574,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
             },
             payload: {
               errorInformation: {
@@ -3627,8 +3631,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': fxp,
-              'FSPIOP-Source': payerFsp
+              'fspiop-destination': fxp,
+              'fspiop-source': payerFsp
             },
             payload: {
               errorInformation: {
@@ -3692,8 +3696,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': 'dfsp1',
-              'FSPIOP-Source': Config.HUB_NAME
+              'fspiop-destination': 'dfsp1',
+              'fspiop-source': Config.HUB_NAME
             },
             // TODO: double check - is this a valid payload?
             payload: {

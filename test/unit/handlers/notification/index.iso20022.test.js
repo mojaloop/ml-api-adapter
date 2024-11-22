@@ -125,8 +125,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': 'Hub'
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               transferState: 'COMMITTED',
@@ -176,8 +176,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': 'Hub'
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               conversionState: 'COMMITTED',
@@ -228,8 +228,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': 'Hub'
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               errorInformation: {
@@ -280,8 +280,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': 'Hub'
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               errorInformation: {
@@ -332,8 +332,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': 'Hub'
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               errorInformation: {
@@ -384,8 +384,8 @@ Test('Notification Service tests', async notificationTest => {
           },
           content: {
             headers: {
-              'FSPIOP-Destination': payeeFsp,
-              'FSPIOP-Source': 'Hub'
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': Config.HUB_NAME
             },
             payload: {
               errorInformation: {

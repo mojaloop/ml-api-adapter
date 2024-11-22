@@ -49,8 +49,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'POST',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee'
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee'
         }
       }
       Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers')
@@ -71,8 +71,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee'
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee'
         }
       }
       Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error')
@@ -93,8 +93,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee',
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee',
           'FSPIOP-Signature': 'DELETEME'
         }
       }
@@ -116,8 +116,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee',
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee',
           'FSPIOP-Signature': 'DELETEME'
         }
       }
@@ -125,8 +125,8 @@ Test('Headers tests', headersTest => {
       const expected = {
         'fspiop-http-method': 'PUT',
         'fspiop-uri': '/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error',
-        'FSPIOP-Source': 'payer',
-        'FSPIOP-Destination': 'payee',
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee',
         'FSPIOP-Signature': 'DELETEME'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)
@@ -151,8 +151,8 @@ Test('Headers tests', headersTest => {
 
     getHeaderCaseInsensitiveKeyTest.test('return null if searchKey is null', test => {
       const headers = {
-        'FSPIOP-Source': 'payer',
-        'FSPIOP-Destination': 'payee'
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee'
       }
       const key = null
 
@@ -178,8 +178,8 @@ Test('Headers tests', headersTest => {
 
     getHeaderCaseInsensitiveValueTest.test('return null if searchKey is null', test => {
       const headers = {
-        'FSPIOP-Source': 'payer',
-        'FSPIOP-Destination': 'payee'
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee'
       }
       const key = null
 
