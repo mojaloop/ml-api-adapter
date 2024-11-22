@@ -49,7 +49,6 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 }
 
 const getCallbackPayload = async (content, payloadCache = undefined) => {
-  const isProxied = !!content.headers['fspiop-proxy']
   const isIso = API_TYPE === API_TYPES.iso20022
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
@@ -58,8 +57,8 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
 
   if (fspiopObject.errorInformation) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-    payloadForCallback = isProxied && finalPayload ? finalPayload : fspiopError
-    if (isIso && !isProxied) {
+    payloadForCallback = fspiopError
+    if (isIso) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
     }
   }
