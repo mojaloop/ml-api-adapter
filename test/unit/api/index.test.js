@@ -24,6 +24,7 @@
 
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
+const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../../../src/lib/config')
 const Routes = require('../../../src/api/routes')
@@ -59,7 +60,7 @@ Test('Api index', indexTest => {
       test.ok(Setup.initialize.calledWith({
         service: 'api',
         port: Config.PORT,
-        modules: [Routes],
+        modules: [Routes, MetricsPlugin],
         runHandlers: true
       }))
       test.end()

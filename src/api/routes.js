@@ -129,15 +129,6 @@ const APIRoutes = (api) => [
       tags: ['api', 'fxTransfers'],
       description: 'PUT FX Transfer Error by ID'
     }
-  },
-  {
-    method: 'GET',
-    path: '/metrics',
-    handler: (req, h) => handleRequest(api, req, h),
-    config: {
-      tags: ['api', 'metrics'],
-      description: 'GET Metrics'
-    }
   }
 ]
 

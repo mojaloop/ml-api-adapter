@@ -5,7 +5,7 @@ const Sinon = require('sinon')
 const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
 const HealthPlugin = require('../../../src/handlers/api/plugin')
-const MetricsPlugin = require('../../../src/api/metrics/plugin')
+const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 
 Test('cli', async (cliTest) => {
   cliTest.beforeEach(test => {
