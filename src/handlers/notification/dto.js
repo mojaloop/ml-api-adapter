@@ -3,7 +3,7 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { logger } = require('../../shared/logger')
-const { ERROR_HANDLING, API_TYPE } = require('../../lib/config')
+const { ERROR_HANDLING, API_TYPE, HUB_NAME } = require('../../lib/config')
 const { API_TYPES } = require('../../shared/constants')
 
 const { Action } = Enum.Events.Event
@@ -48,12 +48,9 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
   return originalPayload
 }
 
-const payloadIsIsoTransferError = (payload) => {
-  return !!(payload.TxInfAndSts?.StsRsnInf?.Rsn?.Cd)
-}
-
 const getCallbackPayload = async (content, payloadCache = undefined) => {
-  const isIso = API_TYPE === API_TYPES.iso20022
+  const isIsoMode = API_TYPE === API_TYPES.iso20022
+  const fromSwitch = content.headers['fspiop-source'] === HUB_NAME
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
@@ -61,13 +58,11 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
 
   if (fspiopObject.errorInformation) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-    // If we're in ISO mode and the original payload is not an ISO error, then this is a hub-generated error (in current hub).
+    // If we're in ISO mode and source is switch, then this is a hub-generated error (in current hub).
     // If so, we need to generate an ISO error to forward.
-    // If we're in ISO mode and the original payload is an ISO error, then this is either a DFSP sent error or error from another hub from another scheme.
-    // In that case, we can just forward the error object as is in originalPayload or content.payload (i.e finalPayload).
-    if (isIso && !payloadIsIsoTransferError(originalPayload)) {
+    if (isIsoMode && fromSwitch) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
-    } else if (!isIso) {
+    } else if (!isIsoMode) {
       payloadForCallback = fspiopError
     }
   }

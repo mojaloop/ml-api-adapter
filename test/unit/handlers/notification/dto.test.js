@@ -122,7 +122,7 @@ Test('notificationMessageDto', async notificationMessageDtoTest => {
     test.end()
   })
 
-  notificationMessageDtoTest.test('create and transform error payload in ISO20022', async test => {
+  notificationMessageDtoTest.test('create and transform error payload in ISO20022 for hub-generated errors', async test => {
     const ConfigStub = Util.clone(Config)
     ConfigStub.API_TYPE = API_TYPES.iso20022
     const notificationMessageDtoProxy = Proxyquire('../../../../src/handlers/notification/dto', {
@@ -140,6 +140,7 @@ Test('notificationMessageDto', async notificationMessageDtoTest => {
         }
       )
     }
+    message.value.content.headers['fspiop-source'] = Config.HUB_NAME
     Proxyquire.callThru()
     // Act
     const result = await notificationMessageDtoProxy(message, undefined)

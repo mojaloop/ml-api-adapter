@@ -917,8 +917,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': Config.HUB_NAME
+            'fspiop-destination': 'dfsp1',
+            'fspiop-source': Config.HUB_NAME
           },
           payload: {
             transferId,
@@ -979,8 +979,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': Config.HUB_NAME
+            'fspiop-destination': 'dfsp1',
+            'fspiop-source': Config.HUB_NAME
           },
           payload: {
             commitRequestId,
