@@ -1609,7 +1609,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'HUB',
+        Config.HUB_NAME,
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
@@ -1637,7 +1637,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'HUB',
+        Config.HUB_NAME,
         'nonExistentFxp'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
