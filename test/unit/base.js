@@ -32,7 +32,7 @@ const Util = require('../../src/lib/util')
 const setupServer = async () => {
   const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: false })
   const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
-  const server = await ServerSetup.createServer(await getPort(), api, Routes.APIRoutes(api))
+  const server = await ServerSetup.createServer(await getPort(), api, Routes.APIRoutes(api), [])
   return server
 }
 

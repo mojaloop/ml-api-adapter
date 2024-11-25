@@ -61,7 +61,7 @@ const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
  * @returns {Promise<Server>} Returns the Server object
  */
 
-const createServer = async (port, api, routes) => {
+const createServer = async (port, api, routes, modules) => {
   /* istanbul ignore next */
   const server = await new Hapi.Server({
     port,
@@ -83,8 +83,8 @@ const createServer = async (port, api, routes) => {
     Util.setProp(server, 'app.payloadCache', initializePayloadCache())
   }
 
+  await server.register(modules)
   await Plugins.registerPlugins(server, api)
-
   server.route(routes)
   await server.start()
   Logger.isDebugEnabled && Logger.debug(`Server running at: ${server.info.uri}`)
@@ -177,7 +177,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     case Enums.Http.ServiceType.API: {
       const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: false })
       const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
-      server = await createServer(port, api, Routes.APIRoutes(api))
+      server = await createServer(port, api, Routes.APIRoutes(api), modules)
       await initializeProducers()
       break
     }
@@ -185,7 +185,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       if (!Config.HANDLERS_API_DISABLED) {
         const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: true })
         const api = await OpenapiBackend.initialise(OpenAPISpecPath, HandlerModeHandlers.KafkaModeHandlerApiHandlers)
-        server = await createServer(port, api, HandlerModeRoutes.APIRoutes(api))
+        server = await createServer(port, api, HandlerModeRoutes.APIRoutes(api), modules)
       }
       break
     }
