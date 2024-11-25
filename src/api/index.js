@@ -23,7 +23,6 @@
 'use strict'
 
 const Config = require('../lib/config')
-const Routes = require('./routes')
 const Setup = require('../shared/setup')
 const Enums = require('@mojaloop/central-services-shared').Enum
 const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
@@ -44,6 +43,6 @@ const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 module.exports = Setup.initialize({
   service: Enums.Http.ServiceType.API,
   port: Config.PORT,
-  modules: [Routes, MetricsPlugin],
+  modules: [MetricsPlugin],
   runHandlers: !Config.HANDLERS_DISABLED
 })

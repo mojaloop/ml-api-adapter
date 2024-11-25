@@ -27,7 +27,6 @@ const Sinon = require('sinon')
 const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../../../src/lib/config')
-const Routes = require('../../../src/api/routes')
 const Setup = require('../../../src/shared/setup')
 
 Test('Api index', indexTest => {
@@ -60,7 +59,7 @@ Test('Api index', indexTest => {
       test.ok(Setup.initialize.calledWith({
         service: 'api',
         port: Config.PORT,
-        modules: [Routes, MetricsPlugin],
+        modules: [MetricsPlugin],
         runHandlers: true
       }))
       test.end()

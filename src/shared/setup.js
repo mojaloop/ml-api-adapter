@@ -83,8 +83,8 @@ const createServer = async (port, api, routes, modules) => {
     Util.setProp(server, 'app.payloadCache', initializePayloadCache())
   }
 
-  await server.register(modules)
   await Plugins.registerPlugins(server, api)
+  await server.register(modules)
   server.route(routes)
   await server.start()
   Logger.isDebugEnabled && Logger.debug(`Server running at: ${server.info.uri}`)
