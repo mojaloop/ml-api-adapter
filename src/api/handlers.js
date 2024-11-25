@@ -1,5 +1,4 @@
 const { getHealth, metadata } = require('./metadata/handler')
-const { metrics } = require('./metrics/handler')
 const { deleteEndpointCache } = require('./endpointcache/handler')
 const TransferHandler = require('./transfers/handler')
 const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
@@ -7,7 +6,6 @@ const OpenapiBackend = require('@mojaloop/central-services-shared').Util.Openapi
 module.exports.ApiHandlers = {
   HealthGet: getHealth,
   MetadataGet: metadata,
-  MetricsGet: metrics,
   EndpointCacheDelete: deleteEndpointCache,
   transfers: TransferHandler.create,
   TransfersByIDGet: TransferHandler.getTransferById,
