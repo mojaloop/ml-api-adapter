@@ -4,6 +4,7 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
+const HealthPlugin = require('../../../src/handlers/api/plugin')
 const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 
 Test('cli', async (cliTest) => {
@@ -72,7 +73,7 @@ Test('cli', async (cliTest) => {
       const initOptions = {
         service: 'handler',
         port: Config.PORT,
-        modules: [MetricsPlugin],
+        modules: [HealthPlugin, MetricsPlugin],
         handlers: modulesList,
         runHandlers: true
       }
@@ -100,7 +101,7 @@ Test('cli', async (cliTest) => {
       const initOptions = {
         service: 'handler',
         port: Config.PORT,
-        modules: [MetricsPlugin],
+        modules: [HealthPlugin, MetricsPlugin],
         handlers: modulesList,
         runHandlers: true
       }
