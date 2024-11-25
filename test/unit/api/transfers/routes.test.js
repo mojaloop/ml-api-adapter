@@ -335,7 +335,7 @@ Test('return error if invalid errorCode is provided to PUT /transfers/{id}/error
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -358,7 +358,7 @@ Test('return error if errorCode is not provided to PUT /transfers/{id}/error', a
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -381,7 +381,7 @@ Test('return error if errorDescription is not provided to PUT /transfers/{id}/er
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.transfers+json;version=1.1' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -446,7 +446,7 @@ Test('return error if errorDescription is not provided to PUT /fxTransfers/{id}'
         }]
       }
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -580,7 +580,7 @@ Test('return error if invalid errorCode is provided to PUT /fxTransfers/{id}/err
       errorCode: 'invalid_code',
       errorDescription: 'This is a more detailed error description'
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -596,7 +596,7 @@ Test('return error if errorCode is not provided to PUT /fxTransfers/{id}/error',
     payload: {
       errorDescription: 'This is a more detailed error description'
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -612,7 +612,7 @@ Test('return error if errorDescription is not provided to PUT /fxTransfers/{id}/
     payload: {
       errorCode: '5001'
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)
@@ -646,7 +646,7 @@ Test('return error if transferId is not a uuid on PUT /fxTransfers/{id}/error', 
       errorCode: '5001',
       errorDescription: 'This is a more detailed error description'
     },
-    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'FSPIOP-Source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
+    headers: { date: 'Fri, 14 Sep 2018 19:10:56 GMT', 'fspiop-source': 'me', 'content-type': 'application/vnd.interoperability.fxTransfers+json;version=2.0' }
   })
   const server = await Base.setup()
   const res = await server.inject(req)

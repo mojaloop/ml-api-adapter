@@ -3,7 +3,7 @@ const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { logger } = require('../../shared/logger')
-const { ERROR_HANDLING, API_TYPE } = require('../../lib/config')
+const { ERROR_HANDLING, API_TYPE, HUB_NAME } = require('../../lib/config')
 const { API_TYPES } = require('../../shared/constants')
 
 const { Action } = Enum.Events.Event
@@ -49,8 +49,8 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 }
 
 const getCallbackPayload = async (content, payloadCache = undefined) => {
-  const isProxied = !!content.headers['fspiop-proxy']
-  const isIso = API_TYPE === API_TYPES.iso20022
+  const isIsoMode = API_TYPE === API_TYPES.iso20022
+  const fromSwitch = content.headers['fspiop-source'] === HUB_NAME
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
@@ -58,9 +58,12 @@ const getCallbackPayload = async (content, payloadCache = undefined) => {
 
   if (fspiopObject.errorInformation) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
-    payloadForCallback = isProxied && finalPayload ? finalPayload : fspiopError
-    if (isIso && !isProxied) {
+    // If we're in ISO mode and source is switch, then this is a hub-generated error (in current hub).
+    // If so, we need to generate an ISO error to forward.
+    if (isIsoMode && fromSwitch) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
+    } else if (!isIsoMode && fromSwitch) {
+      payloadForCallback = fspiopError
     }
   }
 

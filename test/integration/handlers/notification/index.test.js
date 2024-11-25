@@ -584,7 +584,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp2',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -620,7 +620,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'fxp1',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -917,8 +917,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': Config.HUB_NAME
+            'fspiop-destination': 'dfsp1',
+            'fspiop-source': Config.HUB_NAME
           },
           payload: {
             transferId,
@@ -979,8 +979,8 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': Config.HUB_NAME
+            'fspiop-destination': 'dfsp1',
+            'fspiop-source': Config.HUB_NAME
           },
           payload: {
             commitRequestId,
@@ -1074,7 +1074,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'dfsp2'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1107,7 +1107,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'fxp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1140,7 +1140,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'dfsp2'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1179,7 +1179,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'fxp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1609,7 +1609,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'HUB',
+        Config.HUB_NAME,
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
@@ -1637,7 +1637,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'HUB',
+        Config.HUB_NAME,
         'nonExistentFxp'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
