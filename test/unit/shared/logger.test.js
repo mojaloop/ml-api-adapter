@@ -47,7 +47,6 @@ Test('Logger wrapper tests -->', loggerTest => {
   })
 
   loggerTest.test('should be called without any params', test => {
-    // todo: think, if such case should throw an error
     test.doesNotThrow(() => logger.perf())
     test.end()
   })

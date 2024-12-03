@@ -37,7 +37,6 @@ const test = require('tapes')(require('tape'))
 const Joi = require('@hapi/joi')
 const { transferHeadersSchema } = require('../../../src/api/validationSchemas')
 
-// todo: move to a  separate file
 const getRequiredSchemaFields = (schema) => {
   if (!Joi.isSchema(transferHeadersSchema)) throw new TypeError('Invalid Joi schema')
 
