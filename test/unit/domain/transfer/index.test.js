@@ -541,13 +541,13 @@ Test('Transfer Service tests', serviceTest => {
         to: message.payeeFsp,
         from: message.payerFsp,
         type: 'application/json',
-        context: undefined,
         content: {
           uriParams: {
             id: message.transferId
           },
           headers,
-          payload: {}
+          payload: {},
+          context: undefined
         },
         metadata: {
           correlationId: transferId,
@@ -595,13 +595,13 @@ Test('Transfer Service tests', serviceTest => {
         to: message.payeeFsp,
         from: message.payerFsp,
         type: 'application/json',
-        context: undefined,
         content: {
           uriParams: {
             id: undefined
           },
           headers,
-          payload: {}
+          payload: {},
+          context: undefined
         },
         metadata: {
           correlationId: undefined,

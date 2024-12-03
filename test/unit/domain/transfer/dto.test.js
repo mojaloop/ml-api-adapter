@@ -63,11 +63,11 @@ Test('DTO tests -->', dtoTest => {
       to: 'to',
       from: 'from',
       type: 'application/json',
-      context: undefined,
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: undefined
       },
       metadata: {
         correlationId: 1,
@@ -90,11 +90,11 @@ Test('DTO tests -->', dtoTest => {
       to: 'to',
       from: 'from',
       type: 'application/json',
-      context: undefined,
       content: {
         uriParams: undefined,
         headers: undefined,
-        payload: { id: 1, from: 'from' }
+        payload: { id: 1, from: 'from' },
+        context: undefined
       },
       metadata: {
         correlationId: 1,
