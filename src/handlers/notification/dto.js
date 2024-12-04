@@ -80,6 +80,7 @@ const notificationMessageDto = async (message, payloadCache = undefined) => {
   const status = state.status.toLowerCase()
   const isSuccess = status === SUCCESS.status
   const isFx = FX_ACTIONS.includes(actionLower)
+  const isOriginalId = content.context?.isOriginalId
 
   logger.info('Notification::processMessage - action, status: ', { actionLower, status, isFx, isSuccess })
 
@@ -98,6 +99,7 @@ const notificationMessageDto = async (message, payloadCache = undefined) => {
     content,
     isFx,
     isSuccess,
+    isOriginalId,
     fspiopObject,
     payloadForCallback
   })
