@@ -32,7 +32,7 @@ const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 
-const Endpoints = require('@mojaloop/central-services-shared').Util.Endpoints
+const { Endpoints, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Config = require('../../../../src/lib/config.js')
 
 const Notification = require('../../../../src/handlers/notification')
@@ -41,7 +41,7 @@ const proxyquire = require('proxyquire')
 const {
   createRequest,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general.js')
 
 const SharedStub = {
   Util: {
@@ -49,12 +49,18 @@ const SharedStub = {
       stopCache: () => {
         throw new Error()
       }
+    },
+    HeaderValidation: {
+      getHubNameRegex: () => {
+        return /^Hub$/
+      }
     }
   }
 }
 const handler = proxyquire('../../../../src/api/endpointcache/handler', {
   '@mojaloop/central-services-shared': SharedStub
 })
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 Test('route handler', (handlerTest) => {
   let sandbox
@@ -99,7 +105,7 @@ Test('route handler', (handlerTest) => {
       Notification.isConnected.resolves(true)
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 202
-      await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG)
+      await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
 
       // Act
       const {

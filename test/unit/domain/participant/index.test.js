@@ -3,11 +3,15 @@
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Uuid = require('uuid4')
-const Facade = require('@mojaloop/central-services-shared').Util.Endpoints
-const Service = require('../../../../src/domain/participant')
-const Enum = require('@mojaloop/central-services-shared').Enum
-const Config = require('../../../../src/lib/config')
+const { Enum, Util } = require('@mojaloop/central-services-shared')
 const Logger = require('@mojaloop/central-services-logger')
+
+const Service = require('../../../../src/domain/participant')
+const Config = require('../../../../src/lib/config')
+const { TEMPLATE_PARAMS } = require('../../../../src/shared/constants')
+
+const Facade = Util.Endpoints
+const { FspEndpointTypes } = Enum.EndPoints
 
 Test('ParticipantEndpoint Service Test', endpointTest => {
   let sandbox
@@ -27,14 +31,19 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
   endpointTest.test('getEndpoint should', async (getEndpointTest) => {
     getEndpointTest.test('return the endpoint', async (test) => {
       const fsp = 'fsp'
-      const endpointType = Enum.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      const proxy = 'proxy'
+      const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
-      const expected = `http://localhost:1080/transfers/${transferId}`
+      const expected = `https://localhost:1080/transfers/${transferId}`
+      const expectedProxy = { url: expected }
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).returns(Promise.resolve(expected))
+      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, proxy, endpointType, { transferId }).returns(Promise.resolve(expectedProxy))
 
       try {
-        const result = await Service.getEndpoint(fsp, endpointType, transferId)
-        test.equal(result, expected, 'The results match')
+        test.deepEqual(await Service.getEndpoint({ fsp, endpointType, id: transferId }), expected, 'Return string')
+        test.deepEqual(await Service.getEndpoint({ fsp: proxy, endpointType, id: transferId }), expected, 'Return string when proxy is configured')
+        test.deepEqual(await Service.getEndpoint({ fsp, endpointType, id: transferId, proxy: true }), expectedProxy, 'Return object when proxy:true and proxy is not configured')
+        test.deepEqual(await Service.getEndpoint({ fsp: proxy, endpointType, id: transferId, proxy: true }), expectedProxy, 'Return object when proxy:true and proxy is not configured')
         test.end()
       } catch (err) {
         test.fail('Error thrown', err)
@@ -44,12 +53,12 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
 
     getEndpointTest.test('return the endpoint when transferId is null', async (test) => {
       const fsp = 'fsp'
-      const endpointType = Enum.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST
-      const expected = 'http://localhost:1080/transfers'
+      const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST
+      const expected = 'https://localhost:1080/transfers'
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType).returns(Promise.resolve(expected))
 
       try {
-        const result = await Service.getEndpoint(fsp, endpointType)
+        const result = await Service.getEndpoint({ fsp, endpointType })
         test.equal(result, expected, 'The results match')
         test.end()
       } catch (err) {
@@ -58,14 +67,30 @@ Test('ParticipantEndpoint Service Test', endpointTest => {
       }
     })
 
+    getEndpointTest.test('return the FX endpoint', async (test) => {
+      const fsp = `fsp-${Uuid()}`
+      const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST
+      const id = 'fxId'
+      const expectedTemplateParams = {
+        [TEMPLATE_PARAMS.commitRequestId]: id
+      }
+      const expectedUrl = 'https://host/fxTransfers'
+      Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp).resolves(expectedUrl)
+
+      const result = await Service.getEndpoint({ fsp, endpointType, id, isFx: true })
+      test.equal(result, expectedUrl, 'The url matches')
+      test.same(Facade.getEndpoint.firstCall.args[3], expectedTemplateParams)
+      test.end()
+    })
+
     getEndpointTest.test('throw error', async (test) => {
       const fsp = 'fsp1'
-      const endpointType = Enum.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
+      const endpointType = FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT
       const transferId = Uuid()
 
       Facade.getEndpoint.withArgs(Config.ENDPOINT_SOURCE_URL, fsp, endpointType, { transferId }).throws(new Error())
       try {
-        await Service.getEndpoint(fsp, endpointType, transferId)
+        await Service.getEndpoint({ fsp, endpointType, id: transferId })
         test.fail('should throw error')
         test.end()
       } catch (e) {

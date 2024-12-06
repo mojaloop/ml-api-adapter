@@ -30,6 +30,9 @@ const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const axios = require('axios')
+const http = require('http')
+
+axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
 
 /**
  * @function getSubServiceHealthBroker

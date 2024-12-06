@@ -5,30 +5,20 @@
   "moderate": true,
   "allowlist": [ // NOTE: Please add as much information as possible to any items added to the allowList
     // Currently no fixes available for the following
-    // widdershins>swagger2openapi>oas-validator>ajv
-    "GHSA-v88g-cgmw-v5xw",
-    // // @mojaloop/central-services-shared>shins>ejs
-    "GHSA-phwq-j96m-2c2q",
-    // // widdershins>swagger2openapi>better-ajv-errors>jsonpointer
-    "GHSA-282f-qqgm-c34q",
-    // @mojaloop/central-services-health>@mojaloop/central-services-error-handling>@mojaloop/sdk-standard-components>jsonwebtoken
-    // @now-ims/hapi-now-auth>jsonwebtoken
-    "GHSA-hjrf-2m68-5959",
-    // @mojaloop/central-services-health>@mojaloop/central-services-error-handling>@mojaloop/sdk-standard-components>jsonwebtoken
-    "GHSA-qwph-4952-7xr6",
-    // widdershins>markdown-it
-    "GHSA-6vfc-qv3f-vr6c",
-    // @mojaloop/central-services-shared>shins>sanitize-html
-    "GHSA-mjxr-4v3x-q3m4",
-    // @mojaloop/central-services-shared>shins>sanitize-html
-    "GHSA-rjqq-98f6-6j3r",
-    // tap-spec>tap-out>trim
-    "GHSA-w5p7-h5w8-2hfq",
-    // widdershins>yargs>yargs-parser
-    "GHSA-p9pc-299p-vxgp",
-    // https://github.com/advisories/GHSA-8cf7-32gw-wr33
-    "GHSA-8cf7-32gw-wr33",
-    // https://github.com/advisories/GHSA-7fh5-64p2-3v2j
-    "GHSA-7fh5-64p2-3v2j"
+    "GHSA-v88g-cgmw-v5xw", // widdershins>swagger2openapi>oas-validator>ajv
+    "GHSA-phwq-j96m-2c2q", // @mojaloop/central-services-shared>shins>ejs
+    "GHSA-282f-qqgm-c34q", // widdershins>swagger2openapi>better-ajv-errors>jsonpointer
+    "GHSA-8cf7-32gw-wr33", // @now-ims/hapi-now-auth>jsonwebtoken
+    "GHSA-hjrf-2m68-5959", // @now-ims/hapi-now-auth>jsonwebtoken
+    "GHSA-qwph-4952-7xr6", // @now-ims/hapi-now-auth>jsonwebtoken
+    "GHSA-6vfc-qv3f-vr6c", // widdershins>markdown-it
+    "GHSA-7fh5-64p2-3v2j", // @mojaloop/central-services-shared>shins>sanitize-html>postcss
+    "GHSA-mjxr-4v3x-q3m4", // @mojaloop/central-services-shared>shins>sanitize-html
+    "GHSA-rjqq-98f6-6j3r", // @mojaloop/central-services-shared>shins>sanitize-html
+    "GHSA-rm97-x556-q36h", // @mojaloop/central-services-shared>shins>sanitize-html
+    "GHSA-w5p7-h5w8-2hfq", // tap-spec>tap-out>trim
+    "GHSA-p9pc-299p-vxgp", // widdershins>yargs>yargs-parser
+    "GHSA-cgfm-xwp7-2cvr", // @mojaloop/central-services-shared>shins>sanitize-html
+    "GHSA-3xgq-45jj-v275"  // High vulnerability https://github.com/advisories/GHSA-3xgq-45jj-v275 ignoring for now since devDependency
   ]
 }

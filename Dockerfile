@@ -1,5 +1,5 @@
 # Arguments
-ARG NODE_VERSION=lts-alpine
+ARG NODE_VERSION=18.20.3-alpine3.19
 
 # NOTE: Ensure you set NODE_VERSION Build Argument as follows...
 #
@@ -11,7 +11,7 @@ ARG NODE_VERSION=lts-alpine
 #
 
 # Build Image
-FROM node:${NODE_VERSION} as builder
+FROM node:${NODE_VERSION} AS builder
 USER root
 
 WORKDIR /opt/app
@@ -19,12 +19,12 @@ WORKDIR /opt/app
 RUN apk --no-cache add git
 RUN apk add --no-cache -t build-dependencies make gcc g++ python3 libtool openssl-dev autoconf automake bash \
     && cd $(npm root -g)/npm
-    # && npm config set unsafe-perm true \
+    # && npm config set unsafe-perm true
     # && npm install -g node-gyp
-
 COPY package.json package-lock.json* /opt/app/
 
 RUN npm ci
+RUN npm prune --omit=dev
 
 FROM node:${NODE_VERSION}
 
@@ -38,7 +38,6 @@ RUN adduser -D app-user
 USER app-user
 
 COPY --chown=app-user --from=builder /opt/app .
-RUN npm prune --production
 
 COPY src /opt/app/src
 COPY test /opt/app/test

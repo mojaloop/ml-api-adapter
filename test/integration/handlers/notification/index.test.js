@@ -26,34 +26,386 @@
  ******/
 'use strict'
 
-const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Uuid = require('uuid4')
-const Config = require(`${src}/lib/config`)
-const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
-const Kafka = require('@mojaloop/central-services-stream').Util
-const Request = require('@mojaloop/central-services-shared').Util.Request
-const Enum = require('@mojaloop/central-services-shared').Enum
-const Fixtures = require('../../../fixtures/index')
+const db = require('@mojaloop/database-lib').Db
 const Logger = require('@mojaloop/central-services-logger')
+const proxyLib = require('@mojaloop/inter-scheme-proxy-cache-lib')
+const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/central-services-shared').Util
+const Enum = require('@mojaloop/central-services-shared').Enum
+const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
+const Kafka = require('@mojaloop/central-services-stream').Util
+
+const Config = require('../../../../src/lib/config')
+const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
+const { prepare } = require('../../../../src/domain/transfer/index')
+const Fixtures = require('../../../fixtures')
+
+const { Action } = Enum.Events.Event
+const EventTypes = Enum.Events.Event.Type
+const EventActions = Enum.Events.Event.Action
+const GeneralTopicTemplate = Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE
 
 const timeoutAttempts = 10
 const callbackWaitSeconds = 2
+const retryDelay = process?.env?.test_INT_RETRY_DELAY || 2
+const retryCount = process?.env?.test_INT_RETRY_COUNT || 40
+const retryOpts = {
+  retries: retryCount,
+  minTimeout: retryDelay,
+  maxTimeout: retryDelay
+}
+const wrapWithRetriesConf = {
+  remainingRetries: retryOpts?.retries || 10, // default 10
+  timeout: retryOpts?.maxTimeout || 2 // default 2
+}
 
 const getNotificationUrl = process.env.ENDPOINT_URL
+const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
+
+const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null, proxy) => {
+  await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+  senderOperation = senderOperation || operation
+
+  let response = await getNotifications(proxy || messageProtocol.to, operation, transferId)
+  let responseFrom = checkSenderResponse ? await getNotifications(messageProtocol.from, senderOperation, transferId) : true
+
+  let currentAttempts = 0
+  while (!(response && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+    sleep(callbackWaitSeconds)
+    response = response || await getNotifications(proxy || messageProtocol.to, operation, transferId)
+    responseFrom = responseFrom || checkSenderResponse ? await getNotifications(messageProtocol.from, senderOperation, transferId) : true
+    currentAttempts++
+  }
+  return checkSenderResponse ? { responseTo: response, responseFrom } : response
+}
 
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
+    let proxy
+    notificationTest.test('connect proxy lib', async test => {
+      const { type, proxyConfig } = Fixtures.proxyCacheConfigDto()
+      proxy = proxyLib.createProxyCache(type, proxyConfig)
+      await proxy.connect()
+      test.pass('Connected proxy lib')
+      test.end()
+    })
+
+    notificationTest.test('throw an error if invalid message is received', async test => {
+      try {
+        await Kafka.Consumer.consumeMessage(null, null, null)
+        test.fail('Error not thrown!')
+      } catch (err) {
+        test.ok(err instanceof Error)
+        test.end()
+      }
+    })
+
     notificationTest.test('consume a PREPARE message and send POST callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.PREPARE,
+        {
+          amount: { amount: 100, currency: 'USD' },
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          payerFsp: 'dfsp3',
+          payeeFsp: 'dfsp4',
+          transferId
+        },
+        'dfsp3',
+        'dfsp4'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a PREPARE message and send POST callback to proxy', async test => {
+      await proxy.addDfspIdToProxyMapping('proxied2', 'dfsp2') // simulate proxy mapping
+      const transferId = Uuid()
+      const payload = {
+        amount: { amount: 1, currency: 'USD' },
+        condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+        expiration: '2040-01-01T00:00:00.000',
+        ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+        payerFsp: 'dfsp1',
+        payeeFsp: 'proxied2',
+        transferId
+      }
+      await prepare(
+        {
+          'fspiop-source': payload.payerFsp,
+          'fspiop-destination': payload.payeeFsp
+        },
+        encodePayload(JSON.stringify(payload), 'application/vnd.interoperability.transfers+json;version=1.1'),
+        payload,
+        { injectContextToMessage: msg => msg }
+      )
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.PREPARE,
+        payload,
+        payload.payerFsp,
+        payload.payeeFsp
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await db.connect({
+        client: centralLedgerConfig.DATABASE.DIALECT,
+        connection: {
+          host: 'localhost',
+          port: centralLedgerConfig.DATABASE.PORT,
+          user: centralLedgerConfig.DATABASE.USER,
+          password: centralLedgerConfig.DATABASE.PASSWORD,
+          database: centralLedgerConfig.DATABASE.SCHEMA
+        }
+      })
+
+      // wait for RESERVED
+      try {
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('transferStateChange')
+            .findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED) {
+            throw new Error('Transfer state not changed to RESERVED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED, 'Transfer state changed to RESERVED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
+      }
+
+      const response = await testNotification(messageProtocol, 'post', transferId, kafkaConfig, topicConfig, undefined, undefined, 'dfsp2')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      // wait for RESERVED_FORWARDED
+      try {
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('transferStateChange')
+            .findOne({ transferId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED_FORWARDED) {
+            throw new Error('Transfer state not changed to RESERVED_FORWARDED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
+      }
+
+      await db.disconnect()
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_PREPARE message and send POST callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.FX_PREPARE,
+        {
+          commitRequestId,
+          determiningTransferId: Uuid(),
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          amountType: 'SEND',
+          sourceAmount: { amount: 100, currency: 'KWS' },
+          targetAmount: { amount: 200, currency: 'TZS' },
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'post', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_PREPARE message and send POST callback to proxy', async test => {
+      await proxy.addDfspIdToProxyMapping('proxied2', 'fxp1') // simulate proxy mapping
+      const commitRequestId = Uuid()
+      const payload = {
+        commitRequestId,
+        determiningTransferId: Uuid(),
+        initiatingFsp: 'dfsp1',
+        counterPartyFsp: 'proxied2',
+        amountType: 'SEND',
+        sourceAmount: { amount: 100, currency: 'USD' },
+        targetAmount: { amount: 200, currency: 'USD' },
+        condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+        expiration: new Date((new Date()).getTime() + (24 * 60 * 60 * 1000)).toISOString(), // tomorrow
+        ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+      }
+      await prepare(
+        {
+          'fspiop-source': payload.initiatingFsp,
+          'fspiop-destination': payload.counterPartyFsp
+        },
+        encodePayload(JSON.stringify(payload), 'application/vnd.interoperability.fxTransfers+json;version=1.1'),
+        payload,
+        { injectContextToMessage: msg => msg }
+      )
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.FX_PREPARE,
+        payload,
+        payload.initiatingFsp,
+        payload.counterPartyFsp
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await db.connect({
+        client: centralLedgerConfig.DATABASE.DIALECT,
+        connection: {
+          host: 'localhost',
+          port: centralLedgerConfig.DATABASE.PORT,
+          user: centralLedgerConfig.DATABASE.USER,
+          password: centralLedgerConfig.DATABASE.PASSWORD,
+          database: centralLedgerConfig.DATABASE.SCHEMA
+        }
+      })
+
+      // wait for RESERVED
+      try {
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('fxTransferStateChange')
+            .findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED) {
+            throw new Error('Transfer state not changed to RESERVED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED, 'Transfer state changed to RESERVED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
+      }
+
+      const response = await testNotification(messageProtocol, 'post', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'fxp1')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+
+      // wait for RESERVED_FORWARDED
+      try {
+        await wrapWithRetries(async () => {
+          const stateChange = await db
+            .from('fxTransferStateChange')
+            .findOne({ commitRequestId, transferStateId: Enum.Transfers.TransferInternalState.RESERVED_FORWARDED })
+          if (stateChange?.transferStateId !== Enum.Transfers.TransferInternalState.RESERVED_FORWARDED) {
+            throw new Error('Transfer state not changed to RESERVED_FORWARDED')
+          }
+          test.equal(stateChange.transferStateId, Enum.Transfers.TransferInternalState.RESERVED_FORWARDED, 'Transfer state changed to RESERVED_FORWARDED')
+          return stateChange
+        }, wrapWithRetriesConf.remainingRetries, wrapWithRetriesConf.timeout)
+      } catch (err) {
+        Logger.error(err)
+        test.fail(err.message)
+      }
+      await db.disconnect()
+      test.end()
+    })
+
+    notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.PREPARE,
+        {
+          errorInformation: {
+            errorCode: '3100',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        Config.HUB_NAME,
+        'dfsp1'
+      )
+      messageProtocol.metadata.event.state = {
+        code: 3100,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      messageProtocol.content.uriParams = { id: transferId }
+
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_PREPARE message and send PUT callback on error', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.FX_PREPARE,
+        {
+          errorInformation: {
+            errorCode: '3100',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        Config.HUB_NAME,
+        'dfsp1'
+      )
+      messageProtocol.metadata.event.state = {
+        code: 3100,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      messageProtocol.content.uriParams = { id: commitRequestId }
+
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a PREPARE_DUPLICATE message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: Enum.Events.Event.Action.PREPARE,
-            action: Enum.Events.Event.Action.PREPARE,
+            type: Action.PREPARE,
+            action: Action.PREPARE_DUPLICATE,
             state: {
               status: 'success',
               code: 0
@@ -70,50 +422,44 @@ Test('Notification Handler', notificationHandlerTest => {
           },
           payload: {
             amount: { amount: 100, currency: 'USD' },
+            transferState: 'COMMITTED',
+            completedTimestamp: '2018-08-23T21:31:00.534+01:00',
+            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
             condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
             expiration: '2018-08-24T21:31:00.534+01:00',
             ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-            payeeFsp: 'dfsp1',
-            payerFsp: 'dfsp2',
+            payeeFsp: 'dfsp2',
+            payerFsp: 'dfsp1',
             transferId
           }
         },
-        to: 'dfsp2',
-        from: 'dfsp1',
+        to: 'dfsp1',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'post'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
 
-    notificationTest.test('consume a PREPARE message and send PUT callback on error', async test => {
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
-      const transferId = Uuid()
+    notificationTest.test('consume a FX_PREPARE_DUPLICATE message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: 'prepare',
-            action: 'prepare',
+            type: Action.PREPARE,
+            action: Action.FX_PREPARE_DUPLICATE,
             state: {
-              code: 3100,
-              description: 'Generic validation error',
-              status: 'error'
+              status: 'success',
+              code: 0
             }
           }
         },
@@ -122,233 +468,394 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2017-11-02T00:00:00.000Z',
-            'fspiop-source': 'switch',
-            'fspiop-destination': 'dfsp1'
-          },
-          uriParams: {
-            id: transferId
+            'fspiop-destination': 'fxp1',
+            'fspiop-source': 'dfsp1'
           },
           payload: {
-            errorInformation: {
-              errorCode: '3100',
-              errorDescription: 'Generic validation error'
-            }
+            commitRequestId,
+            initiatingFsp: 'dfsp1',
+            counterPartyFsp: 'fxp1'
           }
         },
-        from: 'switch',
         to: 'dfsp1',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
 
-      const operation = 'error'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
 
     notificationTest.test('consume a COMMIT message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
-      const messageProtocol = {
-        metadata: {
-          event: {
-            id: Uuid(),
-            createdAt: new Date(),
-            type: 'commit',
-            action: 'commit',
-            state: {
-              status: 'success',
-              code: 0
-            }
-          }
+      const messageProtocol = Fixtures.createMessageProtocol(
+        'commit',
+        'commit',
+        {
+          amount: { amount: 100, currency: 'USD' },
+          transferState: 'RESERVED',
+          fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          payeeFsp: 'dfsp1',
+          payerFsp: 'dfsp2',
+          transferId
         },
-        content: {
-          headers: {
-            'content-length': 1038,
-            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
-            date: '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
-          },
-          payload: {
-            amount: { amount: 100, currency: 'USD' },
-            transferState: 'RESERVED',
-            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-            condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-            expiration: '2018-08-24T21:31:00.534+01:00',
-            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-            payeeFsp: 'dfsp1',
-            payerFsp: 'dfsp2',
-            transferId
-          }
-        },
-        to: 'dfsp2',
-        from: 'dfsp1',
-        id: Uuid(),
-        type: 'application/json'
-      }
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-
-      const operation = 'put'
-      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
+    notificationTest.test('consume a FX_COMMIT message and send PUT callback to fxp and payerfsp', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.COMMIT,
+        Action.FX_COMMIT,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          sourceAmount: { amount: 100, currency: 'ZKW' },
+          targetAmount: { amount: 200, currency: 'TZS' }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payerfsp')
+      test.end()
+    })
+
     notificationTest.test('consume a COMMIT message and send PUT callback on error', async test => {
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
       const transferId = Uuid()
-      const messageProtocol = {
-        metadata: {
-          event: {
-            id: Uuid(),
-            createdAt: new Date(),
-            type: 'commit',
-            action: 'commit',
-            state: {
-              code: 3000,
-              description: 'Generic error',
-              status: 'error'
-            }
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.COMMIT,
+        Action.COMMIT,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
           }
         },
-        content: {
-          headers: {
-            'content-length': 1038,
-            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
-            date: '2017-11-02T00:00:00.000Z',
-            'fspiop-source': 'dfsp2',
-            'fspiop-destination': 'dfsp1'
-          },
-          payload: {
-            errorInformation: {
-              errorCode: '3000',
-              errorDescription: 'Generic error'
-            }
-          },
-          uriParams: {
-            id: transferId
-          }
-        },
-        from: 'dfsp2',
-        to: 'dfsp1',
-        id: Uuid(),
-        type: 'application/json'
+        'dfsp2',
+        'dfsp1'
+      )
+      messageProtocol.metadata.event.state = {
+        code: 3000,
+        description: 'Generic validation error',
+        status: 'error'
       }
+      messageProtocol.content.uriParams = { id: transferId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-
-      const operation = 'error'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_COMMIT message and send PUT callback on error', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.COMMIT,
+        Action.FX_COMMIT,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'fxp1',
+        'dfsp1'
+      )
+      messageProtocol.metadata.event.state = {
+        code: 3000,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a RESERVE message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.RESERVE,
+        Action.RESERVE,
+        {
+          transferId,
+          payerFsp: 'dfsp1',
+          payeeFsp: 'dfsp2'
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true, 'patch')
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_RESERVE message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.RESERVE,
+        Action.FX_RESERVE,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1'
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true, 'put')
+
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
       test.end()
     })
 
     notificationTest.test('consume a REJECT message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
-      const messageProtocol = {
-        metadata: {
-          event: {
-            id: Uuid(),
-            createdAt: new Date(),
-            type: 'reject',
-            action: 'reject',
-            state: {
-              status: 'success',
-              code: 0
-            }
-          }
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.REJECT,
+        Action.REJECT,
+        {
+          amount: { amount: 100, currency: 'USD' },
+          transferState: 'COMMITTED',
+          fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          payeeFsp: 'dfsp1',
+          payerFsp: 'dfsp2',
+          transferId
         },
-        content: {
-          headers: {
-            'content-length': 1038,
-            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
-            date: '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
-          },
-          payload: {
-            amount: { amount: 100, currency: 'USD' },
-            transferState: 'COMMITTED',
-            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-            condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-            expiration: '2018-08-24T21:31:00.534+01:00',
-            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-            payeeFsp: 'dfsp1',
-            payerFsp: 'dfsp2',
-            transferId
-          }
-        },
-        to: 'dfsp2',
-        from: 'dfsp1',
-        id: Uuid(),
-        type: 'application/json'
-      }
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
-
-      const operation = 'put'
-      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume an FX_REJECT message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.REJECT,
+        Action.FX_REJECT,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          sourceAmount: { amount: 100, currency: 'ZKW' },
+          targetAmount: { amount: 200, currency: 'TZS' }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
       test.end()
     })
 
     notificationTest.test('consume a ABORT message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.ABORT,
+        {
+          amount: { amount: 100, currency: 'USD' },
+          transferState: 'COMMITTED',
+          fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          payeeFsp: 'dfsp1',
+          payerFsp: 'dfsp2',
+          transferId
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume an FX_ABORT message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.FX_ABORT,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          sourceAmount: { amount: 100, currency: 'ZKW' },
+          targetAmount: { amount: 200, currency: 'TZS' }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a ABORT_VALIDATION message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.ABORT_VALIDATION,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      messageProtocol.content.uriParams = { id: transferId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_ABORT_VALIDATION message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.FX_ABORT_VALIDATION,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(
+        Config.KAFKA_CONFIG,
+        Enum.Kafka.Config.PRODUCER,
+        EventTypes.TRANSFER.toUpperCase(),
+        EventActions.FULFIL.toUpperCase()
+      )
       const messageProtocol = {
         metadata: {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: 'abort',
-            action: 'abort',
+            type: Action.FULFIL,
+            action: Action.RESERVED_ABORTED,
             state: {
-              status: 'success',
-              code: 0
+              status: 'error',
+              code: 1
             }
           }
         },
@@ -356,57 +863,271 @@ Test('Notification Handler', notificationHandlerTest => {
           headers: {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
-            date: '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
+            date: '2021-11-02T00:00:00.000Z',
+            'FSPIOP-Destination': 'dfsp1',
+            'FSPIOP-Source': Config.HUB_NAME
           },
           payload: {
-            amount: { amount: 100, currency: 'USD' },
-            transferState: 'COMMITTED',
-            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-            condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-            expiration: '2018-08-24T21:31:00.534+01:00',
-            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-            payeeFsp: 'dfsp1',
-            payerFsp: 'dfsp2',
-            transferId
+            // TODO: should we have the transferId here?
+            transferId,
+            completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+            transferState: 'ABORTED'
           }
         },
-        to: 'dfsp2',
-        from: 'dfsp1',
+        to: 'dfsp1',
+        from: Config.HUB_NAME,
         id: Uuid(),
         type: 'application/json'
       }
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(
+        GeneralTopicTemplate,
+        EventTypes.NOTIFICATION,
+        EventActions.EVENT
+      )
 
       await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
 
-      const operation = 'error'
-      let responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-      let responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!(responseTo && responseFrom) && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        responseFrom = await getNotifications(messageProtocol.from, operation, transferId)
-        responseTo = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      const operation = 'patch'
+      const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, transferId), 5, 2)
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
 
-    notificationTest.test('consume a TIMEOUT-RECEIVED message and send PUT callback', async test => {
-      const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+    notificationTest.test('consume a FX_RESERVED_ABORTED message and send PATCH callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(
+        Config.KAFKA_CONFIG,
+        Enum.Kafka.Config.PRODUCER,
+        EventTypes.TRANSFER.toUpperCase(),
+        EventActions.FULFIL.toUpperCase()
+      )
       const messageProtocol = {
         metadata: {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: 'prepare',
-            action: 'timeout-received',
+            type: Action.FULFIL,
+            action: Action.FX_RESERVED_ABORTED,
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2021-11-02T00:00:00.000Z',
+            'FSPIOP-Destination': 'dfsp1',
+            'FSPIOP-Source': Config.HUB_NAME
+          },
+          payload: {
+            commitRequestId
+          }
+        },
+        to: 'dfsp1',
+        from: Config.HUB_NAME,
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(
+        GeneralTopicTemplate,
+        EventTypes.NOTIFICATION,
+        EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const operation = 'patch'
+      const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, commitRequestId), 5, 2)
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a FULFIL_DUPLICATE message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.FULFIL,
+        Action.FULFIL_DUPLICATE,
+        {
+          transferId,
+          payerFsp: 'dfsp1',
+          payeeFsp: 'dfsp2'
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_FULFIL_DUPLICATE message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.FULFIL,
+        Action.FX_FULFIL_DUPLICATE,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1'
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a ABORT_DUPLICATE message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.ABORT_DUPLICATE,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      messageProtocol.content.uriParams = { id: transferId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume an FX_ABORT_DUPLICATE message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.FX_ABORT_DUPLICATE,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a ABORT_DUPLICATE message and send PUT error callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.ABORT_DUPLICATE,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      messageProtocol.content.uriParams = { id: transferId }
+      messageProtocol.metadata.event.state = {
+        code: 3100,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume an FX_ABORT_DUPLICATE message and send PUT error callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.ABORT,
+        Action.FX_ABORT_DUPLICATE,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        'dfsp1',
+        'fxp1'
+      )
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      messageProtocol.metadata.event.state = {
+        code: 3100,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.PREPARE,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a TIMEOUT_RECEIVED message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: Action.PREPARE,
+            action: Action.TIMEOUT_RECEIVED,
             state: {
               status: 'success',
               code: 0
@@ -439,32 +1160,24 @@ Test('Notification Handler', notificationHandlerTest => {
         type: 'application/json'
       }
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'error'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
       test.end()
     })
 
-    notificationTest.test('consume a PREPARE-DUPLICATE message and send PUT callback', async test => {
-      const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, Enum.Events.Event.Type.TRANSFER.toUpperCase(), Enum.Events.Event.Action.PREPARE.toUpperCase())
+    notificationTest.test('consume a FX_TIMEOUT_RECEIVED message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: 'prepare',
-            action: 'prepare-duplicate',
+            type: Action.PREPARE,
+            action: Action.FX_TIMEOUT_RECEIVED,
             state: {
               status: 'success',
               code: 0
@@ -476,59 +1189,39 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2017-11-02T00:00:00.000Z',
-            'fspiop-destination': 'dfsp2',
-            'fspiop-source': 'dfsp1'
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'fxp1'
           },
           payload: {
-            amount: { amount: 100, currency: 'USD' },
-            transferState: 'COMMITTED',
-            completedTimestamp: '2018-08-23T21:31:00.534+01:00',
-            fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-            condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-            expiration: '2018-08-24T21:31:00.534+01:00',
-            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
-            payeeFsp: 'dfsp2',
-            payerFsp: 'dfsp1',
-            transferId
+            initiatingFsp: 'dfsp1',
+            counterPartyFsp: 'fxp1',
+            commitRequestId
           }
         },
-        to: 'dfsp1',
-        from: 'switch',
+        from: 'dfsp1',
+        to: 'fxp1',
         id: Uuid(),
         type: 'application/json'
       }
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, Enum.Events.Event.Type.NOTIFICATION, Enum.Events.Event.Action.EVENT)
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      const operation = 'put'
-      let response = await getNotifications(messageProtocol.to, operation, transferId)
-      let currentAttempts = 0
-      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
-        sleep(callbackWaitSeconds)
-        response = await getNotifications(messageProtocol.to, operation, transferId)
-        currentAttempts++
-      }
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
       test.end()
     })
 
-    notificationTest.test('consume a RESERVED_ABORTED message and send PATCH callback', async test => {
+    notificationTest.test('consume a TIMEOUT_RESERVED message and send PUT callback', async test => {
       const transferId = Uuid()
-      const kafkaConfig = KafkaUtil.getKafkaConfig(
-        Config.KAFKA_CONFIG,
-        Enum.Kafka.Config.PRODUCER,
-        Enum.Events.Event.Type.TRANSFER.toUpperCase(),
-        Enum.Events.Event.Action.FULFIL.toUpperCase()
-      )
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
       const messageProtocol = {
         metadata: {
           event: {
             id: Uuid(),
             createdAt: new Date(),
-            type: 'fulfil',
-            action: 'reserved-aborted',
+            type: Action.PREPARE,
+            action: Action.TIMEOUT_RESERVED,
             state: {
               status: 'error',
               code: 1
@@ -539,39 +1232,314 @@ Test('Notification Handler', notificationHandlerTest => {
           headers: {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
-            date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': 'switch'
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'dfsp2'
           },
           payload: {
-            // TODO: should we have the transferId here?
-            transferId,
-            completedTimestamp: '2021-05-24T08:38:08.699-04:00',
-            transferState: 'ABORTED'
-          }
+            errorInformation: {
+              errorCode: '3000',
+              errorDescription: 'Generic validation error'
+            }
+          },
+          uriParams: { id: transferId }
         },
-        to: 'dfsp1',
-        from: 'switch',
+        from: 'dfsp1',
+        to: 'dfsp2',
         id: Uuid(),
         type: 'application/json'
       }
 
-      const topicConfig = KafkaUtil.createGeneralTopicConf(
-        Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE,
-        Enum.Events.Event.Type.NOTIFICATION,
-        Enum.Events.Event.Action.EVENT
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_TIMEOUT_RESERVED message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.PRODUCER, EventTypes.TRANSFER.toUpperCase(), EventActions.PREPARE.toUpperCase())
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: Action.PREPARE,
+            action: Action.FX_TIMEOUT_RESERVED,
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'fxp1'
+          },
+          payload: {
+            errorInformation: {
+              errorCode: '3000',
+              errorDescription: 'Generic error'
+            }
+          },
+          uriParams: {
+            id: commitRequestId
+          }
+        },
+        from: 'dfsp1',
+        to: 'fxp1',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
+
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a FORWARDED error message and send PUT callback to `to` and `from` participants', async test => {
+      const transferId = Uuid()
+      const kafkaConfig = KafkaUtil.getKafkaConfig(
+        Config.KAFKA_CONFIG,
+        Enum.Kafka.Config.PRODUCER,
+        EventTypes.TRANSFER.toUpperCase(),
+        EventActions.PREPARE.toUpperCase()
+      )
+      const messageProtocol = {
+        metadata: {
+          event: {
+            id: Uuid(),
+            createdAt: new Date(),
+            type: EventTypes.NOTIFICATION,
+            action: Action.FORWARDED,
+            state: {
+              status: 'error',
+              code: 1
+            }
+          }
+        },
+        content: {
+          headers: {
+            'content-length': 1038,
+            'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+            date: '2017-11-02T00:00:00.000Z',
+            'fspiop-source': 'dfsp1',
+            'fspiop-destination': 'proxyFsp'
+          },
+          payload: {
+            errorInformation: {
+              errorCode: '3000',
+              errorDescription: 'Generic validation error'
+            }
+          },
+          uriParams: { id: transferId }
+        },
+        from: 'dfsp1',
+        to: 'proxyFsp',
+        id: Uuid(),
+        type: 'application/json'
+      }
+
+      const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
+      const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
+
+      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
+      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      test.end()
+    })
+
+    notificationTest.test('consume a GET message and send PUT callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.GET,
+        Action.GET,
+        {
+          amount: { amount: 100, currency: 'USD' },
+          transferState: 'COMMITTED',
+          fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          expiration: '2018-08-24T21:31:00.534+01:00',
+          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLC',
+          payeeFsp: 'dfsp1',
+          payerFsp: 'dfsp2',
+          transferId,
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        Config.HUB_NAME,
+        'dfsp1'
+      )
+      messageProtocol.content.uriParams = { id: transferId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
       )
 
-      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+      const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      const operation = 'patch'
-      const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, transferId), 5, 2)
       test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
       test.end()
     })
 
+    notificationTest.test('consume a FX_GET message and send PUT callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.GET,
+        Action.FX_GET,
+        {
+          commitRequestId,
+          initiatingFsp: 'dfsp1',
+          counterPartyFsp: 'fxp1',
+          sourceAmount: { amount: 100, currency: 'ZKW' },
+          targetAmount: { amount: 200, currency: 'TZS' }
+        },
+        Config.HUB_NAME,
+        'dfsp1'
+      )
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a GET message and send PUT error callback', async test => {
+      const transferId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.GET,
+        Action.GET,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        Config.HUB_NAME,
+        'dfsp1'
+      )
+      messageProtocol.content.uriParams = { id: transferId }
+      messageProtocol.metadata.event.state = {
+        code: 3100,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_GET message and send PUT error callback', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.GET,
+        Action.FX_GET,
+        {
+          errorInformation: {
+            errorCode: '3000',
+            errorDescription: 'Generic validation error'
+          }
+        },
+        Config.HUB_NAME,
+        'dfsp1'
+      )
+      messageProtocol.content.uriParams = { id: commitRequestId }
+      messageProtocol.metadata.event.state = {
+        code: 3100,
+        description: 'Generic validation error',
+        status: 'error'
+      }
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.GET,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
+
+      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_NOTIFY message and send PATCH callback to fxp', async test => {
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        EventTypes.NOTIFICATION,
+        Action.FX_NOTIFY,
+        {
+          commitRequestId,
+          fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        'HUB',
+        'fxp1'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig)
+
+      const payloadWithoutFulfilment = JSON.parse(JSON.stringify(messageProtocol.content.payload))
+      delete payloadWithoutFulfilment.fulfilment
+
+      test.deepEqual(response.payload, payloadWithoutFulfilment, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('consume a FX_NOTIFY message and send PATCH callback to proxied fxp', async test => {
+      await proxy.addDfspIdToProxyMapping('nonExistentFxp', 'proxyFsp') // simulate proxy mapping
+      const commitRequestId = Uuid()
+      const messageProtocol = Fixtures.createMessageProtocol(
+        EventTypes.NOTIFICATION,
+        Action.FX_NOTIFY,
+        {
+          commitRequestId,
+          fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
+        },
+        'HUB',
+        'nonExistentFxp'
+      )
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+
+      const response = await testNotification(messageProtocol, 'patch', commitRequestId, kafkaConfig, topicConfig, undefined, undefined, 'proxyFsp')
+
+      const payloadWithoutFulfilment = JSON.parse(JSON.stringify(messageProtocol.content.payload))
+      delete payloadWithoutFulfilment.fulfilment
+      test.deepEqual(response.payload, payloadWithoutFulfilment, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
     notificationTest.test('tear down', async test => {
-      await Kafka.Producer.disconnect()
+      await proxy.disconnect()
+      await db.disconnect()
+      try {
+        await Kafka.Producer.disconnect()
+      } catch (err) { /* ignore error */ }
       test.end()
     })
 
@@ -592,12 +1560,13 @@ const getNotifications = async (fsp, operation, id) => {
   try {
     const url = `${getNotificationUrl}/${fsp}/${operation}/${id}`
     Logger.debug(`getNotifications: ${url}`)
-    const response = await Request.sendRequest(
+    const response = await Request.sendRequest({
       url,
-      Fixtures.buildHeaders,
-      Enum.Http.Headers.FSPIOP.SWITCH.value,
-      Enum.Http.Headers.FSPIOP.SWITCH.value
-    )
+      headers: Fixtures.buildHeaders,
+      source: Config.HUB_NAME,
+      destination: Config.HUB_NAME,
+      hubNameRegex
+    })
     return response.data
   } catch (error) {
     Logger.error(error)

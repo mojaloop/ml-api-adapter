@@ -24,12 +24,9 @@
 
 const EventSdk = require('@mojaloop/event-sdk')
 const Uuid = require('uuid4')
-// const Moment = require('moment')
-
-// const hostname = 'ml-api-adapter'
-// const executionCondition = 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0'
-// const executionCondition = 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA'
-// const ilpPacket = 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA'
+const KafkaUtil = require('@mojaloop/central-services-shared').Util.Kafka
+const { Enum } = require('@mojaloop/central-services-shared')
+const { STORAGE_TYPES } = require('@mojaloop/inter-scheme-proxy-cache-lib')
 
 const generateTransferId = () => {
   return Uuid()
@@ -38,29 +35,6 @@ const generateTransferId = () => {
 const generateParentTestSpan = () => {
   return EventSdk.Tracer.createSpan('test_span')
 }
-
-// const generateAccountName = () => {
-//   return generateRandomName()
-// }
-
-// const generateRandomName = () => {
-//   return `dfsp${Uuid().replace(/-/g, '')}`.substr(0, 25)
-// }
-
-// const buildDebitOrCredit = (accountName, amount, memo) => {
-//   return {
-//     account: `http://${hostname}/accounts/${accountName}`,
-//     amount: amount,
-//     memo: memo,
-//     authorized: true
-//   }
-// }
-
-// const futureDate = () => {
-//   let d = new Date()
-//   d.setTime(d.getTime() + 86400000)
-//   return d
-// }
 
 const buildTransfer = (transferId) => {
   return {
@@ -91,6 +65,66 @@ const buildTransfer = (transferId) => {
   }
 }
 
+const buildFXTransfer = (commitRequestId) => {
+  return {
+    commitRequestId,
+    determiningTransferId: Uuid(),
+    initiatingFsp: 'dfsp1',
+    counterPartyFsp: 'fxp1',
+    amountType: 'SEND',
+    sourceAmount: { amount: 100, currency: 'KWS' },
+    targetAmount: { amount: 200, currency: 'TZS' },
+    condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
+    expiration: '2018-08-24T21:31:00.534+01:00',
+    ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+  }
+}
+
+const buildTransferError = () => {
+  return {
+    errorInformation: {
+      errorCode: '3100',
+      errorDescription: 'Generic error'
+    },
+    extensionList:
+    {
+      extension:
+      [
+        {
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        },
+        {
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }
+      ]
+    }
+  }
+}
+
+const buildFulfil = () => {
+  return {
+    transferState: 'RESERVED',
+    fulfilment: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
+    completedTimestamp: '2024-04-06T08:38:08.699-04:00',
+    extensionList:
+    {
+      extension:
+      [
+        {
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        },
+        {
+          key: 'errorDescription',
+          value: 'This is a more detailed error description'
+        }
+      ]
+    }
+  }
+}
+
 const buildHeaders = {
   accept: 'application/vnd.interoperability.participants+json;version=1',
   'fspiop-destination': 'dsfp1',
@@ -99,173 +133,62 @@ const buildHeaders = {
   'fspiop-source': 'dfsp2'
 }
 
-// const buildUnconditionalTransfer = (transferId, debit, credit) => {
-//   return {
-//     id: `http://${hostname}/transfers/${transferId}`,
-//     ledger: `http://${hostname}`,
-//     debits: [debit],
-//     credits: [credit]
-//   }
-// }
+const createProducerConfig = (kafkaConfig, kafkaConfigEventType, kafkaConfigEventAction, configTemplate, topicEventType, topicEventAction) => {
+  return {
+    kafkaConfig: KafkaUtil.getKafkaConfig(kafkaConfig, Enum.Kafka.Config.PRODUCER, kafkaConfigEventType.toUpperCase(), kafkaConfigEventAction.toUpperCase()),
+    topicConfig: KafkaUtil.createGeneralTopicConf(configTemplate, topicEventType, topicEventAction)
+  }
+}
 
-// const buildTransferPreparedEvent = (transferId, debit, credit, expiresAt) => {
-//   expiresAt = (expiresAt || futureDate()).toISOString()
-//   return {
-//     id: 1,
-//     name: 'TransferPrepared',
-//     payload: {
-//       ledger: `${hostname}`,
-//       debits: [debit],
-//       credits: [credit],
-//       execution_condition: executionCondition,
-//       expires_at: expiresAt
-//     },
-//     aggregate: {
-//       id: transferId,
-//       name: 'Transfer'
-//     },
-//     context: 'Ledger',
-//     timestamp: 1474471273588
-//   }
-// }
+const createMessageProtocol = (eventType = 'prepare', eventAction = 'prepare', payload = {}, source = 'dfsp1', destination = 'dfsp2') => {
+  return {
+    metadata: {
+      event: {
+        id: Uuid(),
+        createdAt: new Date(),
+        type: eventType,
+        action: eventAction,
+        state: {
+          status: 'success',
+          code: 0
+        }
+      }
+    },
+    content: {
+      headers: {
+        'content-length': 1038,
+        'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
+        date: '2017-11-02T00:00:00.000Z',
+        'fspiop-destination': destination,
+        'fspiop-source': source
+      },
+      payload
+    },
+    to: destination,
+    from: source,
+    id: Uuid(),
+    type: 'application/json'
+  }
+}
 
-// const buildTransferExecutedEvent = (transferId, debit, credit, expiresAt) => {
-//   expiresAt = (expiresAt || futureDate()).toISOString()
-//   return {
-//     id: 2,
-//     name: 'TransferExecuted',
-//     payload: {
-//       ledger: `${hostname}`,
-//       debits: [debit],
-//       credits: [credit],
-//       execution_condition: executionCondition,
-//       expires_at: expiresAt,
-//       fulfillment: 'oAKAAA'
-//     },
-//     aggregate: {
-//       id: transferId,
-//       name: 'Transfer'
-//     },
-//     context: 'Ledger',
-//     timestamp: 1474471284081
-//   }
-// }
-
-// const buildTransferRejectedEvent = (transferId, rejectionReason) => {
-//   return {
-//     id: 2,
-//     name: 'TransferRejected',
-//     payload: {
-//       rejection_reason: rejectionReason
-//     },
-//     aggregate: {
-//       id: transferId,
-//       name: 'Transfer'
-//     },
-//     context: 'Ledger',
-//     timestamp: 1474471286000
-//   }
-// }
-
-// const buildReadModelTransfer = (transferId, debit, credit, state, expiresAt, preparedDate, rejectionReason) => {
-//   state = state || 'prepared'
-//   expiresAt = (expiresAt || futureDate()).toISOString()
-//   preparedDate = (preparedDate || new Date()).toISOString()
-//   return {
-//     transferUuid: transferId,
-//     state: state,
-//     ledger: `${hostname}`,
-//     debitAccountId: debit.accountId,
-//     debitAmount: debit.amount,
-//     debitMemo: debit.memo,
-//     creditAccountId: credit.accountId,
-//     creditAmount: credit.amount,
-//     creditMemo: credit.memo,
-//     executionCondition: executionCondition,
-//     rejectionReason: rejectionReason,
-//     expiresAt: expiresAt,
-//     preparedDate: preparedDate
-//   }
-// }
-
-// const buildCharge = (name, rateType, code) => {
-//   return {
-//     'name': name,
-//     'charge_type': 'fee',
-//     'rate_type': rateType,
-//     'rate': '0.50',
-//     'code': code,
-//     'minimum': '16.00',
-//     'maximum': '100.00',
-//     'is_active': true,
-//     'payer': 'sender',
-//     'payee': 'receiver'
-//   }
-// }
-
-// const findAccountPositions = (positions, accountName) => {
-//   return positions.find(function (p) {
-//     return p.account === buildAccountUrl(accountName)
-//   })
-// }
-
-// const buildAccountUrl = (accountName) => {
-//   return `http://${hostname}/accounts/${accountName}`
-// }
-
-// function buildAccountPosition (accountName, tPayments, tReceipts, fPayments, fReceipts) {
-//   return {
-//     account: buildAccountUrl(accountName),
-//     fees: {
-//       payments: fPayments.toString(),
-//       receipts: fReceipts.toString(),
-//       net: (fReceipts - fPayments).toString()
-//     },
-//     transfers: {
-//       payments: tPayments.toString(),
-//       receipts: tReceipts.toString(),
-//       net: (tReceipts - tPayments).toString()
-//     },
-//     net: (tReceipts - tPayments + fReceipts - fPayments).toString()
-//   }
-// }
-
-// const getMomentToExpire = (timeToPrepareTransfer = 0.5) => {
-//   return Moment.utc().add(timeToPrepareTransfer, 'seconds')
-// }
-
-// const getCurrentUTCTimeInMilliseconds = () => {
-//   return new Date().getTime()
-// }
-
-// const rejectionMessage = () => {
-//   return {
-//     code: 'S00',
-//     name: 'Bad Request',
-//     message: 'destination transfer failed',
-//     triggered_by: 'example.red.bob',
-//     additional_info: {}
-//   }
-// }
+const proxyCacheConfigDto = ({ host = 'localhost' } = {}) => ({
+  type: STORAGE_TYPES.redisCluster,
+  proxyConfig: {
+    cluster: [
+      { host, port: 6379 }
+    ]
+  }
+})
 
 module.exports = {
-  // hostname,
-  // buildAccountPosition,
-  // buildCharge,
-  // buildDebitOrCredit,
   buildTransfer,
+  buildFXTransfer,
+  buildTransferError,
+  buildFulfil,
   buildHeaders,
-  // buildUnconditionalTransfer,
-  // buildTransferPreparedEvent,
-  // buildTransferExecutedEvent,
-  // buildTransferRejectedEvent,
-  // buildReadModelTransfer,
-  // findAccountPositions,
-  // generateRandomName,
-  // generateAccountName,
   generateTransferId,
-  generateParentTestSpan
-  // getMomentToExpire,
-  // getCurrentUTCTimeInMilliseconds,
-  // rejectionMessage
+  generateParentTestSpan,
+  createMessageProtocol,
+  createProducerConfig,
+  proxyCacheConfigDto
 }

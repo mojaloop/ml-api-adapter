@@ -7,11 +7,12 @@ const proxyquire = require('proxyquire')
 
 const Config = require('../../../../src/lib/config')
 const Notification = require('../../../../src/handlers/notification')
+const Producer = require('@mojaloop/central-services-stream').Util.Producer
 
 const {
   createRequest,
   unwrapResponse
-} = require('../../../helpers')
+} = require('../../../helpers/general')
 
 const apiTags = ['api']
 
@@ -25,6 +26,7 @@ Test('metadata handler', (handlerTest) => {
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
     sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(Producer, 'isConnected')
     sandbox.stub(axios, 'get')
     Handler = proxyquire('../../../../src/api/metadata/handler', {})
 
@@ -53,6 +55,7 @@ Test('metadata handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
+      Producer.isConnected.resolves(true)
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 200
 
@@ -69,6 +72,7 @@ Test('metadata handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is up in API mode only (Config.HANDLERS_DISABLED=true)', async test => {
       // Arrange
       Notification.isConnected.resolves(true)
+      Producer.isConnected.resolves(true)
 
       Config.HANDLERS_DISABLED = true
       Handler = proxyquire('../../../../src/api/metadata/handler', {})
@@ -88,6 +92,7 @@ Test('metadata handler', (handlerTest) => {
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
       Notification.isConnected.throws(new Error('Error connecting to consumer'))
+      Producer.isConnected.throws(new Error('Error connecting producer'))
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 502
 
