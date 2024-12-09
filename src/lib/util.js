@@ -22,12 +22,18 @@ const setProp = (obj, path, value) => {
 
   for (let i = 0; i < pathParts.length - 1; i++) {
     const part = pathParts[i]
+    if (part === '__proto__' || part === 'constructor') {
+      return
+    }
     if (!current[part]) {
       current[part] = {}
     }
     current = current[part]
   }
-  current[pathParts[pathParts.length - 1]] = value
+  const lastPart = pathParts[pathParts.length - 1]
+  if (lastPart !== '__proto__' && lastPart !== 'constructor') {
+    current[lastPart] = value
+  }
 }
 
 module.exports = {
