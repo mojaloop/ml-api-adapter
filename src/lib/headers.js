@@ -31,7 +31,7 @@
 const Mustache = require('mustache')
 const Enums = require('@mojaloop/central-services-shared').Enum
 const Config = require('../lib/config')
-const uriRegex = /(?:^.*)(\/(participants|parties|quotes|transfers|fxTransfers)(\/.*)*)$/
+const uriRegex = /(?:^.*)(\/(transfers|fxTransfers)(\/.*)*)$/
 
 /**
  * @function createErrorCallbackHeaders

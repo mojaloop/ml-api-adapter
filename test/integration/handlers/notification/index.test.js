@@ -1654,8 +1654,6 @@ Test('Notification Handler', notificationHandlerTest => {
     })
 
     notificationTest.test('should read originalRequestPayload from payload cache and send to recipient', async test => {
-      // todo: need to find a way to dynamically update containers to use redis for payload cache
-      // and set the environment variable to use redis for payload cache
       if (apiType !== API_TYPES.iso20022 || originalPayloadStorage !== PAYLOAD_STORAGES.redis) {
         test.pass('Skipping test for non-ISO20022 API')
         test.end()
