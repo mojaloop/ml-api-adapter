@@ -94,5 +94,20 @@ Test('Util', (utilTests) => {
     t.end()
   })
 
+  utilTests.test('setProp should not set __proto__ property in an object', async (t) => {
+    const obj = {}
+    Util.setProp(obj, '__proto__.polluted', 'value')
+    // eslint-disable-next-line no-proto
+    t.notOk(obj.__proto__.polluted, 'Should not set __proto__ property')
+    t.end()
+  })
+
+  utilTests.test('setProp should not set constructor property in an object', async (t) => {
+    const obj = {}
+    Util.setProp(obj, 'constructor.polluted', 'value')
+    t.notOk(obj.constructor.polluted, 'Should not set constructor property')
+    t.end()
+  })
+
   utilTests.end()
 })
