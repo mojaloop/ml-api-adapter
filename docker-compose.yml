@@ -268,6 +268,7 @@ services:
     environment:
       - KAFKA_BROKERS=kafka:29092
 
+
   redis-node-0:
     container_name: redis-node-0
     <<: *REDIS_NODE
@@ -278,6 +279,9 @@ services:
     depends_on:
       - redis-node-1
       - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
     ports:
       - "6379:6379"
       - "16379:16379"

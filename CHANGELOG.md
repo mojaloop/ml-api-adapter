@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [15.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.7...v15.0.0) (2024-12-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* fx and interscheme implementation (#534)
+
+### Features
+
+* fx and interscheme implementation ([#534](https://github.com/mojaloop/ml-api-adapter/issues/534)) ([b270825](https://github.com/mojaloop/ml-api-adapter/commit/b270825ed0f16760d8ffa5acb43063bb980177fc)), closes [mojaloop/#3574](https://github.com/mojaloop/project/issues/3574)
+
 ### [14.0.7](https://github.com/mojaloop/ml-api-adapter/compare/v14.0.6...v14.0.7) (2024-06-11)
 
 

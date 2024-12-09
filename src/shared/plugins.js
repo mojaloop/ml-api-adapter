@@ -28,6 +28,7 @@ const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
 const CentralServices = require('@mojaloop/central-services-shared')
 
+const Package = require('../../package')
 const Config = require('../lib/config')
 const loggingPlugin = require('./loggingPlugin')
 const OpenapiBackendValidator = require('@mojaloop/central-services-shared').Util.Hapi.OpenapiBackendValidator
@@ -38,6 +39,16 @@ const OpenapiBackendValidator = require('@mojaloop/central-services-shared').Uti
 
 const registerPlugins = async (server, openAPIBackend) => {
   await server.register(OpenapiBackendValidator)
+
+  await server.register({
+    plugin: require('hapi-swagger'),
+    options: {
+      info: {
+        title: 'ml api adapter API Documentation',
+        version: Package.version
+      }
+    }
+  })
 
   await server.register({
     plugin: loggingPlugin
