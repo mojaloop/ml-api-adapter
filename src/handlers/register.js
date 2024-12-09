@@ -42,8 +42,8 @@ const NotificationHandler = require('./notification')
  * in each of them. Every handler in the sub-folders must have a registerAllHandlers() function
  * @returns {boolean} - Returns a boolean: true if successful, or throws and error if failed
  */
-const registerAllHandlers = async () => {
-  return NotificationHandler.startConsumer()
+const registerAllHandlers = async ({ payloadCache } = {}) => {
+  return NotificationHandler.startConsumer({ payloadCache })
 }
 
 module.exports = {

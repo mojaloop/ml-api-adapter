@@ -1,4 +1,15 @@
 {
+  "API_TYPE": "fspiop",
+  "ORIGINAL_PAYLOAD_STORAGE": "",
+  "PAYLOAD_CACHE": {
+    "enabled": true,
+    "type": "redis-cluster",
+    "connectionConfig": {
+      "cluster": [
+        { "host": "redis-node-0", "port": 6379 }
+      ]
+    }
+  },
   "PROXY_CACHE": {
     "enabled": true,
     "type": "redis-cluster",
@@ -21,11 +32,22 @@
     "generateTimeout": 30000
   },
   "PROTOCOL_VERSIONS": {
-    "CONTENT": "1.1",
+    "CONTENT": {
+      "DEFAULT": "2.0",
+      "VALIDATELIST": [
+        "1.1",
+        "1.0",
+        "2.0"
+      ]
+    },
     "ACCEPT": {
+      "DEFAULT": "2",
       "VALIDATELIST": [
         "1",
-        "1.1"
+        "1.0",
+        "1.1",
+        "2",
+        "2.0"
       ]
     }
   },
