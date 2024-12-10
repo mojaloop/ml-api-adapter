@@ -26,12 +26,17 @@ const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const CentralServices = require('@mojaloop/central-services-shared')
+const {
+  HapiRawPayload,
+  HapiEventPlugin,
+  FSPIOPHeaderValidation,
+  OpenapiBackendValidator,
+  loggingPlugin
+} = require('@mojaloop/central-services-shared').Util.Hapi
 
 const Package = require('../../package')
 const Config = require('../lib/config')
-const loggingPlugin = require('./loggingPlugin')
-const OpenapiBackendValidator = require('@mojaloop/central-services-shared').Util.Hapi.OpenapiBackendValidator
+const { logger } = require('./logger')
 
 /**
  * @module src/shared/plugins
@@ -48,10 +53,6 @@ const registerPlugins = async (server, openAPIBackend) => {
         version: Package.version
       }
     }
-  })
-
-  await server.register({
-    plugin: loggingPlugin
   })
 
   await server.register({
@@ -109,13 +110,18 @@ const registerPlugins = async (server, openAPIBackend) => {
     Vision,
     Blipp,
     ErrorHandling,
-    CentralServices.Util.Hapi.HapiRawPayload,
-    CentralServices.Util.Hapi.HapiEventPlugin,
+    HapiRawPayload,
+    HapiEventPlugin,
     {
-      plugin: CentralServices.Util.Hapi.FSPIOPHeaderValidation.plugin,
+      plugin: FSPIOPHeaderValidation.plugin,
       options: getOptionsForFSPIOPHeaderValidation()
     }
   ])
+
+  await server.register({
+    plugin: loggingPlugin,
+    options: { log: logger }
+  })
 
   await server.register({
     plugin: {
