@@ -29,7 +29,7 @@
 'use strict'
 
 const Mustache = require('mustache')
-const Enums = require('@mojaloop/central-services-shared').Enum
+const { Enum: Enums, Util: { Headers: { makeAcceptContentTypeHeader } } } = require('@mojaloop/central-services-shared')
 const Config = require('../lib/config')
 const uriRegex = /(?:^.*)(\/(transfers|fxTransfers)(\/.*)*)$/
 
@@ -56,8 +56,13 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
     callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Config.HUB_NAME
     callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(params.headers, Enums.Http.Headers.FSPIOP.DESTINATION)
     if (Config.IS_ISO_MODE) {
-      if (!callbackHeaders[Enums.Http.Headers.GENERAL.CONTENT_TYPE.value].startsWith('application/vnd.interoperability.iso20022')) {
-        callbackHeaders[Enums.Http.Headers.FSPIOP.CONTENT_TYPE].replace('application/vnd.interoperability', 'application/vnd.interoperability.iso20022')
+      let contentType = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.FSPIOP.CONTENT_TYPE.value)
+      if (!contentType.startsWith('application/vnd.interoperability.iso20022')) {
+        if (contentType.includes(Enums.Http.HeaderResources.FX_TRANSFERS)) {
+          contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.FX_TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
+        } else {
+          contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
+        }
       }
     }
   }
