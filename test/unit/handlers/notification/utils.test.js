@@ -9,5 +9,13 @@ Test('Notification utils Tests -->', utilsTests => {
     t.end()
   })
 
+  utilsTests.test('getRecursiveCause should return error message if no cause', t => {
+    const error = new Error()
+    error.message = 'error message'
+    const result = utils.getRecursiveCause(error)
+    t.equal(result, 'error message')
+    t.end()
+  })
+
   utilsTests.end()
 })

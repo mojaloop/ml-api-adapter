@@ -23,7 +23,9 @@
  ******/
 'use strict'
 
+const Proxyquire = require('proxyquire')
 const Test = require('tapes')(require('tape'))
+const Util = require('@mojaloop/central-services-shared').Util
 const Headers = require('../../../src/lib/headers')
 const Mustache = require('mustache')
 const Config = require('../../../src/lib/config')
@@ -49,8 +51,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'POST',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee'
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee'
         }
       }
       Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers')
@@ -71,8 +73,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee'
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee'
         }
       }
       Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error')
@@ -93,8 +95,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee',
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee',
           'FSPIOP-Signature': 'DELETEME'
         }
       }
@@ -116,8 +118,8 @@ Test('Headers tests', headersTest => {
       const params = {
         httpMethod: 'PUT',
         headers: {
-          'FSPIOP-Source': 'payer',
-          'FSPIOP-Destination': 'payee',
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee',
           'FSPIOP-Signature': 'DELETEME'
         }
       }
@@ -125,11 +127,71 @@ Test('Headers tests', headersTest => {
       const expected = {
         'fspiop-http-method': 'PUT',
         'fspiop-uri': '/transfers/5ac51bd9-0be4-4256-876b-070b44b438cb/error',
-        'FSPIOP-Source': 'payer',
-        'FSPIOP-Destination': 'payee',
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee',
         'FSPIOP-Signature': 'DELETEME'
       }
       const result = Headers.createCallbackHeaders(params, fromSwitch)
+
+      test.deepEqual(result, expected)
+      test.end()
+    })
+
+    createCallbackHeadersTest.test('transform content-type header in ISO mode for transfers', test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.IS_ISO_MODE = true
+      ConfigStub.API_TYPE = 'iso20022'
+      const HeadersProxy = Proxyquire('../../../src/lib/headers', {
+        '../lib/config': ConfigStub
+      })
+      const fromSwitch = true
+      const params = {
+        httpMethod: 'PUT',
+        headers: {
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee',
+          'content-type': 'application/vnd.interoperability.transfers+json;version=1.0'
+        }
+      }
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers')
+      const expected = {
+        'fspiop-http-method': 'PUT',
+        'fspiop-uri': '/transfers',
+        'fspiop-source': Config.HUB_NAME,
+        'fspiop-destination': 'payee',
+        'content-type': 'application/vnd.interoperability.iso20022.transfers+json;version=2.0'
+      }
+      const result = HeadersProxy.createCallbackHeaders(params, fromSwitch)
+
+      test.deepEqual(result, expected)
+      test.end()
+    })
+
+    createCallbackHeadersTest.test('transform content-type header in ISO mode for fx transfers', test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.IS_ISO_MODE = true
+      ConfigStub.API_TYPE = 'iso20022'
+      const HeadersProxy = Proxyquire('../../../src/lib/headers', {
+        '../lib/config': ConfigStub
+      })
+      const fromSwitch = true
+      const params = {
+        httpMethod: 'PUT',
+        headers: {
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee',
+          'content-type': 'application/vnd.interoperability.fxTransfers+json;version=1.1'
+        }
+      }
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/fxTransfers')
+      const expected = {
+        'fspiop-http-method': 'PUT',
+        'fspiop-uri': '/fxTransfers',
+        'fspiop-source': Config.HUB_NAME,
+        'fspiop-destination': 'payee',
+        'content-type': 'application/vnd.interoperability.iso20022.fxTransfers+json;version=2.0'
+      }
+      const result = HeadersProxy.createCallbackHeaders(params, fromSwitch)
 
       test.deepEqual(result, expected)
       test.end()
@@ -151,8 +213,8 @@ Test('Headers tests', headersTest => {
 
     getHeaderCaseInsensitiveKeyTest.test('return null if searchKey is null', test => {
       const headers = {
-        'FSPIOP-Source': 'payer',
-        'FSPIOP-Destination': 'payee'
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee'
       }
       const key = null
 
@@ -178,8 +240,8 @@ Test('Headers tests', headersTest => {
 
     getHeaderCaseInsensitiveValueTest.test('return null if searchKey is null', test => {
       const headers = {
-        'FSPIOP-Source': 'payer',
-        'FSPIOP-Destination': 'payee'
+        'fspiop-source': 'payer',
+        'fspiop-destination': 'payee'
       }
       const key = null
 

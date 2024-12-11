@@ -62,7 +62,7 @@ Test('metadata handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+      } = await unwrapResponse((reply) => Handler.getHealth({}, createRequest({}), reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
@@ -82,7 +82,7 @@ Test('metadata handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({}), reply))
+      } = await unwrapResponse((reply) => Handler.getHealth({}, createRequest({}), reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
@@ -99,7 +99,7 @@ Test('metadata handler', (handlerTest) => {
       // Act
       const {
         responseCode
-      } = await unwrapResponse((reply) => Handler.getHealth(createRequest({ query: { detailed: true } }), reply))
+      } = await unwrapResponse((reply) => Handler.getHealth({}, createRequest({ query: { detailed: true } }), reply))
 
       // Assert
       test.deepEqual(responseCode, expectedResponseCode, 'The response code matches')
@@ -120,7 +120,7 @@ Test('metadata handler', (handlerTest) => {
           }
         }
       }
-      await Handler.metadata(createRequest(), reply)
+      await Handler.metadata({}, createRequest(), reply)
     })
 
     metadataTest.test('return urls from request.server and append hostname', t => {
@@ -136,7 +136,7 @@ Test('metadata handler', (handlerTest) => {
           return { code: statusCode => { t.end() } }
         }
       }
-      Handler.metadata(request, reply)
+      Handler.metadata({}, request, reply)
     })
 
     metadataTest.test('format url parameters with colons', t => {
@@ -153,7 +153,7 @@ Test('metadata handler', (handlerTest) => {
         }
       }
 
-      Handler.metadata(request, reply)
+      Handler.metadata({}, request, reply)
     })
 
     metadataTest.end()
