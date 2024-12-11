@@ -55,6 +55,11 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
     if (fspIOPSingatureKey) delete callbackHeaders[fspIOPSingatureKey]
     callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Config.HUB_NAME
     callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(params.headers, Enums.Http.Headers.FSPIOP.DESTINATION)
+    if (Config.IS_ISO_MODE) {
+      if (!callbackHeaders[Enums.Http.Headers.GENERAL.CONTENT_TYPE.value].startsWith('application/vnd.interoperability.iso20022')) {
+        callbackHeaders[Enums.Http.Headers.FSPIOP.CONTENT_TYPE].replace('application/vnd.interoperability', 'application/vnd.interoperability.iso20022')
+      }
+    }
   }
 
   return callbackHeaders
