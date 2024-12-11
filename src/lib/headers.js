@@ -63,6 +63,7 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
         } else {
           contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
         }
+        callbackHeaders[Enums.Http.Headers.FSPIOP.CONTENT_TYPE.value] = contentType
       }
     }
   }
