@@ -56,14 +56,14 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
     callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Config.HUB_NAME
     callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(params.headers, Enums.Http.Headers.FSPIOP.DESTINATION)
     if (Config.IS_ISO_MODE) {
-      let contentType = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.FSPIOP.CONTENT_TYPE.value)
+      let contentType = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.GENERAL.CONTENT_TYPE.value)
       if (!contentType.startsWith('application/vnd.interoperability.iso20022')) {
         if (contentType.includes(Enums.Http.HeaderResources.FX_TRANSFERS)) {
           contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.FX_TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
         } else {
           contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
         }
-        callbackHeaders[Enums.Http.Headers.FSPIOP.CONTENT_TYPE.value] = contentType
+        callbackHeaders[Enums.Http.Headers.GENERAL.CONTENT_TYPE.value] = contentType
       }
     }
   }
