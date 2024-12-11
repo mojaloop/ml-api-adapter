@@ -58,11 +58,8 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
     if (Config.IS_ISO_MODE) {
       let contentType = getHeaderCaseInsensitiveValue(callbackHeaders, Enums.Http.Headers.GENERAL.CONTENT_TYPE.value)
       if (!contentType.startsWith('application/vnd.interoperability.iso20022')) {
-        if (contentType.includes(Enums.Http.HeaderResources.FX_TRANSFERS)) {
-          contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.FX_TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
-        } else {
-          contentType = makeAcceptContentTypeHeader(Enums.Http.HeaderResources.TRANSFERS, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
-        }
+        const resourceType = contentType.includes(Enums.Http.HeaderResources.FX_TRANSFERS) ? Enums.Http.HeaderResources.FX_TRANSFERS : Enums.Http.HeaderResources.TRANSFERS
+        contentType = makeAcceptContentTypeHeader(resourceType, Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT, Config.API_TYPE)
         callbackHeaders[Enums.Http.Headers.GENERAL.CONTENT_TYPE.value] = contentType
       }
     }
