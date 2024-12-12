@@ -109,7 +109,6 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.test('processMessage should', async processMessageTest => {
     await processMessageTest.test('transform hub sent transfer GET message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -139,7 +138,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -160,7 +159,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer FX_GET message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -190,7 +188,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -212,7 +210,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer ABORT_VALIDATION message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -243,7 +240,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -264,7 +261,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer FX_ABORT_VALIDATION message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -295,7 +291,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -316,7 +312,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer RESERVED_ABORTED message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -347,7 +342,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -368,7 +363,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer FX_RESERVED_ABORTED message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -399,7 +393,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }

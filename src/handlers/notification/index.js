@@ -700,17 +700,19 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.TIMEOUT_RESERVED, Action.FX_TIMEOUT_RESERVED, Action.FORWARDED, Action.FX_FORWARDED].includes(action)) {
-    const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
+    const payerToNotify = content.context?.payer || destination
+    const payeeToNotify = content.context?.payee || source
+    const callbackURLTo = await getEndpointFn(payerToNotify, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     jwsSigner = getJWSSigner(Config.HUB_NAME)
-    headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${destination}, ${hubNameRegex} })`)
-    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source: Config.HUB_NAME, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    headers = createCallbackHeaders({ dfspId: payerToNotify, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${payerToNotify}, ${hubNameRegex} })`)
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source: Config.HUB_NAME, destination: payerToNotify, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
 
-    const callbackURLFrom = await getEndpointFn(source, REQUEST_TYPE.PUT_ERROR)
-    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${source}, ${hubNameRegex} })`)
-    headers = createCallbackHeaders({ dfspId: source, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
-    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: source, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+    const callbackURLFrom = await getEndpointFn(payeeToNotify, REQUEST_TYPE.PUT_ERROR)
+    logger.debug(`Notification::processMessage - Callback.sendRequest({ ${callbackURLFrom}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${Config.HUB_NAME}, ${payeeToNotify}, ${hubNameRegex} })`)
+    headers = createCallbackHeaders({ dfspId: payeeToNotify, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
+    await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLFrom, headers, source: Config.HUB_NAME, destination: payeeToNotify, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
 
     histTimerEnd({ success: true, action })
     return true
