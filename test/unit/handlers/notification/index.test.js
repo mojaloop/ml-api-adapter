@@ -184,7 +184,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: 'dfsp2',
-          from: 'dfsp1',
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -250,7 +250,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: 'dfsp2',
-          from: 'dfsp1',
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -549,7 +549,7 @@ Test('Notification Service tests', async notificationTest => {
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
       const msg = {
         value: {
-          from: 'dfsp1',
+          from: Config.HUB_NAME,
           to: 'dfsp2',
           id: '6b74834e-688b-419f-aa59-145ccb962b24',
           content: {
@@ -681,7 +681,7 @@ Test('Notification Service tests', async notificationTest => {
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
       const msg = {
         value: {
-          from: 'dfsp1',
+          from: Config.HUB_NAME,
           to: 'fxp1',
           id: '6b74834e-688b-419f-aa59-145ccb962b24',
           content: {
@@ -828,15 +828,7 @@ Test('Notification Service tests', async notificationTest => {
             payload: {
               errorInformation: {
                 errorCode: '3100',
-                errorDescription: 'Generic validation error - invalid fulfilment',
-                extensionList: {
-                  extension: [
-                    {
-                      key: 'cause',
-                      value: 'FSPIOPError: invalid fulfilment\n    at Object.createFSPIOPError (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/node_modules/@mojaloop/central-services-error-handling/src/factory.js:198:12)\n    at fulfil (/Users/mdebarros/Documents/work/projects/mojaloop/git/central-ledger/src/handlers/transfers/handler.js:439:52)\n    at processTicksAndRejections (internal/process/task_queues.js:97:5)'
-                    }
-                  ]
-                }
+                errorDescription: 'Generic validation error - invalid fulfilment'
               }
             },
             context: {
@@ -890,18 +882,11 @@ Test('Notification Service tests', async notificationTest => {
       const method = ENUM.Http.RestMethods.PUT
       const payeeHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
       const payerHeaders = createCallbackHeaders({ dfspId: msg.value.from, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }, true)
-      const message = {
-        errorInformation:
-        {
-          errorCode: '3100',
-          errorDescription: 'Generic validation error - invalid fulfilment'
-        }
-      }
       try {
         // callback request to PayerFSP
-        Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payeeHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
+        Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payeeHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
         // callback request to PayeeFSP
-        Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
+        Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
         createCallbackHeadersSpy.resetHistory()
         Participant.getEndpoint.resetHistory()
 
@@ -913,8 +898,8 @@ Test('Notification Service tests', async notificationTest => {
         test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(Callback.sendRequest.calledTwice)
-        test.ok(Callback.sendRequest.calledWith(match({ url, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
-        test.ok(Callback.sendRequest.calledWith(match({ url, headers: payeeHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
+        test.ok(Callback.sendRequest.calledWith(match({ url, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })))
+        test.ok(Callback.sendRequest.calledWith(match({ url, headers: payeeHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })))
         test.equal(result, true)
         test.end()
       } catch (e) {

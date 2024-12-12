@@ -139,7 +139,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -190,7 +190,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -243,7 +243,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -295,7 +295,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -347,7 +347,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
@@ -399,7 +399,7 @@ Test('Notification Service tests', async notificationTest => {
             }
           },
           to: payeeFsp,
-          from: payerFsp,
+          from: Config.HUB_NAME,
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
