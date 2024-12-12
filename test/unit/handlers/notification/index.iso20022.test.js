@@ -109,7 +109,6 @@ Test('Notification Service tests', async notificationTest => {
   await notificationTest.test('processMessage should', async processMessageTest => {
     await processMessageTest.test('transform hub sent transfer GET message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -160,7 +159,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer FX_GET message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -212,7 +210,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer ABORT_VALIDATION message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -264,7 +261,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer FX_ABORT_VALIDATION message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -316,7 +312,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer RESERVED_ABORTED message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
@@ -368,7 +363,6 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('transform hub sent transfer FX_RESERVED_ABORTED message when in iso mode', async test => {
       const payeeFsp = 'dfsp2'
-      const payerFsp = 'dfsp1'
       const uuid = Uuid()
       const msg = {
         value: {
