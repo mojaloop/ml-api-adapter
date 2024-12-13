@@ -26,17 +26,25 @@ const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const Blipp = require('blipp')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const CentralServices = require('@mojaloop/central-services-shared')
+const {
+  HapiRawPayload,
+  HapiEventPlugin,
+  FSPIOPHeaderValidation,
+  OpenapiBackendValidator,
+  loggingPlugin
+} = require('@mojaloop/central-services-shared').Util.Hapi
 
 const Package = require('../../package')
 const Config = require('../lib/config')
-const loggingPlugin = require('./loggingPlugin')
+const { logger } = require('./logger')
 
 /**
  * @module src/shared/plugins
  */
 
-const registerPlugins = async (server) => {
+const registerPlugins = async (server, openAPIBackend) => {
+  await server.register(OpenapiBackendValidator)
+
   await server.register({
     plugin: require('hapi-swagger'),
     options: {
@@ -45,10 +53,6 @@ const registerPlugins = async (server) => {
         version: Package.version
       }
     }
-  })
-
-  await server.register({
-    plugin: loggingPlugin
   })
 
   await server.register({
@@ -88,14 +92,16 @@ const registerPlugins = async (server) => {
 
     // configure FSPIOP resources
     const resources = [
-      'transfers'
+      'transfers',
+      'fxTransfers'
     ]
 
     // return FSPIOPHeaderValidation plugin options
     return {
       resources,
       supportedProtocolContentVersions,
-      supportedProtocolAcceptVersions
+      supportedProtocolAcceptVersions,
+      apiType: Config.API_TYPE
     }
   }
 
@@ -104,13 +110,32 @@ const registerPlugins = async (server) => {
     Vision,
     Blipp,
     ErrorHandling,
-    CentralServices.Util.Hapi.HapiRawPayload,
-    CentralServices.Util.Hapi.HapiEventPlugin,
+    HapiRawPayload,
+    HapiEventPlugin,
     {
-      plugin: CentralServices.Util.Hapi.FSPIOPHeaderValidation.plugin,
+      plugin: FSPIOPHeaderValidation.plugin,
       options: getOptionsForFSPIOPHeaderValidation()
     }
   ])
+
+  await server.register({
+    plugin: loggingPlugin,
+    options: { log: logger }
+  })
+
+  await server.register({
+    plugin: {
+      name: 'openapi',
+      version: '1.0.0',
+      multiple: true,
+      register: function (server, options) {
+        server.expose('openapi', options.openapi)
+      }
+    },
+    options: {
+      openapi: openAPIBackend
+    }
+  })
 }
 
 module.exports = {

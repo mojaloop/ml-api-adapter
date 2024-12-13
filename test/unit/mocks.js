@@ -32,6 +32,7 @@
  --------------
 
  ******/
+const Sinon = require('sinon')
 
 const mockFxPreparePayload = ({
   commitRequestId = '77c9d78d-c26a-4474-8b3c-99b96a814bfc',
@@ -65,7 +66,16 @@ const mockFxFulfilPayload = ({
   completedTimestamp
 })
 
+const mockPayloadCache = {
+  connect: Sinon.stub(),
+  disconnect: Sinon.stub(),
+  getPayload: Sinon.stub(),
+  setPayload: Sinon.stub(),
+  isConnected: Sinon.stub().returns(true)
+}
+
 module.exports = {
   mockFxPreparePayload,
-  mockFxFulfilPayload
+  mockFxFulfilPayload,
+  mockPayloadCache
 }
