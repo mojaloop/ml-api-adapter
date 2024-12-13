@@ -82,21 +82,20 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
   return originalPayload
 }
 
-const getCallbackPayload = async (content, payloadCache = undefined) => {
+const getCallbackPayload = async (content, payloadCache = undefined, fromSwitch = false) => {
   const isIsoMode = API_TYPE === API_TYPES.iso20022
-  const fromSwitch = content.headers['fspiop-source'] === HUB_NAME
   const originalPayload = await getOriginalPayload(content, payloadCache)
   const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
   const fspiopObject = content.payload
   let payloadForCallback = finalPayload
 
-  if (fspiopObject.errorInformation) {
+  if (fspiopObject.errorInformation && fromSwitch) {
     const fspiopError = ErrorHandler.CreateFSPIOPErrorFromErrorInformation(fspiopObject.errorInformation).toApiErrorObject(ERROR_HANDLING)
     // If we're in ISO mode and source is switch, then this is a hub-generated error (in current hub).
     // If so, we need to generate an ISO error to forward.
-    if (isIsoMode && fromSwitch) {
+    if (isIsoMode) {
       payloadForCallback = (await TransformFacades.FSPIOP.transfers.putError({ body: fspiopError })).body
-    } else if (!isIsoMode && fromSwitch) {
+    } else {
       payloadForCallback = fspiopError
     }
   }
@@ -114,11 +113,12 @@ const notificationMessageDto = async (message, payloadCache = undefined) => {
   const status = state.status.toLowerCase()
   const isSuccess = status === SUCCESS.status
   const isFx = FX_ACTIONS.includes(actionLower)
+  const fromSwitch = (from === HUB_NAME)
   const isOriginalId = content.context?.isOriginalId
 
   logger.info('Notification::processMessage - action, status: ', { actionLower, status, isFx, isSuccess })
 
-  const { payloadForCallback, fspiopObject } = await getCallbackPayload(content, payloadCache)
+  const { payloadForCallback, fspiopObject } = await getCallbackPayload(content, payloadCache, fromSwitch)
 
   let id = content.uriParams?.id
   if (!id) {

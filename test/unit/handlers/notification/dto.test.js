@@ -148,7 +148,7 @@ Test('notificationMessageDto', async notificationMessageDtoTest => {
     const isoError = JSON.parse(result.payloadForCallback)
 
     // Assert
-    test.equal(isoError.TxInfAndSts.StsRsnInf.Rsn.Cd, '3100')
+    test.equal(isoError.errorInformation.errorCode, '3100')
     test.end()
   })
 
