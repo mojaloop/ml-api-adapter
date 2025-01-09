@@ -64,7 +64,7 @@ Program.command('handler') // sub-command name, coffeeType = type, required
     module.exports = Setup.initialize({
       service: Enums.Http.ServiceType.HANDLER,
       port: Config.PORT,
-      modules: [MetricsPlugin],
+      modules: [!Config.INSTRUMENTATION_METRICS_DISABLED && MetricsPlugin].filter(Boolean),
       handlers: handlerList,
       runHandlers: true
     })

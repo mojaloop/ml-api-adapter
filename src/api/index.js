@@ -43,6 +43,6 @@ const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 module.exports = Setup.initialize({
   service: Enums.Http.ServiceType.API,
   port: Config.PORT,
-  modules: [MetricsPlugin],
+  modules: [!Config.INSTRUMENTATION_METRICS_DISABLED && MetricsPlugin].filter(Boolean),
   runHandlers: !Config.HANDLERS_DISABLED
 })
