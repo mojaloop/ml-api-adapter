@@ -20,50 +20,87 @@ const makeMessageMetadata = (id, type, action) => {
   return StreamingProtocol.createMetadata(id, event)
 }
 
-const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '' }) => {
+const prepareMessageDto = ({ headers, dataUri, payload, logPrefix = '', context, isIsoMode }) => {
   const isFx = !!payload.commitRequestId
   const action = isFx ? Action.FX_PREPARE : Action.PREPARE
   const id = isFx ? payload.commitRequestId : payload.transferId
   const to = isFx ? payload.counterPartyFsp : payload.payeeFsp
   const from = isFx ? payload.initiatingFsp : payload.payerFsp
-
+  let messageProtocol
   const metadata = makeMessageMetadata(id, Type.PREPARE, action)
-  const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri, params: { id } }, to, from, metadata)
+  if (!isIsoMode) {
+    messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri, params: { id } }, to, from, metadata, context)
+  } else {
+    messageProtocol = StreamingProtocol.createMessage(
+      id,
+      to,
+      from,
+      metadata,
+      headers,
+      payload,
+      { id },
+      undefined,
+      context
+    )
+  }
+
   logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
 }
 
-const forwardedMessageDto = (id, from, to, payload) => Object.freeze(StreamingProtocol.createMessage(
+const forwardedMessageDto = (id, from, to, payload, context = {}) => Object.freeze(StreamingProtocol.createMessage(
   id,
   to,
   from,
   makeMessageMetadata(id, Type.PREPARE, Action.FORWARDED),
   undefined,
-  payload
+  payload,
+  undefined,
+  undefined,
+  context
 ))
 
-const fxForwardedMessageDto = (id, from, to, payload) => Object.freeze(StreamingProtocol.createMessage(
+const fxForwardedMessageDto = (id, from, to, payload, context = {}) => Object.freeze(StreamingProtocol.createMessage(
   id,
   to,
   from,
   makeMessageMetadata(id, Type.PREPARE, Action.FX_FORWARDED),
   undefined,
-  payload
+  payload,
+  undefined,
+  undefined,
+  context
 ))
 
-const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix }) => {
+const baseFulfillMessageDto = ({ action, headers, dataUri, params, logPrefix, context, payload, isIsoMode }) => {
+  const id = params.id || params.ID
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
+  const metadata = makeMessageMetadata(id, Type.FULFIL, action)
+  let messageProtocol
 
-  const metadata = makeMessageMetadata(params.id, Type.FULFIL, action)
-  const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri, params }, to, from, metadata)
+  if (!isIsoMode) {
+    messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri, params: { id } }, to, from, metadata, context)
+  } else {
+    messageProtocol = StreamingProtocol.createMessage(
+      id,
+      to,
+      from,
+      metadata,
+      headers,
+      payload,
+      { id },
+      undefined,
+      context
+    )
+  }
   logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
 }
 
-const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '' }) => {
+const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '', context, isIsoMode }) => {
   const isFx = !payload.transferState
   const state = payload.transferState || payload.conversionState
   const actionKey = state === TransferState.ABORTED
@@ -73,21 +110,22 @@ const fulfilMessageDto = ({ headers, dataUri, payload, params, logPrefix = '' })
         : 'COMMIT'
   const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}${actionKey}`]
 
-  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
+  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix, payload, context, isIsoMode })
 }
 
-const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '' }) => {
+const fulfilErrorMessageDto = ({ headers, dataUri, params, isFx, logPrefix = '', payload, context, isIsoMode }) => {
   const action = Action[`${isFx ? FX_ACTION_KEY_PREFIX : ''}ABORT`]
-  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix })
+  return baseFulfillMessageDto({ action, headers, dataUri, params, logPrefix, payload, context, isIsoMode })
 }
 
-const getMessageDto = ({ headers, params, isFx, logPrefix = '' }) => {
+const getMessageDto = ({ headers, params, isFx, logPrefix = '', context }) => {
+  const id = params.id || params.ID
   const action = isFx ? Action.FX_GET : Action.GET
   const to = headers[Enum.Http.Headers.FSPIOP.DESTINATION]
   const from = headers[Enum.Http.Headers.FSPIOP.SOURCE]
 
-  const metadata = makeMessageMetadata(params.id, Type.GET, action)
-  const messageProtocol = StreamingProtocol.createMessageFromRequest(params.id, { headers, dataUri: undefined, params }, to, from, metadata)
+  const metadata = makeMessageMetadata(id, Type.GET, action)
+  const messageProtocol = StreamingProtocol.createMessageFromRequest(id, { headers, dataUri: undefined, params: { id } }, to, from, metadata, context)
   logger.debug(`${logPrefix}::messageProtocol`, { messageProtocol })
 
   return Object.freeze(messageProtocol)
@@ -101,6 +139,13 @@ const producerConfigDto = (functionality, action, logPrefix = '') => {
   return Object.freeze({ topicConfig, kafkaConfig })
 }
 
+const setOriginalRequestPayload = async (kafkaMessageContext, payloadCache = undefined) => {
+  await payloadCache.setPayload(
+    kafkaMessageContext.originalRequestId,
+    kafkaMessageContext.originalRequestPayload
+  )
+}
+
 module.exports = {
   prepareMessageDto,
   forwardedMessageDto,
@@ -109,5 +154,6 @@ module.exports = {
   fulfilErrorMessageDto,
   eventStateDto,
   producerConfigDto,
-  getMessageDto
+  getMessageDto,
+  setOriginalRequestPayload
 }

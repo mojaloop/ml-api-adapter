@@ -33,6 +33,8 @@
 
  ******/
 
+const { API_TYPES } = require('@mojaloop/central-services-shared').Util.Hapi
+
 const ROUTES = Object.freeze({
   fxTransfers: '/fxTransfers'
 })
@@ -61,6 +63,7 @@ const TEMPLATE_PARAMS = Object.freeze({
 })
 
 module.exports = {
+  API_TYPES,
   ROUTES,
   ROUTE_IDS,
   PROM_METRICS,
