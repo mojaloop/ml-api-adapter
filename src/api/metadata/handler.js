@@ -30,7 +30,6 @@
 'use strict'
 
 const HealthCheck = require('@mojaloop/central-services-shared').HealthCheck.HealthCheck
-const { defaultHealthHandler } = require('@mojaloop/central-services-health')
 const packageJson = require('../../../package.json')
 const Config = require('../../lib/config')
 
@@ -87,7 +86,11 @@ const extractUrls = (request) => {
  * @param {*} request - the Hapi request object
  * @param {*} h - the Hapi handler object
  */
-const getHealth = defaultHealthHandler(healthCheck)
+const getHealth = async (context, request, h) => {
+  const health = await healthCheck.getHealth()
+  const statusCode = health.status !== 'OK' ? 502 : 200
+  return h.response(health).code(statusCode)
+}
 
 /**
  * @function metadata
@@ -100,7 +103,7 @@ const getHealth = defaultHealthHandler(healthCheck)
  *
  * @returns {object} - Returns the object containing the hostname, registered URLs and 200 status code
  */
-const metadata = (request, h) => {
+const metadata = (context, request, h) => {
   return h.response({
     directory: Config.HOSTNAME,
     urls: extractUrls(request)

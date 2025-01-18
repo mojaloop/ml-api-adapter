@@ -1,7 +1,7 @@
 /*****
  License
  --------------
- Copyright © 2020-2024 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
  The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
@@ -67,7 +67,7 @@ Test('DTO tests -->', dtoTest => {
         uriParams: undefined,
         headers: undefined,
         payload: { id: 1, from: 'from' },
-        context: undefined
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -94,7 +94,7 @@ Test('DTO tests -->', dtoTest => {
         uriParams: undefined,
         headers: undefined,
         payload: { id: 1, from: 'from' },
-        context: undefined
+        context: {}
       },
       metadata: {
         correlationId: 1,
@@ -114,6 +114,14 @@ Test('DTO tests -->', dtoTest => {
   dtoTest.test('fulfilMessageDto FX_RESERVE test', test => {
     const payload = mocks.mockFxFulfilPayload()
     const params = { id: '1234' }
+    const data = dto.fulfilMessageDto({ headers, dataUri, payload, params })
+    test.ok(data.metadata.event.action === Event.Action.FX_RESERVE)
+    test.end()
+  })
+
+  dtoTest.test('fulfilMessageDto FX_RESERVE test ID', test => {
+    const payload = mocks.mockFxFulfilPayload()
+    const params = { ID: '1234' }
     const data = dto.fulfilMessageDto({ headers, dataUri, payload, params })
     test.ok(data.metadata.event.action === Event.Action.FX_RESERVE)
     test.end()

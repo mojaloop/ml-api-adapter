@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "15.0.1",
+  "version": "15.1.0-iso.14",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -25,6 +25,7 @@
   "pre-commit": [
     "lint",
     "dep:check",
+    "audit:check",
     "test"
   ],
   "scripts": {
@@ -53,10 +54,10 @@
     "test:xint": "npm run test:int | tee /dev/tty | tap-xunit > ./test/results/xunit-integration.xml",
     "test:functional": "./test/scripts/test-functional.sh",
     "docker:build": "docker build --build-arg NODE_VERSION=\"$(cat .nvmrc)-alpine\" -t mojaloop/ml-api-adapter:local .",
-    "docker:up": "docker-compose -f docker-compose.yml up",
+    "docker:up": ". ./docker/env.sh && docker-compose -f docker-compose.yml up -d",
     "docker:stop": "docker-compose -f docker-compose.yml stop",
     "docker:rm": "docker-compose -f docker-compose.yml rm -f -v",
-    "docker:down": "docker-compose -f docker-compose.yml down -v",
+    "docker:down": ". ./docker/env.sh && docker-compose -f docker-compose.yml down -v",
     "docker:clean": "docker-compose -f docker-compose.yml down --rmi local",
     "generate-docs": "npx jsdoc -c jsdoc.json",
     "audit:fix": "npm audit fix",
@@ -75,8 +76,6 @@
     "@hapi/good": "9.0.1",
     "@hapi/hapi": "21.3.12",
     "@hapi/inert": "7.1.0",
-    "@hapi/joi": "17.1.1",
-    "@hapi/joi-date": "2.0.1",
     "@hapi/vision": "7.0.3",
     "@mojaloop/central-services-error-handling": "13.0.3",
     "@mojaloop/central-services-health": "15.0.0",
@@ -84,8 +83,9 @@
     "@mojaloop/central-services-metrics": "12.4.3",
     "@mojaloop/central-services-shared": "18.15.1",
     "@mojaloop/central-services-stream": "11.4.2",
-    "@mojaloop/event-sdk": "14.1.1",
+    "@mojaloop/event-sdk": "14.1.2",
     "@mojaloop/sdk-standard-components": "19.6.3",
+    "@mojaloop/ml-schema-transformer-lib": "2.5.1",
     "@now-ims/hapi-now-auth": "2.1.0",
     "axios": "1.7.9",
     "blipp": "4.0.2",
@@ -122,7 +122,6 @@
   "devDependencies": {
     "@mojaloop/database-lib": "11.1.1",
     "@mojaloop/inter-scheme-proxy-cache-lib": "2.3.1",
-    "@types/hapi__joi": "^17.1.15",
     "audit-ci": "^7.1.0",
     "get-port": "5.1.1",
     "jsdoc": "4.0.4",

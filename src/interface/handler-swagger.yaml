@@ -1,0 +1,308 @@
+openapi: 3.0.1
+info:
+  title: Open API for ML Adapter Admin API
+  description: Open API for ML Adapter Admin API
+  license:
+    name: Apache 2.0
+  version: "1.1"
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      tags:
+        - admin
+      summary: Get Oracles
+      description: The HTTP request GET /health is used to return the current status
+        of the Admin API.
+      operationId: HealthGet
+      responses:
+        200:
+          $ref: '#/components/responses/ResponseHealth200'
+        400:
+          $ref: '#/components/responses/ErrorResponse400'
+        401:
+          $ref: '#/components/responses/ErrorResponse401'
+        403:
+          $ref: '#/components/responses/ErrorResponse403'
+        404:
+          $ref: '#/components/responses/ErrorResponse404'
+        405:
+          $ref: '#/components/responses/ErrorResponse405'
+        406:
+          $ref: '#/components/responses/ErrorResponse406'
+        501:
+          $ref: '#/components/responses/ErrorResponse501'
+        503:
+          $ref: '#/components/responses/ErrorResponse503'
+components:
+  schemas:
+    ErrorCode:
+      title: ErrorCode
+      pattern: ^[1-9]\d{3}$
+      type: string
+      description: The API data type ErrorCode is a JSON String of four characters,
+        consisting of digits only. Negative numbers are not allowed. A leading zero
+        is not allowed. Each error code in the API is a four-digit number, for example,
+        1234, where the first number (1 in the example) represents the high-level
+        error category, the second number (2 in the example) represents the low-level
+        error category, and the last two numbers (34 in the example) represents the
+        specific error.
+    ErrorDescription:
+      title: ErrorDescription
+      maxLength: 128
+      minLength: 1
+      type: string
+      description: Error description string.
+    ExtensionKey:
+      title: ExtensionKey
+      maxLength: 32
+      minLength: 1
+      type: string
+      description: Extension key.
+    ExtensionValue:
+      title: ExtensionValue
+      maxLength: 128
+      minLength: 1
+      type: string
+      description: Extension value.
+    ErrorInformation:
+      title: ErrorInformation
+      required:
+        - errorCode
+        - errorDescription
+      type: object
+      properties:
+        errorCode:
+          $ref: '#/components/schemas/ErrorCode'
+        errorDescription:
+          $ref: '#/components/schemas/ErrorDescription'
+        extensionList:
+          $ref: '#/components/schemas/ExtensionList'
+      description: Data model for the complex type ErrorInformation.
+    ErrorInformationResponse:
+      title: ErrorInformationResponse
+      type: object
+      properties:
+        errorInformation:
+          $ref: '#/components/schemas/ErrorInformation'
+      description: Data model for the complex type object that contains an optional
+        element ErrorInformation used along with 4xx and 5xx responses.
+    Extension:
+      title: Extension
+      required:
+        - key
+        - value
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/ExtensionKey'
+        value:
+          $ref: '#/components/schemas/ExtensionValue'
+      description: Data model for the complex type Extension
+    ExtensionList:
+      title: ExtensionList
+      required:
+        - extension
+      type: object
+      properties:
+        extension:
+          maxItems: 16
+          minItems: 1
+          type: array
+          description: Number of Extension elements
+          items:
+            $ref: '#/components/schemas/Extension'
+      description: Data model for the complex type ExtensionList
+    HealthStatusType:
+      title: HealthStatusType
+      type: string
+      description: Below are the allowed values for the enumeration HealthStatusType
+        - OK - DOWN
+      enum:
+        - OK
+        - DOWN
+    HealthServicesType:
+      title: HealthServicesType
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/HealthStatusType'
+      description: Data model for the complex type HealthServicesType. Contains health
+        services information.
+    Status:
+      title: Status
+      type: object
+      properties:
+        status:
+          type: string
+          description: The return status, usually "OK"
+        uptime:
+          type: number
+          description: The amount of time in seconds that the server has been up for.
+        startTime:
+          type: string
+          description: The UTC time that the server started up
+        versionNumber:
+          type: string
+          description: Current version of the API
+        services:
+          type: array
+          description: An list of the statuses of services that the API requires
+          items:
+            $ref: '#/components/schemas/HealthServicesType'
+      description: Data model for the api status.
+  responses:
+    ErrorResponse400:
+      description: Bad Request - The application cannot process the request; for example,
+        due to malformed syntax or the payload exceeded size restrictions.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse401:
+      description: Unauthorized - The request requires authentication in order to
+        be processed.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse403:
+      description: Forbidden - The request was denied and will be denied in the future.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse404:
+      description: Not Found - The resource specified in the URI was not found.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse405:
+      description: Method Not Allowed - An unsupported HTTP method for the request
+        was used.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse406:
+      description: Not acceptable - The server is not capable of generating content
+        according to the Accept headers sent in the request. Used in the API to indicate
+        that the server does not support the version that the client is requesting.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse501:
+      description: Not Implemented - The server does not support the requested service.
+        The client should not retry.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ErrorResponse503:
+      description: Service Unavailable - The server is currently unavailable to accept
+        any new service requests. This should be a temporary state, and the client
+        should retry within a reasonable time frame.
+      headers:
+        Content-Length:
+          description: The Content-Length header field indicates the anticipated size
+            of the payload body. Only sent if there is a body.
+          schema:
+            type: integer
+        Content-Type:
+          description: The Content-Type header indicates the specific version of the
+            API used to send the payload body.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInformationResponse'
+    ResponseHealth200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Status'
+  parameters: {}

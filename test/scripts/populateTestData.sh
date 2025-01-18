@@ -16,6 +16,12 @@ function isProxy() {
     [[ "$1" =~ ^prox ]]
 }
 
+function generateUUID() {
+    # uuidgen in macOS is generated as all-caps, so we need to convert it to lowercase 
+    # to pass validation in the CL admin API
+    echo $(uuidgen | tr '[:upper:]' '[:lower:]')
+}
+
 echo "Loading env vars..."
 source $CWD/env.sh
 
@@ -127,7 +133,7 @@ curl -i -X POST "${CENTRAL_LEDGER_ADMIN_URI_PREFIX}://${CENTRAL_LEDGER_ADMIN_HOS
 
 
   ## Generate TransferId for Funds-in
-  FUNDS_IN_TRANSFER_ID=$(uuidgen)
+  FUNDS_IN_TRANSFER_ID=$(generateUUID)
   ACCOUNT_ID=$(echo $ACCOUNT_LIST | jq '.[] | select(.ledgerAccountType == "SETTLEMENT" and .currency == "USD") | .id')
 
   echo

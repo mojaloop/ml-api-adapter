@@ -1,7 +1,7 @@
 /*****
  License
  --------------
- Copyright © 2020-2024 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
  The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
@@ -33,46 +33,49 @@
 
  ******/
 
-const { asyncStorage } = require('@mojaloop/central-services-logger/src/contextLogger')
-const { logger } = require('./logger') // pass though plugin options?
+const RedisCache = require('@mojaloop/central-services-shared/src/util/redis/redisCache')
+const safeStringify = require('fast-safe-stringify')
 
-const loggingPlugin = {
-  name: 'loggingPlugin',
-  version: '1.0.0',
-  once: true,
-  register: async (server) => {
-    // const { logger } = options;
-    server.ext({
-      type: 'onPreHandler',
-      method: (request, h) => {
-        const { path, method, headers, payload, query } = request
-        const { remoteAddress } = request.info
-        const requestId = request.info.id = `${request.info.id}__${headers.traceid}`
-        asyncStorage.enterWith({ requestId })
+const DEFAULT_TTL_SEC = 300 // pass through config
+const KEY_PREFIX = 'iso_payload'
 
-        logger.isInfoEnabled && logger.info(`[==> req] ${method.toUpperCase()} ${path}`, { headers, payload, query, remoteAddress })
-        return h.continue
-      }
-    })
+class PayloadCache extends RedisCache {
+  async getPayload (requestId, parseJson = false) {
+    try {
+      const key = PayloadCache.formatPayloadCacheKey(requestId)
+      const rawValue = await super.get(key)
 
-    server.ext({
-      type: 'onPreResponse',
-      method: (request, h) => {
-        if (logger.isInfoEnabled) {
-          const { path, method, headers, payload, query, response } = request
-          const { received } = request.info
+      const value = (rawValue && parseJson)
+        ? JSON.parse(rawValue)
+        : rawValue
 
-          const statusCode = response instanceof Error
-            ? response.output?.statusCode
-            : response.statusCode
-          const respTimeSec = ((Date.now() - received) / 1000).toFixed(3)
+      this.log.debug('getPayload is done:', { key, requestId, value })
+      return value
+    } catch (err) {
+      this.log.warn('getPayload is failed with error', err)
+      return null
+    }
+  }
 
-          logger.info(`[<== ${statusCode}][${respTimeSec} s] ${method.toUpperCase()} ${path}`, { headers, payload, query })
-        }
-        return h.continue
-      }
-    })
+  async setPayload (requestId, payload, ttl = DEFAULT_TTL_SEC) {
+    try {
+      const key = PayloadCache.formatPayloadCacheKey(requestId)
+      const valueString = typeof payload === 'string'
+        ? payload
+        : safeStringify(payload)
+      const setResult = await super.set(key, valueString, ttl)
+
+      this.log.debug('setPayload is done:', { key, requestId, setResult })
+      return true
+    } catch (err) {
+      this.log.warn('setPayload is failed with error:', err)
+      return false
+    }
+  }
+
+  static formatPayloadCacheKey (requestId) {
+    return `${KEY_PREFIX}:${requestId}`
   }
 }
 
-module.exports = loggingPlugin
+module.exports = PayloadCache

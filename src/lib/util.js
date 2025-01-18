@@ -17,60 +17,48 @@
  optionally within square brackets <email>.
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
-
- - Shashikant Hirugade <shashikant.hirugade@modusbox.com>
  --------------
  ******/
 
-'use strict'
+const Path = require('path')
+const { Hapi } = require('@mojaloop/central-services-shared').Util
+const Config = require('../lib/config')
 
-const Test = require('tapes')(require('tape'))
-const Sinon = require('sinon')
-const Handler = require('../../../../src/api/metrics/handler')
-const Metrics = require('@mojaloop/central-services-metrics')
+const pathForInterface = ({ isHandlerInterface }) => {
+  let apiFile
+  const pathFolder = '../interface/'
+  if (isHandlerInterface) {
+    apiFile = 'handler-swagger.yaml'
+  } else {
+    apiFile = Config.API_TYPE === Hapi.API_TYPES.iso20022
+      ? 'api-swagger-iso20022-transfers.yaml'
+      : 'api-swagger.yaml'
+  }
+  return Path.resolve(__dirname, pathFolder + apiFile)
+}
 
-function createRequest (routes) {
-  const value = routes || []
-  return {
-    server: {
-      table: () => {
-        return [{ table: value }]
-      }
+// Safely set nested property in an object
+const setProp = (obj, path, value) => {
+  const pathParts = path.split('.')
+  let current = obj
+
+  for (let i = 0; i < pathParts.length - 1; i++) {
+    const part = pathParts[i]
+    if (part === '__proto__' || part === 'constructor') {
+      return
     }
+    if (!current[part]) {
+      current[part] = {}
+    }
+    current = current[part]
+  }
+  const lastPart = pathParts[pathParts.length - 1]
+  if (lastPart !== '__proto__' && lastPart !== 'constructor') {
+    current[lastPart] = value
   }
 }
 
-Test('metrics handler', (handlerTest) => {
-  let sandbox
-  handlerTest.beforeEach(t => {
-    sandbox = Sinon.createSandbox()
-    sandbox.stub(Metrics)
-    t.end()
-  })
-
-  handlerTest.afterEach(t => {
-    sandbox.restore()
-    t.end()
-  })
-
-  handlerTest.test('metrics should', (healthTest) => {
-    healthTest.test('return thr metrics ok', async function (assert) {
-      const reply = {
-        response: () => {
-          // assert.equal(response.status, 'OK')
-          return {
-            code: (statusCode) => {
-              assert.equal(statusCode, 200)
-              assert.end()
-            }
-          }
-        }
-      }
-
-      Handler.metrics(createRequest(), reply)
-    })
-    healthTest.end()
-  })
-
-  handlerTest.end()
-})
+module.exports = {
+  pathForInterface,
+  setProp
+}

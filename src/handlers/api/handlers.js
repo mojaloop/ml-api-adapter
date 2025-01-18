@@ -1,7 +1,7 @@
 /*****
  License
  --------------
- Copyright © 2020-2024 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
  The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
@@ -33,32 +33,12 @@
 
  ******/
 
-const test = require('tapes')(require('tape'))
-const Joi = require('@hapi/joi')
-const { transferHeadersSchema } = require('../../../src/api/validationSchemas')
+const { getHealth } = require('../../../src/api/metadata/handler')
+const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
 
-const getRequiredSchemaFields = (schema) => {
-  if (!Joi.isSchema(transferHeadersSchema)) throw new TypeError('Invalid Joi schema')
-
-  const { keys } = schema.describe()
-  return Object.entries(keys).reduce((r, [key, value]) => {
-    if (value.flags?.presence === 'required') {
-      r.push(key)
-    }
-    return r
-  }, [])
+module.exports.KafkaModeHandlerApiHandlers = {
+  HealthGet: getHealth,
+  validationFail: OpenapiBackend.validationFail,
+  notFound: OpenapiBackend.notFound,
+  methodNotAllowed: OpenapiBackend.methodNotAllowed
 }
-
-test('Validation Schemas Tests', (vshTests) => {
-  vshTests.test('transferSchema should fail if no required fields', (t) => {
-    const headers = {}
-    const { error } = transferHeadersSchema.validate(headers)
-
-    t.ok(error instanceof Joi.ValidationError)
-    const required = getRequiredSchemaFields(transferHeadersSchema)
-    required.forEach(field => t.ok(error.message.includes(field)))
-    t.end()
-  })
-
-  vshTests.end()
-})

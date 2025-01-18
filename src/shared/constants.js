@@ -1,7 +1,7 @@
 /*****
  License
  --------------
- Copyright © 2020-2024 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
  The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
@@ -33,6 +33,8 @@
 
  ******/
 
+const { API_TYPES } = require('@mojaloop/central-services-shared').Util.Hapi
+
 const ROUTES = Object.freeze({
   fxTransfers: '/fxTransfers'
 })
@@ -61,6 +63,7 @@ const TEMPLATE_PARAMS = Object.freeze({
 })
 
 module.exports = {
+  API_TYPES,
   ROUTES,
   ROUTE_IDS,
   PROM_METRICS,

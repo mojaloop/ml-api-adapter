@@ -1,7 +1,7 @@
 /*****
  License
  --------------
- Copyright © 2020-2024 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
  The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
@@ -32,6 +32,7 @@
  --------------
 
  ******/
+const Sinon = require('sinon')
 
 const mockFxPreparePayload = ({
   commitRequestId = '77c9d78d-c26a-4474-8b3c-99b96a814bfc',
@@ -65,7 +66,16 @@ const mockFxFulfilPayload = ({
   completedTimestamp
 })
 
+const mockPayloadCache = {
+  connect: Sinon.stub(),
+  disconnect: Sinon.stub(),
+  getPayload: Sinon.stub(),
+  setPayload: Sinon.stub(),
+  isConnected: Sinon.stub().returns(true)
+}
+
 module.exports = {
   mockFxPreparePayload,
-  mockFxFulfilPayload
+  mockFxFulfilPayload,
+  mockPayloadCache
 }

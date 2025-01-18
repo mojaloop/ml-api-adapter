@@ -35,11 +35,14 @@ const { Kafka: KafkaUtil, HeaderValidation, Request } = require('@mojaloop/centr
 const Enum = require('@mojaloop/central-services-shared').Enum
 const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Kafka = require('@mojaloop/central-services-stream').Util
-
 const Config = require('../../../../src/lib/config')
 const centralLedgerConfig = require('../../../../docker/central-ledger/default.json')
 const { prepare } = require('../../../../src/domain/transfer/index')
 const Fixtures = require('../../../fixtures')
+const { API_TYPES } = require('../../../../src/shared/constants')
+const { createPayloadCache } = require('../../../../src/lib/payloadCache')
+const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 const { Action } = Enum.Events.Event
 const EventTypes = Enum.Events.Event.Type
@@ -61,6 +64,8 @@ const wrapWithRetriesConf = {
 }
 
 const getNotificationUrl = process.env.ENDPOINT_URL
+const apiType = process.env.API_TYPE
+const originalPayloadStorage = process.env.ORIGINAL_PAYLOAD_STORAGE || ''
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 const testNotification = async (messageProtocol, operation, transferId, kafkaConfig, topicConfig, checkSenderResponse = false, senderOperation = null, proxy) => {
@@ -84,6 +89,7 @@ const testNotification = async (messageProtocol, operation, transferId, kafkaCon
 Test('Notification Handler', notificationHandlerTest => {
   notificationHandlerTest.test('should', async notificationTest => {
     let proxy
+
     notificationTest.test('connect proxy lib', async test => {
       const { type, proxyConfig } = Fixtures.proxyCacheConfigDto()
       proxy = proxyLib.createProxyCache(type, proxyConfig)
@@ -111,7 +117,7 @@ Test('Notification Handler', notificationHandlerTest => {
           amount: { amount: 100, currency: 'USD' },
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
           payerFsp: 'dfsp3',
           payeeFsp: 'dfsp4',
           transferId
@@ -137,7 +143,7 @@ Test('Notification Handler', notificationHandlerTest => {
         amount: { amount: 1, currency: 'USD' },
         condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
         expiration: '2040-01-01T00:00:00.000',
-        ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
         payerFsp: 'dfsp1',
         payeeFsp: 'proxied2',
         transferId
@@ -229,7 +235,7 @@ Test('Notification Handler', notificationHandlerTest => {
           targetAmount: { amount: 200, currency: 'TZS' },
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+          ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA'
         },
         'dfsp1',
         'fxp1'
@@ -258,7 +264,7 @@ Test('Notification Handler', notificationHandlerTest => {
         targetAmount: { amount: 200, currency: 'USD' },
         condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
         expiration: new Date((new Date()).getTime() + (24 * 60 * 60 * 1000)).toISOString(), // tomorrow
-        ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9'
+        ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA'
       }
       await prepare(
         {
@@ -360,7 +366,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully from switch to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      }
+
       test.end()
     })
 
@@ -392,7 +403,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully from switch to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully from switch to Payer')
+      }
+
       test.end()
     })
 
@@ -427,7 +443,7 @@ Test('Notification Handler', notificationHandlerTest => {
             fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
             condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
             expiration: '2018-08-24T21:31:00.534+01:00',
-            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+            ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
             payeeFsp: 'dfsp2',
             payerFsp: 'dfsp1',
             transferId
@@ -438,12 +454,16 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
-
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.ok(response.payload.TxInfAndSts, 'ISO duplication notification sent successfully')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -473,8 +493,8 @@ Test('Notification Handler', notificationHandlerTest => {
           },
           payload: {
             commitRequestId,
-            initiatingFsp: 'dfsp1',
-            counterPartyFsp: 'fxp1'
+            conversionState: 'COMMITTED',
+            completedTimestamp: '2018-08-23T21:31:00.534+01:00'
           }
         },
         to: 'dfsp1',
@@ -482,12 +502,16 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
-
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.ok(response.payload.TxInfAndSts, 'ISO duplication notification sent successfully')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -502,7 +526,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
           payeeFsp: 'dfsp1',
           payerFsp: 'dfsp2',
           transferId
@@ -560,7 +584,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp2',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -576,7 +600,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -591,7 +620,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'fxp1',
+        Config.HUB_NAME,
         'dfsp1'
       )
       messageProtocol.metadata.event.state = {
@@ -607,7 +636,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Error notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -618,8 +652,8 @@ Test('Notification Handler', notificationHandlerTest => {
         Action.RESERVE,
         {
           transferId,
-          payerFsp: 'dfsp1',
-          payeeFsp: 'dfsp2'
+          fulfilment: 'VFhBCqP17O5VolemGmeVeVn_ZByepYwtqBDe2F675kA',
+          transferState: 'RESERVED'
         },
         'dfsp1',
         'dfsp2'
@@ -630,9 +664,16 @@ Test('Notification Handler', notificationHandlerTest => {
       )
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig, true, 'patch')
-
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (apiType === API_TYPES.iso20022) {
+        const isoPayerPayload = (await TransformFacades.FSPIOP.transfers.put({ body: messageProtocol.content.payload })).body
+        const isoPayeePayload = (await TransformFacades.FSPIOP.transfers.patch({ body: messageProtocol.content.payload })).body
+        test.deepEqual(responseFrom.payload.TxInfAndSts, isoPayeePayload.TxInfAndSts, 'Notification sent successfully to Payee')
+        test.deepEqual(responseTo.payload.TxInfAndSts, isoPayerPayload.TxInfAndSts, 'Notification sent successfully to Payer')
+      } else {
+        const { fulfilment: _, ...payeePayload } = messageProtocol.content.payload
+        test.deepEqual(responseFrom.payload, payeePayload, 'Notification sent successfully to Payee')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -671,7 +712,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
           payeeFsp: 'dfsp1',
           payerFsp: 'dfsp2',
           transferId
@@ -729,7 +770,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
           condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+          ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
           payeeFsp: 'dfsp1',
           payerFsp: 'dfsp2',
           transferId
@@ -804,8 +845,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -833,8 +880,14 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -864,11 +917,10 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': Config.HUB_NAME
+            'fspiop-destination': 'dfsp1',
+            'fspiop-source': Config.HUB_NAME
           },
           payload: {
-            // TODO: should we have the transferId here?
             transferId,
             completedTimestamp: '2021-05-24T08:38:08.699-04:00',
             transferState: 'ABORTED'
@@ -879,6 +931,8 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      // Make this different since the original request payload is not what we want sent in notification.
+      messageProtocol.content.context = { originalRequestPayload: { ...messageProtocol.content.payload, transferState: 'RESERVED' } }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -890,7 +944,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const operation = 'patch'
       const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, transferId), 5, 2)
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.ok(response.payload)
+        test.equal(response.payload.TxInfAndSts.TxSts, 'ABOR', 'ISO ABORT Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -920,11 +979,13 @@ Test('Notification Handler', notificationHandlerTest => {
             'content-length': 1038,
             'content-type': 'application/vnd.interoperability.transfers+json;version=1.1',
             date: '2021-11-02T00:00:00.000Z',
-            'FSPIOP-Destination': 'dfsp1',
-            'FSPIOP-Source': Config.HUB_NAME
+            'fspiop-destination': 'dfsp1',
+            'fspiop-source': Config.HUB_NAME
           },
           payload: {
-            commitRequestId
+            commitRequestId,
+            completedTimestamp: '2021-05-24T08:38:08.699-04:00',
+            conversionState: 'ABORTED'
           }
         },
         to: 'dfsp1',
@@ -932,6 +993,8 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      // Make this different since the original request payload is not what we want sent in notification.
+      messageProtocol.content.context = { originalRequestPayload: { ...messageProtocol.content.payload, conversionState: 'RESERVED' } }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(
         GeneralTopicTemplate,
@@ -943,7 +1006,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const operation = 'patch'
       const response = await wrapWithRetries(() => getNotifications(messageProtocol.to, operation, commitRequestId), 5, 2)
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.ok(response.payload)
+        test.equal(response.payload.TxInfAndSts.TxSts, 'ABOR', 'ISO ABORT Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -1006,7 +1074,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'dfsp2'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1019,7 +1087,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1034,7 +1107,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'fxp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1047,7 +1120,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1062,7 +1140,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'dfsp2'
       )
       messageProtocol.content.uriParams = { id: transferId }
@@ -1081,7 +1159,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1096,7 +1179,7 @@ Test('Notification Handler', notificationHandlerTest => {
             errorDescription: 'Generic validation error'
           }
         },
-        'dfsp1',
+        Config.HUB_NAME,
         'fxp1'
       )
       messageProtocol.content.uriParams = { id: commitRequestId }
@@ -1114,7 +1197,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1148,7 +1236,7 @@ Test('Notification Handler', notificationHandlerTest => {
             fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
             condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
             expiration: '2018-08-24T21:31:00.534+01:00',
-            ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLCJpbml0aWF0b3JUeXBlIjoiQ09OU1VNRVIifSwibm90ZSI6ImhlaiJ9',
+            ilpPacket: 'AYIBgQAAAAAAAASwNGxldmVsb25lLmRmc3AxLm1lci45T2RTOF81MDdqUUZERmZlakgyOVc4bXFmNEpLMHlGTFGCAUBQU0svMS4wCk5vbmNlOiB1SXlweUYzY3pYSXBFdzVVc05TYWh3CkVuY3J5cHRpb246IG5vbmUKUGF5bWVudC1JZDogMTMyMzZhM2ItOGZhOC00MTYzLTg0NDctNGMzZWQzZGE5OGE3CgpDb250ZW50LUxlbmd0aDogMTM1CkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vanNvbgpTZW5kZXItSWRlbnRpZmllcjogOTI4MDYzOTEKCiJ7XCJmZWVcIjowLFwidHJhbnNmZXJDb2RlXCI6XCJpbnZvaWNlXCIsXCJkZWJpdE5hbWVcIjpcImFsaWNlIGNvb3BlclwiLFwiY3JlZGl0TmFtZVwiOlwibWVyIGNoYW50XCIsXCJkZWJpdElkZW50aWZpZXJcIjpcIjkyODA2MzkxXCJ9IgA',
             payerFsp: 'dfsp1',
             payeeFsp: 'dfsp2',
             transferId
@@ -1159,6 +1247,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1203,6 +1292,7 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
@@ -1249,13 +1339,20 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payee')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to Payee')
+      }
+
       test.end()
     })
 
@@ -1298,13 +1395,20 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
 
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to FXP')
+      } else {
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to FXP')
+      }
+
       test.end()
     })
 
@@ -1350,12 +1454,19 @@ Test('Notification Handler', notificationHandlerTest => {
         id: Uuid(),
         type: 'application/json'
       }
+      messageProtocol.content.context = { originalRequestPayload: messageProtocol.content.payload }
 
       const topicConfig = KafkaUtil.createGeneralTopicConf(GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT)
       const { responseTo, responseFrom } = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig, true)
 
-      test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
-      test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      if (responseTo.payload.TxInfAndSts) {
+        test.equal(responseTo.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to dfsp1')
+        test.equal(responseFrom.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to proxyFsp')
+      } else {
+        test.deepEqual(responseTo.payload, messageProtocol.content.payload, 'Notification sent successfully to dfsp1')
+        test.deepEqual(responseFrom.payload, messageProtocol.content.payload, 'Notification sent successfully to proxyFsp')
+      }
+
       test.end()
     })
 
@@ -1365,15 +1476,8 @@ Test('Notification Handler', notificationHandlerTest => {
         Action.GET,
         Action.GET,
         {
-          amount: { amount: 100, currency: 'USD' },
           transferState: 'COMMITTED',
           fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
-          condition: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
-          expiration: '2018-08-24T21:31:00.534+01:00',
-          ilpPacket: 'AQAAAAAAAABkEGcuZXdwMjEuaWQuODAwMjCCAhd7InRyYW5zYWN0aW9uSWQiOiJmODU0NzdkYi0xMzVkLTRlMDgtYThiNy0xMmIyMmQ4MmMwZDYiLCJxdW90ZUlkIjoiOWU2NGYzMjEtYzMyNC00ZDI0LTg5MmYtYzQ3ZWY0ZThkZTkxIiwicGF5ZWUiOnsicGFydHlJZEluZm8iOnsicGFydHlJZFR5cGUiOiJNU0lTRE4iLCJwYXJ0eUlkZW50aWZpZXIiOiIyNTYxMjM0NTYiLCJmc3BJZCI6IjIxIn19LCJwYXllciI6eyJwYXJ0eUlkSW5mbyI6eyJwYXJ0eUlkVHlwZSI6Ik1TSVNETiIsInBhcnR5SWRlbnRpZmllciI6IjI1NjIwMTAwMDAxIiwiZnNwSWQiOiIyMCJ9LCJwZXJzb25hbEluZm8iOnsiY29tcGxleE5hbWUiOnsiZmlyc3ROYW1lIjoiTWF0cyIsImxhc3ROYW1lIjoiSGFnbWFuIn0sImRhdGVPZkJpcnRoIjoiMTk4My0xMC0yNSJ9fSwiYW1vdW50Ijp7ImFtb3VudCI6IjEwMCIsImN1cnJlbmN5IjoiVVNEIn0sInRyYW5zYWN0aW9uVHlwZSI6eyJzY2VuYXJpbyI6IlRSQU5TRkVSIiwiaW5pdGlhdG9yIjoiUEFZRVIiLC',
-          payeeFsp: 'dfsp1',
-          payerFsp: 'dfsp2',
-          transferId,
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
         Config.HUB_NAME,
@@ -1387,7 +1491,11 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'put', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.TxSts, 'COMM', 'ISO message has correct status')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -1397,11 +1505,9 @@ Test('Notification Handler', notificationHandlerTest => {
         Action.GET,
         Action.FX_GET,
         {
-          commitRequestId,
-          initiatingFsp: 'dfsp1',
-          counterPartyFsp: 'fxp1',
-          sourceAmount: { amount: 100, currency: 'ZKW' },
-          targetAmount: { amount: 200, currency: 'TZS' }
+          conversionState: 'COMMITTED',
+          fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+          completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
         Config.HUB_NAME,
         'dfsp1'
@@ -1413,8 +1519,11 @@ Test('Notification Handler', notificationHandlerTest => {
       )
 
       const response = await testNotification(messageProtocol, 'put', commitRequestId, kafkaConfig, topicConfig)
-
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.TxSts, 'COMM', 'ISO message has correct status')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
       test.end()
     })
 
@@ -1445,7 +1554,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', transferId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -1476,7 +1590,12 @@ Test('Notification Handler', notificationHandlerTest => {
 
       const response = await testNotification(messageProtocol, 'error', commitRequestId, kafkaConfig, topicConfig)
 
-      test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      if (apiType === API_TYPES.iso20022) {
+        test.equal(response.payload.TxInfAndSts.StsRsnInf.Rsn.Cd, messageProtocol.content.payload.errorInformation.errorCode, 'ISO Error notification sent successfully to Payer')
+      } else {
+        test.deepEqual(response.payload, messageProtocol.content.payload, 'Notification sent successfully to Payer')
+      }
+
       test.end()
     })
 
@@ -1490,7 +1609,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'HUB',
+        Config.HUB_NAME,
         'fxp1'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
@@ -1518,7 +1637,7 @@ Test('Notification Handler', notificationHandlerTest => {
           fulfilment: 'uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvze1',
           completedTimestamp: '2021-05-24T08:38:08.699-04:00'
         },
-        'HUB',
+        Config.HUB_NAME,
         'nonExistentFxp'
       )
       const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
@@ -1531,6 +1650,59 @@ Test('Notification Handler', notificationHandlerTest => {
       const payloadWithoutFulfilment = JSON.parse(JSON.stringify(messageProtocol.content.payload))
       delete payloadWithoutFulfilment.fulfilment
       test.deepEqual(response.payload, payloadWithoutFulfilment, 'Notification sent successfully to FXP')
+      test.end()
+    })
+
+    notificationTest.test('should read originalRequestPayload from payload cache and send to recipient', async test => {
+      if (apiType !== API_TYPES.iso20022 || originalPayloadStorage !== PAYLOAD_STORAGES.redis) {
+        test.pass('Skipping test for non-ISO20022 API')
+        test.end()
+        return
+      }
+
+      const { kafkaConfig, topicConfig } = Fixtures.createProducerConfig(
+        Config.KAFKA_CONFIG, EventTypes.TRANSFER, EventActions.FULFIL,
+        GeneralTopicTemplate, EventTypes.NOTIFICATION, EventActions.EVENT
+      )
+      const messageProtocol = Fixtures.createMessageProtocol(
+        Action.PREPARE,
+        Action.PREPARE,
+        {
+          transferId: Uuid(),
+          payerFsp: 'dfsp1',
+          payeeFsp: 'dfsp2'
+        },
+        'dfsp1',
+        'dfsp2'
+      )
+      delete messageProtocol.content.context.originalRequestPayload
+      const originalRequestPayload = { ...messageProtocol.content.payload, payloadFromRedis: true }
+      const originalRequestId = Uuid()
+      messageProtocol.content.context.originalRequestId = originalRequestId
+      const operation = 'post'
+      const transferId = messageProtocol.content.payload.transferId
+
+      const payloadCache = createPayloadCache(Config.PAYLOAD_CACHE.type, Config.PAYLOAD_CACHE.connectionConfig)
+      await payloadCache.connect()
+      await payloadCache.setPayload(originalRequestId, originalRequestPayload)
+
+      await Kafka.Producer.produceMessage(messageProtocol, topicConfig, kafkaConfig)
+
+      let response = await getNotifications(messageProtocol.to, operation, transferId)
+
+      let currentAttempts = 0
+      while (!response && currentAttempts < (timeoutAttempts * callbackWaitSeconds)) {
+        sleep(callbackWaitSeconds)
+        response = response || await getNotifications(messageProtocol.to, operation, transferId)
+        currentAttempts++
+      }
+
+      // Assert
+      test.ok(response, 'Notification sent successfully to Payee')
+      test.deepEqual(response.payload, originalRequestPayload, 'Notification read successfully from payload cache and sent to Payee')
+
+      await payloadCache.disconnect()
+
       test.end()
     })
 
