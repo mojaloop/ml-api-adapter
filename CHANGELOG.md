@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.0.0](https://github.com/mojaloop/ml-api-adapter/compare/v15.0.1...v16.0.0) (2025-01-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* add option to handle iso20022 requests (#564)
+
+### Features
+
+* add option to handle iso20022 requests ([#564](https://github.com/mojaloop/ml-api-adapter/issues/564)) ([2dea0bd](https://github.com/mojaloop/ml-api-adapter/commit/2dea0bd391f6453e8a340832f448e60958f5ab64)), closes [mojaloop/#3574](https://github.com/mojaloop/project/issues/3574)
+
 ### [15.0.1](https://github.com/mojaloop/ml-api-adapter/compare/v15.0.0...v15.0.1) (2025-01-09)
 
 
