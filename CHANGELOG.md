@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.0.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.0.2...v16.0.3) (2025-02-04)
+
+
+### Chore
+
+* update build orb to version 1.0.50 and add context to workflow ([#573](https://github.com/mojaloop/ml-api-adapter/issues/573)) ([0959311](https://github.com/mojaloop/ml-api-adapter/commit/0959311681a0bc9391cc991278ff590a06389e4b))
+
 ### [16.0.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.0.1...v16.0.2) (2025-01-28)
 
 
