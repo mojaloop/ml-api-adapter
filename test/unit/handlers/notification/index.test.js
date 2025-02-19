@@ -52,7 +52,7 @@ const { mockPayloadCache } = require('../../mocks')
 const Fixtures = require('../../../fixtures')
 const { API_TYPES } = require('../../../../src/shared/constants')
 const { PAYLOAD_STORAGES } = require('../../../../src/lib/payloadCache/constants')
-const helpers = require('../../../helpers/general')
+const { tryCatchEndTest } = require('../../../helpers/general')
 
 Test('Notification Service tests', async notificationTest => {
   let sandbox
@@ -543,7 +543,7 @@ Test('Notification Service tests', async notificationTest => {
       }
     })
 
-    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', helpers.tryCatchEndTest(async test => {
+    processMessageTest.test('process message with action "abort-validation" action received from kafka and send out a transfer PUT error callback', tryCatchEndTest(async test => {
       // Disable SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       const ORIGINAL_SEND_TRANSFER_CONFIRMATION_TO_PAYEE = Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE
       Config.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = false
@@ -4399,7 +4399,7 @@ Test('Notification Service tests', async notificationTest => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
 
-    await consumeMessageTest.test('throw error is there is any error processing the message', async test => {
+    await consumeMessageTest.test('throw error is there is any error processing the message', tryCatchEndTest(async test => {
       const msg = {
         value: {
           metadata: {
@@ -4422,14 +4422,12 @@ Test('Notification Service tests', async notificationTest => {
         test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
         await Notification.consumeMessage(null, [msg])
         test.fail('Should not have caught an error here since it should have been dealt with')
-        test.end()
       } catch (e) {
         test.pass('Error successfully thrown')
-        test.end()
       }
-    })
+    }))
 
-    await consumeMessageTest.test('throw error is there is any error processing the message with auto-commit enabled', async test => {
+    await consumeMessageTest.test('throw error is there is any error processing the message with auto-commit enabled', tryCatchEndTest(async (test) => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
       const msg = {
         value: {
@@ -4453,13 +4451,11 @@ Test('Notification Service tests', async notificationTest => {
         test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
         await Notification.consumeMessage(null, [msg])
         test.fail('Should not have caught an error here since it should have been dealt with')
-        test.end()
       } catch (e) {
         test.pass('Error successfully thrown')
-        test.end()
       }
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
-    })
+    }))
 
     await consumeMessageTest.test('convert a single message into an array', async test => {
       const msg = {

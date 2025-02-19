@@ -31,7 +31,7 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
-const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
+const { Kafka: { Consumer, otel }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const { Util, Enum } = require('@mojaloop/central-services-shared')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
 const { makeAcceptContentTypeHeader } = require('@mojaloop/central-services-shared').Util.Headers
@@ -52,6 +52,7 @@ const { Action } = Enum.Events.Event
 const { PATCH, POST, PUT } = Enum.Http.RestMethods
 const { FspEndpointTypes, FspEndpointTemplates } = Enum.EndPoints
 
+let consumerConfig = null
 let notificationConsumer = {}
 let autoCommitEnabled = true
 let PayloadCache
@@ -105,19 +106,21 @@ const startConsumer = async ({ payloadCache } = {}) => {
   PayloadCache = payloadCache
   const functionality = Enum.Events.Event.Type.NOTIFICATION
   const action = Action.EVENT
-
   let topicName
+
   try {
     const topicConfig = Util.Kafka.createGeneralTopicConf(Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE, functionality, action)
     topicName = topicConfig.topicName
     logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
-    const config = Util.Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.CONSUMER, functionality.toUpperCase(), action.toUpperCase())
-    config.rdkafkaConf['client.id'] = topicName
 
-    if (config.rdkafkaConf['enable.auto.commit'] !== undefined) {
-      autoCommitEnabled = config.rdkafkaConf['enable.auto.commit']
+    consumerConfig = Util.Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.CONSUMER, functionality.toUpperCase(), action.toUpperCase())
+    consumerConfig.options.disableOtelSpanAutoCreation = true // Disable auto creation of OTel span inside central-services-stream lib
+    consumerConfig.rdkafkaConf['client.id'] = topicName
+
+    if (consumerConfig.rdkafkaConf['enable.auto.commit'] !== undefined) {
+      autoCommitEnabled = consumerConfig.rdkafkaConf['enable.auto.commit']
     }
-    notificationConsumer = new Consumer([topicName], config)
+    notificationConsumer = new Consumer([topicName], consumerConfig)
 
     await PayloadCache?.connect()
     await notificationConsumer.connect()
@@ -160,15 +163,17 @@ const consumeMessage = async (error, message) => {
     }
     logger.debug('Notification:consumeMessage message:', message)
 
-    message = (!Array.isArray(message) ? [message] : message)
+    message = Array.isArray(message) ? message : [message]
     let combinedResult = true
-    for (const msg of message) {
+
+    const processOneMessage = async (msg) => {
       logger.debug('Notification::consumeMessage::processMessage')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
       if (traceTags.timeApiPrepare && parseInt(traceTags.timeApiPrepare)) timeApiPrepare = parseInt(traceTags.timeApiPrepare)
       if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
+
       try {
         await span.audit(msg, EventSdk.AuditEventAction.start)
         const res = await processMessage(msg, span).catch(err => {
@@ -196,8 +201,12 @@ const consumeMessage = async (error, message) => {
         }
       }
     }
-    // TODO: calculate end times - report end-to-time
-    //
+
+    for (const msg of message) {
+      const { executeInsideSpanContext } = otel.startConsumerTracingSpan(msg, consumerConfig)
+      await executeInsideSpanContext(() => processOneMessage(msg))
+    }
+
     recordTxMetrics(timeApiPrepare, timeApiFulfil, true)
     histTimerEnd({ success: true })
     return combinedResult
