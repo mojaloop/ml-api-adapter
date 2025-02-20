@@ -142,7 +142,7 @@ Test('Notification Service tests', async notificationTest => {
         test.fail('should throw')
       } catch (err) {
         test.ok(err instanceof Error)
-        test.equal(err.message, 'Invalid message received from kafka')
+        test.equal(err.message, 'Invalid message received from kafka - wrong action or no context')
         test.end()
       }
     })
@@ -4042,7 +4042,10 @@ Test('Notification Service tests', async notificationTest => {
       } catch (err) {
         test.equal(err.message, 'Test Error')
         test.ok(loggerSpy.calledOnce)
-        test.ok(loggerSpy.calledWith(sandbox.match.instanceOf(Error).and(sandbox.match.has('message', 'Test Error'))))
+        test.ok(loggerSpy.calledWith(
+          sandbox.match.string,
+          sandbox.match.instanceOf(Error).and(sandbox.match.has('message', 'Test Error'))
+        ))
       }
 
       Callback.sendRequest.reset()
