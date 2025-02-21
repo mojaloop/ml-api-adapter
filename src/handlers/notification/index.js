@@ -167,7 +167,7 @@ const consumeMessage = async (error, message) => {
     let combinedResult = true
 
     const processOneMessage = async (msg) => {
-      logger.debug('Notification::consumeMessage::processMessage')
+      logger.debug('Notification::consumeMessage - processOneMessage...')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
@@ -176,7 +176,7 @@ const consumeMessage = async (error, message) => {
 
       try {
         await span.audit(msg, EventSdk.AuditEventAction.start)
-        const res = await processMessage(msg, span).catch(err => {
+        const result = await processMessage(msg, span).catch(err => {
           const errMessage = 'Error processing notification message'
           const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(errMessage, err)
           logger.error(errMessage, fspiopError)
@@ -188,8 +188,8 @@ const consumeMessage = async (error, message) => {
         if (!autoCommitEnabled) {
           notificationConsumer.commitMessageSync(msg)
         }
-        logger.verbose(`Notification:consumeMessage message processed: - ${res}`)
-        combinedResult = (combinedResult && res)
+        logger.verbose('Notification:consumeMessage - message processed:', { result })
+        combinedResult = (combinedResult && result)
       } catch (err) {
         const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
         const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed, fspiopError.apiErrorCode.code, fspiopError.apiErrorCode.message)

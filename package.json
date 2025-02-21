@@ -36,7 +36,6 @@
     "start:handler:debug": "npm run start:handler --node-options --inspect=0.0.0.0",
     "watch": "npm run watch:api",
     "watch:api": "npx nodemon src/api/index.js",
-    "pretest": "npm run lint",
     "standard": "npx standard",
     "standard:fix": "npm run standard -- --fix",
     "lint": "npm run standard",
