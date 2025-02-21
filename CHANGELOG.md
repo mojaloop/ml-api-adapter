@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.1.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.0.3...v16.1.0) (2025-02-21)
+
+
+### Features
+
+* **csi-1161:** enabled otel for kafka ([#574](https://github.com/mojaloop/ml-api-adapter/issues/574)) ([4775d46](https://github.com/mojaloop/ml-api-adapter/commit/4775d46853e0ece23543ed5d9d81406355df3c9f))
+
 ### [16.0.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.0.2...v16.0.3) (2025-02-04)
 
 
