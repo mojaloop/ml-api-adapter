@@ -76,7 +76,7 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
   }
 
   if (!originalPayload) {
-    logger.warn('Notification::processMessage - Original payload not found')
+    logger.warn('Notification::processMessage - Original payload not found; content.payload will be used')
   }
 
   return originalPayload
@@ -85,7 +85,9 @@ const getOriginalPayload = async (content, payloadCache = undefined) => {
 const getCallbackPayload = async (content, payloadCache = undefined, fromSwitch = false) => {
   const isIsoMode = API_TYPE === API_TYPES.iso20022
   const originalPayload = await getOriginalPayload(content, payloadCache)
-  const finalPayload = originalPayload ? decodePayload(originalPayload, { asParsed: false }).body : content.payload
+  const finalPayload = originalPayload
+    ? decodePayload(originalPayload, { asParsed: false }).body
+    : content.payload
   const fspiopObject = content.payload
   let payloadForCallback = finalPayload
 
