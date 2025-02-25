@@ -193,7 +193,7 @@ const fulfilTransfer = async function (context, request, h) {
         QueryTags.auditType.transactionFlow,
         QueryTags.contentType.httpRequest,
         isFx
-          ? QueryTags.operation.fulfillFxTransfer
+          ? QueryTags.operation.fulfilFxTransfer
           : QueryTags.operation.fulfilTransfer,
         {
           httpMethod: method,
@@ -337,7 +337,7 @@ const fulfilTransferError = async function (context, request, h) {
         QueryTags.auditType.transactionFlow,
         QueryTags.contentType.httpRequest,
         isFx
-          ? QueryTags.operation.fulfillFxTransferError
+          ? QueryTags.operation.fulfilFxTransferError
           : QueryTags.operation.fulfilTransferError,
         {
           httpMethod: method,
