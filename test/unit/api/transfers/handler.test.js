@@ -139,9 +139,7 @@ Test('transfer handler', handlerTest => {
       const request = createRequest(payload)
       const reply = createTestReply(test)
       const spanSpy = sandbox.spy(request.span, 'setTags')
-
       Handler.create({}, request, reply)
-
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -160,9 +158,7 @@ Test('transfer handler', handlerTest => {
       const request = createRequest(payload, true)
       const reply = createTestReply(test)
       const spanSpy = sandbox.spy(request.span, 'setTags')
-
       Handler.create({}, request, reply)
-
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -258,9 +254,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const spanSpy = sandbox.spy(request.span, 'setTags')
-
       Handler.fulfilTransfer({}, request, reply)
-
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -281,9 +275,7 @@ Test('transfer handler', handlerTest => {
       const request = createPutRequest(params, payload, true)
       const reply = createTestReply(test, 200)
       const spanSpy = sandbox.spy(request.span, 'setTags')
-
       Handler.fulfilTransfer({}, request, reply)
-
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -449,7 +441,6 @@ Test('transfer handler', handlerTest => {
         const spanSpy = sandbox.spy(request.span, 'setTags')
         try {
           await Handler.getTransferById({}, request, reply)
-
           sandbox.assert.calledTwice(spanSpy)
           sandbox.assert.calledWith(spanSpy, {
             serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -527,7 +518,6 @@ Test('transfer handler', handlerTest => {
       }
       const spanSpy = sandbox.spy(request.span, 'setTags')
       await Handler.fulfilTransferError({}, request, reply)
-
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
