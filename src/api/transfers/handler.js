@@ -27,7 +27,7 @@
 const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const { Enum, Util } = require('@mojaloop/central-services-shared')
+const { Enum, Util, Enum: { Tags: { QueryTags } } } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
 
@@ -38,7 +38,7 @@ const { logger } = require('../../shared/logger')
 const { ROUTES, PROM_METRICS } = require('../../shared/constants')
 const { setOriginalRequestPayload } = require('../../domain/transfer/dto')
 
-const { getTransferSpanTags } = Util.EventFramework
+const { getTransferSpanTags, getQueryTags } = Util.EventFramework.Tags
 const { Type, Action } = Enum.Events.Event
 
 /**
@@ -58,7 +58,7 @@ const { Type, Action } = Enum.Events.Event
  */
 
 const create = async function (context, request, h) {
-  const { headers, span } = request
+  const { headers, span, method } = request
   let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
@@ -97,6 +97,22 @@ const create = async function (context, request, h) {
   try {
     span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.PREPARE))
+    span.setTags(
+      getQueryTags(
+        QueryTags.serviceName.mlApiAdapterService,
+        QueryTags.auditType.transactionFlow,
+        QueryTags.contentType.httpRequest,
+        isFx
+          ? QueryTags.operation.prepareFxTransfer
+          : QueryTags.operation.prepareTransfer,
+        {
+          httpMethod: method,
+          ...(isFx
+            ? { commitRequestId: payload.commitRequestId }
+            : { transferId: payload.transferId })
+        }
+      )
+    )
     await span.audit({
       headers,
       dataUri,
@@ -128,7 +144,7 @@ const create = async function (context, request, h) {
  */
 
 const fulfilTransfer = async function (context, request, h) {
-  const { headers, params, span } = request
+  const { headers, params, span, method, path } = request
   let { dataUri, payload } = request
 
   const isFx = request.path?.includes(ROUTES.fxTransfers)
@@ -171,6 +187,23 @@ const fulfilTransfer = async function (context, request, h) {
     Validator.fulfilTransfer({ payload })
 
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
+    span.setTags(
+      getQueryTags(
+        QueryTags.serviceName.mlApiAdapterService,
+        QueryTags.auditType.transactionFlow,
+        QueryTags.contentType.httpRequest,
+        isFx
+          ? QueryTags.operation.fulfillFxTransfer
+          : QueryTags.operation.fulfilTransfer,
+        {
+          httpMethod: method,
+          httpPath: path,
+          ...(isFx
+            ? { commitRequestId: params.ID }
+            : { transferId: params.ID })
+        }
+      )
+    )
     await span.audit({
       headers,
       payload,
@@ -211,10 +244,27 @@ const getTransferById = async function (context, request, h) {
     ['success']
   ).startTimer()
 
-  const span = request.span
+  const { span, params, path, method } = request
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    logger.info(`getById::id(${request.params.id || request.params.ID})`)
+    span.setTags(
+      getQueryTags(
+        QueryTags.serviceName.mlApiAdapterService,
+        QueryTags.auditType.transactionFlow,
+        QueryTags.contentType.httpRequest,
+        isFx
+          ? QueryTags.operation.getFxTransferByID
+          : QueryTags.operation.getTransferByID,
+        {
+          httpMethod: method,
+          httpPath: path,
+          ...(isFx
+            ? { commitRequestId: params.ID }
+            : { transferId: params.ID })
+        }
+      )
+    )
+    logger.info(`getById::id(${params.id || params.ID})`)
     await span.audit({
       headers: request.headers,
       params: request.params
@@ -242,7 +292,7 @@ const getTransferById = async function (context, request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (context, request, h) {
-  const { headers, params, span } = request
+  const { headers, params, span, path, method } = request
   let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
@@ -281,6 +331,23 @@ const fulfilTransferError = async function (context, request, h) {
 
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
+    span.setTags(
+      getQueryTags(
+        QueryTags.serviceName.mlApiAdapterService,
+        QueryTags.auditType.transactionFlow,
+        QueryTags.contentType.httpRequest,
+        isFx
+          ? QueryTags.operation.fulfillFxTransferError
+          : QueryTags.operation.fulfilTransferError,
+        {
+          httpMethod: method,
+          httpPath: path,
+          ...(isFx
+            ? { commitRequestId: params.ID }
+            : { transferId: params.ID })
+        }
+      )
+    )
     await span.audit({
       headers,
       dataUri,
