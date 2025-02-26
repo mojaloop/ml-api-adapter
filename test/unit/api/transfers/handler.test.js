@@ -527,7 +527,7 @@ Test('transfer handler', handlerTest => {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
         auditType: QueryTags.auditType.transactionFlow,
         contentType: QueryTags.contentType.httpRequest,
-        operation: QueryTags.operation.fulfilTransferError,
+        operation: QueryTags.operation.abortTransfer,
         httpMethod: 'put',
         httpPath: request.path,
         transferId: request.params.ID

@@ -31,7 +31,7 @@
 const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
-const { Enum, Util, Enum: { Tags: { QueryTags } } } = require('@mojaloop/central-services-shared')
+const { Enum, Util } = require('@mojaloop/central-services-shared')
 const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
 
@@ -41,8 +41,8 @@ const Validator = require('../../lib/validator')
 const { logger } = require('../../shared/logger')
 const { ROUTES, PROM_METRICS } = require('../../shared/constants')
 const { setOriginalRequestPayload } = require('../../domain/transfer/dto')
-
-const { getTransferSpanTags, getQueryTags } = Util.EventFramework.Tags
+const { injectAuditQueryTags } = require('../../lib/util')
+const { getTransferSpanTags } = Util.EventFramework.Tags
 const { Type, Action } = Enum.Events.Event
 
 /**
@@ -101,22 +101,7 @@ const create = async function (context, request, h) {
   try {
     span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.PREPARE))
-    span.setTags(
-      getQueryTags(
-        QueryTags.serviceName.mlApiAdapterService,
-        QueryTags.auditType.transactionFlow,
-        QueryTags.contentType.httpRequest,
-        isFx
-          ? QueryTags.operation.prepareFxTransfer
-          : QueryTags.operation.prepareTransfer,
-        {
-          httpMethod: method,
-          ...(isFx
-            ? { commitRequestId: payload.commitRequestId }
-            : { transferId: payload.transferId })
-        }
-      )
-    )
+    injectAuditQueryTags({ span, id: payload.transferId || payload.commitRequestId, method, action: Action.PREPARE, isFx })
     await span.audit({
       headers,
       dataUri,
@@ -191,23 +176,7 @@ const fulfilTransfer = async function (context, request, h) {
     Validator.fulfilTransfer({ payload })
 
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
-    span.setTags(
-      getQueryTags(
-        QueryTags.serviceName.mlApiAdapterService,
-        QueryTags.auditType.transactionFlow,
-        QueryTags.contentType.httpRequest,
-        isFx
-          ? QueryTags.operation.fulfilFxTransfer
-          : QueryTags.operation.fulfilTransfer,
-        {
-          httpMethod: method,
-          httpPath: path,
-          ...(isFx
-            ? { commitRequestId: params.ID }
-            : { transferId: params.ID })
-        }
-      )
-    )
+    injectAuditQueryTags({ span, id: params.ID, method, path, action: Action.FULFIL, isFx })
     await span.audit({
       headers,
       payload,
@@ -251,23 +220,7 @@ const getTransferById = async function (context, request, h) {
   const { span, params, path, method } = request
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    span.setTags(
-      getQueryTags(
-        QueryTags.serviceName.mlApiAdapterService,
-        QueryTags.auditType.transactionFlow,
-        QueryTags.contentType.httpRequest,
-        isFx
-          ? QueryTags.operation.getFxTransferByID
-          : QueryTags.operation.getTransferByID,
-        {
-          httpMethod: method,
-          httpPath: path,
-          ...(isFx
-            ? { commitRequestId: params.ID }
-            : { transferId: params.ID })
-        }
-      )
-    )
+    injectAuditQueryTags({ span, id: params.id || params.ID, method, path, action: Action.GET, isFx })
     logger.info(`getById::id(${params.id || params.ID})`)
     await span.audit({
       headers: request.headers,
@@ -335,23 +288,7 @@ const fulfilTransferError = async function (context, request, h) {
 
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
-    span.setTags(
-      getQueryTags(
-        QueryTags.serviceName.mlApiAdapterService,
-        QueryTags.auditType.transactionFlow,
-        QueryTags.contentType.httpRequest,
-        isFx
-          ? QueryTags.operation.fulfilFxTransferError
-          : QueryTags.operation.fulfilTransferError,
-        {
-          httpMethod: method,
-          httpPath: path,
-          ...(isFx
-            ? { commitRequestId: params.ID }
-            : { transferId: params.ID })
-        }
-      )
-    )
+    injectAuditQueryTags({ span, id: params.ID, method, path, action: Action.ABORT, isFx })
     await span.audit({
       headers,
       dataUri,
