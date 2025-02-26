@@ -353,22 +353,25 @@ const processMessage = async (msg, span) => {
         return _isFx ? QueryTags.operation.abortFxTransfer : QueryTags.operation.abortTransfer
       case Action.ABORT_VALIDATION:
       case Action.FX_ABORT_VALIDATION:
-        return _isFx ? QueryTags.operation.abortValidationFxTransfer : QueryTags.operation.abortValidationTransfer
+        return _isFx ? QueryTags.operation.abortFxTransferValidation : QueryTags.operation.abortTransferValidation
       case Action.ABORT_DUPLICATE:
       case Action.FX_ABORT_DUPLICATE:
         return _isFx ? QueryTags.operation.abortDuplicateFxTransfer : QueryTags.operation.abortDuplicateTransfer
       case Action.TIMEOUT_RECEIVED:
       case Action.FX_TIMEOUT_RECEIVED:
-        return _isFx ? QueryTags.operation.timeoutReceivedFxTransfer : QueryTags.operation.timeoutReceivedTransfer
+        return _isFx ? QueryTags.operation.fxTimeoutReceived : QueryTags.operation.timeoutReceived
       case Action.TIMEOUT_RESERVED:
       case Action.FX_TIMEOUT_RESERVED:
-        return _isFx ? QueryTags.operation.timeoutReservedFxTransfer : QueryTags.operation.timeoutReservedTransfer
+        return _isFx ? QueryTags.operation.fxTimeoutReserved : QueryTags.operation.timeoutReserved
+      case Action.PREPARE:
+      case Action.FX_PREPARE:
+        return _isFx ? QueryTags.operation.prepareFxTransfer : QueryTags.operation.prepareTransfer
       case Action.PREPARE_DUPLICATE:
       case Action.FX_PREPARE_DUPLICATE:
         return _isFx ? QueryTags.operation.prepareFxTransferDuplicate : QueryTags.operation.prepareTransferDuplicate
       case Action.FULFIL_DUPLICATE:
       case Action.FX_FULFIL_DUPLICATE:
-        return _isFx ? QueryTags.operation.fulfilFxTransferDuplicate : QueryTags.operation.fulfilTransferDuplicate
+        return _isFx ? QueryTags.operation.fulfilDuplicateFxTransfer : QueryTags.operation.fulfilDuplicateTransfer
       case Action.FORWARDED:
       case Action.FX_FORWARDED:
         return _isFx ? QueryTags.operation.forwardedFxTransfer : QueryTags.operation.forwardedTransfer
@@ -377,15 +380,15 @@ const processMessage = async (msg, span) => {
         return _isFx ? QueryTags.operation.reservedAbortedFxTransfer : QueryTags.operation.reservedAbortedTransfer
       case Action.GET:
       case Action.FX_GET:
-        return _isFx ? QueryTags.operation.getFxTransfer : QueryTags.operation.getTransfer
+        return _isFx ? QueryTags.operation.getFxTransferByID : QueryTags.operation.getTransferByID
       case Action.FX_NOTIFY:
         return QueryTags.operation.notifyFxTransfer
       default:
-        throw new Error('Invalid action')
+        throw new Error(`Unsupported action for audit operation: ${action}`)
     }
   }
 
-  const injectAuditQueryTags = (span, action, url, httpMethod, additionalTags = {}, _isFx = isFx) => {
+  const injectAuditQueryTags = (span, action, url, method, additionalTags = {}, _isFx = isFx) => {
     span.setTags(getQueryTags(
       QueryTags.serviceName.mlNotificationHandler,
       QueryTags.auditType.transactionFlow,
@@ -393,7 +396,7 @@ const processMessage = async (msg, span) => {
       getAuditOperationForAction(action, _isFx),
       {
         url,
-        httpMethod,
+        httpMethod: method,
         ...(_isFx ? { commitRequestId: id } : { transferId: id }),
         ...additionalTags
       }

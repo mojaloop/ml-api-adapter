@@ -32,6 +32,7 @@ const Proxyquire = require('proxyquire')
 const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
+const EventSdk = require('@mojaloop/event-sdk')
 const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const EncodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 const Logger = require('@mojaloop/central-services-logger')
@@ -59,6 +60,7 @@ Test('Notification Service tests', async notificationTest => {
   let createCallbackHeadersSpy
   let createCallbackHeaders
   let Notification
+  let span
   const responseType = ENUM.Http.ResponseTypes.JSON
   const hubNameRegex = Util.HeaderValidation.getHubNameRegex(Config.HUB_NAME)
   const match = Sinon.match
@@ -103,6 +105,8 @@ Test('Notification Service tests', async notificationTest => {
       '../../lib/headers': HeadersLib
     })
 
+    span = EventSdk.Tracer.createSpan('test_span')
+
     Proxyquire.callThru()
     t.end()
   })
@@ -138,7 +142,7 @@ Test('Notification Service tests', async notificationTest => {
       }
       Notification.startConsumer({ payloadCache: mockPayloadCache })
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('should throw')
       } catch (err) {
         test.ok(err instanceof Error)
@@ -204,10 +208,10 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), span: undefined, hubNameRegex })))
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
+      test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), span, hubNameRegex })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.uriParams.id, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })))
       test.equal(result, expected)
       test.end()
@@ -270,10 +274,10 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.uriParams.id, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })))
       test.equal(result, expected)
       test.end()
@@ -318,10 +322,10 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })))
       test.equal(result, expected)
       test.end()
@@ -366,11 +370,11 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
       test.equal(url, proxyUrl)
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.payload.transferId, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })))
       test.equal(result, expected)
       test.end()
@@ -415,10 +419,10 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })))
       test.equal(result, expected)
       test.end()
@@ -483,7 +487,7 @@ Test('Notification Service tests', async notificationTest => {
       const expected = true
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
 
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -533,8 +537,8 @@ Test('Notification Service tests', async notificationTest => {
       const message = { transferId: uuid }
       try {
         Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
-        Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType, span: undefined, jwsSigner: undefined, hubNameRegex })).returns(Promise.reject(new Error()))
-        await Notification.processMessage(msg)
+        Callback.sendRequest.withArgs(match({ apiType: match.any, url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType, span, jwsSigner: undefined, hubNameRegex })).returns(Promise.reject(new Error()))
+        await Notification.processMessage(msg, span)
         test.fail('should throw')
         test.end()
       } catch (e) {
@@ -652,9 +656,9 @@ Test('Notification Service tests', async notificationTest => {
         Participant.getEndpoint.resetHistory()
 
         // process message
-        const result = await Notification.processMessage(msg)
+        const result = await Notification.processMessage(msg, span)
 
-        test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
+        test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span })))
         test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(Callback.sendRequest.calledOnce)
         test.ok(Callback.sendRequest.calledWith(match({
@@ -784,9 +788,9 @@ Test('Notification Service tests', async notificationTest => {
         Participant.getEndpoint.resetHistory()
 
         // process message
-        const result = await Notification.processMessage(msg)
+        const result = await Notification.processMessage(msg, span)
 
-        test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+        test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span })))
         test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }), true))
         test.ok(Callback.sendRequest.calledOnce)
         test.ok(Callback.sendRequest.calledWith(match({ url, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -891,10 +895,10 @@ Test('Notification Service tests', async notificationTest => {
         Participant.getEndpoint.resetHistory()
 
         // process message
-        const result = await Notification.processMessage(msg)
+        const result = await Notification.processMessage(msg, span)
 
-        test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
-        test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
+        test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span })))
+        test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span })))
         test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
         test.ok(Callback.sendRequest.calledTwice)
@@ -950,7 +954,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.reject(new Error()))
         Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('should throw')
         test.end()
       } catch (e) {
@@ -996,7 +1000,7 @@ Test('Notification Service tests', async notificationTest => {
       const expected = true
 
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
       test.end()
@@ -1039,9 +1043,9 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -1084,7 +1088,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).throws(new Error())
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving trying post the transfer to the receiver')
         test.end()
       } catch (e) {
@@ -1129,7 +1133,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).throws(new Error())
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving trying to send an error notification to sender')
         test.end()
       } catch (e) {
@@ -1183,10 +1187,10 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId, isFx: false, span })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -1240,10 +1244,10 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayer, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -1289,13 +1293,13 @@ Test('Notification Service tests', async notificationTest => {
       const fxpHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }, true)
       const message = { commitRequestId: uuid }
       const expected = true
-      Callback.sendRequest.withArgs(match({ url: urlFsp, headers: fxpHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), span: undefined, jwsSigner: undefined, hubNameRegex })).returns(Promise.resolve(200))
+      Callback.sendRequest.withArgs(match({ url: urlFsp, headers: fxpHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), span, jwsSigner: undefined, hubNameRegex })).returns(Promise.resolve(200))
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlFsp, headers: fxpHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex })))
       test.equal(result, expected)
@@ -1344,7 +1348,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
         Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.reject(new Error()))
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('should throw')
         test.end()
       } catch (e) {
@@ -1395,7 +1399,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.reject(new Error()))
         Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('should throw')
         test.end()
       } catch (e) {
@@ -1445,7 +1449,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).throws(new Error())
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving trying to send an error notification to sender')
         test.end()
       } catch (e) {
@@ -1495,7 +1499,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(true))
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.ok(await Callback.sendRequest({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message) }))
         test.end()
       } catch (e) {
@@ -1552,13 +1556,13 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: 'json', hubNameRegex })).returns(Promise.resolve(200))
 
       // test for "commit" action and "success" status
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.notok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
 
       // test for "reject" action
       msg.value.metadata.event.action = 'reject'
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.notok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
 
@@ -1569,7 +1573,7 @@ Test('Notification Service tests', async notificationTest => {
 
       // test for "abort" action
       msg.value.metadata.event.action = 'abort'
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.notok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
 
@@ -1624,13 +1628,13 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: 'json', hubNameRegex })).returns(Promise.resolve(200))
 
       // test for "commit" action and "success" status
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.notok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
 
       // test for "reject" action
       msg.value.metadata.event.action = 'reject'
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.notok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
 
@@ -1641,7 +1645,7 @@ Test('Notification Service tests', async notificationTest => {
 
       // test for "abort" action
       msg.value.metadata.event.action = 'abort'
-      await NotificationProxy.processMessage(msg)
+      await NotificationProxy.processMessage(msg, span)
       test.notok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
 
@@ -1685,7 +1689,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
         NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
-        const result = await NotificationProxy.processMessage(msg)
+        const result = await NotificationProxy.processMessage(msg, span)
         test.ok(!result, 'processMessage should have returned false signalling that no action was taken')
         test.ok(CentralServicesLoggerStub.warn.withArgs(`Unknown action received from kafka: ${msg.value.metadata.event.action}`).calledOnce, 'Logger.warn called once')
         test.end()
@@ -1701,7 +1705,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         mockPayloadCache.getPayload.returns(Promise.resolve(msg))
         Notification.startConsumer({ payloadCache: mockPayloadCache })
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
       } catch (err) {
@@ -1757,7 +1761,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -1809,10 +1813,10 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -1866,10 +1870,10 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.payload.transferId, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.transferId, headers: { ...msg.value.content.headers, 'fspiop-destination': payerFsp }, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -1929,10 +1933,10 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: { ...msg.value.content.headers, 'fspiop-destination': fxp }, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -1994,10 +1998,10 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined, proxy: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined, proxy: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span, proxy: undefined })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span, proxy: undefined })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: modifiedHeaders, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.payload.commitRequestId, headers: { ...modifiedHeaders, 'fspiop-destination': payeeFsp }, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR }), true))
       test.ok(Callback.sendRequest.calledWith(match({ apiType: Config.API_TYPE, url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
@@ -2049,7 +2053,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
       test.end()
@@ -2098,9 +2102,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2150,7 +2154,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
       test.end()
@@ -2205,9 +2209,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2257,7 +2261,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
       test.end()
@@ -2306,9 +2310,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2358,7 +2362,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
       test.end()
@@ -2413,9 +2417,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2465,7 +2469,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
       test.end()
@@ -2514,9 +2518,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2569,7 +2573,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2628,10 +2632,10 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
-      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span })))
+      test.ok(Participant.getEndpoint.getCall(1).calledWith(match({ fsp: msg.value.from, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(createCallbackHeadersSpy.getCall(1).calledWith(match({ dfspId: msg.value.from, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex })))
@@ -2691,7 +2695,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })))
       test.equal(result, expected)
@@ -2749,7 +2753,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: Config.HUB_NAME, destination: msg.value.to, method, payload: JSON.stringify(msg.value.content.payload), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(msg.value.content.payload), hubNameRegex })))
       test.equal(result, expected)
@@ -2799,9 +2803,9 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.payload.transferId, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.transferId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2851,9 +2855,9 @@ Test('Notification Service tests', async notificationTest => {
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }), true))
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -2919,9 +2923,9 @@ Test('Notification Service tests', async notificationTest => {
 
       const jwsSigner = new JwsSignerStub()
 
-      Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, span: undefined, jwsSigner, hubNameRegex })).returns(Promise.resolve(200))
-      const result = await NotificationProxy.processMessage(msg)
-      test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, span: undefined, jwsSigner, hubNameRegex })))
+      Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, span, jwsSigner, hubNameRegex })).returns(Promise.resolve(200))
+      const result = await NotificationProxy.processMessage(msg, span)
+      test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, span, jwsSigner, hubNameRegex })))
       test.deepEqual(Callback.sendRequest.args[0][0].jwsSigner, jwsSigner, 'JwsSigner is same')
 
       test.equal(result, expected)
@@ -2983,7 +2987,7 @@ Test('Notification Service tests', async notificationTest => {
       const jwsSigner = new JwsSignerStub()
 
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })).returns(Promise.resolve(200))
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })))
       test.deepEqual(Callback.sendRequest.args[0][0].jwsSigner, jwsSigner, 'JwsSigner is same')
       test.equal(result, expected)
@@ -3055,7 +3059,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })).returns(Promise.resolve(200))
 
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayer, headers: payerHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })))
       test.equal(result, expected)
@@ -3126,7 +3130,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })).returns(Promise.resolve(200))
 
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })))
       test.equal(result, expected)
@@ -3197,7 +3201,7 @@ Test('Notification Service tests', async notificationTest => {
       Callback.sendRequest.withArgs(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })).returns(Promise.resolve(200))
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
 
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.ok(Callback.sendRequest.calledWith(match({ url: fromUrl, headers: fromHeaders, source: Config.HUB_NAME, destination: msg.value.from, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })))
       test.equal(result, expected)
@@ -3266,7 +3270,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })).returns(Promise.resolve(200))
 
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })))
       test.equal(result, expected)
       test.end()
@@ -3334,7 +3338,7 @@ Test('Notification Service tests', async notificationTest => {
 
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })).returns(Promise.resolve(200))
 
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.ok(Callback.sendRequest.calledWith(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), responseType: ENUM.Http.ResponseTypes.JSON, hubNameRegex, jwsSigner })))
       test.equal(result, expected)
       test.end()
@@ -3386,7 +3390,7 @@ Test('Notification Service tests', async notificationTest => {
       NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
 
       // Act
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
 
       // Assert
       const callbackCall = Callback.sendRequest.getCall(0)
@@ -3450,7 +3454,7 @@ Test('Notification Service tests', async notificationTest => {
       const protocolVersions = { content: ConfigStub.PROTOCOL_VERSIONS.CONTENT.DEFAULT, accept: ConfigStub.PROTOCOL_VERSIONS.ACCEPT.DEFAULT }
 
       // Act
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
 
       // Assert
       test.ok(Callback.sendRequest.calledWith(match({
@@ -3461,7 +3465,7 @@ Test('Notification Service tests', async notificationTest => {
         method: ENUM.Http.RestMethods.PATCH,
         payload: msg.value.content.payload,
         responseType: ENUM.Http.ResponseTypes.JSON,
-        span: undefined,
+        span,
         jwsSigner: undefined,
         protocolVersions,
         hubNameRegex
@@ -3523,7 +3527,7 @@ Test('Notification Service tests', async notificationTest => {
       }, true)
 
       // Act
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
 
       // Assert
       test.ok(Callback.sendRequest.calledWith(match({
@@ -3534,7 +3538,7 @@ Test('Notification Service tests', async notificationTest => {
         method: ENUM.Http.RestMethods.PATCH,
         payload: msg.value.content.payload,
         responseType: ENUM.Http.ResponseTypes.JSON,
-        span: undefined,
+        span,
         jwsSigner: undefined,
         hubNameRegex
       })), 'Callback.sendRequest was called with the expected args')
@@ -3585,9 +3589,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -3637,9 +3641,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -3694,9 +3698,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: false, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT_ERROR })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -3751,9 +3755,9 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span: undefined })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_ERROR, id: msg.value.content.uriParams.id, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ dfspId: msg.value.to, transferId: msg.value.content.uriParams.id, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT_ERROR })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers: payeeHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })))
       test.equal(result, expected)
@@ -3817,7 +3821,7 @@ Test('Notification Service tests', async notificationTest => {
       // Act
       try {
         // TODO: use this for validating the test
-        await NotificationProxy.processMessage(msg)
+        await NotificationProxy.processMessage(msg, span)
         test.notOk('Code should not be executed')
       } catch (err) {
         // Assert
@@ -3829,7 +3833,7 @@ Test('Notification Service tests', async notificationTest => {
           method: ENUM.Http.RestMethods.PATCH,
           payload: msg.value.content.payload,
           responseType: ENUM.Http.ResponseTypes.JSON,
-          span: undefined,
+          span,
           jwsSigner: undefined,
           hubNameRegex
         })), 'Callback.sendRequest was called with the expected args')
@@ -3854,7 +3858,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.returns(Promise.resolve('http://localhost:3000'))
 
       const expected = true
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.equal(result, expected)
       test.end()
     })
@@ -3879,7 +3883,7 @@ Test('Notification Service tests', async notificationTest => {
       NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
 
       const expected = true
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
       test.equal(parsedPayload.fulfilment, undefined)
@@ -3908,7 +3912,7 @@ Test('Notification Service tests', async notificationTest => {
       NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
 
       const expected = true
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[1][0].payload)
       test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
@@ -3930,7 +3934,7 @@ Test('Notification Service tests', async notificationTest => {
       Notification.startConsumer({ payloadCache: mockPayloadCache })
 
       const expected = true
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.equal(result, expected)
       test.end()
     })
@@ -3955,7 +3959,7 @@ Test('Notification Service tests', async notificationTest => {
       Notification.startConsumer({ payloadCache: mockPayloadCache })
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Error expected')
       } catch (err) {
         test.equal(err.message, 'FX_NOTIFY action must be successful')
@@ -3984,7 +3988,7 @@ Test('Notification Service tests', async notificationTest => {
       NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
 
       const expected = true
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[0][0].payload)
       test.equal(parsedPayload.fulfilment, undefined)
@@ -4013,7 +4017,7 @@ Test('Notification Service tests', async notificationTest => {
       NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
 
       const expected = true
-      const result = await NotificationProxy.processMessage(msg)
+      const result = await NotificationProxy.processMessage(msg, span)
       test.equal(result, expected)
       const parsedPayload = JSON.parse(Callback.sendRequest.args[0][0].payload)
       test.equal(parsedPayload.TxInfAndSts.ExctnConf, undefined)
@@ -4037,7 +4041,7 @@ Test('Notification Service tests', async notificationTest => {
       const loggerSpy = sandbox.stub(logger, 'error')
 
       try {
-        await Notification.processMessage(msg)
+        await Notification.processMessage(msg, span)
         test.fail('Error expected')
       } catch (err) {
         test.equal(err.message, 'Test Error')
