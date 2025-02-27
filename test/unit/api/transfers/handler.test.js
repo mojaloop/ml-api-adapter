@@ -448,7 +448,7 @@ Test('transfer handler', handlerTest => {
           sandbox.assert.calledTwice(spanSpy)
           sandbox.assert.calledWith(spanSpy, {
             serviceName: QueryTags.serviceName.mlApiAdapterService,
-            auditType: QueryTags.auditType.transactionFlow, // Is this the appropriate auditType for getTransferById?
+            auditType: QueryTags.auditType.transactionFlow,
             contentType: QueryTags.contentType.httpRequest,
             operation: QueryTags.operation.getTransferByID,
             httpMethod: 'get',
