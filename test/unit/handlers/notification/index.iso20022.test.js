@@ -36,6 +36,7 @@ const Proxyquire = require('proxyquire')
 const src = '../../../../src'
 const Test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
+const EventSdk = require('@mojaloop/event-sdk')
 const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
 const Logger = require('@mojaloop/central-services-logger')
 const { Hapi } = require('@mojaloop/central-services-shared').Util
@@ -53,6 +54,7 @@ Test('Notification Service tests', async notificationTest => {
   let sandbox
   let createCallbackHeadersSpy
   let Notification
+  let span
 
   const url = 'https://somehost:port/'
   const proxyUrl = 'https://proxyhost:port/'
@@ -99,6 +101,8 @@ Test('Notification Service tests', async notificationTest => {
       '../../lib/config': ConfigStub,
       './dto': dto
     })
+
+    span = EventSdk.Tracer.createSpan('test_span')
 
     Proxyquire.callThru()
     t.end()
@@ -153,7 +157,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.ExctnConf)
       test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.PrcgDt)
       test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.TxSts)
@@ -203,7 +207,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
 
       test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.ExctnConf)
       test.ok(Callback.sendRequest.getCall(0).args[0].payload.TxInfAndSts.PrcgDt)
@@ -256,7 +260,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
       test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
       test.equal(result, expected)
@@ -307,7 +311,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
       test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
       test.equal(result, expected)
@@ -358,7 +362,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
       test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
       test.equal(result, expected)
@@ -409,7 +413,7 @@ Test('Notification Service tests', async notificationTest => {
       Participant.getEndpoint.resetHistory()
       createCallbackHeadersSpy.resetHistory()
 
-      const result = await Notification.processMessage(msg)
+      const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
       test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
       test.equal(result, expected)
