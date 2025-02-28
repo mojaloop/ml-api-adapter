@@ -357,7 +357,7 @@ const processMessage = async (msg, span) => {
       const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
       headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
       logger.debug(`Notification::processMessage - Callback.sendRequest({${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination}) ${hubNameRegex}}`)
-      injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: PUT, isFx, serviceName })
+      injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: PUT, isFx, serviceName, ...(isFx ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } } : {}) })
       await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
       histTimerEnd({ success: true, action })
       return true
@@ -374,7 +374,7 @@ const processMessage = async (msg, span) => {
       ['success', 'from', 'to', 'dest', 'action', 'status']
     ).startTimer()
     try {
-      injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: POST, isFx, additionalTags: { proxyId }, serviceName })
+      injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: POST, isFx, serviceName, ...(isFx ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } } : {}) })
       response = await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: POST, payload, responseType, span, protocolVersions, hubNameRegex })
     } catch (err) {
       logger.error(err)
@@ -409,7 +409,7 @@ const processMessage = async (msg, span) => {
     }
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.verbose(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination})`)
-    injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: PUT, isFx, serviceName })
+    injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: PUT, isFx, serviceName, ...(isFx ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } } : {}) })
     await Callback.sendRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
     return true
   }

@@ -170,7 +170,10 @@ Test('transfer handler', handlerTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.prepareFxTransfer,
         httpMethod: 'post',
-        commitRequestId: payload.commitRequestId
+        commitRequestId: payload.commitRequestId,
+        conversionId: payload.commitRequestId,
+        determiningTransferId: payload.determiningTransferId,
+        transactionId: payload.determiningTransferId
       })
     })
 
@@ -288,7 +291,8 @@ Test('transfer handler', handlerTest => {
         operation: QueryTags.operation.fulfilFxTransfer,
         httpMethod: 'put',
         httpPath: request.path,
-        commitRequestId: request.params.ID
+        commitRequestId: request.params.ID,
+        conversionId: request.params.ID
       })
     })
 

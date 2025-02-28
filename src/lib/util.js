@@ -119,6 +119,36 @@ const getAuditOperationForAction = (action, isFx = false) => {
   }
 }
 
+const getAuditQueryTags = ({
+  id,
+  method,
+  url = undefined,
+  path = undefined,
+  action = undefined,
+  serviceName = QueryTags.serviceName.mlApiAdapterService,
+  auditType = QueryTags.auditType.transactionFlow,
+  contentType = QueryTags.contentType.httpRequest,
+  operation = undefined,
+  isFx = false,
+  additionalTags = {}
+}) => {
+  return getQueryTags(
+    serviceName,
+    auditType,
+    contentType,
+    operation || getAuditOperationForAction(action, isFx),
+    {
+      httpMethod: method,
+      ...(url ? { httpUrl: url } : {}),
+      ...(path ? { httpPath: path } : {}),
+      ...(isFx ? { commitRequestId: id } : { transferId: id }),
+      ...(isFx ? { conversionId: id } : {}),
+      ...(additionalTags.determiningTransferId ? { transactionId: additionalTags.determiningTransferId } : {}),
+      ...additionalTags
+    }
+  )
+}
+
 const injectAuditQueryTags = ({
   span,
   id,
@@ -133,24 +163,26 @@ const injectAuditQueryTags = ({
   isFx = false,
   additionalTags = {}
 }) => {
-  span.setTags(getQueryTags(
+  const tags = getAuditQueryTags({
+    id,
+    method,
+    url,
+    path,
+    action,
     serviceName,
     auditType,
     contentType,
-    operation || getAuditOperationForAction(action, isFx),
-    {
-      httpMethod: method,
-      ...(url ? { url } : {}),
-      ...(path ? { httpPath: path } : {}),
-      ...(isFx ? { commitRequestId: id } : { transferId: id }),
-      ...additionalTags
-    }
-  ))
+    operation,
+    isFx,
+    additionalTags
+  })
+  span.setTags(tags)
 }
 
 module.exports = {
   setProp,
   pathForInterface,
+  getAuditQueryTags,
   injectAuditQueryTags,
   getAuditOperationForAction
 }

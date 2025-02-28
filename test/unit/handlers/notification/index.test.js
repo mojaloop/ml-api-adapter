@@ -225,9 +225,8 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.prepareTransfer,
         httpMethod: 'POST',
-        url,
-        transferId: msg.value.content.uriParams.id,
-        proxyId: 'proxy-id'
+        httpUrl: url,
+        transferId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -302,9 +301,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.prepareFxTransfer,
         httpMethod: 'POST',
-        url,
+        httpUrl: url,
         commitRequestId: msg.value.content.uriParams.id,
-        proxyId: 'proxy-id'
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -423,7 +422,8 @@ Test('Notification Service tests', async notificationTest => {
           content: {
             headers: {},
             payload: {
-              commitRequestId: uuid
+              commitRequestId: uuid,
+              determiningTransferId: Uuid()
             },
             context: {
               originalRequestId: uuid
@@ -439,11 +439,12 @@ Test('Notification Service tests', async notificationTest => {
       const method = ENUM.Http.RestMethods.POST
       const url = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.payload.commitRequestId })
       const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })
-      const message = { commitRequestId: uuid }
+      const message = { commitRequestId: uuid, determiningTransferId: msg.value.content.payload.determiningTransferId }
       const expected = true
       Callback.sendRequest.withArgs(match({ url, headers, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
       createCallbackHeadersSpy.resetHistory()
       Participant.getEndpoint.resetHistory()
+      const spanSpy = sandbox.spy(span, 'setTags')
 
       const result = await Notification.processMessage(msg, span)
 
@@ -451,6 +452,17 @@ Test('Notification Service tests', async notificationTest => {
       test.ok(Participant.getEndpoint.calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.payload.commitRequestId, isFx: true, span })))
       test.ok(createCallbackHeadersSpy.calledWith(match({ headers: msg.value.content.headers, httpMethod: ENUM.Http.RestMethods.POST, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })))
       test.equal(result, expected)
+      test.ok(spanSpy.calledWith(match({
+        serviceName: QueryTags.serviceName.mlNotificationHandler,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.prepareFxTransfer,
+        httpMethod: 'POST',
+        httpUrl: url,
+        commitRequestId: msg.value.content.payload.commitRequestId,
+        conversionId: msg.value.content.payload.commitRequestId,
+        determiningTransferId: msg.value.content.payload.determiningTransferId
+      })))
       test.end()
     })
 
@@ -704,7 +716,7 @@ Test('Notification Service tests', async notificationTest => {
           contentType: QueryTags.contentType.httpRequest,
           operation: QueryTags.operation.abortTransferValidation,
           httpMethod: 'PUT',
-          url,
+          httpUrl: url,
           transferId: msg.value.content.uriParams.id
         })))
         test.equal(result, true)
@@ -839,8 +851,9 @@ Test('Notification Service tests', async notificationTest => {
           contentType: QueryTags.contentType.httpRequest,
           operation: QueryTags.operation.abortFxTransferValidation,
           httpMethod: 'PUT',
-          url,
-          commitRequestId: msg.value.content.uriParams.id
+          httpUrl: url,
+          commitRequestId: msg.value.content.uriParams.id,
+          conversionId: msg.value.content.uriParams.id
         })))
         test.end()
       } catch (e) {
@@ -959,7 +972,7 @@ Test('Notification Service tests', async notificationTest => {
           contentType: QueryTags.contentType.httpRequest,
           operation: QueryTags.operation.abortTransferValidation,
           httpMethod: 'PUT',
-          url: urlPayee,
+          httpUrl: urlPayee,
           transferId: msg.value.content.uriParams.id
         })))
         test.ok(spanSpy.calledWith(match({
@@ -968,7 +981,7 @@ Test('Notification Service tests', async notificationTest => {
           contentType: QueryTags.contentType.httpRequest,
           operation: QueryTags.operation.abortTransferValidation,
           httpMethod: 'PUT',
-          url: urlPayer,
+          httpUrl: urlPayer,
           transferId: msg.value.content.uriParams.id
         })))
         test.end()
@@ -1271,7 +1284,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.commitTransfer,
         httpMethod: 'PUT',
-        url,
+        httpUrl: url,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -1339,8 +1352,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.commitFxTransfer,
         httpMethod: 'PUT',
-        url,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: url,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -1863,7 +1877,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.rejectTransfer,
         httpMethod: 'PUT',
-        url: fromUrl,
+        httpUrl: fromUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -1931,8 +1945,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.rejectFxTransfer,
         httpMethod: 'PUT',
-        url: fromUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: fromUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -2127,8 +2142,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.abortFxTransfer,
         httpMethod: 'PUT',
-        url: fromUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: fromUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -2186,7 +2202,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.fulfilDuplicateTransfer,
         httpMethod: 'PUT',
-        url: toUrl,
+        httpUrl: toUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -2249,8 +2265,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.fulfilDuplicateFxTransfer,
         httpMethod: 'PUT',
-        url: toUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: toUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -2415,7 +2432,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.abortDuplicateTransfer,
         httpMethod: 'PUT',
-        url: toUrl,
+        httpUrl: toUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -2478,8 +2495,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.abortDuplicateFxTransfer,
         httpMethod: 'PUT',
-        url: toUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: toUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -2644,7 +2662,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.timeoutReceived,
         httpMethod: 'PUT',
-        url: toUrl,
+        httpUrl: toUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -2707,8 +2725,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.fxTimeoutReceived,
         httpMethod: 'PUT',
-        url: toUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: toUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -2771,7 +2790,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.timeoutReserved,
         httpMethod: 'PUT',
-        url: toUrl,
+        httpUrl: toUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -2845,8 +2864,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.fxTimeoutReserved,
         httpMethod: 'PUT',
-        url: toUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: toUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -2914,7 +2934,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.forwardedTransfer,
         httpMethod: 'PUT',
-        url: toUrl,
+        httpUrl: toUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -2982,8 +3002,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.forwardedFxTransfer,
         httpMethod: 'PUT',
-        url: toUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: toUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -3045,7 +3066,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.prepareTransferDuplicate,
         httpMethod: 'PUT',
-        url: toUrl,
+        httpUrl: toUrl,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -3053,6 +3074,7 @@ Test('Notification Service tests', async notificationTest => {
 
     await processMessageTest.test('process the fx-prepare-duplicate message received from kafka and send out a transfer put callback', async test => {
       const uuid = Uuid()
+      const determiningTransferId = Uuid()
       const payerFsp = 'dfsp1'
       const fxp = 'fxp1'
 
@@ -3073,7 +3095,7 @@ Test('Notification Service tests', async notificationTest => {
               'fspiop-destination': fxp,
               'fspiop-source': payerFsp
             },
-            payload: { commitRequestId: uuid },
+            payload: { commitRequestId: uuid, determiningTransferId },
             context: {
               originalRequestId: uuid
             },
@@ -3089,7 +3111,7 @@ Test('Notification Service tests', async notificationTest => {
       const method = ENUM.Http.RestMethods.PUT
       const toUrl = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.payload.commitRequestId })
       const toHeaders = createCallbackHeaders({ dfspId: msg.value.to, transferId: msg.value.content.payload.commitRequestId, headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT }, true)
-      const message = { commitRequestId: uuid }
+      const message = { commitRequestId: uuid, determiningTransferId }
       const expected = true
       Callback.sendRequest.withArgs(match({ url: toUrl, headers: toHeaders, source: msg.value.from, destination: msg.value.to, method, payload: JSON.stringify(message), hubNameRegex })).returns(Promise.resolve(200))
       createCallbackHeadersSpy.resetHistory()
@@ -3108,8 +3130,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.prepareFxTransferDuplicate,
         httpMethod: 'PUT',
-        url: toUrl,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: toUrl,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -3720,7 +3743,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.reservedAbortedTransfer,
         httpMethod: 'PATCH',
-        url,
+        httpUrl: url,
         transferId: msg.value.content.uriParams.id
       })))
       test.equal(result, true, 'NotificationProxy.processMessage should match the expected')
@@ -3804,8 +3827,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.reservedAbortedFxTransfer,
         httpMethod: 'PATCH',
-        url,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: url,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.equal(result, true, 'NotificationProxy.processMessage should match the expected')
       test.end()
@@ -3867,7 +3891,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.getTransferByID,
         httpMethod: 'PUT',
-        url: urlPayee,
+        httpUrl: urlPayee,
         transferId: msg.value.content.uriParams.id
       })))
       test.end()
@@ -3929,8 +3953,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.getFxTransferByID,
         httpMethod: 'PUT',
-        url,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: url,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })
@@ -4212,7 +4237,7 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.reserveTransfer,
         httpMethod: 'PUT',
-        url,
+        httpUrl: url,
         transferId: uuid
       })))
       test.end()
@@ -4243,8 +4268,9 @@ Test('Notification Service tests', async notificationTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.notifyFxTransfer,
         httpMethod: 'PATCH',
-        url,
-        commitRequestId: msg.value.content.uriParams.id
+        httpUrl: url,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
       })))
       test.end()
     })

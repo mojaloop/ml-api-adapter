@@ -101,7 +101,14 @@ const create = async function (context, request, h) {
   try {
     span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.PREPARE))
-    injectAuditQueryTags({ span, id: payload.transferId || payload.commitRequestId, method, action: Action.PREPARE, isFx })
+    injectAuditQueryTags({
+      span,
+      id: payload.transferId || payload.commitRequestId,
+      method,
+      action: Action.PREPARE,
+      isFx,
+      ...(isFx ? { additionalTags: { determiningTransferId: payload.determiningTransferId } } : {})
+    })
     await span.audit({
       headers,
       dataUri,
