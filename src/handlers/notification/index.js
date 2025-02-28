@@ -179,7 +179,6 @@ const consumeMessage = async (error, message) => {
       if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
 
       try {
-        await span.audit(msg, EventSdk.AuditEventAction.start)
         const result = await processMessage(msg, span).catch(err => {
           const errMessage = 'Error processing notification message'
           const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(errMessage, err)
