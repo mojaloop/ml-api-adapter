@@ -146,8 +146,20 @@ Test('Util', (utilTests) => {
       { action: Action.FX_TIMEOUT_RECEIVED, operation: QueryTags.operation.fxTimeoutReceived },
       { action: Action.TIMEOUT_RESERVED, operation: QueryTags.operation.timeoutReserved },
       { action: Action.TIMEOUT_RESERVED, operation: QueryTags.operation.fxTimeoutReserved },
-      { action: Action.RESERVE, operation: QueryTags.operation.reserveTransfer },
-      { action: Action.FX_RESERVE, operation: QueryTags.operation.reserveFxTransfer }
+      { action: Action.PREPARE, operation: QueryTags.operation.prepareTransfer },
+      { action: Action.FX_PREPARE, operation: QueryTags.operation.prepareFxTransfer },
+      { action: Action.PREPARE_DUPLICATE, operation: QueryTags.operation.prepareTransferDuplicate },
+      { action: Action.FX_PREPARE_DUPLICATE, operation: QueryTags.operation.prepareFxTransferDuplicate },
+      { action: Action.FULFIL, operation: QueryTags.operation.fulfilTransfer },
+      { action: Action.FX_FULFIL, operation: QueryTags.operation.fulfilFxTransfer },
+      { action: Action.FULFIL_DUPLICATE, operation: QueryTags.operation.fulfilDuplicateTransfer },
+      { action: Action.FX_FULFIL_DUPLICATE, operation: QueryTags.operation.fulfilDuplicateFxTransfer },
+      { action: Action.FORWARDED, operation: QueryTags.operation.forwardedTransfer },
+      { action: Action.FX_FORWARDED, operation: QueryTags.operation.forwardedFxTransfer },
+      { action: Action.RESERVED_ABORTED, operation: QueryTags.operation.reservedAbortedTransfer },
+      { action: Action.FX_RESERVED_ABORTED, operation: QueryTags.operation.reservedAbortedFxTransfer },
+      { action: Action.GET, operation: QueryTags.operation.getTransferByID },
+      { action: Action.FX_GET, operation: QueryTags.operation.getFxTransferByID }
     ]
     console.log(operationsActionsMap)
 
