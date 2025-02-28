@@ -145,7 +145,7 @@ Test('Util', (utilTests) => {
       { action: Action.TIMEOUT_RECEIVED, operation: QueryTags.operation.timeoutReceived },
       { action: Action.FX_TIMEOUT_RECEIVED, operation: QueryTags.operation.fxTimeoutReceived },
       { action: Action.TIMEOUT_RESERVED, operation: QueryTags.operation.timeoutReserved },
-      { action: Action.TIMEOUT_RESERVED, operation: QueryTags.operation.fxTimeoutReserved },
+      { action: Action.FX_TIMEOUT_RESERVED, operation: QueryTags.operation.fxTimeoutReserved },
       { action: Action.PREPARE, operation: QueryTags.operation.prepareTransfer },
       { action: Action.FX_PREPARE, operation: QueryTags.operation.prepareFxTransfer },
       { action: Action.PREPARE_DUPLICATE, operation: QueryTags.operation.prepareTransferDuplicate },
@@ -161,67 +161,15 @@ Test('Util', (utilTests) => {
       { action: Action.GET, operation: QueryTags.operation.getTransferByID },
       { action: Action.FX_GET, operation: QueryTags.operation.getFxTransferByID }
     ]
-    console.log(operationsActionsMap)
 
-    getAuditOperationForActionTests.test('should return correct operation for commit action', async (t) => {
-      const operation = Util.getAuditOperationForAction('commit')
-      t.equal(operation, 'commitTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for commit action', async (t) => {
-      const operation = Util.getAuditOperationForAction('commit')
-      t.equal(operation, 'commitTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for reserve action', async (t) => {
-      const operation = Util.getAuditOperationForAction('reserve')
-      t.equal(operation, 'reserveTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for reject action', async (t) => {
-      const operation = Util.getAuditOperationForAction('reject')
-      t.equal(operation, 'rejectTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for abort action', async (t) => {
-      const operation = Util.getAuditOperationForAction('abort')
-      t.equal(operation, 'abortTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for abort validation action', async (t) => {
-      const operation = Util.getAuditOperationForAction('abort-validation')
-      t.equal(operation, 'abortTransferValidation')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for commit fx action', async (t) => {
-      const operation = Util.getAuditOperationForAction('fx-commit', true)
-      t.equal(operation, 'commitFxTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for reserve fx action', async (t) => {
-      const operation = Util.getAuditOperationForAction('fx-reserve', true)
-      t.equal(operation, 'reserveFxTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for reject fx action', async (t) => {
-      const operation = Util.getAuditOperationForAction('fx-reject', true)
-      t.equal(operation, 'rejectFxTransfer')
-      t.end()
-    })
-
-    getAuditOperationForActionTests.test('should return correct operation for abort fx action', async (t) => {
-      const operation = Util.getAuditOperationForAction('fx-abort', true)
-      t.equal(operation, 'abortFxTransfer')
-      t.end()
-    })
+    for (const { action, operation } of operationsActionsMap) {
+      getAuditOperationForActionTests.test(`should return correct operation for ${action} action`, async (t) => {
+        const isFx = action.includes('fx')
+        const operationResult = Util.getAuditOperationForAction(action, isFx)
+        t.equal(operationResult, operation)
+        t.end()
+      })
+    }
 
     getAuditOperationForActionTests.test('should throw if action is invalid', async (t) => {
       t.throws(() => Util.getAuditOperationForAction('invalidAction'), 'Invalid action should throw')
