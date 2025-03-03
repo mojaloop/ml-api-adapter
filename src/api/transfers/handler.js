@@ -105,8 +105,8 @@ const create = async function (context, request, h) {
       span,
       id: payload.transferId || payload.commitRequestId,
       method,
-      action: Action.PREPARE,
       isFx,
+      action: isFx ? Action.FX_PREPARE : Action.PREPARE,
       ...(isFx ? { additionalTags: { determiningTransferId: payload.determiningTransferId } } : {})
     })
     await span.audit({
@@ -183,7 +183,7 @@ const fulfilTransfer = async function (context, request, h) {
     Validator.fulfilTransfer({ payload })
 
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
-    injectAuditQueryTags({ span, id: params.ID, method, path, action: Action.FULFIL, isFx })
+    injectAuditQueryTags({ span, id: params.ID, method, path, action: isFx ? Action.FX_FULFIL : Action.FULFIL, isFx })
     await span.audit({
       headers,
       payload,
@@ -227,7 +227,7 @@ const getTransferById = async function (context, request, h) {
   const { span, params, path, method } = request
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.GET))
-    injectAuditQueryTags({ span, id: params.id || params.ID, method, path, action: Action.GET, isFx })
+    injectAuditQueryTags({ span, id: params.id || params.ID, method, path, action: isFx ? Action.FX_GET : Action.GET, isFx })
     logger.info(`getById::id(${params.id || params.ID})`)
     await span.audit({
       headers: request.headers,
@@ -295,7 +295,7 @@ const fulfilTransferError = async function (context, request, h) {
 
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
-    injectAuditQueryTags({ span, id: params.ID, method, path, action: Action.ABORT, isFx })
+    injectAuditQueryTags({ span, id: params.ID, method, path, action: isFx ? Action.FX_ABORT : Action.ABORT, isFx })
     await span.audit({
       headers,
       dataUri,

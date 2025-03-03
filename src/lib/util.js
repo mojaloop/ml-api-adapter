@@ -65,58 +65,46 @@ const setProp = (obj, path, value) => {
   }
 }
 
-const getAuditOperationForAction = (action, isFx = false) => {
-  switch (action) {
-    case Action.COMMIT:
-    case Action.FX_COMMIT:
-      return isFx ? QueryTags.operation.commitFxTransfer : QueryTags.operation.commitTransfer
-    case Action.RESERVE:
-    case Action.FX_RESERVE:
-      return isFx ? QueryTags.operation.reserveFxTransfer : QueryTags.operation.reserveTransfer
-    case Action.REJECT:
-    case Action.FX_REJECT:
-      return isFx ? QueryTags.operation.rejectFxTransfer : QueryTags.operation.rejectTransfer
-    case Action.ABORT:
-    case Action.FX_ABORT:
-      return isFx ? QueryTags.operation.abortFxTransfer : QueryTags.operation.abortTransfer
-    case Action.ABORT_VALIDATION:
-    case Action.FX_ABORT_VALIDATION:
-      return isFx ? QueryTags.operation.abortFxTransferValidation : QueryTags.operation.abortTransferValidation
-    case Action.ABORT_DUPLICATE:
-    case Action.FX_ABORT_DUPLICATE:
-      return isFx ? QueryTags.operation.abortDuplicateFxTransfer : QueryTags.operation.abortDuplicateTransfer
-    case Action.TIMEOUT_RECEIVED:
-    case Action.FX_TIMEOUT_RECEIVED:
-      return isFx ? QueryTags.operation.fxTimeoutReceived : QueryTags.operation.timeoutReceived
-    case Action.TIMEOUT_RESERVED:
-    case Action.FX_TIMEOUT_RESERVED:
-      return isFx ? QueryTags.operation.fxTimeoutReserved : QueryTags.operation.timeoutReserved
-    case Action.PREPARE:
-    case Action.FX_PREPARE:
-      return isFx ? QueryTags.operation.prepareFxTransfer : QueryTags.operation.prepareTransfer
-    case Action.PREPARE_DUPLICATE:
-    case Action.FX_PREPARE_DUPLICATE:
-      return isFx ? QueryTags.operation.prepareFxTransferDuplicate : QueryTags.operation.prepareTransferDuplicate
-    case Action.FULFIL:
-    case Action.FX_FULFIL:
-      return isFx ? QueryTags.operation.fulfilFxTransfer : QueryTags.operation.fulfilTransfer
-    case Action.FULFIL_DUPLICATE:
-    case Action.FX_FULFIL_DUPLICATE:
-      return isFx ? QueryTags.operation.fulfilDuplicateFxTransfer : QueryTags.operation.fulfilDuplicateTransfer
-    case Action.FORWARDED:
-    case Action.FX_FORWARDED:
-      return isFx ? QueryTags.operation.forwardedFxTransfer : QueryTags.operation.forwardedTransfer
-    case Action.RESERVED_ABORTED:
-    case Action.FX_RESERVED_ABORTED:
-      return isFx ? QueryTags.operation.reservedAbortedFxTransfer : QueryTags.operation.reservedAbortedTransfer
-    case Action.GET:
-    case Action.FX_GET:
-      return isFx ? QueryTags.operation.getFxTransferByID : QueryTags.operation.getTransferByID
-    case Action.FX_NOTIFY:
-      return QueryTags.operation.notifyFxTransfer
-    default:
-      throw new Error(`Unsupported action for audit operation: ${action}`)
+const actionsOperationsMap = Object.freeze({
+  [Action.COMMIT]: QueryTags.operation.commitTransfer,
+  [Action.FX_COMMIT]: QueryTags.operation.commitFxTransfer,
+  [Action.RESERVE]: QueryTags.operation.reserveTransfer,
+  [Action.FX_RESERVE]: QueryTags.operation.reserveFxTransfer,
+  [Action.REJECT]: QueryTags.operation.rejectTransfer,
+  [Action.FX_REJECT]: QueryTags.operation.rejectFxTransfer,
+  [Action.ABORT]: QueryTags.operation.abortTransfer,
+  [Action.FX_ABORT]: QueryTags.operation.abortFxTransfer,
+  [Action.ABORT_VALIDATION]: QueryTags.operation.abortTransferValidation,
+  [Action.FX_ABORT_VALIDATION]: QueryTags.operation.abortFxTransferValidation,
+  [Action.ABORT_DUPLICATE]: QueryTags.operation.abortDuplicateTransfer,
+  [Action.FX_ABORT_DUPLICATE]: QueryTags.operation.abortDuplicateFxTransfer,
+  [Action.TIMEOUT_RECEIVED]: QueryTags.operation.timeoutReceived,
+  [Action.FX_TIMEOUT_RECEIVED]: QueryTags.operation.fxTimeoutReceived,
+  [Action.TIMEOUT_RESERVED]: QueryTags.operation.timeoutReserved,
+  [Action.FX_TIMEOUT_RESERVED]: QueryTags.operation.fxTimeoutReserved,
+  [Action.PREPARE]: QueryTags.operation.prepareTransfer,
+  [Action.FX_PREPARE]: QueryTags.operation.prepareFxTransfer,
+  [Action.PREPARE_DUPLICATE]: QueryTags.operation.prepareTransferDuplicate,
+  [Action.FX_PREPARE_DUPLICATE]: QueryTags.operation.prepareFxTransferDuplicate,
+  [Action.FULFIL]: QueryTags.operation.fulfilTransfer,
+  [Action.FX_FULFIL]: QueryTags.operation.fulfilFxTransfer,
+  [Action.FULFIL_DUPLICATE]: QueryTags.operation.fulfilDuplicateTransfer,
+  [Action.FX_FULFIL_DUPLICATE]: QueryTags.operation.fulfilDuplicateFxTransfer,
+  [Action.FORWARDED]: QueryTags.operation.forwardedTransfer,
+  [Action.FX_FORWARDED]: QueryTags.operation.forwardedFxTransfer,
+  [Action.RESERVED_ABORTED]: QueryTags.operation.reservedAbortedTransfer,
+  [Action.FX_RESERVED_ABORTED]: QueryTags.operation.reservedAbortedFxTransfer,
+  [Action.GET]: QueryTags.operation.getTransferByID,
+  [Action.FX_GET]: QueryTags.operation.getFxTransferByID,
+  [Action.FX_NOTIFY]: QueryTags.operation.notifyFxTransfer
+})
+
+const getAuditOperationForAction = (action) => {
+  const ops = actionsOperationsMap[action]
+  if (!ops) {
+    throw new Error(`No audit operation found for action: ${action}`)
   }
+  return ops
 }
 
 const getAuditQueryTags = ({
@@ -136,7 +124,7 @@ const getAuditQueryTags = ({
     serviceName,
     auditType,
     contentType,
-    operation || getAuditOperationForAction(action, isFx),
+    operation || getAuditOperationForAction(action),
     {
       httpMethod: method,
       ...(url ? { httpUrl: url } : {}),

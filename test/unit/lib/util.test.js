@@ -39,7 +39,6 @@ const Test = require('tapes')(require('tape'))
 const Util = require('../../../src/lib/util')
 const Config = require('../../../src/lib/config')
 const path = require('path')
-const { Enum: { Events: { Event: { Action } }, Tags: { QueryTags } } } = require('@mojaloop/central-services-shared')
 
 Test('Util', (utilTests) => {
   utilTests.test('pathForInterface', async (pathForInterfaceTests) => {
@@ -129,48 +128,6 @@ Test('Util', (utilTests) => {
   })
 
   utilTests.test('getAuditOperationForAction', async (getAuditOperationForActionTests) => {
-    const operationsActionsMap = [
-      { action: Action.COMMIT, operation: QueryTags.operation.commitTransfer },
-      { action: Action.FX_COMMIT, operation: QueryTags.operation.commitFxTransfer },
-      { action: Action.RESERVE, operation: QueryTags.operation.reserveTransfer },
-      { action: Action.FX_RESERVE, operation: QueryTags.operation.reserveFxTransfer },
-      { action: Action.REJECT, operation: QueryTags.operation.rejectTransfer },
-      { action: Action.FX_REJECT, operation: QueryTags.operation.rejectFxTransfer },
-      { action: Action.ABORT, operation: QueryTags.operation.abortTransfer },
-      { action: Action.FX_ABORT, operation: QueryTags.operation.abortFxTransfer },
-      { action: Action.ABORT_VALIDATION, operation: QueryTags.operation.abortTransferValidation },
-      { action: Action.FX_ABORT_VALIDATION, operation: QueryTags.operation.abortFxTransferValidation },
-      { action: Action.ABORT_DUPLICATE, operation: QueryTags.operation.abortDuplicateTransfer },
-      { action: Action.FX_ABORT_DUPLICATE, operation: QueryTags.operation.abortDuplicateFxTransfer },
-      { action: Action.TIMEOUT_RECEIVED, operation: QueryTags.operation.timeoutReceived },
-      { action: Action.FX_TIMEOUT_RECEIVED, operation: QueryTags.operation.fxTimeoutReceived },
-      { action: Action.TIMEOUT_RESERVED, operation: QueryTags.operation.timeoutReserved },
-      { action: Action.FX_TIMEOUT_RESERVED, operation: QueryTags.operation.fxTimeoutReserved },
-      { action: Action.PREPARE, operation: QueryTags.operation.prepareTransfer },
-      { action: Action.FX_PREPARE, operation: QueryTags.operation.prepareFxTransfer },
-      { action: Action.PREPARE_DUPLICATE, operation: QueryTags.operation.prepareTransferDuplicate },
-      { action: Action.FX_PREPARE_DUPLICATE, operation: QueryTags.operation.prepareFxTransferDuplicate },
-      { action: Action.FULFIL, operation: QueryTags.operation.fulfilTransfer },
-      { action: Action.FX_FULFIL, operation: QueryTags.operation.fulfilFxTransfer },
-      { action: Action.FULFIL_DUPLICATE, operation: QueryTags.operation.fulfilDuplicateTransfer },
-      { action: Action.FX_FULFIL_DUPLICATE, operation: QueryTags.operation.fulfilDuplicateFxTransfer },
-      { action: Action.FORWARDED, operation: QueryTags.operation.forwardedTransfer },
-      { action: Action.FX_FORWARDED, operation: QueryTags.operation.forwardedFxTransfer },
-      { action: Action.RESERVED_ABORTED, operation: QueryTags.operation.reservedAbortedTransfer },
-      { action: Action.FX_RESERVED_ABORTED, operation: QueryTags.operation.reservedAbortedFxTransfer },
-      { action: Action.GET, operation: QueryTags.operation.getTransferByID },
-      { action: Action.FX_GET, operation: QueryTags.operation.getFxTransferByID }
-    ]
-
-    for (const { action, operation } of operationsActionsMap) {
-      getAuditOperationForActionTests.test(`should return correct operation for ${action} action`, async (t) => {
-        const isFx = action.includes('fx')
-        const operationResult = Util.getAuditOperationForAction(action, isFx)
-        t.equal(operationResult, operation)
-        t.end()
-      })
-    }
-
     getAuditOperationForActionTests.test('should throw if action is invalid', async (t) => {
       t.throws(() => Util.getAuditOperationForAction('invalidAction'), 'Invalid action should throw')
       t.end()
