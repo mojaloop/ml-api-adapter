@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.2.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.1.1...v16.2.0) (2025-03-03)
+
+
+### Features
+
+* **csi-1194:** add audit query tags ([#575](https://github.com/mojaloop/ml-api-adapter/issues/575)) ([f7bcb5a](https://github.com/mojaloop/ml-api-adapter/commit/f7bcb5a999718f856f7f45c92fdc9be959f742c8))
+
 ### [16.1.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.1.0...v16.1.1) (2025-02-25)
 
 
