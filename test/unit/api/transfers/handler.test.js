@@ -151,7 +151,8 @@ Test('transfer handler', handlerTest => {
         contentType: QueryTags.contentType.httpRequest,
         operation: QueryTags.operation.prepareTransfer,
         httpMethod: 'post',
-        transferId: payload.transferId
+        transferId: payload.transferId,
+        transactionId: payload.transferId
       })
     })
 
@@ -270,7 +271,8 @@ Test('transfer handler', handlerTest => {
         operation: QueryTags.operation.fulfilTransfer,
         httpMethod: 'put',
         httpPath: request.path,
-        transferId: request.params.ID
+        transferId: request.params.ID,
+        transactionId: request.params.ID
       })
     })
 
@@ -457,7 +459,8 @@ Test('transfer handler', handlerTest => {
             operation: QueryTags.operation.getTransferByID,
             httpMethod: 'get',
             httpPath: request.path,
-            transferId: request.params.ID
+            transferId: request.params.ID,
+            transactionId: request.params.ID
           })
         } catch (e) {
           test.fail()
@@ -534,7 +537,8 @@ Test('transfer handler', handlerTest => {
         operation: QueryTags.operation.abortTransfer,
         httpMethod: 'put',
         httpPath: request.path,
-        transferId: request.params.ID
+        transferId: request.params.ID,
+        transactionId: request.params.ID
       })
     })
     await fulfilTransferErrorTest.test('return error if fulfilTransfer throws', async test => {

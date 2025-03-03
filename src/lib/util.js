@@ -131,7 +131,7 @@ const injectAuditQueryTags = ({
       ...(url ? { httpUrl: url } : {}),
       ...(path ? { httpPath: path } : {}),
       ...(isFx ? { commitRequestId: id } : { transferId: id }),
-      ...(isFx ? { conversionId: id } : {}),
+      ...(isFx ? { conversionId: id } : { transactionId: id }),
       ...(additionalTags.determiningTransferId ? { transactionId: additionalTags.determiningTransferId } : {}),
       ...additionalTags
     }
