@@ -33,13 +33,13 @@ const FSPIOPError = require('@mojaloop/central-services-error-handling').Factory
 const Config = require('../../../../src/lib/config')
 const Handler = require('../../../../src/api/transfers/handler')
 const TransferService = require('../../../../src/domain/transfer')
-const Enum = require('@mojaloop/central-services-shared').Enum
+const { Enum, Enum: { Tags: { QueryTags } } } = require('@mojaloop/central-services-shared')
 const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
 
 const mocks = require('../../mocks')
 
-const createRequest = (payload) => {
+const createRequest = (payload, isFx = false) => {
   const requestPayload = payload || {}
   const headers = {}
   headers[Enum.Http.Headers.FSPIOP.SOURCE] = payload.payerFsp
@@ -47,6 +47,8 @@ const createRequest = (payload) => {
   return {
     headers,
     payload: requestPayload,
+    method: 'post',
+    path: isFx ? '/fxTransfers' : '/transfers',
     server: {
       log: () => { }
     },
@@ -54,7 +56,7 @@ const createRequest = (payload) => {
   }
 }
 
-const createPutRequest = (params, payload) => {
+const createPutRequest = (params, payload, isFx = false) => {
   const requestPayload = payload || {}
   const requestParams = params || {}
   const headers = {}
@@ -64,6 +66,8 @@ const createPutRequest = (params, payload) => {
     headers,
     params: requestParams,
     payload: requestPayload,
+    method: 'put',
+    path: isFx ? `/fxTransfers/${params.ID}` : `/transfers/${params.ID}`,
     server: {
       log: () => { }
     },
@@ -138,18 +142,40 @@ Test('transfer handler', handlerTest => {
 
       const request = createRequest(payload)
       const reply = createTestReply(test)
-
+      const spanSpy = sandbox.spy(request.span, 'setTags')
       Handler.create({}, request, reply)
+      sandbox.assert.calledTwice(spanSpy)
+      sandbox.assert.calledWith(spanSpy, {
+        serviceName: QueryTags.serviceName.mlApiAdapterService,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.prepareTransfer,
+        httpMethod: 'post',
+        transferId: payload.transferId,
+        transactionId: payload.transferId
+      })
     })
 
     createTransferTest.test('reply with status code 202 for correct fxTransfer request', test => {
       TransferService.prepare.returns(Promise.resolve(true))
 
       const payload = mocks.mockFxPreparePayload()
-      const request = createRequest(payload)
+      const request = createRequest(payload, true)
       const reply = createTestReply(test)
-
+      const spanSpy = sandbox.spy(request.span, 'setTags')
       Handler.create({}, request, reply)
+      sandbox.assert.calledTwice(spanSpy)
+      sandbox.assert.calledWith(spanSpy, {
+        serviceName: QueryTags.serviceName.mlApiAdapterService,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.prepareFxTransfer,
+        httpMethod: 'post',
+        commitRequestId: payload.commitRequestId,
+        conversionId: payload.commitRequestId,
+        determiningTransferId: payload.determiningTransferId,
+        transactionId: payload.determiningTransferId
+      })
     })
 
     createTransferTest.test('return error if transfer create throws', async test => {
@@ -219,7 +245,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const params = {
-        id: 'dfsp1'
+        ID: 'dfsp1'
       }
 
       TransferService.fulfil.returns(Promise.resolve(true))
@@ -235,19 +261,41 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
-
+      const spanSpy = sandbox.spy(request.span, 'setTags')
       Handler.fulfilTransfer({}, request, reply)
+      sandbox.assert.calledTwice(spanSpy)
+      sandbox.assert.calledWith(spanSpy, {
+        serviceName: QueryTags.serviceName.mlApiAdapterService,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.fulfilTransfer,
+        httpMethod: 'put',
+        httpPath: request.path,
+        transferId: request.params.ID,
+        transactionId: request.params.ID
+      })
     })
 
     fulfilTransferTest.test('reply with status code 200 for success PUT fxTransfer callback', test => {
       TransferService.fulfil.returns(Promise.resolve(true))
 
       const payload = mocks.mockFxFulfilPayload()
-      const params = { id: 'dfsp1' }
-      const request = createPutRequest(params, payload)
+      const params = { ID: 'dfsp1' }
+      const request = createPutRequest(params, payload, true)
       const reply = createTestReply(test, 200)
-
+      const spanSpy = sandbox.spy(request.span, 'setTags')
       Handler.fulfilTransfer({}, request, reply)
+      sandbox.assert.calledTwice(spanSpy)
+      sandbox.assert.calledWith(spanSpy, {
+        serviceName: QueryTags.serviceName.mlApiAdapterService,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.fulfilFxTransfer,
+        httpMethod: 'put',
+        httpPath: request.path,
+        commitRequestId: request.params.ID,
+        conversionId: request.params.ID
+      })
     })
 
     fulfilTransferTest.test('reply with status code 400 if future completedTimestamp is provided', async test => {
@@ -272,7 +320,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const params = {
-        id: 'dfsp1'
+        ID: 'dfsp1'
       }
 
       TransferService.fulfil.returns(Promise.resolve(true))
@@ -312,7 +360,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const params = {
-        id: 'dfsp1'
+        ID: 'dfsp1'
       }
 
       TransferService.fulfil.returns(Promise.resolve(true))
@@ -351,7 +399,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const params = {
-        id: 'dfsp1'
+        ID: 'dfsp1'
       }
 
       const error = new Error('An error has occurred')
@@ -375,8 +423,10 @@ Test('transfer handler', handlerTest => {
         headers[Enum.Http.Headers.FSPIOP.SOURCE] = 'source'
         headers[Enum.Http.Headers.FSPIOP.DESTINATION] = 'destination'
         const request = {
+          method: 'get',
+          path: '/transfers/b51ec534-ee48-4575b6a9-ead2955b8069',
           params: {
-            transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
+            ID: 'b51ec534-ee48-4575b6a9-ead2955b8069'
           },
           payload: {
             transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
@@ -398,8 +448,20 @@ Test('transfer handler', handlerTest => {
           }
         }
         TransferService.getTransferById.resolves()
+        const spanSpy = sandbox.spy(request.span, 'setTags')
         try {
           await Handler.getTransferById({}, request, reply)
+          sandbox.assert.calledTwice(spanSpy)
+          sandbox.assert.calledWith(spanSpy, {
+            serviceName: QueryTags.serviceName.mlApiAdapterService,
+            auditType: QueryTags.auditType.transactionFlow,
+            contentType: QueryTags.contentType.httpRequest,
+            operation: QueryTags.operation.getTransferByID,
+            httpMethod: 'get',
+            httpPath: request.path,
+            transferId: request.params.ID,
+            transactionId: request.params.ID
+          })
         } catch (e) {
           test.fail()
           test.end()
@@ -451,7 +513,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const params = {
-        id: '888ec534-ee48-4575-b6a9-ead2955b8930'
+        ID: '888ec534-ee48-4575-b6a9-ead2955b8930'
       }
       TransferService.transferError.returns(Promise.resolve(true))
       const request = createPutRequest(params, payload)
@@ -465,7 +527,19 @@ Test('transfer handler', handlerTest => {
           }
         }
       }
+      const spanSpy = sandbox.spy(request.span, 'setTags')
       await Handler.fulfilTransferError({}, request, reply)
+      sandbox.assert.calledTwice(spanSpy)
+      sandbox.assert.calledWith(spanSpy, {
+        serviceName: QueryTags.serviceName.mlApiAdapterService,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.abortTransfer,
+        httpMethod: 'put',
+        httpPath: request.path,
+        transferId: request.params.ID,
+        transactionId: request.params.ID
+      })
     })
     await fulfilTransferErrorTest.test('return error if fulfilTransfer throws', async test => {
       const headers = {}

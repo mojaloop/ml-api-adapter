@@ -25,7 +25,10 @@
  ******/
 
 const Path = require('path')
-const { Hapi } = require('@mojaloop/central-services-shared').Util
+const {
+  Util: { Hapi, EventFramework: { Tags: { getQueryTags } } },
+  Enum: { Events: { Event: { Action } }, Tags: { QueryTags } }
+} = require('@mojaloop/central-services-shared')
 const Config = require('../lib/config')
 
 const pathForInterface = ({ isHandlerInterface }) => {
@@ -62,7 +65,83 @@ const setProp = (obj, path, value) => {
   }
 }
 
+const actionsOperationsMap = Object.freeze({
+  [Action.COMMIT]: QueryTags.operation.commitTransfer,
+  [Action.FX_COMMIT]: QueryTags.operation.commitFxTransfer,
+  [Action.RESERVE]: QueryTags.operation.reserveTransfer,
+  [Action.FX_RESERVE]: QueryTags.operation.reserveFxTransfer,
+  [Action.REJECT]: QueryTags.operation.rejectTransfer,
+  [Action.FX_REJECT]: QueryTags.operation.rejectFxTransfer,
+  [Action.ABORT]: QueryTags.operation.abortTransfer,
+  [Action.FX_ABORT]: QueryTags.operation.abortFxTransfer,
+  [Action.ABORT_VALIDATION]: QueryTags.operation.abortTransferValidation,
+  [Action.FX_ABORT_VALIDATION]: QueryTags.operation.abortFxTransferValidation,
+  [Action.ABORT_DUPLICATE]: QueryTags.operation.abortDuplicateTransfer,
+  [Action.FX_ABORT_DUPLICATE]: QueryTags.operation.abortDuplicateFxTransfer,
+  [Action.TIMEOUT_RECEIVED]: QueryTags.operation.timeoutReceived,
+  [Action.FX_TIMEOUT_RECEIVED]: QueryTags.operation.fxTimeoutReceived,
+  [Action.TIMEOUT_RESERVED]: QueryTags.operation.timeoutReserved,
+  [Action.FX_TIMEOUT_RESERVED]: QueryTags.operation.fxTimeoutReserved,
+  [Action.PREPARE]: QueryTags.operation.prepareTransfer,
+  [Action.FX_PREPARE]: QueryTags.operation.prepareFxTransfer,
+  [Action.PREPARE_DUPLICATE]: QueryTags.operation.prepareTransferDuplicate,
+  [Action.FX_PREPARE_DUPLICATE]: QueryTags.operation.prepareFxTransferDuplicate,
+  [Action.FULFIL]: QueryTags.operation.fulfilTransfer,
+  [Action.FX_FULFIL]: QueryTags.operation.fulfilFxTransfer,
+  [Action.FULFIL_DUPLICATE]: QueryTags.operation.fulfilDuplicateTransfer,
+  [Action.FX_FULFIL_DUPLICATE]: QueryTags.operation.fulfilDuplicateFxTransfer,
+  [Action.FORWARDED]: QueryTags.operation.forwardedTransfer,
+  [Action.FX_FORWARDED]: QueryTags.operation.forwardedFxTransfer,
+  [Action.RESERVED_ABORTED]: QueryTags.operation.reservedAbortedTransfer,
+  [Action.FX_RESERVED_ABORTED]: QueryTags.operation.reservedAbortedFxTransfer,
+  [Action.GET]: QueryTags.operation.getTransferByID,
+  [Action.FX_GET]: QueryTags.operation.getFxTransferByID,
+  [Action.FX_NOTIFY]: QueryTags.operation.notifyFxTransfer
+})
+
+const getAuditOperationForAction = (action) => {
+  const ops = actionsOperationsMap[action]
+  if (!ops) {
+    throw new Error(`No audit operation found for action: ${action}`)
+  }
+  return ops
+}
+
+const injectAuditQueryTags = ({
+  span,
+  id,
+  method,
+  url = undefined,
+  path = undefined,
+  action = undefined,
+  serviceName = QueryTags.serviceName.mlApiAdapterService,
+  auditType = QueryTags.auditType.transactionFlow,
+  contentType = QueryTags.contentType.httpRequest,
+  operation = undefined,
+  isFx = false,
+  additionalTags = {}
+}) => {
+  const tags = getQueryTags(
+    serviceName,
+    auditType,
+    contentType,
+    operation || getAuditOperationForAction(action),
+    {
+      httpMethod: method,
+      ...(url ? { httpUrl: url } : {}),
+      ...(path ? { httpPath: path } : {}),
+      ...(isFx ? { commitRequestId: id } : { transferId: id }),
+      ...(isFx ? { conversionId: id } : { transactionId: id }),
+      ...(additionalTags.determiningTransferId ? { transactionId: additionalTags.determiningTransferId } : {}),
+      ...additionalTags
+    }
+  )
+  span.setTags(tags)
+}
+
 module.exports = {
+  setProp,
   pathForInterface,
-  setProp
+  injectAuditQueryTags,
+  getAuditOperationForAction
 }

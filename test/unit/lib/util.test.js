@@ -41,82 +41,99 @@ const Config = require('../../../src/lib/config')
 const path = require('path')
 
 Test('Util', (utilTests) => {
-  utilTests.test('pathForInterface should return correct path for default API', async (t) => {
-    Config.API_TYPE = 'fspiop'
-    const apiPath = Util.pathForInterface({ isHandlerInterface: false })
-    const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for default API')
-    t.end()
+  utilTests.test('pathForInterface', async (pathForInterfaceTests) => {
+    pathForInterfaceTests.test('pathForInterface should return correct path for default API', async (t) => {
+      Config.API_TYPE = 'fspiop'
+      const apiPath = Util.pathForInterface({ isHandlerInterface: false })
+      const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for default API')
+      t.end()
+    })
+
+    pathForInterfaceTests.test('pathForInterface should return correct path for handler interface', async (t) => {
+      Config.API_TYPE = 'fspiop'
+      const apiPath = Util.pathForInterface({ isHandlerInterface: true })
+      const expectedAPIpathResult = path.join('interface', 'handler-swagger.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for handler interface')
+      t.end()
+    })
+
+    pathForInterfaceTests.test('pathForInterface should return correct path for iso20022 API type', async (t) => {
+      Config.API_TYPE = 'iso20022'
+      const apiPath = Util.pathForInterface({ isHandlerInterface: false })
+      const expectedAPIpathResult = path.join('interface', 'api-swagger-iso20022-transfers.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for iso20022 API type')
+      t.end()
+    })
+
+    pathForInterfaceTests.test('pathForInterface should return correct path for non-iso20022 API type', async (t) => {
+      Config.API_TYPE = 'non-iso20022'
+      const apiPath = Util.pathForInterface({ isHandlerInterface: false })
+      const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for non-iso20022 API type')
+      t.end()
+    })
+
+    pathForInterfaceTests.test('pathForInterface should handle undefined API_TYPE gracefully', async (t) => {
+      Config.API_TYPE = undefined
+      const apiPath = Util.pathForInterface({ isHandlerInterface: false })
+      const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for undefined API_TYPE')
+      t.end()
+    })
+
+    pathForInterfaceTests.test('pathForInterface should handle null API_TYPE gracefully', async (t) => {
+      Config.API_TYPE = null
+      const apiPath = Util.pathForInterface({ isHandlerInterface: false })
+      const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for null API_TYPE')
+      t.end()
+    })
+
+    pathForInterfaceTests.test('pathForInterface should handle empty string API_TYPE gracefully', async (t) => {
+      Config.API_TYPE = ''
+      const apiPath = Util.pathForInterface({ isHandlerInterface: false })
+      const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
+      t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for empty string API_TYPE')
+      t.end()
+    })
+
+    pathForInterfaceTests.end()
   })
 
-  utilTests.test('pathForInterface should return correct path for handler interface', async (t) => {
-    Config.API_TYPE = 'fspiop'
-    const apiPath = Util.pathForInterface({ isHandlerInterface: true })
-    const expectedAPIpathResult = path.join('interface', 'handler-swagger.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for handler interface')
-    t.end()
+  utilTests.test('setProp', async (setPropTests) => {
+    setPropTests.test('setProp should set a nested property in an object', async (t) => {
+      const obj = {}
+      Util.setProp(obj, 'a.b.c', 'value')
+      t.equal(obj.a.b.c, 'value')
+      t.end()
+    })
+
+    setPropTests.test('setProp should not set __proto__ property in an object', async (t) => {
+      const obj = {}
+      Util.setProp(obj, '__proto__.polluted', 'value')
+      // eslint-disable-next-line no-proto
+      t.notOk(obj.__proto__.polluted, 'Should not set __proto__ property')
+      t.end()
+    })
+
+    setPropTests.test('setProp should not set constructor property in an object', async (t) => {
+      const obj = {}
+      Util.setProp(obj, 'constructor.polluted', 'value')
+      t.notOk(obj.constructor.polluted, 'Should not set constructor property')
+      t.end()
+    })
+
+    setPropTests.end()
   })
 
-  utilTests.test('pathForInterface should return correct path for iso20022 API type', async (t) => {
-    Config.API_TYPE = 'iso20022'
-    const apiPath = Util.pathForInterface({ isHandlerInterface: false })
-    const expectedAPIpathResult = path.join('interface', 'api-swagger-iso20022-transfers.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for iso20022 API type')
-    t.end()
-  })
+  utilTests.test('getAuditOperationForAction', async (getAuditOperationForActionTests) => {
+    getAuditOperationForActionTests.test('should throw if action is invalid', async (t) => {
+      t.throws(() => Util.getAuditOperationForAction('invalidAction'), 'Invalid action should throw')
+      t.end()
+    })
 
-  utilTests.test('pathForInterface should return correct path for non-iso20022 API type', async (t) => {
-    Config.API_TYPE = 'non-iso20022'
-    const apiPath = Util.pathForInterface({ isHandlerInterface: false })
-    const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for non-iso20022 API type')
-    t.end()
-  })
-
-  utilTests.test('pathForInterface should handle undefined API_TYPE gracefully', async (t) => {
-    Config.API_TYPE = undefined
-    const apiPath = Util.pathForInterface({ isHandlerInterface: false })
-    const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for undefined API_TYPE')
-    t.end()
-  })
-
-  utilTests.test('pathForInterface should handle null API_TYPE gracefully', async (t) => {
-    Config.API_TYPE = null
-    const apiPath = Util.pathForInterface({ isHandlerInterface: false })
-    const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for null API_TYPE')
-    t.end()
-  })
-
-  utilTests.test('pathForInterface should handle empty string API_TYPE gracefully', async (t) => {
-    Config.API_TYPE = ''
-    const apiPath = Util.pathForInterface({ isHandlerInterface: false })
-    const expectedAPIpathResult = path.join('interface', 'api-swagger.yaml')
-    t.ok(apiPath.includes(expectedAPIpathResult), 'Correct path for empty string API_TYPE')
-    t.end()
-  })
-
-  utilTests.test('setProp should set a nested property in an object', async (t) => {
-    const obj = {}
-    Util.setProp(obj, 'a.b.c', 'value')
-    t.equal(obj.a.b.c, 'value')
-    t.end()
-  })
-
-  utilTests.test('setProp should not set __proto__ property in an object', async (t) => {
-    const obj = {}
-    Util.setProp(obj, '__proto__.polluted', 'value')
-    // eslint-disable-next-line no-proto
-    t.notOk(obj.__proto__.polluted, 'Should not set __proto__ property')
-    t.end()
-  })
-
-  utilTests.test('setProp should not set constructor property in an object', async (t) => {
-    const obj = {}
-    Util.setProp(obj, 'constructor.polluted', 'value')
-    t.notOk(obj.constructor.polluted, 'Should not set constructor property')
-    t.end()
+    getAuditOperationForActionTests.end()
   })
 
   utilTests.end()
