@@ -107,36 +107,6 @@ const getAuditOperationForAction = (action) => {
   return ops
 }
 
-const getAuditQueryTags = ({
-  id,
-  method,
-  url = undefined,
-  path = undefined,
-  action = undefined,
-  serviceName = QueryTags.serviceName.mlApiAdapterService,
-  auditType = QueryTags.auditType.transactionFlow,
-  contentType = QueryTags.contentType.httpRequest,
-  operation = undefined,
-  isFx = false,
-  additionalTags = {}
-}) => {
-  return getQueryTags(
-    serviceName,
-    auditType,
-    contentType,
-    operation || getAuditOperationForAction(action),
-    {
-      httpMethod: method,
-      ...(url ? { httpUrl: url } : {}),
-      ...(path ? { httpPath: path } : {}),
-      ...(isFx ? { commitRequestId: id } : { transferId: id }),
-      ...(isFx ? { conversionId: id } : {}),
-      ...(additionalTags.determiningTransferId ? { transactionId: additionalTags.determiningTransferId } : {}),
-      ...additionalTags
-    }
-  )
-}
-
 const injectAuditQueryTags = ({
   span,
   id,
@@ -151,26 +121,27 @@ const injectAuditQueryTags = ({
   isFx = false,
   additionalTags = {}
 }) => {
-  const tags = getAuditQueryTags({
-    id,
-    method,
-    url,
-    path,
-    action,
+  const tags = getQueryTags(
     serviceName,
     auditType,
     contentType,
-    operation,
-    isFx,
-    additionalTags
-  })
+    operation || getAuditOperationForAction(action),
+    {
+      httpMethod: method,
+      ...(url ? { httpUrl: url } : {}),
+      ...(path ? { httpPath: path } : {}),
+      ...(isFx ? { commitRequestId: id } : { transferId: id }),
+      ...(isFx ? { conversionId: id } : {}),
+      ...(additionalTags.determiningTransferId ? { transactionId: additionalTags.determiningTransferId } : {}),
+      ...additionalTags
+    }
+  )
   span.setTags(tags)
 }
 
 module.exports = {
   setProp,
   pathForInterface,
-  getAuditQueryTags,
   injectAuditQueryTags,
   getAuditOperationForAction
 }
