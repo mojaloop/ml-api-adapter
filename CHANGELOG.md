@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.3.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.2.0...v16.3.0) (2025-03-06)
+
+
+### Features
+
+* **csi-1252:** updated central-services-shared to log error details ([#579](https://github.com/mojaloop/ml-api-adapter/issues/579)) ([0c3ab85](https://github.com/mojaloop/ml-api-adapter/commit/0c3ab856a0c1b5210979b911630e5c223ef44828))
+
 ## [16.2.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.1.1...v16.2.0) (2025-03-03)
 
 
