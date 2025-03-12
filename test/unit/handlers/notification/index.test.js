@@ -150,7 +150,7 @@ Test('Notification Service tests', async notificationTest => {
         test.fail('should throw')
       } catch (err) {
         test.ok(err instanceof Error)
-        test.equal(err.message, 'Invalid message received from kafka - wrong action or no context')
+        test.equal(err.message, 'Invalid message received from kafka - wrong action "prepare" or no context')
         test.end()
       }
     })
@@ -4763,7 +4763,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         mockPayloadCache.getPayload.returns(Promise.resolve({}))
         test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
-        await Notification.consumeMessage(null, [msg])
+        await Notification.consumeMessage(null, msg)
         test.fail('Should not have caught an error here since it should have been dealt with')
       } catch (e) {
         test.pass('Error successfully thrown')
@@ -4792,7 +4792,7 @@ Test('Notification Service tests', async notificationTest => {
       try {
         mockPayloadCache.getPayload.returns(Promise.resolve({}))
         test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
-        await Notification.consumeMessage(null, [msg])
+        await Notification.consumeMessage(null, msg)
         test.fail('Should not have caught an error here since it should have been dealt with')
       } catch (e) {
         test.pass('Error successfully thrown')
@@ -4833,22 +4833,82 @@ Test('Notification Service tests', async notificationTest => {
     })
 
     await consumeMessageTest.test('throw error on invalid message', async test => {
-      const msg = {
-      }
-
-      const message = [msg]
       const error = new Error()
 
       try {
         mockPayloadCache.getPayload.returns(Promise.resolve({}))
         test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
-        await Notification.consumeMessage(error, message)
+        await Notification.consumeMessage(error, {})
         test.fail('ehe')
         test.end()
       } catch (e) {
         test.ok(e instanceof Error)
         test.end()
       }
+    })
+
+    const invalidActionMessage = {
+      value: {
+        metadata: {
+          event: {
+            type: 'notification',
+            action: 'invalid',
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        content: {
+          headers: {},
+          payload: {}
+        }
+      }
+    }
+    await consumeMessageTest.test('throw error on invalid action', async test => {
+      try {
+        mockPayloadCache.getPayload.returns(Promise.resolve({}))
+        test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+        await Notification.consumeMessage(null, invalidActionMessage)
+        test.fail('ehe')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.name, 'FSPIOPError')
+        test.end()
+      }
+    })
+
+    await consumeMessageTest.test('not throw error in batch mode', async test => {
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+      const result = await Notification.consumeMessage(null, [invalidActionMessage, msg])
+      test.notOk(result)
+      test.end()
     })
 
     await consumeMessageTest.end()
