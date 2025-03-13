@@ -167,6 +167,7 @@ const consumeMessage = async (error, message) => {
     }
     logger.debug('Notification:consumeMessage message:', message)
 
+    const isBatch = Array.isArray(message)
     message = Array.isArray(message) ? message : [message]
     let combinedResult = true
 
@@ -186,7 +187,8 @@ const consumeMessage = async (error, message) => {
           if (!autoCommitEnabled) {
             notificationConsumer.commitMessageSync(msg)
           }
-          throw fspiopError // We return 'resolved' since we have dealt with the error here
+          if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
+          return false
         })
         if (!autoCommitEnabled) {
           notificationConsumer.commitMessageSync(msg)
@@ -266,7 +268,7 @@ const processMessage = async (msg, span) => {
     (!msg.value.content.context?.originalRequestId && !msg.value.content.context?.originalRequestPayload)
   ) {
     histTimerEnd({ success: false, action: 'unknown' })
-    throw ErrorHandler.Factory.createInternalServerFSPIOPError('Invalid message received from kafka - wrong action or no context', { msg })
+    throw ErrorHandler.Factory.createInternalServerFSPIOPError(`Invalid message received from kafka - wrong action "${msg.value.metadata?.event?.action}" or no context`, { offset: msg.offset, partition: msg.partition, topic: msg.topic })
   }
 
   const fromSwitch = true
