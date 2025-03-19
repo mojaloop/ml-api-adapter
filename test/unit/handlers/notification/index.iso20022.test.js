@@ -262,7 +262,7 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
-      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Prtry)
       test.equal(result, expected)
       test.end()
     })
@@ -313,7 +313,7 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
-      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Prtry)
       test.equal(result, expected)
       test.end()
     })
@@ -364,7 +364,7 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
-      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Prtry)
       test.equal(result, expected)
       test.end()
     })
@@ -415,7 +415,7 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg, span)
       const parsedPayload = JSON.parse(Callback.sendRequest.getCall(0).args[0].payload)
-      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Cd)
+      test.ok(parsedPayload.TxInfAndSts.StsRsnInf.Rsn.Prtry)
       test.equal(result, expected)
       test.end()
     })
