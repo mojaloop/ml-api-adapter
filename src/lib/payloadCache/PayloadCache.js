@@ -52,7 +52,7 @@ class PayloadCache extends RedisCache {
       this.log.debug('getPayload is done:', { key, requestId, value })
       return value
     } catch (err) {
-      this.log.warn('getPayload is failed with error', err)
+      this.log.warn('getPayload failed with error', err)
       return null
     }
   }
@@ -68,7 +68,7 @@ class PayloadCache extends RedisCache {
       this.log.debug('setPayload is done:', { key, requestId, setResult })
       return true
     } catch (err) {
-      this.log.warn('setPayload is failed with error:', err)
+      this.log.warn('setPayload failed with error:', err)
       return false
     }
   }
