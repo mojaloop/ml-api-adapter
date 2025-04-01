@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.4.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.4.1...v16.4.2) (2025-04-01)
+
+
+### Bug Fixes
+
+* rename metrics to avoid conflict with central ledger ([#584](https://github.com/mojaloop/ml-api-adapter/issues/584)) ([5d34f1f](https://github.com/mojaloop/ml-api-adapter/commit/5d34f1f7d00719ca1a4aa47246fdcd26519d8624))
+
 ### [16.4.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.4.0...v16.4.1) (2025-03-27)
 
 
