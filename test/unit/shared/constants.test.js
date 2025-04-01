@@ -36,7 +36,7 @@
 const Test = require('tapes')(require('tape'))
 const { PROM_METRICS } = require('../../../src/shared/constants')
 
-const FX_METRIC_PREFIX = 'fx_'
+const FX_METRIC_PREFIX = 'ml_fx_'
 
 Test('Constants tests -->', test => {
   test.test('should return valid FX metric names', test => {

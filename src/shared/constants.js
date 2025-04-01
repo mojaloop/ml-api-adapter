@@ -50,11 +50,11 @@ const ROUTE_IDS = Object.freeze({
 const FX_METRIC_PREFIX = 'fx_'
 
 const PROM_METRICS = Object.freeze({
-  transferGet: (isFx) => `${isFx ? FX_METRIC_PREFIX : ''}transfer_get`,
-  transferPrepare: (isFx) => `${isFx ? FX_METRIC_PREFIX : ''}transfer_prepare`,
-  transferFulfil: (isFx) => `${isFx ? FX_METRIC_PREFIX : ''}transfer_fulfil`,
-  transferFulfilError: (isFx) => `${isFx ? FX_METRIC_PREFIX : ''}transfer_fulfil_error`,
-  transferPatch: (isFx) => `${isFx ? FX_METRIC_PREFIX : ''}transfer_patch`
+  transferGet: (isFx) => `ml_${isFx ? FX_METRIC_PREFIX : ''}transfer_get`,
+  transferPrepare: (isFx) => `ml_${isFx ? FX_METRIC_PREFIX : ''}transfer_prepare`,
+  transferFulfil: (isFx) => `ml_${isFx ? FX_METRIC_PREFIX : ''}transfer_fulfil`,
+  transferFulfilError: (isFx) => `ml_${isFx ? FX_METRIC_PREFIX : ''}transfer_fulfil_error`,
+  transferPatch: (isFx) => `ml_${isFx ? FX_METRIC_PREFIX : ''}transfer_patch`
 })
 
 const TEMPLATE_PARAMS = Object.freeze({
