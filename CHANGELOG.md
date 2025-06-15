@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.5.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.1...v16.5.2) (2025-06-15)
+
+
+### Chore
+
+* bump deps for rdkafka ([#592](https://github.com/mojaloop/ml-api-adapter/issues/592)) ([b9b854c](https://github.com/mojaloop/ml-api-adapter/commit/b9b854c13d4808e54cbaba236b6de487d738ecce))
+
 ### [16.5.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.0...v16.5.1) (2025-06-10)
 
 
