@@ -41,10 +41,6 @@ const Logger = require('@mojaloop/central-services-logger')
 
 const Notification = require('../../../../src/handlers/notification/index')
 
-const {
-  getSubServiceHealthBroker
-} = require('../../../../src/lib/healthCheck/subServiceHealth')
-
 Test('SubServiceHealth test', subServiceHealthTest => {
   let sandbox
 
@@ -65,81 +61,118 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   })
 
   subServiceHealthTest.test('getSubServiceHealthBroker', brokerTest => {
-    brokerTest.test('broker test fails when one broker cannot connect', async test => {
+    brokerTest.test('returns OK when Notification is connected and Producer is connected', async test => {
       // Arrange
-      Notification.isConnected.throws(new Error('Not connected!'))
-      const expected = { name: serviceName.broker, status: statusEnum.DOWN }
+      Notification.isConnected.returns(true)
+      const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
+        '../../handlers/notification': Notification,
+        '@mojaloop/central-services-stream': { Util: { Producer } }
+      })
 
-      // Act
-      const result = await getSubServiceHealthBroker()
-
-      // Assert
-      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
-      test.end()
-    })
-
-    brokerTest.test('Passes when it connects', async test => {
-      // Arrange
-      Notification.isConnected.resolves(true)
-      sandbox.stub(Producer, 'isConnected').returns(true)
       const expected = { name: serviceName.broker, status: statusEnum.OK }
 
       // Act
-      const result = await getSubServiceHealthBroker()
+      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
-      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
+      test.ok(Notification.isConnected.calledOnce, 'Notification.isConnected should be called')
+      test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return OK')
       test.end()
     })
 
-    brokerTest.test('Succeed when isProducerConnected returns pending', async test => {
+    brokerTest.test('returns DOWN when Notification is not connected', async test => {
       // Arrange
-      Config.HANDLERS_DISABLED = true
-      sandbox.stub(Producer, 'allConnected').returns(Producer.stateList.PENDING)
+      Notification.isConnected.returns(false)
+      const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
-        Config,
-        Producer
+        '../../handlers/notification': Notification,
+        '@mojaloop/central-services-stream': { Util: { Producer } }
       })
+
+      const expected = { name: serviceName.broker, status: statusEnum.DOWN }
+
+      // Act
+      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
+
+      // Assert
+      test.ok(Notification.isConnected.calledOnce, 'Notification.isConnected should be called')
+      test.notOk(producerStub.called, 'Producer.allConnected should not be called if notification is not connected')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
+      test.end()
+    })
+
+    brokerTest.test('returns DOWN when Producer.allConnected throws', async test => {
+      // Arrange
+      Notification.isConnected.returns(true)
+      const producerStub = sandbox.stub(Producer, 'allConnected').throws(new Error('Producer error'))
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
+        '../../handlers/notification': Notification,
+        '@mojaloop/central-services-stream': { Util: { Producer } }
+      })
+
+      const expected = { name: serviceName.broker, status: statusEnum.DOWN }
+
+      // Act
+      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
+
+      // Assert
+      test.ok(Notification.isConnected.calledOnce, 'Notification.isConnected should be called')
+      test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
+      test.end()
+    })
+
+    brokerTest.test('returns OK when HANDLERS_DISABLED is true and Producer is connected', async test => {
+      // Arrange
+      const originalHandlersDisabled = Config.HANDLERS_DISABLED
+      Config.HANDLERS_DISABLED = true
+      Notification.isConnected.returns(false) // Should not matter
+      const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
+        '../../handlers/notification': Notification,
+        '@mojaloop/central-services-stream': { Util: { Producer } },
+        '../../lib/config': Config
+      })
+
       const expected = { name: serviceName.broker, status: statusEnum.OK }
+
+      // Act
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
-      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
-      Config.HANDLERS_DISABLED = false
-      Producer.allConnected.restore()
+
+      // Assert
+      test.notOk(Notification.isConnected.called, 'Notification.isConnected should not be called when HANDLERS_DISABLED')
+      test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return OK')
+      Config.HANDLERS_DISABLED = originalHandlersDisabled
       test.end()
     })
 
-    brokerTest.test('Fail when isProducerConnected throws an error', async test => {
+    brokerTest.test('returns DOWN when HANDLERS_DISABLED is true and Producer.allConnected throws', async test => {
       // Arrange
+      const originalHandlersDisabled = Config.HANDLERS_DISABLED
       Config.HANDLERS_DISABLED = true
-      sandbox.stub(Producer, 'allConnected').throwsException()
+      Notification.isConnected.returns(false) // Should not matter
+      const producerStub = sandbox.stub(Producer, 'allConnected').throws(new Error('Producer error'))
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
-        Config,
-        Producer
+        '../../handlers/notification': Notification,
+        '@mojaloop/central-services-stream': { Util: { Producer } },
+        '../../lib/config': Config
       })
+
       const expected = { name: serviceName.broker, status: statusEnum.DOWN }
+
+      // Act
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
-      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
-      Config.HANDLERS_DISABLED = false
-      Producer.allConnected.restore()
+
+      // Assert
+      test.notOk(Notification.isConnected.called, 'Notification.isConnected should not be called when HANDLERS_DISABLED')
+      test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
+      Config.HANDLERS_DISABLED = originalHandlersDisabled
       test.end()
     })
-
-    brokerTest.test('Fail when isProducerConnected throws an error', async test => {
-      // Arrange
-      Config.HANDLERS_DISABLED = true
-      sandbox.stub(Producer, 'allConnected').returns(Producer.stateList.DOWN)
-      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
-        Config,
-        Producer
-      })
-      const expected = { name: serviceName.broker, status: statusEnum.DOWN }
-      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
-      test.deepEqual(result, expected, 'getSubServiceHealthBroker should match expected result')
-      Config.HANDLERS_DISABLED = false
-      Producer.allConnected.restore()
-      test.end()
-    })
-
     brokerTest.end()
   })
 

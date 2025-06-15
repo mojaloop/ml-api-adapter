@@ -53,8 +53,8 @@ const getSubServiceHealthBroker = async () => {
         throw new Error('Not connected!')
       }
     }
-    status = await Producer.allConnected()
-    status = status === Producer.stateList.PENDING ? statusEnum.OK : status
+    await Producer.allConnected() // returns true or throws error
+    status = statusEnum.OK
   } catch (err) {
     Logger.isDebugEnabled && Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
     status = statusEnum.DOWN
