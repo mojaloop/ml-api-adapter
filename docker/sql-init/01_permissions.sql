@@ -1,2 +1,2 @@
-ALTER USER 'central_ledger'@'%' identified WITH mysql_native_password by 'password';
+ALTER USER 'central_ledger'@'%' IDENTIFIED WITH caching_sha2_password BY 'password';
 FLUSH PRIVILEGES;
