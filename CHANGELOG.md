@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.5.5](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.3...v16.5.5) (2025-07-11)
+
+
+### Chore
+
+* bump deps ([#597](https://github.com/mojaloop/ml-api-adapter/issues/597)) ([5cda23a](https://github.com/mojaloop/ml-api-adapter/commit/5cda23a1a8259d06f21a3537a30a8308a0682af6))
+* **sbom:** update sbom-v16.5.4.csv [skip ci] ([7beee74](https://github.com/mojaloop/ml-api-adapter/commit/7beee747995340b3465407fccd6b36a8f5b2a535))
+* update dependencies ([#598](https://github.com/mojaloop/ml-api-adapter/issues/598)) ([ba08fd0](https://github.com/mojaloop/ml-api-adapter/commit/ba08fd02bf64a9d72e906aaf996de79480c7876a))
+
 ### [16.5.4](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.3...v16.5.4) (2025-07-11)
 
 
