@@ -64,12 +64,13 @@ const getEndpoint = async ({
     'Gets endpoints for notification from central ledger db',
     ['success', 'endpointType', 'fsp']
   ).startTimer()
+  const log = logger.child({ fsp, id, isFx })
 
   try {
     const templateOptions = {
       [isFx ? TEMPLATE_PARAMS.commitRequestId : TEMPLATE_PARAMS.transferId]: id
     }
-    logger.debug(metric, { fsp, endpointType, templateOptions })
+    log.debug(metric, { endpointType, templateOptions })
 
     let getEndpointSpan
     if (span) {
@@ -85,9 +86,8 @@ const getEndpoint = async ({
       ? typeof url === 'string' ? { url } : url
       : typeof url === 'string' ? url : url?.url
   } catch (err) {
-    logger.error(`${metric} - ERROR:${err}`)
+    log.error('error in participant.getEndpoint: ', err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
     histTimerEnd({ success: false, fsp, endpointType })
 
     throw fspiopError

@@ -118,7 +118,7 @@
     "yargs-parser": "21.1.1"
   },
   "devDependencies": {
-    "@mojaloop/database-lib": "^11.2.1",
+    "@mojaloop/database-lib": "^11.3.0",
     "@mojaloop/inter-scheme-proxy-cache-lib": "2.6.0",
     "audit-ci": "7.1.0",
     "get-port": "5.1.1",
