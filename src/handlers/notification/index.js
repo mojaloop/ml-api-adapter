@@ -219,8 +219,8 @@ const consumeMessage = async (error, message) => {
     histTimerEnd({ success: true })
     return combinedResult
   } catch (err) {
-    logger.error('error in notification consumeMessage: ', err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    logger.warn('error in notification consumeMessage: ', fspiopError)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 
     const errCause = utils.getRecursiveCause(err)

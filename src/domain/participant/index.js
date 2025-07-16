@@ -86,8 +86,8 @@ const getEndpoint = async ({
       ? typeof url === 'string' ? { url } : url
       : typeof url === 'string' ? url : url?.url
   } catch (err) {
-    log.error('error in participant.getEndpoint: ', err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+    log.warn('error in participant.getEndpoint: ', fspiopError)
     histTimerEnd({ success: false, fsp, endpointType })
 
     throw fspiopError
