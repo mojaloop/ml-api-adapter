@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.5.7](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.6...v16.5.7) (2025-07-17)
+
+
+### Chore
+
+* update orb version ([#596](https://github.com/mojaloop/ml-api-adapter/issues/596)) ([f08a3e7](https://github.com/mojaloop/ml-api-adapter/commit/f08a3e7fb4dd51badc1ca3fb6df8444e0195d9f1))
+
 ### [16.5.6](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.5...v16.5.6) (2025-07-11)
 
 
