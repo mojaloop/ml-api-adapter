@@ -1,5 +1,5 @@
 # Arguments
-ARG NODE_VERSION=18.20.3-alpine3.19
+ARG NODE_VERSION=lts-alpine
 
 # NOTE: Ensure you set NODE_VERSION Build Argument as follows...
 #

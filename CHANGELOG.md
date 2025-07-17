@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.5.6](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.5...v16.5.6) (2025-07-11)
+
+
+### Chore
+
+* **sbom:** update sbom-v16.5.5.csv [skip ci] ([1b6203d](https://github.com/mojaloop/ml-api-adapter/commit/1b6203d396039c17720614b6d7e0cf6be885b0a1))
+* use mysql2 dialect ([#599](https://github.com/mojaloop/ml-api-adapter/issues/599)) ([1a75f32](https://github.com/mojaloop/ml-api-adapter/commit/1a75f323ebdd9cf41d331dc1a17d823f12c33226))
+
+### [16.5.5](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.3...v16.5.5) (2025-07-11)
+
+
+### Chore
+
+* bump deps ([#597](https://github.com/mojaloop/ml-api-adapter/issues/597)) ([5cda23a](https://github.com/mojaloop/ml-api-adapter/commit/5cda23a1a8259d06f21a3537a30a8308a0682af6))
+* **sbom:** update sbom-v16.5.4.csv [skip ci] ([7beee74](https://github.com/mojaloop/ml-api-adapter/commit/7beee747995340b3465407fccd6b36a8f5b2a535))
+* update dependencies ([#598](https://github.com/mojaloop/ml-api-adapter/issues/598)) ([ba08fd0](https://github.com/mojaloop/ml-api-adapter/commit/ba08fd02bf64a9d72e906aaf996de79480c7876a))
+
+### [16.5.4](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.3...v16.5.4) (2025-07-11)
+
+
+### Chore
+
+* update deps ([d575192](https://github.com/mojaloop/ml-api-adapter/commit/d575192db0482ea74e5bfef6b2a73dbd9498361d))
+
 ### [16.5.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.2...v16.5.3) (2025-06-16)
 
 

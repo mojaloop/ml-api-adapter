@@ -6,7 +6,7 @@
     "RUN_DATA_MIGRATIONS": true
   },
   "DATABASE": {
-    "DIALECT": "mysql",
+    "DIALECT": "mysql2",
     "HOST": "mysql",
     "PORT": 3306,
     "USER": "central_ledger",
