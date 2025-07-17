@@ -181,9 +181,11 @@ const consumeMessage = async (error, message) => {
 
       try {
         const result = await processMessage(msg, span).catch(err => {
-          const errMessage = 'Error processing notification message'
-          const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(errMessage, err)
-          logger.error(errMessage, fspiopError)
+          logger.error('error in notification processMessage: ', err)
+          const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(
+            `Notification message processing error: ${err?.message}`, err
+          )
+
           if (!autoCommitEnabled) {
             notificationConsumer.commitMessageSync(msg)
           }
@@ -218,7 +220,7 @@ const consumeMessage = async (error, message) => {
     return combinedResult
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
+    logger.warn('error in notification consumeMessage: ', fspiopError)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 
     const errCause = utils.getRecursiveCause(err)
