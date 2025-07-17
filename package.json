@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "16.5.7-snapshot.1",
+  "version": "16.5.7",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -80,7 +80,7 @@
     "@mojaloop/central-services-health": "15.1.0",
     "@mojaloop/central-services-logger": "11.9.0",
     "@mojaloop/central-services-metrics": "12.6.0",
-    "@mojaloop/central-services-shared": "18.30.0",
+    "@mojaloop/central-services-shared": "18.30.1",
     "@mojaloop/central-services-stream": "11.8.2",
     "@mojaloop/event-sdk": "14.6.1",
     "@mojaloop/ml-schema-transformer-lib": "2.7.1",
