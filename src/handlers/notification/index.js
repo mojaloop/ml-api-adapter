@@ -161,9 +161,9 @@ const consumeMessage = async (error, message) => {
   let timeApiFulfil
   try {
     if (error) {
-      const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
-      logger.error(fspiopError)
-      throw fspiopError
+      const errMessage = 'error while reading message from kafka: '
+      logger.error(errMessage, error)
+      throw ErrorHandler.Factory.createInternalServerFSPIOPError(`${errMessage} ${error?.message}`, error)
     }
     logger.debug('Notification:consumeMessage message:', message)
 
