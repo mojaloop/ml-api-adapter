@@ -161,9 +161,9 @@ const consumeMessage = async (error, message) => {
   let timeApiFulfil
   try {
     if (error) {
-      const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(`Error while reading message from kafka ${error}`, error)
-      logger.error(fspiopError)
-      throw fspiopError
+      const errMessage = 'error while reading message from kafka: '
+      logger.error(errMessage, error)
+      throw ErrorHandler.Factory.createInternalServerFSPIOPError(`${errMessage} ${error?.message}`, error)
     }
     logger.debug('Notification:consumeMessage message:', message)
 
@@ -181,9 +181,11 @@ const consumeMessage = async (error, message) => {
 
       try {
         const result = await processMessage(msg, span).catch(err => {
-          const errMessage = 'Error processing notification message'
-          const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(errMessage, err)
-          logger.error(errMessage, fspiopError)
+          logger.error('error in notification processMessage: ', err)
+          const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(
+            `Notification message processing error: ${err?.message}`, err
+          )
+
           if (!autoCommitEnabled) {
             notificationConsumer.commitMessageSync(msg)
           }
@@ -218,7 +220,7 @@ const consumeMessage = async (error, message) => {
     return combinedResult
   } catch (err) {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.error(fspiopError)
+    logger.warn('error in notification consumeMessage: ', fspiopError)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 
     const errCause = utils.getRecursiveCause(err)
