@@ -4,7 +4,7 @@ networks:
 
 # @see https://uninterrupted.tech/blog/hassle-free-redis-cluster-deployment-using-docker/
 x-redis-node: &REDIS_NODE
-  image: docker.io/bitnami/redis-cluster:6.2.14
+  image: docker.io/bitnamilegacy/redis-cluster:6.2.14
   environment: &REDIS_ENVS
     ALLOW_EMPTY_PASSWORD: yes
     REDIS_CLUSTER_DYNAMIC_IPS: no
