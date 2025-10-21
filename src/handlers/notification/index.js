@@ -64,15 +64,6 @@ let PayloadCache
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 const API_TYPE = Config.API_TYPE
 
-const sendHttpRequest = ({ method, ...restArgs }) => Callback.sendRequest({
-  ...restArgs,
-  method: method.toUpperCase(),
-  hubNameRegex,
-  axiosRequestOptionsOverride: {
-    timeout: Config.HTTP_REQUEST_TIMEOUT_MS
-  }
-})
-
 const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   const endTime = Date.now()
   if (timeApiPrepare && !timeApiFulfil) {
@@ -363,6 +354,19 @@ const processMessage = async (msg, span) => {
   let headers // callback headers
   const serviceName = QueryTags.serviceName.mlNotificationHandler
 
+  const sendHttpRequest = ({ method, ...restArgs }) => Callback.sendRequest({
+    method: method.toUpperCase(),
+    apiType: API_TYPE,
+    hubNameRegex,
+    protocolVersions,
+    span,
+    responseType,
+    axiosRequestOptionsOverride: {
+      timeout: Config.HTTP_REQUEST_TIMEOUT_MS
+    },
+    ...restArgs
+  })
+
   if ([Action.PREPARE, Action.FX_PREPARE].includes(action)) {
     if (!isSuccess) {
       const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
@@ -370,7 +374,16 @@ const processMessage = async (msg, span) => {
       headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
       logger.debug(`Notification::processMessage - Callback.sendRequest({${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination}) ${hubNameRegex}}`)
       injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: PUT, isFx, serviceName, ...(isFx ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } } : {}) })
-      await sendHttpRequest({ apiType: API_TYPE, url: callbackURLTo, headers, source, destination, method: PUT, payload, responseType, span, jwsSigner, protocolVersions, hubNameRegex })
+      await sendHttpRequest({
+        url: callbackURLTo,
+        headers,
+        source,
+        destination,
+        method: PUT,
+        payload,
+        span,
+        jwsSigner
+      })
       histTimerEnd({ success: true, action })
       return true
     }
