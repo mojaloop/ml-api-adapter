@@ -23,6 +23,7 @@
       ]
     }
   },
+  "HTTP_REQUEST_TIMEOUT_MS": 20000,
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
   "ENDPOINT_SOURCE_URL": "http://localhost:3001",
