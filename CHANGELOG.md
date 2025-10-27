@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.6.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.11...v16.6.0) (2025-10-27)
+
+
+### Features
+
+* **csi-1897:** add timeout to callback requests ([#610](https://github.com/mojaloop/ml-api-adapter/issues/610)) ([441b138](https://github.com/mojaloop/ml-api-adapter/commit/441b138c927d157a8cf3e17bb50afd62b7295bc5))
+
+
+### Chore
+
+* **sbom:** update sbom [skip ci] ([52168c0](https://github.com/mojaloop/ml-api-adapter/commit/52168c0f4cffc90f76f4b8f00bbb517e57f07f8b))
+
 ### [16.5.11](https://github.com/mojaloop/ml-api-adapter/compare/v16.5.10...v16.5.11) (2025-10-06)
 
 
