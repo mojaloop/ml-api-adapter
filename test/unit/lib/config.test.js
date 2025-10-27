@@ -154,5 +154,33 @@ Test('Config tests', configTest => {
     getFileContentTest.end()
   })
 
+  configTest.test('HTTP_REQUEST_TIMEOUT_MS should default to 20000 if not set', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_REQUEST_TIMEOUT_MS = undefined
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.equal(Config.HTTP_REQUEST_TIMEOUT_MS, 20000, 'Should default to 20000')
+    test.end()
+  })
+
+  configTest.test('HTTP_REQUEST_TIMEOUT_MS should use value from config if set', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_REQUEST_TIMEOUT_MS = 12345
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.equal(Config.HTTP_REQUEST_TIMEOUT_MS, 12345, 'Should use value from config')
+    test.end()
+  })
+
   configTest.end()
 })

@@ -5,5 +5,6 @@
   "moderate": true,
   "allowlist": [ // NOTE: Please add as much information as possible to any items added to the allowList
     // Currently no fixes available for the following
+    "GHSA-9965-vmph-33xx" // https://github.com/advisories/GHSA-9965-vmph-33xx
   ]
 }
