@@ -38,6 +38,5 @@ const { loggerFactory } = require('@mojaloop/central-services-logger/src/context
 const logger = loggerFactory('ML-API') // global logger
 
 module.exports = {
-  loggerFactory,
   logger
 }

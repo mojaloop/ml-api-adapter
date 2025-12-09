@@ -16,8 +16,8 @@ const expectedContainers = [
   'ml_mysql'
 ]
 
-let retries = 50
-const waitTimeMs = 20000
+let retries = 80
+const waitTimeMs = 10_000
 
 async function main () {
   const waitingMap = {}

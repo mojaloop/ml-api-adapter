@@ -12,7 +12,7 @@ paths:
     get:
       tags:
         - admin
-      summary: Get Oracles
+      summary: Get Health state of the service
       description: The HTTP request GET /health is used to return the current status
         of the Admin API.
       operationId: HealthGet
