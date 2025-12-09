@@ -40,7 +40,6 @@ USER app-user
 COPY --chown=app-user --from=builder /opt/app .
 
 COPY src /opt/app/src
-COPY test /opt/app/test
 COPY config /opt/app/config
 
 EXPOSE 3000
