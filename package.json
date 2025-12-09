@@ -24,9 +24,9 @@
   },
   "pre-commit": [
     "lint",
+    "test",
     "dep:check",
-    "audit:check",
-    "test"
+    "audit:check"
   ],
   "scripts": {
     "start": "npm run start:api",
@@ -79,7 +79,7 @@
     "@mojaloop/central-services-error-handling": "13.1.5",
     "@mojaloop/central-services-health": "15.2.1",
     "@mojaloop/central-services-logger": "11.10.2",
-    "@mojaloop/central-services-metrics": "12.8.2",
+    "@mojaloop/central-services-metrics": "12.8.3",
     "@mojaloop/central-services-shared": "18.34.5",
     "@mojaloop/central-services-stream": "11.8.13",
     "@mojaloop/event-sdk": "14.8.2",
