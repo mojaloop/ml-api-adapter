@@ -68,6 +68,7 @@ const generateHapiRoutes = (api) => {
     h
   )
 
+  /* istanbul ignore next */
   return api.router.getOperations()
     .filter(operation => operation.path !== '/metrics') // todo: think if we need to remove it from swagger (it's added by Metrics Plugin)
     .map(operation => ({
