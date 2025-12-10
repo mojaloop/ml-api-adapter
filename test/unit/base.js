@@ -27,7 +27,6 @@
 'use strict'
 
 const ServerSetup = require('../../src/shared/setup')
-const Routes = require('../../src/api/routes')
 const getPort = require('get-port')
 const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
 const Handlers = require('../../src/api/handlers')
@@ -36,7 +35,7 @@ const Util = require('../../src/lib/util')
 const setupServer = async () => {
   const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: false })
   const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
-  const server = await ServerSetup.createServer(await getPort(), api, Routes.APIRoutes(api), [])
+  const server = await ServerSetup.createServer(await getPort(), api, ServerSetup.generateHapiRoutes(api), [])
   return server
 }
 

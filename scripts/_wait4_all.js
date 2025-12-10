@@ -16,8 +16,8 @@ const expectedContainers = [
   'ml_mysql'
 ]
 
-let retries = 50
-const waitTimeMs = 20000
+let retries = 80
+const waitTimeMs = 10_000
 
 async function main () {
   const waitingMap = {}
@@ -81,7 +81,7 @@ async function areAllServicesHealthy (waitingMap) {
 async function updateServiceStatus (waitingMap) {
   const startingServices = getServicesForStatus(waitingMap, 'starting')
 
-  Promise.all(startingServices.map(async serviceName => {
+  await Promise.all(startingServices.map(async serviceName => {
     // TODO: This info may be useful in future!
     // const currentStatus = waitingMap[serviceName]
     const progress = await getProgress(serviceName)

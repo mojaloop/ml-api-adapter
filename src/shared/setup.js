@@ -29,42 +29,68 @@
 'use strict'
 
 const Hapi = require('@hapi/hapi')
-const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const Plugins = require('./plugins')
-const Logger = require('@mojaloop/central-services-logger')
 const Boom = require('@hapi/boom')
-const RegisterHandlers = require('../handlers/register')
-const Config = require('../lib/config')
+const ErrorHandling = require('@mojaloop/central-services-error-handling')
+const Logger = require('@mojaloop/central-services-logger')
 const { Endpoints, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Metrics = require('@mojaloop/central-services-metrics')
 const Enums = require('@mojaloop/central-services-shared').Enum
+const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
 const Kafka = require('@mojaloop/central-services-stream').Util
+
+const Plugins = require('./plugins')
+const RegisterHandlers = require('../handlers/register')
+const Config = require('../lib/config')
 const { getProducerConfigs } = require('../lib/kafka/producer')
 const Util = require('../lib/util')
-const OpenapiBackend = require('@mojaloop/central-services-shared').Util.OpenapiBackend
 const Handlers = require('../api/handlers')
-const Routes = require('../api/routes')
 const HandlerModeHandlers = require('../handlers/api/handlers')
-const HandlerModeRoutes = require('../handlers/api/routes')
 const { createPayloadCache } = require('../lib/payloadCache')
 const { PAYLOAD_STORAGES } = require('../lib/payloadCache/constants')
+
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
 /**
- * @module src/shared/setup
+ * Generate Hapi routes from OpenAPI spec operations
+ * @param {object} api OpenAPIBackend instance
+ * @returns {array} Hapi route definitions
  */
+const generateHapiRoutes = (api) => {
+  const handleRequest = (req, h) => api.handleRequest(
+    {
+      method: req.method,
+      path: req.path,
+      body: req.payload,
+      query: req.query,
+      headers: req.headers
+    },
+    req,
+    h
+  )
+
+  /* istanbul ignore next */
+  return api.router.getOperations()
+    .filter(operation => operation.path !== '/metrics') // the route is added by Metrics Plugin
+    .map(operation => ({
+      method: operation.method.toUpperCase(),
+      path: operation.path,
+      handler: handleRequest,
+      config: {
+        tags: ['api', ...(operation.tags || [])],
+        description: operation.summary || operation.operationId || 'No route description'
+      }
+    }))
+}
 
 /**
- * @function createServer
- *
  * @description Create HTTP Server
  *
  * @param {number} port Port to register the Server against
- * @param modules list of Modules to be registered
+ * @param {object} api OpenAPIBackend instance
  * @param {array} routes array of API routes
+ * @param {array} modules list of Modules to be registered
  * @returns {Promise<Server>} Returns the Server object
  */
-
 const createServer = async (port, api, routes, modules) => {
   /* istanbul ignore next */
   const server = await new Hapi.Server({
@@ -90,6 +116,7 @@ const createServer = async (port, api, routes, modules) => {
   await Plugins.registerPlugins(server, api)
   await server.register(modules)
   server.route(routes)
+
   await server.start()
   Logger.isDebugEnabled && Logger.debug(`Server running at: ${server.info.uri}`)
   return server
@@ -181,7 +208,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     case Enums.Http.ServiceType.API: {
       const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: false })
       const api = await OpenapiBackend.initialise(OpenAPISpecPath, Handlers.ApiHandlers)
-      server = await createServer(port, api, Routes.APIRoutes(api), modules)
+      server = await createServer(port, api, generateHapiRoutes(api), modules)
       await initializeProducers()
       break
     }
@@ -189,7 +216,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       if (!Config.HANDLERS_API_DISABLED) {
         const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: true })
         const api = await OpenapiBackend.initialise(OpenAPISpecPath, HandlerModeHandlers.KafkaModeHandlerApiHandlers)
-        server = await createServer(port, api, HandlerModeRoutes.APIRoutes(api), modules)
+        server = await createServer(port, api, generateHapiRoutes(api), modules)
       }
       break
     }
@@ -215,5 +242,6 @@ module.exports = {
   initialize,
   initializeProducers,
   createServer,
-  getProducerConfigs
+  getProducerConfigs,
+  generateHapiRoutes
 }
