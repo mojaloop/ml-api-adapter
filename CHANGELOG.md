@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.6.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.6.1...v16.6.2) (2025-12-10)
+
+
+### Bug Fixes
+
+* **csi-1980:** added generateHapiRoutes to avoid hapi routes manual definition ([#617](https://github.com/mojaloop/ml-api-adapter/issues/617)) ([ec88bcb](https://github.com/mojaloop/ml-api-adapter/commit/ec88bcb78ca22908abea5290acad8a0ca521567a))
+
+
+### Chore
+
+* **sbom:** update sbom [skip ci] ([0c2ebf6](https://github.com/mojaloop/ml-api-adapter/commit/0c2ebf6245d94b5862a00e10e494d9d15a4a7d71))
+
 ### [16.6.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.6.0...v16.6.1) (2025-11-02)
 
 
