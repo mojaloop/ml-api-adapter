@@ -133,7 +133,7 @@ const startConsumer = async ({ payloadCache } = {}) => {
     logger.info(`Notification::startConsumer - Kafka Consumer created for topicNames: [${topicName}]`)
     return true
   } catch (err) {
-    logger.error(`Notification::startConsumer - error for topicNames: [${topicName}] - ${err}`)
+    logger.error(`Notification::startConsumer - error for topicNames [${topicName}]: `, err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     logger.error(fspiopError)
     throw fspiopError
@@ -237,7 +237,7 @@ const consumeMessage = async (error, message) => {
   * @param {object} msg - the message received form kafka
   * @param {object} span - the parent event span
   *
-  * @returns {boolean} Returns true on success and throws error on failure
+  * @returns {Promise<boolean>} Returns true on success and throws error on failure
   */
 const processMessage = async (msg, span) => {
   const histTimerEnd = Metrics.getHistogram(

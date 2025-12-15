@@ -122,7 +122,7 @@ Test('Notification Service tests', async notificationTest => {
   })
 
   await notificationTest.test('processMessage should', async processMessageTest => {
-    await processMessageTest.test('should throw if no context is provided', async test => {
+    await processMessageTest.test('throw if no context is provided', async test => {
       const msg = {
         value: {
           metadata: {
@@ -144,7 +144,7 @@ Test('Notification Service tests', async notificationTest => {
           id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
         }
       }
-      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      await Notification.startConsumer({ payloadCache: mockPayloadCache })
       try {
         await Notification.processMessage(msg, span)
         test.fail('should throw')
@@ -1808,7 +1808,7 @@ Test('Notification Service tests', async notificationTest => {
 
       try {
         mockPayloadCache.getPayload.returns(Promise.resolve(msg))
-        Notification.startConsumer({ payloadCache: mockPayloadCache })
+        await Notification.startConsumer({ payloadCache: mockPayloadCache })
         await Notification.processMessage(msg, span)
         test.fail('Was expecting an error when receiving an invalid message from Kafka')
         test.end()
