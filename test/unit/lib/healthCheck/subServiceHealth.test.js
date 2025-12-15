@@ -46,7 +46,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
   subServiceHealthTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(Notification, 'isHealthy')
     sandbox.stub(axios, 'get')
 
     sandbox.stub(Logger, 'isErrorEnabled').value(true)
@@ -63,7 +63,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
   subServiceHealthTest.test('getSubServiceHealthBroker', brokerTest => {
     brokerTest.test('returns OK when Notification is connected and Producer is connected', async test => {
       // Arrange
-      Notification.isConnected.returns(true)
+      Notification.isHealthy.resolves(true)
       const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
         '../../handlers/notification': Notification,
@@ -76,7 +76,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
-      test.ok(Notification.isConnected.calledOnce, 'Notification.isConnected should be called')
+      test.ok(Notification.isHealthy.calledOnce, 'Notification.isHealthy should be called')
       test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
       test.deepEqual(result, expected, 'getSubServiceHealthBroker should return OK')
       test.end()
@@ -84,7 +84,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     brokerTest.test('returns DOWN when Notification is not connected', async test => {
       // Arrange
-      Notification.isConnected.returns(false)
+      Notification.isHealthy.resolves(false)
       const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
         '../../handlers/notification': Notification,
@@ -97,7 +97,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
-      test.ok(Notification.isConnected.calledOnce, 'Notification.isConnected should be called')
+      test.ok(Notification.isHealthy.calledOnce, 'Notification.isHealthy should be called')
       test.notOk(producerStub.called, 'Producer.allConnected should not be called if notification is not connected')
       test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
       test.end()
@@ -105,7 +105,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
     brokerTest.test('returns DOWN when Producer.allConnected throws', async test => {
       // Arrange
-      Notification.isConnected.returns(true)
+      Notification.isHealthy.resolves(true)
       const producerStub = sandbox.stub(Producer, 'allConnected').throws(new Error('Producer error'))
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
         '../../handlers/notification': Notification,
@@ -118,7 +118,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
-      test.ok(Notification.isConnected.calledOnce, 'Notification.isConnected should be called')
+      test.ok(Notification.isHealthy.calledOnce, 'Notification.isHealthy should be called')
       test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
       test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
       test.end()
@@ -128,7 +128,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       // Arrange
       const originalHandlersDisabled = Config.HANDLERS_DISABLED
       Config.HANDLERS_DISABLED = true
-      Notification.isConnected.returns(false) // Should not matter
+      Notification.isHealthy.resolves(false) // Should not matter
       const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
         '../../handlers/notification': Notification,
@@ -142,7 +142,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
-      test.notOk(Notification.isConnected.called, 'Notification.isConnected should not be called when HANDLERS_DISABLED')
+      test.notOk(Notification.isHealthy.called, 'Notification.isHealthy should not be called when HANDLERS_DISABLED')
       test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
       test.deepEqual(result, expected, 'getSubServiceHealthBroker should return OK')
       Config.HANDLERS_DISABLED = originalHandlersDisabled
@@ -153,7 +153,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       // Arrange
       const originalHandlersDisabled = Config.HANDLERS_DISABLED
       Config.HANDLERS_DISABLED = true
-      Notification.isConnected.returns(false) // Should not matter
+      Notification.isHealthy.resolves(false) // Should not matter
       const producerStub = sandbox.stub(Producer, 'allConnected').throws(new Error('Producer error'))
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
         '../../handlers/notification': Notification,
@@ -167,7 +167,7 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
-      test.notOk(Notification.isConnected.called, 'Notification.isConnected should not be called when HANDLERS_DISABLED')
+      test.notOk(Notification.isHealthy.called, 'Notification.isHealthy should not be called when HANDLERS_DISABLED')
       test.ok(producerStub.calledOnce, 'Producer.allConnected should be called')
       test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
       Config.HANDLERS_DISABLED = originalHandlersDisabled

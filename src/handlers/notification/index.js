@@ -182,9 +182,8 @@ const consumeMessage = async (error, message) => {
       try {
         const result = await processMessage(msg, span).catch(err => {
           logger.error('error in notification processMessage: ', err)
-          const fspiopError = ErrorHandler.Factory.createInternalServerFSPIOPError(
-            `Notification message processing error: ${err?.message}`, err
-          )
+          const fspiopError = ErrorHandler.Factory
+            .createInternalServerFSPIOPError(`Notification message processing error: ${err?.message}`, err)
 
           if (!autoCommitEnabled) {
             notificationConsumer.commitMessageSync(msg)
@@ -192,13 +191,14 @@ const consumeMessage = async (error, message) => {
           if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
           return false
         })
+
         if (!autoCommitEnabled) {
           notificationConsumer.commitMessageSync(msg)
         }
-        logger.verbose('Notification:consumeMessage - message processed:', { result })
+        logger.verbose('Notification:consumeMessage - message processed')
         combinedResult = (combinedResult && result)
       } catch (err) {
-        logger.error('Notification:consumeMessage - error in processOneMessage:', err)
+        logger.warn(`error in processOneMessage: ${err?.message}`)
         const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
         const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed, fspiopError.apiErrorCode.code, fspiopError.apiErrorCode.message)
         await span.error(fspiopError, state)
@@ -220,8 +220,8 @@ const consumeMessage = async (error, message) => {
     histTimerEnd({ success: true })
     return combinedResult
   } catch (err) {
+    logger.warn('error in notification consumeMessage: ', err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
-    logger.warn('error in notification consumeMessage: ', fspiopError)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 
     const errCause = utils.getRecursiveCause(err)
@@ -1035,6 +1035,10 @@ const isConnected = () => {
   return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected() : true)
 }
 
+const isHealthy = async () => {
+  return (await notificationConsumer.isHealthy()) && (PayloadCache ? PayloadCache.isConnected() : true)
+}
+
 /**
   * @function disconnect
   *
@@ -1078,5 +1082,6 @@ module.exports = {
   processMessage,
   consumeMessage,
   isConnected,
+  isHealthy,
   getJWSSigner // exported for testing only
 }

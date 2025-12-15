@@ -27,14 +27,13 @@
  ******/
 'use strict'
 
+const http = require('node:http')
+const axios = require('axios')
+const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
-const Logger = require('@mojaloop/central-services-logger')
-
+const { logger } = require('../../shared/logger')
 const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
-const Producer = require('@mojaloop/central-services-stream').Util.Producer
-const axios = require('axios')
-const http = require('http')
 
 axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
 
@@ -46,17 +45,17 @@ axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
  */
 const getSubServiceHealthBroker = async () => {
   let status = statusEnum.OK
+
   try {
     if (!Config.HANDLERS_DISABLED) {
-      const notificationStatus = Notification.isConnected()
-      if (!notificationStatus) {
-        throw new Error('Not connected!')
+      const isOk = await Notification.isHealthy()
+      if (!isOk) {
+        throw new Error('Kafka consumer is not healthy!')
       }
     }
     await Producer.allConnected() // returns true or throws error
-    status = statusEnum.OK
   } catch (err) {
-    Logger.isDebugEnabled && Logger.debug(`getSubServiceHealthBroker failed with error: ${err.message}.`)
+    logger.warn('getSubServiceHealthBroker failed with error: ', err)
     status = statusEnum.DOWN
   }
 
@@ -74,11 +73,11 @@ const getSubServiceHealthBroker = async () => {
  */
 const getSubServiceHealthCentralLedger = async () => {
   const url = Config.ENDPOINT_HEALTH_URL
-  let status = statusEnum.DOWN
+  let status
 
   try {
     const response = await axios.get(url)
-    const responseStatus = response.data && response.data.status
+    const responseStatus = response.data?.status
     switch (responseStatus) {
       case statusEnum.OK:
       case statusEnum.DOWN:
@@ -88,7 +87,7 @@ const getSubServiceHealthCentralLedger = async () => {
         throw new Error(`getSubServiceHealthCentralLedger request failed with unknown status: ${response.status}`)
     }
   } catch (err) {
-    Logger.isDebugEnabled && Logger.debug(`getSubServiceHealthCentralLedger failed with error: ${err.message}.`)
+    logger.warn('getSubServiceHealthCentralLedger failed with error: ', err)
     status = statusEnum.DOWN
   }
 
