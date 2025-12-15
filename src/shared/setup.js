@@ -49,12 +49,13 @@ const { createPayloadCache } = require('../lib/payloadCache')
 const { PAYLOAD_STORAGES } = require('../lib/payloadCache/constants')
 const { logger } = require('../shared/logger')
 
+/* istanbul ignore next */
 process.on('uncaughtExceptionMonitor', (err) => {
   logger.error('uncaughtExceptionMonitor error: ', err)
   // todo: add shutdown logic
   process.exit(1)
 })
-
+/* istanbul ignore next */
 process.on('unhandledRejection', (err) => {
   logger.error('unhandledRejection error: ', err)
   throw err // should be caught by uncaughtException
@@ -163,7 +164,7 @@ const createHandlers = async (handlers) => {
   for (handlerIndex in handlers) {
     const handler = handlers[handlerIndex]
     if (handler.enabled) {
-      logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
+      logger.debug(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
         await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
         await RegisterHandlers.registerNotificationHandler({ payloadCache: initializePayloadCache() })
@@ -175,6 +176,7 @@ const createHandlers = async (handlers) => {
       }
     }
   }
+  logger.verbose('createHandlers is done')
   return registeredHandlers
 }
 
@@ -251,6 +253,7 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     logger.verbose('handlers init is done')
   }
 
+  logger.info('initialize is done')
   return server
 }
 

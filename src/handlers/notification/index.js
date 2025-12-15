@@ -198,6 +198,7 @@ const consumeMessage = async (error, message) => {
         logger.verbose('Notification:consumeMessage - message processed:', { result })
         combinedResult = (combinedResult && result)
       } catch (err) {
+        logger.error('Notification:consumeMessage - error in processOneMessage:', err)
         const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
         const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed, fspiopError.apiErrorCode.code, fspiopError.apiErrorCode.message)
         await span.error(fspiopError, state)
