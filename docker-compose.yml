@@ -29,7 +29,6 @@ services:
       # - "9229:9229" # for debugging
     environment:
       - LOG_LEVEL=debug
-      - CSL_LOG_TRANSPORT=file
       - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:
       - ./docker/ml-api-adapter/default.json:/opt/app/config/default.json
@@ -61,7 +60,6 @@ services:
       - "9229:9229" # for debugging
     environment:
       - LOG_LEVEL=info
-      - CSL_LOG_TRANSPORT=file
       - MLAPI_ENDPOINT_SOURCE_URL=http://ml-api-adapter-endpoint:4545
     volumes:
       - ./docker/ml-api-adapter/default_iso.json:/opt/app/config/default.json
@@ -92,7 +90,6 @@ services:
       - "4545:4545"
     environment:
       - LOG_LEVEL=debug
-      - CSL_LOG_TRANSPORT=file
       - ENDPOINT_PORT=4545
     volumes:
       - ./docker/ml-api-adapter/default.json:/opt/app/config/default.json

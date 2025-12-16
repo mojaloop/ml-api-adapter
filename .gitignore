@@ -1,4 +1,4 @@
-# Logs
+1# Logs
 logs
 *.log
 npm-debug.log*
@@ -6,6 +6,7 @@ npm-debug.log*
 
 # Ignore test results
 **/test/results/*
+!**/test/results/.gitkeep
 
 # Runtime data
 pids

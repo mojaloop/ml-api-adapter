@@ -160,7 +160,7 @@ docker-compose logs -f
 
 When you're done, don't forget to stop your containers however:
 ```bash
-npm run docker:stop
+npm run docker:down
 ```
 
 ##  5. <a name='Testing'></a>Testing
