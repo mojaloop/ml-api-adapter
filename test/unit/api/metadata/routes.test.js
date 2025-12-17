@@ -38,7 +38,7 @@ Test('metadata routes', (metadataRoutesTest) => {
 
   metadataRoutesTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
-    sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(Notification, 'isHealthy')
     sandbox.stub(Producer, 'isConnected')
     sandbox.stub(axios, 'get')
     t.end()
@@ -50,7 +50,7 @@ Test('metadata routes', (metadataRoutesTest) => {
   })
 
   metadataRoutesTest.test('GET /health should return status OK', async function (t) {
-    Notification.isConnected.resolves(true)
+    Notification.isHealthy.resolves(true)
     Producer.isConnected.resolves(true)
     axios.get.resolves({ data: { status: 'OK' } })
 
@@ -64,7 +64,7 @@ Test('metadata routes', (metadataRoutesTest) => {
   })
 
   metadataRoutesTest.test('GET /health should return status DOWN if service is down', async function (t) {
-    Notification.isConnected.resolves(false)
+    Notification.isHealthy.resolves(false)
     Producer.isConnected.resolves(false)
     axios.get.resolves({ data: { status: 'DOWN' } })
 

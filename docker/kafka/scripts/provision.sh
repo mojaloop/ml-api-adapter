@@ -36,7 +36,7 @@ topics=(
 for topic in "${topics[@]}"
 do
   echo -e "--> Creating topic $topic..."
-  kafka-topics.sh --bootstrap-server $KAFKAHOST:$KAFKAPORT --create --if-not-exists --topic "$topic" --replication-factor 1 --partitions 1
+  kafka-topics.sh --bootstrap-server $KAFKAHOST:$KAFKAPORT --create --if-not-exists --topic "$topic" --replication-factor 1 --partitions 3
 done
 
 echo -e ""

@@ -28,10 +28,10 @@
 
 'use strict'
 
+const process = require('node:process')
 const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
 const ErrorHandling = require('@mojaloop/central-services-error-handling')
-const Logger = require('@mojaloop/central-services-logger')
 const { Endpoints, HeaderValidation } = require('@mojaloop/central-services-shared').Util
 const Metrics = require('@mojaloop/central-services-metrics')
 const Enums = require('@mojaloop/central-services-shared').Enum
@@ -39,14 +39,27 @@ const OpenapiBackend = require('@mojaloop/central-services-shared').Util.Openapi
 const Kafka = require('@mojaloop/central-services-stream').Util
 
 const Plugins = require('./plugins')
-const RegisterHandlers = require('../handlers/register')
-const Config = require('../lib/config')
-const { getProducerConfigs } = require('../lib/kafka/producer')
-const Util = require('../lib/util')
 const Handlers = require('../api/handlers')
 const HandlerModeHandlers = require('../handlers/api/handlers')
+const RegisterHandlers = require('../handlers/register')
+const Config = require('../lib/config')
+const Util = require('../lib/util')
+const { getProducerConfigs } = require('../lib/kafka/producer')
 const { createPayloadCache } = require('../lib/payloadCache')
 const { PAYLOAD_STORAGES } = require('../lib/payloadCache/constants')
+const { logger } = require('../shared/logger')
+
+/* istanbul ignore next */
+process.on('uncaughtExceptionMonitor', (err) => {
+  logger.error('uncaughtExceptionMonitor error: ', err)
+  // todo: add shutdown logic
+  process.exit(1)
+})
+/* istanbul ignore next */
+process.on('unhandledRejection', (err) => {
+  logger.error('unhandledRejection error: ', err)
+  throw err // should be caught by uncaughtException
+})
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
@@ -99,6 +112,7 @@ const createServer = async (port, api, routes, modules) => {
       validate: {
         options: ErrorHandling.validateRoutes(),
         failAction: async (request, h, err) => {
+          logger.warn('error in server failAction: ', err)
           throw Boom.boomify(err)
         }
       },
@@ -118,7 +132,7 @@ const createServer = async (port, api, routes, modules) => {
   server.route(routes)
 
   await server.start()
-  Logger.isDebugEnabled && Logger.debug(`Server running at: ${server.info.uri}`)
+  logger.info(`Server running at: ${server.info.uri}`)
   return server
 }
 
@@ -150,18 +164,19 @@ const createHandlers = async (handlers) => {
   for (handlerIndex in handlers) {
     const handler = handlers[handlerIndex]
     if (handler.enabled) {
-      Logger.isInfoEnabled && Logger.info(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
+      logger.debug(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
         await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
         await RegisterHandlers.registerNotificationHandler({ payloadCache: initializePayloadCache() })
       } else {
         const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
         const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
-        Logger.isErrorEnabled && Logger.error(fspiopError)
+        logger.error('Handler Setup error: ', fspiopError)
         throw fspiopError
       }
     }
   }
+  logger.verbose('createHandlers is done')
   return registeredHandlers
 }
 
@@ -204,6 +219,7 @@ const initializeProducers = async () => {
 const initialize = async function ({ service, port, modules = [], runHandlers = false, handlers = [] }) {
   let server
   initializeInstrumentation()
+
   switch (service) {
     case Enums.Http.ServiceType.API: {
       const OpenAPISpecPath = Util.pathForInterface({ isHandlerInterface: false })
@@ -222,10 +238,11 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
     }
     default: {
       const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(`No valid service type ${service} found!`)
-      Logger.isErrorEnabled && Logger.error(fspiopError)
+      logger.error('service initialize error: ', fspiopError)
       throw fspiopError
     }
   }
+
   if (runHandlers) {
     if (Array.isArray(handlers) && handlers.length > 0) {
       await createHandlers(handlers)
@@ -233,8 +250,10 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
       await RegisterHandlers.registerAllHandlers({ payloadCache: initializePayloadCache() })
     }
+    logger.verbose('handlers init is done')
   }
 
+  logger.info('initialize is done')
   return server
 }
 

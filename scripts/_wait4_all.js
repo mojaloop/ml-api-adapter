@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const { ML_API_CONTAINER = 'ml_ml-api-adapter' } = process.env
 const { execSync } = require('child_process')
 
 /**
@@ -11,12 +12,12 @@ const { execSync } = require('child_process')
 const expectedContainers = [
   'ml_central-ledger',
   'ml_kafka',
-  'ml_ml-api-adapter',
+  'ml_mysql',
   'ml_ml-api-adapter-endpoint',
-  'ml_mysql'
+  ML_API_CONTAINER
 ]
 
-let retries = 80
+let retries = 70
 const waitTimeMs = 10_000
 
 async function main () {

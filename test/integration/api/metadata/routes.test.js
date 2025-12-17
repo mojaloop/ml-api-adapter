@@ -49,7 +49,7 @@ Test('Metadata handler test', async handlerTest => {
     await registerAllHandlers()
 
     // Give the handlers some time to be up
-    const retries = Array.from({ length: 6 }, (x, i) => i).filter(i => i > 0).map(i => i * 2)
+    const retries = Array.from({ length: 10 }, (x, i) => i).filter(i => i > 0).map(i => i * 2)
     const ready = await retries.reduce(async (acc, curr, next) => {
       const ready = await acc
 
@@ -58,7 +58,10 @@ Test('Metadata handler test', async handlerTest => {
       }
 
       try {
-        await Notification.isConnected()
+        const healthy = await Notification.isHealthy()
+        if (!healthy) {
+          throw new Error('Consumer not healthy yet')
+        }
         return Promise.resolve(true)
       } catch (err) {
         Logger.error(`Notification handler not ready yet. Sleeping for: ${curr} seconds.`)

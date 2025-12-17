@@ -44,7 +44,7 @@ Test('route handler', (handlerTest) => {
   handlerTest.beforeEach(t => {
     sandbox = Sinon.createSandbox()
 
-    sandbox.stub(Notification, 'isConnected')
+    sandbox.stub(Notification, 'isHealthy')
     sandbox.stub(Producer, 'isConnected')
     sandbox.stub(axios, 'get')
 
@@ -60,7 +60,7 @@ Test('route handler', (handlerTest) => {
   handlerTest.test('/health should', healthTest => {
     healthTest.test('returns the correct response when the health check is up', async test => {
       // Arrange
-      Notification.isConnected.resolves(true)
+      Notification.isHealthy.resolves(true)
       Producer.isConnected.resolves(true)
       axios.get.resolves({ data: { status: 'OK' } })
       const expectedResponseCode = 200
@@ -77,7 +77,7 @@ Test('route handler', (handlerTest) => {
 
     healthTest.test('returns the correct response when the health check is down', async test => {
       // Arrange
-      Notification.isConnected.throws(new Error('Error connecting to consumer'))
+      Notification.isHealthy.rejects(new Error('Error connecting to consumer'))
       Producer.isConnected.throws(new Error('Error connecting producer'))
       axios.get.resolves({ data: { status: 'OK' } })
 

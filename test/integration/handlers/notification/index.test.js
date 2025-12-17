@@ -53,8 +53,8 @@ const EventTypes = Enum.Events.Event.Type
 const EventActions = Enum.Events.Event.Action
 const GeneralTopicTemplate = Config.KAFKA_CONFIG.TOPIC_TEMPLATES.GENERAL_TOPIC_TEMPLATE.TEMPLATE
 
-const timeoutAttempts = 10
-const callbackWaitSeconds = 2
+const timeoutAttempts = 15
+const callbackWaitSeconds = 3
 const retryDelay = process?.env?.test_INT_RETRY_DELAY || 2
 const retryCount = process?.env?.test_INT_RETRY_COUNT || 40
 const retryOpts = {
