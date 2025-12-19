@@ -4236,9 +4236,9 @@ Test('Notification Service tests', async notificationTest => {
       mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
       Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.GET
-      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.uriParams.id, proxy: true })
+      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, proxy: true })
       const urlPayee = endpointResult.url
-      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
       const expected = true
       Callback.sendRequest.withArgs(match({ url: urlPayee, headers, source: msg.value.from, destination: msg.value.to, method, hubNameRegex })).returns(Promise.resolve(200))
       Participant.getEndpoint.resetHistory()
@@ -4247,10 +4247,11 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.uriParams.id, isFx: false, span, proxy: true })))
-      test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: false, span, proxy: true })))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers, source: msg.value.from, destination: msg.value.to, method, span, hubNameRegex })))
       test.equal(result, expected)
+
       test.ok(spanSpy.calledWith(match({
         serviceName: QueryTags.serviceName.mlNotificationHandler,
         auditType: QueryTags.auditType.transactionFlow,
@@ -4298,9 +4299,9 @@ Test('Notification Service tests', async notificationTest => {
       mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
       Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.GET
-      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.uriParams.id, proxy: true })
+      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id, proxy: true })
       const urlFxp = endpointResult.url
-      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })
       const expected = true
       Callback.sendRequest.withArgs(match({ url: urlFxp, headers, source: msg.value.from, destination: msg.value.to, method, hubNameRegex })).returns(Promise.resolve(200))
       Participant.getEndpoint.resetHistory()
@@ -4309,8 +4310,8 @@ Test('Notification Service tests', async notificationTest => {
 
       const result = await Notification.processMessage(msg, span)
 
-      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_POST, id: msg.value.content.uriParams.id, isFx: true, span, proxy: true })))
-      test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_POST })))
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: true, span, proxy: true })))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
       test.ok(Callback.sendRequest.calledWith(match({ url: urlFxp, headers, source: msg.value.from, destination: msg.value.to, method, span, hubNameRegex })))
       test.equal(result, expected)
       test.ok(spanSpy.calledWith(match({
@@ -4361,9 +4362,9 @@ Test('Notification Service tests', async notificationTest => {
       mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
       Notification.startConsumer({ payloadCache: mockPayloadCache })
       const method = ENUM.Http.RestMethods.GET
-      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_POST, id: msg.value.content.uriParams.id, proxy: true })
+      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, proxy: true })
       const urlPayee = endpointResult.url
-      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_POST })
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
 
       Callback.sendRequest.withArgs(match({ url: urlPayee, headers, source: msg.value.from, destination: msg.value.to, method, hubNameRegex })).throws(new Error('GET forward failed'))
 
