@@ -933,6 +933,40 @@ const processMessage = async (msg, span) => {
   }
 
   if ([Action.GET, Action.FX_GET].includes(action)) {
+    // Check if this is a straight GET request (no payload)
+    if (!content.payload || Object.keys(content.payload).length === 0) {
+      const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.POST, true)
+      const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.POST)
+      headers = createCallbackHeaders({ headers: content.headers, httpMethod: Enum.Http.RestMethods.GET, endpointTemplate })
+      logger.debug('Notification::processMessage - Callback.sendRequest (GET request)...', { callbackURLTo, headers, id, source, destination, hubNameRegex })
+      let response = { status: 'unknown' }
+      const histTimerEndSendRequest = Metrics.getHistogram(
+        'notification_event_delivery',
+        'notification_event_delivery - metric for sending notification requests to FSPs',
+        ['success', 'from', 'to', 'dest', 'action', 'status']
+      ).startTimer()
+      try {
+        injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: Enum.Http.RestMethods.GET, isFx, serviceName, ...(isFx ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } } : {}) })
+        response = await sendHttpRequest({
+          url: callbackURLTo,
+          headers,
+          source,
+          destination,
+          method: Enum.Http.RestMethods.GET,
+          span
+        })
+      } catch (err) {
+        logger.error(err)
+        histTimerEndSendRequest({ success: false, from: source, dest: destination, action, status: response.status })
+        histTimerEnd({ success: false, action })
+        throw err
+      }
+      histTimerEndSendRequest({ success: true, from: source, dest: destination, action, status: response.status })
+      histTimerEnd({ success: true, action })
+      return true
+    }
+
+    // Original PUT response logic for GET actions with payload
     const callbackURLTo = isSuccess ? await getEndpointFn(destination, REQUEST_TYPE.PUT) : await getEndpointFn(destination, REQUEST_TYPE.PUT_ERROR)
     const endpointTemplate = isSuccess ? getEndpointTemplate(REQUEST_TYPE.PUT) : getEndpointTemplate(REQUEST_TYPE.PUT_ERROR)
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
