@@ -180,7 +180,12 @@ const fulfilTransfer = async function (context, request, h) {
 
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
-    Validator.fulfilTransfer({ payload })
+    // Skip validation for external participants
+    // TODO: Need a better way to skip this validation for RESERVED_FORWARDED transfers
+    // since this is to resolve incomplete inter scheme fulfils
+    if (!headers['fspiop-proxy']) {
+      Validator.fulfilTransfer({ payload })
+    }
 
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
     injectAuditQueryTags({ span, id: params.ID, method, path, action: isFx ? Action.FX_FULFIL : Action.FULFIL, isFx })
