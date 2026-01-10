@@ -181,8 +181,8 @@ const fulfilTransfer = async function (context, request, h) {
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
     // Skip validation for external participants
-    // TODO: Need a better way to skip this validation for RESERVED_FORWARDED transfers
-    // since this is to resolve incomplete inter scheme fulfils
+    // TODO: Maybe a better way to skip this validation
+    // Needed for RESERVED_FORWARDED transfers since this is to resolve incomplete inter scheme fulfils
     if (!headers['fspiop-proxy']) {
       Validator.fulfilTransfer({ payload })
     }
