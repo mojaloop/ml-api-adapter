@@ -934,7 +934,7 @@ const processMessage = async (msg, span) => {
 
   if ([Action.GET, Action.FX_GET].includes(action)) {
     // Check if this is a straight GET request (no payload)
-    if (!content.payload || Object.keys(content.payload).length === 0) {
+    if (!content.payload || (typeof content.payload === 'object' && Object.keys(content.payload).length === 0)) {
       const { url: callbackURLTo } = await getEndpointFn(destination, REQUEST_TYPE.PUT, true)
       const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
       headers = createCallbackHeaders({ headers: content.headers, httpMethod: Enum.Http.RestMethods.GET, endpointTemplate })
