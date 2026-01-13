@@ -180,7 +180,8 @@ const fulfilTransfer = async function (context, request, h) {
 
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
-    // Skip validation for external participants
+    // Skip validation when request is forwarded through a proxy (indicated by the fspiop-proxy header)
+    // Potential security risk using headers, but proxy whitelisting is done at the infrastructure level
     if (!headers['fspiop-proxy']) {
       Validator.fulfilTransfer({ payload })
     }
