@@ -946,7 +946,18 @@ const processMessage = async (msg, span) => {
         ['success', 'from', 'to', 'dest', 'action', 'status']
       ).startTimer()
       try {
-        injectAuditQueryTags({ span, action, id, url: callbackURLTo, method: Enum.Http.RestMethods.GET, isFx, serviceName, ...(isFx ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } } : {}) })
+        injectAuditQueryTags({
+          span,
+          action,
+          id,
+          url: callbackURLTo,
+          method: Enum.Http.RestMethods.GET,
+          isFx,
+          serviceName,
+          ...(isFx && fspiopObject?.determiningTransferId
+            ? { additionalTags: { determiningTransferId: fspiopObject.determiningTransferId } }
+            : {})
+        })
         response = await sendHttpRequest({
           url: callbackURLTo,
           headers,
