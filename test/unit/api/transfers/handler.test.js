@@ -604,7 +604,7 @@ Test('transfer handler', handlerTest => {
         })
       }
 
-      const validatorSpy = sandbox.spy(require('../../../../src/lib/validator'), 'fulfilTransfer')
+      const validatorSpy = sandbox.spy(Validator, 'fulfilTransfer')
       await Handler.fulfilTransfer({}, request, reply)
       sandbox.assert.notCalled(validatorSpy)
     })
