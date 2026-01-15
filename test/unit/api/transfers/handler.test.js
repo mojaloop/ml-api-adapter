@@ -38,6 +38,7 @@ const ErrorEnums = require('@mojaloop/central-services-error-handling').Enums
 const Logger = require('@mojaloop/central-services-logger')
 
 const mocks = require('../../mocks')
+const Validator = require('../../../../src/lib/validator')
 
 const createRequest = (payload, isFx = false) => {
   const requestPayload = payload || {}
@@ -572,6 +573,79 @@ Test('transfer handler', handlerTest => {
     fulfilTransferErrorTest.end()
   })
 
+  handlerTest.test('fulfilTransfer validation skip logic should', async validationSkipTest => {
+    await validationSkipTest.test('skip validation when fspiop-proxy header is present', async test => {
+      const payload = {
+        transferState: 'RECEIVED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: new Date(),
+        extensionList: {
+          extension: [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+      const params = { ID: 'dfsp1' }
+
+      TransferService.fulfil.returns(Promise.resolve(true))
+
+      const request = createPutRequest(params, payload)
+      request.headers['fspiop-proxy'] = 'proxy-value'
+
+      const reply = {
+        response: () => ({
+          code: statusCode => {
+            test.equal(statusCode, 200)
+            test.end()
+          }
+        })
+      }
+
+      const validatorSpy = sandbox.spy(Validator, 'fulfilTransfer')
+      await Handler.fulfilTransfer({}, request, reply)
+      sandbox.assert.notCalled(validatorSpy)
+    })
+
+    await validationSkipTest.test('perform validation when fspiop-proxy header is absent', async test => {
+      const payload = {
+        transferState: 'RECEIVED',
+        fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
+        completedTimestamp: new Date(),
+        extensionList: {
+          extension: [
+            {
+              key: 'errorDescription',
+              value: 'This is a more detailed error description'
+            }
+          ]
+        }
+      }
+      const params = { ID: 'dfsp1' }
+
+      TransferService.fulfil.returns(Promise.resolve(true))
+
+      const request = createPutRequest(params, payload)
+
+      const reply = {
+        response: () => ({
+          code: statusCode => {
+            test.equal(statusCode, 200)
+            test.end()
+          }
+        })
+      }
+
+      const validatorSpy = sandbox.spy(Validator, 'fulfilTransfer')
+      await Handler.fulfilTransfer({}, request, reply)
+      sandbox.assert.calledOnce(validatorSpy)
+      sandbox.assert.calledWith(validatorSpy, { payload })
+    })
+
+    validationSkipTest.end()
+  })
   handlerTest.test('patchTransfer should', async patchTransferTest => {
     await patchTransferTest.test('return error if patchTransfer is called', async test => {
       try {

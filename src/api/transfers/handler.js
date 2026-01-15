@@ -180,7 +180,11 @@ const fulfilTransfer = async function (context, request, h) {
 
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
-    Validator.fulfilTransfer({ payload })
+    // Skip validation when request is forwarded through a proxy (indicated by the fspiop-proxy header)
+    // Potential security risk using headers, but proxy whitelisting is done at the infrastructure level
+    if (!headers['fspiop-proxy']) {
+      Validator.fulfilTransfer({ payload })
+    }
 
     span.setTags(getTransferSpanTags(request, Type.TRANSFER, Action.FULFIL))
     injectAuditQueryTags({ span, id: params.ID, method, path, action: isFx ? Action.FX_FULFIL : Action.FULFIL, isFx })

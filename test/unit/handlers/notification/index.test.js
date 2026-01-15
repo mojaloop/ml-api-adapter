@@ -4201,6 +4201,184 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('process a get message with no payload (GET request) received from kafka and forward to proxy', async test => {
+      const payeeFsp = 'dfsp2'
+      const payerFsp = 'dfsp1-proxied'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'get',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
+            },
+            payload: {},
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      const method = ENUM.Http.RestMethods.GET
+      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, proxy: true })
+      const urlPayee = endpointResult.url
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+      const expected = true
+      Callback.sendRequest.withArgs(match({ url: urlPayee, headers, source: msg.value.from, destination: msg.value.to, method, hubNameRegex })).returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+      const spanSpy = sandbox.spy(span, 'setTags')
+
+      const result = await Notification.processMessage(msg, span)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: false, span, proxy: true })))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })))
+      test.ok(Callback.sendRequest.calledWith(match({ url: urlPayee, headers, source: msg.value.from, destination: msg.value.to, method, span, hubNameRegex })))
+      test.equal(result, expected)
+
+      test.ok(spanSpy.calledWith(match({
+        serviceName: QueryTags.serviceName.mlNotificationHandler,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.getTransferByID,
+        httpMethod: 'GET',
+        httpUrl: urlPayee,
+        transferId: msg.value.content.uriParams.id
+      })))
+      test.end()
+    })
+
+    await processMessageTest.test('process an fx-get message with no payload (GET request) received from kafka and forward to proxy', async test => {
+      const fxp = 'fxp1-proxied'
+      const payerFsp = 'dfsp1'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'fx-get',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'fspiop-destination': fxp,
+              'fspiop-source': payerFsp
+            },
+            payload: {},
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: fxp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      const method = ENUM.Http.RestMethods.GET
+      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id, proxy: true })
+      const urlFxp = endpointResult.url
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })
+      const expected = true
+      Callback.sendRequest.withArgs(match({ url: urlFxp, headers, source: msg.value.from, destination: msg.value.to, method, hubNameRegex })).returns(Promise.resolve(200))
+      Participant.getEndpoint.resetHistory()
+      createCallbackHeadersSpy.resetHistory()
+      const spanSpy = sandbox.spy(span, 'setTags')
+
+      const result = await Notification.processMessage(msg, span)
+
+      test.ok(Participant.getEndpoint.getCall(0).calledWith(match({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_FX_TRANSFER_PUT, id: msg.value.content.uriParams.id, isFx: true, span, proxy: true })))
+      test.ok(createCallbackHeadersSpy.getCall(0).calledWith(match({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.FX_TRANSFERS_PUT })))
+      test.ok(Callback.sendRequest.calledWith(match({ url: urlFxp, headers, source: msg.value.from, destination: msg.value.to, method, span, hubNameRegex })))
+      test.equal(result, expected)
+      test.ok(spanSpy.calledWith(match({
+        serviceName: QueryTags.serviceName.mlNotificationHandler,
+        auditType: QueryTags.auditType.transactionFlow,
+        contentType: QueryTags.contentType.httpRequest,
+        operation: QueryTags.operation.getFxTransferByID,
+        httpMethod: 'GET',
+        httpUrl: urlFxp,
+        commitRequestId: msg.value.content.uriParams.id,
+        conversionId: msg.value.content.uriParams.id
+      })))
+      test.end()
+    })
+
+    await processMessageTest.test('throw error if GET request forwarding fails', async test => {
+      const payeeFsp = 'dfsp2'
+      const payerFsp = 'dfsp1-proxied'
+      const uuid = Uuid()
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'notification',
+              action: 'get',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {
+              'fspiop-destination': payeeFsp,
+              'fspiop-source': payerFsp
+            },
+            payload: {},
+            uriParams: { id: uuid },
+            context: {
+              originalRequestId: uuid
+            }
+          },
+          to: payeeFsp,
+          from: payerFsp,
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      Notification.startConsumer({ payloadCache: mockPayloadCache })
+      const method = ENUM.Http.RestMethods.GET
+      const endpointResult = await Participant.getEndpoint({ fsp: msg.value.to, endpointType: ENUM.EndPoints.FspEndpointTypes.FSPIOP_CALLBACK_URL_TRANSFER_PUT, id: msg.value.content.uriParams.id, proxy: true })
+      const urlPayee = endpointResult.url
+      const headers = createCallbackHeaders({ headers: msg.value.content.headers, httpMethod: method, endpointTemplate: ENUM.EndPoints.FspEndpointTemplates.TRANSFERS_PUT })
+
+      Callback.sendRequest.withArgs(match({ url: urlPayee, headers, source: msg.value.from, destination: msg.value.to, method, hubNameRegex })).throws(new Error('GET forward failed'))
+
+      try {
+        await Notification.processMessage(msg, span)
+        test.fail('Was expecting an error when forwarding GET request')
+        test.end()
+      } catch (e) {
+        test.ok(e instanceof Error)
+        test.equal(e.message, 'GET forward failed')
+        test.end()
+      }
+    })
+
     await processMessageTest.test('process transform FSPIOP message to ISO message for reserve action, remove fulfilment for payee notification in ISO mode', async test => {
       const ConfigStub = Util.clone(Config)
       ConfigStub.IS_ISO_MODE = true
