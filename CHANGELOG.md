@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.7.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.6.5...v16.7.0) (2026-01-15)
+
+
+### Features
+
+* add get forwarding functionality ([#620](https://github.com/mojaloop/ml-api-adapter/issues/620)) ([6a1ec09](https://github.com/mojaloop/ml-api-adapter/commit/6a1ec094db655a18b4984ce14f0521fd5a21c8f4))
+
+
+### Chore
+
+* **sbom:** update sbom [skip ci] ([6de0448](https://github.com/mojaloop/ml-api-adapter/commit/6de0448094358f0a4d1483b7b7ff3e7c657b8eb4))
+
 ### [16.6.5](https://github.com/mojaloop/ml-api-adapter/compare/v16.6.4...v16.6.5) (2026-01-07)
 
 
