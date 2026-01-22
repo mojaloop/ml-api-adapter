@@ -75,9 +75,9 @@
     "@hapi/vision": "7.0.3",
     "@mojaloop/central-services-error-handling": "13.1.5",
     "@mojaloop/central-services-health": "15.2.1",
-    "@mojaloop/central-services-logger": "11.10.2",
+    "@mojaloop/central-services-logger": "11.10.3",
     "@mojaloop/central-services-metrics": "12.8.3",
-    "@mojaloop/central-services-shared": "18.34.5",
+    "@mojaloop/central-services-shared": "18.35.0",
     "@mojaloop/central-services-stream": "11.8.14",
     "@mojaloop/event-sdk": "14.8.2",
     "@mojaloop/ml-schema-transformer-lib": "2.7.13",
@@ -117,10 +117,12 @@
     "yargs-parser": "21.1.1",
     "js-yaml": ">=4.1.1",
     "jws": ">=3.2.3",
-    "validator": ">=13.15.22"
+    "validator": ">=13.15.22",
+    "lodash": ">=4.17.23",
+    "lodash-es": ">=4.17.23"
   },
   "devDependencies": {
-    "@mojaloop/database-lib": "^11.3.4",
+    "@mojaloop/database-lib": "^11.3.5",
     "@mojaloop/inter-scheme-proxy-cache-lib": "2.9.0",
     "audit-ci": "7.1.0",
     "get-port": "5.1.1",
