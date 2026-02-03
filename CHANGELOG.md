@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.8.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.8.0...v16.8.1) (2026-02-03)
+
+
+### Chore
+
+* bump dep ([#627](https://github.com/mojaloop/ml-api-adapter/issues/627)) ([4106763](https://github.com/mojaloop/ml-api-adapter/commit/41067635c6af6d25b48e6588bf5b4345198a965b))
+
 ## [16.8.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.7.0...v16.8.0) (2026-01-29)
 
 
