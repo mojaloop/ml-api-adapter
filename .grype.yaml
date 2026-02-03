@@ -11,11 +11,7 @@ ignore:
   - vulnerability: GHSA-8qq5-rm4j-mr97
   - vulnerability: GHSA-34x7-hfp2-rc4v
   - vulnerability: GHSA-37qj-frw5-hhjh
-    package: fast-xml-parser
-    version: 4.5.3
   - vulnerability: GHSA-p5wg-g6qr-c7cg
-    package: eslint
-    version: 8.57.1
 # Set output format defaults
 output:
   - "table"
