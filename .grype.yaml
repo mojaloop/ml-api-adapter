@@ -13,6 +13,7 @@ ignore:
   - vulnerability: GHSA-37qj-frw5-hhjh
   - vulnerability: GHSA-p5wg-g6qr-c7cg
   - vulnerability: GHSA-3966-f6p6-2qr9
+  - vulnerability: GHSA-43fc-jf86-j433
 # Set output format defaults
 output:
   - "table"
