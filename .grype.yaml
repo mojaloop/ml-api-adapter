@@ -37,6 +37,11 @@ ignore:
   - vulnerability: GHSA-38c4-r59v-3vqw
     include-aliases: true
     reason: "Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-02-23"
+  - vulnerability: GHSA-73rr-hh4g-fpgx
+    include-aliases: true
+    reason: >-
+      Base image npm package: diff - bundled in Node.js base image npm, not fixable via application dependencies as of
+      2026-02-25 (low severity)
 output:
   - table
   - json
