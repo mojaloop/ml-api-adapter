@@ -1,0 +1,21 @@
+diff --git a/node_modules/tapes/bin/tapes b/node_modules/tapes/bin/tapes
+index 3f09cff..ff337d9 100755
+--- a/node_modules/tapes/bin/tapes
++++ b/node_modules/tapes/bin/tapes
+@@ -1,12 +1,11 @@
+ #!/usr/bin/env node
+ 
+ var path = require('path');
+-var glob = require('glob');
++var { globSync } = require('glob');
+ 
+ process.argv.slice(2).forEach(function (arg) {
+-  glob(arg, function (err, files) {
+-    files.forEach(function (file) {
+-      require(path.resolve(process.cwd(), file));
+-    });
++  var files = globSync(arg);
++  files.forEach(function (file) {
++    require(path.resolve(process.cwd(), file));
+   });
+ });
