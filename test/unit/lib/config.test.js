@@ -154,6 +154,27 @@ Test('Config tests', configTest => {
     getFileContentTest.end()
   })
 
+  configTest.test('should set otelSpanPerMessage when KAFKA notification options exist', test => {
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    test.ok(Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.options.otelSpanPerMessage, 'otelSpanPerMessage should be true')
+    test.end()
+  })
+
+  configTest.test('should not throw when KAFKA notification options are missing', test => {
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    delete DefaultStub.KAFKA.CONSUMER.NOTIFICATION.EVENT.config.options
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    test.ok(Config)
+    test.end()
+  })
+
   configTest.test('HTTP_REQUEST_TIMEOUT_MS should default to 20000 if not set', test => {
     // Arrange
     const DefaultStub = Util.clone(Default)

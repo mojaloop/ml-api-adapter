@@ -14,6 +14,13 @@ ignore:
   - vulnerability: GHSA-p5wg-g6qr-c7cg
   - vulnerability: GHSA-3966-f6p6-2qr9
   - vulnerability: GHSA-43fc-jf86-j433
+  - vulnerability: GHSA-83g3-92jg-28cx
+  - vulnerability: GHSA-3ppc-4f35-3m26
+  - vulnerability: GHSA-7r86-cg39-jmmj
+  - vulnerability: GHSA-23c5-xmqv-rm74
+
+Medium severity vulnerabilities:
+  - zlib 1.3.1-r2: CVE-2026-27171
 # Set output format defaults
 output:
   - "table"

@@ -24,7 +24,7 @@
   },
   "pre-commit": [
     "lint",
-    "test",
+    "test:coverage-check",
     "dep:check",
     "audit:check"
   ],
@@ -127,6 +127,11 @@
     },
     "glob": {
       "minimatch": "9.0.7"
+    },
+    "tapes": {
+      "glob": {
+        "minimatch": "3.1.5"
+      }
     },
     "@mojaloop/ml-schema-transformer-lib": {
       "minimatch": "5.1.8"
