@@ -35,26 +35,28 @@ const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
 const ErrorHandler = require('@mojaloop/central-services-error-handling')
 const JwsSigner = require('@mojaloop/sdk-standard-components').Jws.signer
-const { Kafka: { Consumer, otel }, Util: { Producer } } = require('@mojaloop/central-services-stream')
-const { Util, Enum, Util: { Hapi }, Enum: { Tags: { QueryTags } } } = require('@mojaloop/central-services-shared')
-const { makeAcceptContentTypeHeader } = require('@mojaloop/central-services-shared').Util.Headers
+const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
+const { Util, Enum, Util: { Hapi } } = require('@mojaloop/central-services-shared')
+const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
 
 const { logger } = require('../../shared/logger')
 const { createCallbackHeaders } = require('../../lib/headers')
 const Participant = require('../../domain/participant')
 const Config = require('../../lib/config')
-const dto = require('./dto')
 const dtoTransfer = require('../../domain/transfer/dto')
-const utils = require('./utils')
-const { injectAuditQueryTags } = require('../../lib/util')
 const { PAYLOAD_STORAGES } = require('../../lib/payloadCache/constants')
-const { TransformFacades } = require('@mojaloop/ml-schema-transformer-lib')
+const { injectAuditQueryTags } = require('../../lib/util')
+const dto = require('./dto')
+const utils = require('./utils')
 
 const Callback = Util.Request
 const HeaderValidation = Util.HeaderValidation
+const { makeAcceptContentTypeHeader } = Util.Headers
+
 const { Action } = Enum.Events.Event
 const { PATCH, POST, PUT } = Enum.Http.RestMethods
 const { FspEndpointTypes, FspEndpointTemplates } = Enum.EndPoints
+const { QueryTags } = Enum.Tags
 
 let consumerConfig = null
 let notificationConsumer = {}
@@ -118,7 +120,6 @@ const startConsumer = async ({ payloadCache } = {}) => {
     logger.info(`Notification::startConsumer - starting Consumer for topicNames: [${topicName}]`)
 
     consumerConfig = Util.Kafka.getKafkaConfig(Config.KAFKA_CONFIG, Enum.Kafka.Config.CONSUMER, functionality.toUpperCase(), action.toUpperCase())
-    consumerConfig.options.disableOtelSpanAutoCreation = true // Disable auto creation of OTel span inside central-services-stream lib
     consumerConfig.rdkafkaConf['client.id'] = topicName
 
     if (consumerConfig.rdkafkaConf['enable.auto.commit'] !== undefined) {
@@ -147,32 +148,36 @@ const startConsumer = async ({ payloadCache } = {}) => {
   * processMessage - called to process the message received from kafka
   * @param {object} error - the error message received form kafka in case of error
   * @param {object} message - the message received form kafka
+  * @param {ConsumerBatchMeta} [meta={}] - Batch metadata from central-services-stream
 
   * @returns {boolean} Returns true on success or false on failure
   */
-const consumeMessage = async (error, message) => {
-  logger.debug('Notification::consumeMessage')
+const consumeMessage = async (error, message, meta = {}) => {
   const histTimerEnd = Metrics.getHistogram(
     'notification_event',
     'Consume a notification message from the kafka topic and process it accordingly',
     ['success', 'error']
   ).startTimer()
+  const log = logger.child({ batchId: meta?.batchId })
+  log.verbose('Notification::consumeMessage...')
+
   let timeApiPrepare
   let timeApiFulfil
+
   try {
     if (error) {
       const errMessage = 'error while reading message from kafka: '
-      logger.error(errMessage, error)
+      log.error(errMessage, error)
       throw ErrorHandler.Factory.createInternalServerFSPIOPError(`${errMessage} ${error?.message}`, error)
     }
-    logger.debug('Notification:consumeMessage message:', message)
+    log.debug('Notification:consumeMessage message:', message) // todo: think which message fields to log
 
     const isBatch = Array.isArray(message)
     message = Array.isArray(message) ? message : [message]
     let combinedResult = true
 
     const processOneMessage = async (msg) => {
-      logger.debug('Notification::consumeMessage - processOneMessage...')
+      log.debug('Notification::consumeMessage - processOneMessage...')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
@@ -180,47 +185,35 @@ const consumeMessage = async (error, message) => {
       if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
 
       try {
-        const result = await processMessage(msg, span).catch(err => {
-          logger.error('error in notification processMessage: ', err)
-          const fspiopError = ErrorHandler.Factory
-            .createInternalServerFSPIOPError(`Notification message processing error: ${err?.message}`, err)
-
-          if (!autoCommitEnabled) {
-            notificationConsumer.commitMessageSync(msg)
-          }
-          if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
-          return false
-        })
-
-        if (!autoCommitEnabled) {
-          notificationConsumer.commitMessageSync(msg)
-        }
-        logger.verbose('Notification:consumeMessage - message processed')
+        const result = await processMessage(msg, span)
+        log.verbose('Notification:consumeMessage - message processed')
         combinedResult = (combinedResult && result)
       } catch (err) {
-        logger.warn(`error in processOneMessage: ${err?.message}`)
-        const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
+        const errMessage = 'Notification message processing error: '
+        log.error(errMessage, err)
+        const fspiopError = ErrorHandler.Factory
+          .createInternalServerFSPIOPError(`${errMessage} ${err?.message}`, err)
         const state = new EventSdk.EventStateMetadata(EventSdk.EventStatusType.failed, fspiopError.apiErrorCode.code, fspiopError.apiErrorCode.message)
         await span.error(fspiopError, state)
         await span.finish(fspiopError.message, state)
-        throw fspiopError
+
+        if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
+        combinedResult = false
       } finally {
-        if (!span.isFinished) {
-          await span.finish()
-        }
+        if (!autoCommitEnabled) notificationConsumer.commitMessageSync(msg)
+        if (!span.isFinished) await span.finish()
       }
     }
 
     for (const msg of message) {
-      const { executeInsideSpanContext } = otel.startConsumerTracingSpan(msg, consumerConfig)
-      await executeInsideSpanContext(() => processOneMessage(msg))
+      await processOneMessage(msg)
     }
 
     recordTxMetrics(timeApiPrepare, timeApiFulfil, true)
     histTimerEnd({ success: true })
     return combinedResult
   } catch (err) {
-    logger.warn('error in notification consumeMessage: ', err)
+    log.warn('error in notification consumeMessage: ', err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     recordTxMetrics(timeApiPrepare, timeApiFulfil, false)
 

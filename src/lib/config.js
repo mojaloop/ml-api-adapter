@@ -2,6 +2,9 @@
 const RC = require('rc')('MLAPI', require('../../config/default.json'))
 const fs = require('fs')
 
+const _nOpts = RC.KAFKA?.CONSUMER?.NOTIFICATION?.EVENT?.config?.options
+if (_nOpts) _nOpts.otelSpanPerMessage = true
+
 const getFileContent = (path) => {
   if (!fs.existsSync(path)) {
     console.log(`File ${path} doesn't exist, can't enable JWS signing`)
