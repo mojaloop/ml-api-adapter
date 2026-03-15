@@ -62,9 +62,16 @@ const { Type, Action } = Enum.Events.Event
  */
 
 const create = async function (context, request, h) {
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const metric = PROM_METRICS.transferPrepare(isFx)
+  const histTimerEnd = Metrics.getHistogram(
+    metric,
+    `Produce a ${metric} message to transfer prepare kafka topic`,
+    ['success']
+  ).startTimer()
+
   const { headers, span, method } = request
   let { dataUri, payload } = request
-  const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
 
@@ -91,12 +98,6 @@ const create = async function (context, request, h) {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
     }
   }
-  const metric = PROM_METRICS.transferPrepare(isFx)
-  const histTimerEnd = Metrics.getHistogram(
-    metric,
-    `Produce a ${metric} message to transfer prepare kafka topic`,
-    ['success']
-  ).startTimer()
 
   try {
     span.setTracestateTags({ timeApiPrepare: `${Date.now()}` })
@@ -140,10 +141,17 @@ const create = async function (context, request, h) {
  */
 
 const fulfilTransfer = async function (context, request, h) {
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const metric = PROM_METRICS.transferFulfil(isFx)
+  const histTimerEnd = Metrics.getHistogram(
+    metric,
+    `Produce a ${metric} message to transfer fulfil kafka topic`,
+    ['success']
+  ).startTimer()
+
   const { headers, params, span, method, path } = request
   let { dataUri, payload } = request
 
-  const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
 
@@ -170,13 +178,6 @@ const fulfilTransfer = async function (context, request, h) {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
     }
   }
-
-  const metric = PROM_METRICS.transferFulfil(isFx)
-  const histTimerEnd = Metrics.getHistogram(
-    metric,
-    `Produce a ${metric} message to transfer fulfil kafka topic`,
-    ['success']
-  ).startTimer()
 
   span.setTracestateTags({ timeApiFulfil: `${Date.now()}` })
   try {
@@ -260,9 +261,16 @@ const getTransferById = async function (context, request, h) {
  * @returns {integer} - Returns the response code 200 on success, throws error if failure occurs
  */
 const fulfilTransferError = async function (context, request, h) {
+  const isFx = request.path?.includes(ROUTES.fxTransfers)
+  const metric = PROM_METRICS.transferFulfilError(isFx)
+  const histTimerEnd = Metrics.getHistogram(
+    metric,
+    `Produce a ${metric} message to transfer fulfil kafka topic`,
+    ['success']
+  ).startTimer()
+
   const { headers, params, span, path, method } = request
   let { dataUri, payload } = request
-  const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
   let kafkaMessageContext
 
@@ -289,13 +297,6 @@ const fulfilTransferError = async function (context, request, h) {
       payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
     }
   }
-
-  const metric = PROM_METRICS.transferFulfilError(isFx)
-  const histTimerEnd = Metrics.getHistogram(
-    metric,
-    `Produce a ${metric} message to transfer fulfil kafka topic`,
-    ['success']
-  ).startTimer()
 
   try {
     span.setTags(getTransferSpanTags(request, Enum.Events.Event.Type.TRANSFER, Enum.Events.Event.Action.ABORT))
