@@ -71,7 +71,9 @@ const mockPayloadCache = {
   disconnect: Sinon.stub(),
   getPayload: Sinon.stub(),
   setPayload: Sinon.stub(),
-  isConnected: Sinon.stub().returns(true)
+  get isConnected () {
+    return Sinon.stub().returns(true)()
+  }
 }
 
 module.exports = {

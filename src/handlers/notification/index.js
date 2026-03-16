@@ -1070,12 +1070,12 @@ const processMessage = async (msg, span) => {
   * @returns {boolean}
   */
 const isConnected = () => {
-  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected() : true)
+  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected : true)
 }
 
 /* istanbul ignore next */
 const isHealthy = async () => {
-  return (await notificationConsumer.isHealthy()) && (PayloadCache ? PayloadCache.isConnected() : true)
+  return (await notificationConsumer.isHealthy()) && (PayloadCache ? PayloadCache.isConnected : true)
 }
 
 /**
