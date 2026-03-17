@@ -46,6 +46,7 @@ const Config = require('../../lib/config')
 const dtoTransfer = require('../../domain/transfer/dto')
 const { PAYLOAD_STORAGES } = require('../../lib/payloadCache/constants')
 const { injectAuditQueryTags } = require('../../lib/util')
+const httpAgents = require('../../lib/httpAgents')
 const dto = require('./dto')
 const utils = require('./utils')
 
@@ -62,6 +63,7 @@ let consumerConfig = null
 let notificationConsumer = {}
 let autoCommitEnabled = true
 let PayloadCache
+let sharedHttpAgents = null
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 const API_TYPE = Config.API_TYPE
@@ -125,6 +127,14 @@ const startConsumer = async ({ payloadCache } = {}) => {
     if (consumerConfig.rdkafkaConf['enable.auto.commit'] !== undefined) {
       autoCommitEnabled = consumerConfig.rdkafkaConf['enable.auto.commit']
     }
+
+    // Initialize shared HTTP agents for connection pooling
+    sharedHttpAgents = httpAgents.initializeAgents({
+      maxSockets: Config.HTTP_CLIENT.MAX_SOCKETS,
+      maxFreeSockets: Config.HTTP_CLIENT.MAX_FREE_SOCKETS,
+      socketTimeout: Config.HTTP_CLIENT.SOCKET_TIMEOUT_MS
+    })
+
     notificationConsumer = new Consumer([topicName], consumerConfig)
 
     await PayloadCache?.connect()
@@ -348,18 +358,28 @@ const processMessage = async (msg, span) => {
   let headers // callback headers
   const serviceName = QueryTags.serviceName.mlNotificationHandler
 
-  const sendHttpRequest = ({ method, ...restArgs }) => Callback.sendRequest({
-    method: method.toUpperCase(),
-    apiType: API_TYPE,
-    hubNameRegex,
-    protocolVersions,
-    span,
-    responseType,
-    axiosRequestOptionsOverride: {
+  const sendHttpRequest = ({ method, ...restArgs }) => {
+    const axiosOptions = {
       timeout: Config.HTTP_REQUEST_TIMEOUT_MS
-    },
-    ...restArgs
-  })
+    }
+
+    // Use shared HTTP agents for connection pooling if available
+    if (sharedHttpAgents) {
+      axiosOptions.httpAgent = sharedHttpAgents.httpAgent
+      axiosOptions.httpsAgent = sharedHttpAgents.httpsAgent
+    }
+
+    return Callback.sendRequest({
+      method: method.toUpperCase(),
+      apiType: API_TYPE,
+      hubNameRegex,
+      protocolVersions,
+      span,
+      responseType,
+      axiosRequestOptionsOverride: axiosOptions,
+      ...restArgs
+    })
+  }
 
   if ([Action.PREPARE, Action.FX_PREPARE].includes(action)) {
     if (!isSuccess) {
@@ -1082,7 +1102,7 @@ const isHealthy = async () => {
   * @function disconnect
   *
   *
-  * @description Disconnect from the notificationConsumer
+  * @description Disconnect from the notificationConsumer and clean up HTTP agents
   *
   * @returns Promise<*> - Passes on the Promise from Consumer.disconnect()
   * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
@@ -1091,6 +1111,10 @@ const disconnect = async () => {
   if (!notificationConsumer || !notificationConsumer.disconnect) {
     throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
   }
+
+  // Destroy shared HTTP agents
+  httpAgents.destroyAgents()
+  sharedHttpAgents = null
 
   return Promise.all([notificationConsumer.disconnect(), PayloadCache?.disconnect()])
 }

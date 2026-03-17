@@ -203,5 +203,101 @@ Test('Config tests', configTest => {
     test.end()
   })
 
+  configTest.test('HTTP_CLIENT should use defaults when not configured', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_CLIENT = undefined
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.ok(Config.HTTP_CLIENT, 'HTTP_CLIENT should exist')
+    test.equal(Config.HTTP_CLIENT.MAX_SOCKETS, 256, 'MAX_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.MAX_FREE_SOCKETS, 256, 'MAX_FREE_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.SOCKET_TIMEOUT_MS, 60000, 'SOCKET_TIMEOUT_MS should default to 60000')
+    test.end()
+  })
+
+  configTest.test('HTTP_CLIENT should use configured values', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_CLIENT = {
+      MAX_SOCKETS: 512,
+      MAX_FREE_SOCKETS: 256,
+      SOCKET_TIMEOUT_MS: 30000
+    }
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.ok(Config.HTTP_CLIENT, 'HTTP_CLIENT should exist')
+    test.equal(Config.HTTP_CLIENT.MAX_SOCKETS, 512, 'MAX_SOCKETS should use configured value')
+    test.equal(Config.HTTP_CLIENT.MAX_FREE_SOCKETS, 256, 'MAX_FREE_SOCKETS should use configured value')
+    test.equal(Config.HTTP_CLIENT.SOCKET_TIMEOUT_MS, 30000, 'SOCKET_TIMEOUT_MS should use configured value')
+    test.end()
+  })
+
+  configTest.test('HTTP_CLIENT should use defaults for undefined individual properties', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_CLIENT = {
+      MAX_SOCKETS: undefined,
+      MAX_FREE_SOCKETS: undefined,
+      SOCKET_TIMEOUT_MS: undefined
+    }
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.ok(Config.HTTP_CLIENT, 'HTTP_CLIENT should exist')
+    test.equal(Config.HTTP_CLIENT.MAX_SOCKETS, 256, 'MAX_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.MAX_FREE_SOCKETS, 256, 'MAX_FREE_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.SOCKET_TIMEOUT_MS, 60000, 'SOCKET_TIMEOUT_MS should default to 60000')
+    test.end()
+  })
+
+  configTest.test('HTTP_CLIENT should use defaults when null', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_CLIENT = null
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.ok(Config.HTTP_CLIENT, 'HTTP_CLIENT should exist')
+    test.equal(Config.HTTP_CLIENT.MAX_SOCKETS, 256, 'MAX_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.MAX_FREE_SOCKETS, 256, 'MAX_FREE_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.SOCKET_TIMEOUT_MS, 60000, 'SOCKET_TIMEOUT_MS should default to 60000')
+    test.end()
+  })
+
+  configTest.test('HTTP_CLIENT should support partial configuration', test => {
+    // Arrange
+    const DefaultStub = Util.clone(Default)
+    DefaultStub.HTTP_CLIENT = {
+      MAX_SOCKETS: 128
+      // MAX_FREE_SOCKETS and SOCKET_TIMEOUT_MS not defined
+    }
+    DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+    // Act
+    const Config = Proxyquire(`${src}/lib/config`, {
+      '../../config/default.json': DefaultStub
+    })
+    // Assert
+    test.ok(Config.HTTP_CLIENT, 'HTTP_CLIENT should exist')
+    test.equal(Config.HTTP_CLIENT.MAX_SOCKETS, 128, 'MAX_SOCKETS should use configured value')
+    test.equal(Config.HTTP_CLIENT.MAX_FREE_SOCKETS, 256, 'MAX_FREE_SOCKETS should default to 256')
+    test.equal(Config.HTTP_CLIENT.SOCKET_TIMEOUT_MS, 60000, 'SOCKET_TIMEOUT_MS should default to 60000')
+    test.end()
+  })
+
   configTest.end()
 })
