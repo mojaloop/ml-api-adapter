@@ -174,7 +174,6 @@ const consumeMessage = async (error, message, meta = {}) => {
 
     const isBatch = Array.isArray(message)
     message = Array.isArray(message) ? message : [message]
-    let combinedResult = true
 
     const processOneMessage = async (msg) => {
       log.debug('Notification::consumeMessage - processOneMessage...')
@@ -187,7 +186,7 @@ const consumeMessage = async (error, message, meta = {}) => {
       try {
         const result = await processMessage(msg, span)
         log.verbose('Notification:consumeMessage - message processed')
-        combinedResult = (combinedResult && result)
+        return result
       } catch (err) {
         const errMessage = 'Notification message processing error: '
         log.error(errMessage, err)
@@ -198,16 +197,15 @@ const consumeMessage = async (error, message, meta = {}) => {
         await span.finish(fspiopError.message, state)
 
         if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
-        combinedResult = false
+        return false
       } finally {
         if (!autoCommitEnabled) notificationConsumer.commitMessageSync(msg)
         if (!span.isFinished) await span.finish()
       }
     }
 
-    for (const msg of message) {
-      await processOneMessage(msg)
-    }
+    const results = await Promise.all(message.map(msg => processOneMessage(msg)))
+    const combinedResult = results.every(Boolean)
 
     recordTxMetrics(timeApiPrepare, timeApiFulfil, true)
     histTimerEnd({ success: true })
