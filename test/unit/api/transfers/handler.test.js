@@ -50,6 +50,9 @@ const createRequest = (payload, isFx = false) => {
     payload: requestPayload,
     method: 'post',
     path: isFx ? '/fxTransfers' : '/transfers',
+    info: {
+      id: 'test-request-id'
+    },
     server: {
       log: () => { }
     },
@@ -69,6 +72,9 @@ const createPutRequest = (params, payload, isFx = false) => {
     payload: requestPayload,
     method: 'put',
     path: isFx ? `/fxTransfers/${params.ID}` : `/transfers/${params.ID}`,
+    info: {
+      id: 'test-request-id'
+    },
     server: {
       log: () => { }
     },
@@ -111,7 +117,7 @@ Test('transfer handler', handlerTest => {
   })
 
   handlerTest.test('create should', async createTransferTest => {
-    createTransferTest.test('reply with status code 202 if message is sent successfully to kafka', test => {
+    createTransferTest.test('reply with status code 202 if message is sent successfully to kafka', async test => {
       const payload = {
         transferId: 'b51ec534-ee48-4575-b6a9-ead2955b8069',
         payeeFsp: '1234',
@@ -144,7 +150,7 @@ Test('transfer handler', handlerTest => {
       const request = createRequest(payload)
       const reply = createTestReply(test)
       const spanSpy = sandbox.spy(request.span, 'setTags')
-      Handler.create({}, request, reply)
+      await Handler.create({}, request, reply)
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -157,14 +163,14 @@ Test('transfer handler', handlerTest => {
       })
     })
 
-    createTransferTest.test('reply with status code 202 for correct fxTransfer request', test => {
+    createTransferTest.test('reply with status code 202 for correct fxTransfer request', async test => {
       TransferService.prepare.returns(Promise.resolve(true))
 
       const payload = mocks.mockFxPreparePayload()
       const request = createRequest(payload, true)
       const reply = createTestReply(test)
       const spanSpy = sandbox.spy(request.span, 'setTags')
-      Handler.create({}, request, reply)
+      await Handler.create({}, request, reply)
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -225,7 +231,7 @@ Test('transfer handler', handlerTest => {
   })
 
   handlerTest.test('fulfilTransfer should', async fulfilTransferTest => {
-    fulfilTransferTest.test('reply with status code 200 if message is sent successfully to kafka', test => {
+    fulfilTransferTest.test('reply with status code 200 if message is sent successfully to kafka', async test => {
       const payload = {
         transferState: 'RECEIVED',
         fulfilment: 'f5sqb7tBTWPd5Y8BDFdMm9BJR_MNI4isf8p8n4D5pHA',
@@ -263,7 +269,7 @@ Test('transfer handler', handlerTest => {
         }
       }
       const spanSpy = sandbox.spy(request.span, 'setTags')
-      Handler.fulfilTransfer({}, request, reply)
+      await Handler.fulfilTransfer({}, request, reply)
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -277,7 +283,7 @@ Test('transfer handler', handlerTest => {
       })
     })
 
-    fulfilTransferTest.test('reply with status code 200 for success PUT fxTransfer callback', test => {
+    fulfilTransferTest.test('reply with status code 200 for success PUT fxTransfer callback', async test => {
       TransferService.fulfil.returns(Promise.resolve(true))
 
       const payload = mocks.mockFxFulfilPayload()
@@ -285,7 +291,7 @@ Test('transfer handler', handlerTest => {
       const request = createPutRequest(params, payload, true)
       const reply = createTestReply(test, 200)
       const spanSpy = sandbox.spy(request.span, 'setTags')
-      Handler.fulfilTransfer({}, request, reply)
+      await Handler.fulfilTransfer({}, request, reply)
       sandbox.assert.calledTwice(spanSpy)
       sandbox.assert.calledWith(spanSpy, {
         serviceName: QueryTags.serviceName.mlApiAdapterService,
@@ -432,6 +438,9 @@ Test('transfer handler', handlerTest => {
           payload: {
             transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
           },
+          info: {
+            id: 'test-request-id'
+          },
           headers,
           server: {
             log: () => { }
@@ -554,6 +563,9 @@ Test('transfer handler', handlerTest => {
           transferId: 'b51ec534-ee48-4575b6a9-ead2955b8069'
         },
         headers,
+        info: {
+          id: 'test-request-id'
+        },
         server: {
           log: () => { }
         },
