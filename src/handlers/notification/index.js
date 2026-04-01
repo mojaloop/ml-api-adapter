@@ -181,13 +181,12 @@ const consumeMessage = async (error, message, meta = {}) => {
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
 
-      // Risk 1 mitigation: keep trace timestamps local to this message instead of
-      // writing to shared outer variables, which would produce a race in batch mode.
-      const msgTimeApiPrepare = traceTags.timeApiPrepare && parseInt(traceTags.timeApiPrepare)
-        ? parseInt(traceTags.timeApiPrepare)
+      // Capture timestamps locally to avoid a write-race on the shared outer variables in batch mode.
+      const msgTimeApiPrepare = traceTags.timeApiPrepare && Number.parseInt(traceTags.timeApiPrepare)
+        ? Number.parseInt(traceTags.timeApiPrepare)
         : null
-      const msgTimeApiFulfil = traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)
-        ? parseInt(traceTags.timeApiFulfil)
+      const msgTimeApiFulfil = traceTags.timeApiFulfil && Number.parseInt(traceTags.timeApiFulfil)
+        ? Number.parseInt(traceTags.timeApiFulfil)
         : null
 
       try {
@@ -206,10 +205,8 @@ const consumeMessage = async (error, message, meta = {}) => {
         if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
         return { result: false, msg, msgTimeApiPrepare, msgTimeApiFulfil }
       } finally {
-        // Risk 2 mitigation: for batch mode, defer commits until all messages have
-        // been processed so we can commit in partition-offset order (see below).
-        // For single-message mode keep the commit here to preserve existing behaviour
-        // (commit before re-throwing, i.e. no redelivery on error).
+        // In batch mode defer commits until all messages are processed (see ordered commit below).
+        // In single-message mode commit here so a failed message is not redelivered.
         if (!autoCommitEnabled && !isBatch) notificationConsumer.commitMessageSync(msg)
         if (!span.isFinished) await span.finish()
       }
@@ -217,9 +214,7 @@ const consumeMessage = async (error, message, meta = {}) => {
 
     const outcomes = await Promise.all(message.map(msg => processOneMessage(msg)))
 
-    // Risk 1 mitigation: derive a single representative timestamp from the batch by
-    // taking the earliest value — the message that entered the system first governs
-    // the end-to-end latency metric for the whole batch.
+    // Use the earliest timestamp across the batch to represent the batch's latency metric.
     for (const { msgTimeApiPrepare, msgTimeApiFulfil } of outcomes) {
       if (msgTimeApiPrepare !== null && (timeApiPrepare === undefined || msgTimeApiPrepare < timeApiPrepare)) {
         timeApiPrepare = msgTimeApiPrepare
@@ -229,9 +224,7 @@ const consumeMessage = async (error, message, meta = {}) => {
       }
     }
 
-    // Risk 2 mitigation: commit all batch messages in ascending partition→offset order
-    // so that a consumer restart never skips an unprocessed offset due to an
-    // out-of-order commit having advanced the committed position too far.
+    // Commit in ascending partition→offset order so a restart never skips an unprocessed offset.
     if (!autoCommitEnabled && isBatch) {
       const sortedMsgs = outcomes
         .map(({ msg }) => msg)
