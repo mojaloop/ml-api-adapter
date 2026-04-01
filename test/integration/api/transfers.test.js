@@ -74,7 +74,7 @@ const testKafkaConsumerConfig = {
       config: {
         options: {
           mode: 2,
-          batchSize: 1,
+          batchSize: 10,
           pollFrequency: 10,
           recursiveTimeout: 100,
           messageCharset: 'utf8',
@@ -98,7 +98,7 @@ const testKafkaConsumerConfig = {
       config: {
         options: {
           mode: 2,
-          batchSize: 1,
+          batchSize: 10,
           pollFrequency: 10,
           recursiveTimeout: 100,
           messageCharset: 'utf8',

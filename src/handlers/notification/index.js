@@ -174,20 +174,25 @@ const consumeMessage = async (error, message, meta = {}) => {
 
     const isBatch = Array.isArray(message)
     message = Array.isArray(message) ? message : [message]
-    let combinedResult = true
 
     const processOneMessage = async (msg) => {
       log.debug('Notification::consumeMessage - processOneMessage...')
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
-      if (traceTags.timeApiPrepare && parseInt(traceTags.timeApiPrepare)) timeApiPrepare = parseInt(traceTags.timeApiPrepare)
-      if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
+
+      // Capture timestamps locally to avoid a write-race on the shared outer variables in batch mode.
+      const msgTimeApiPrepare = traceTags.timeApiPrepare && Number.parseInt(traceTags.timeApiPrepare)
+        ? Number.parseInt(traceTags.timeApiPrepare)
+        : null
+      const msgTimeApiFulfil = traceTags.timeApiFulfil && Number.parseInt(traceTags.timeApiFulfil)
+        ? Number.parseInt(traceTags.timeApiFulfil)
+        : null
 
       try {
         const result = await processMessage(msg, span)
         log.verbose('Notification:consumeMessage - message processed')
-        combinedResult = (combinedResult && result)
+        return { result, msg, msgTimeApiPrepare, msgTimeApiFulfil }
       } catch (err) {
         const errMessage = 'Notification message processing error: '
         log.error(errMessage, err)
@@ -198,16 +203,38 @@ const consumeMessage = async (error, message, meta = {}) => {
         await span.finish(fspiopError.message, state)
 
         if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
-        combinedResult = false
+        return { result: false, msg, msgTimeApiPrepare, msgTimeApiFulfil }
       } finally {
-        if (!autoCommitEnabled) notificationConsumer.commitMessageSync(msg)
+        // In batch mode defer commits until all messages are processed (see ordered commit below).
+        // In single-message mode commit here so a failed message is not redelivered.
+        if (!autoCommitEnabled && !isBatch) notificationConsumer.commitMessageSync(msg)
         if (!span.isFinished) await span.finish()
       }
     }
 
-    for (const msg of message) {
-      await processOneMessage(msg)
+    const outcomes = await Promise.all(message.map(msg => processOneMessage(msg)))
+
+    // Use the earliest timestamp across the batch to represent the batch's latency metric.
+    for (const { msgTimeApiPrepare, msgTimeApiFulfil } of outcomes) {
+      if (msgTimeApiPrepare !== null && (timeApiPrepare === undefined || msgTimeApiPrepare < timeApiPrepare)) {
+        timeApiPrepare = msgTimeApiPrepare
+      }
+      if (msgTimeApiFulfil !== null && (timeApiFulfil === undefined || msgTimeApiFulfil < timeApiFulfil)) {
+        timeApiFulfil = msgTimeApiFulfil
+      }
     }
+
+    // Commit in ascending partition→offset order so a restart never skips an unprocessed offset.
+    if (!autoCommitEnabled && isBatch) {
+      const sortedMsgs = outcomes
+        .map(({ msg }) => msg)
+        .sort((a, b) => a.partition !== b.partition ? a.partition - b.partition : a.offset - b.offset)
+      for (const msg of sortedMsgs) {
+        notificationConsumer.commitMessageSync(msg)
+      }
+    }
+
+    const combinedResult = outcomes.every(({ result }) => Boolean(result))
 
     recordTxMetrics(timeApiPrepare, timeApiFulfil, true)
     histTimerEnd({ success: true })

@@ -5089,6 +5089,48 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await consumeMessageTest.test('process multiple valid messages in parallel batch mode', async test => {
+      const makeMsg = (id) => ({
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {},
+            context: {
+              originalRequestId: id
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id
+        }
+      })
+      const msgs = [
+        makeMsg('aaaaaaaa-eeee-4575-b6a9-ead2955b0001'),
+        makeMsg('aaaaaaaa-eeee-4575-b6a9-ead2955b0002'),
+        makeMsg('aaaaaaaa-eeee-4575-b6a9-ead2955b0003')
+      ]
+      mockPayloadCache.getPayload.returns(Promise.resolve({}))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+
+      const result = await Notification.consumeMessage(null, msgs)
+
+      // All three messages should be processed successfully
+      test.ok(result, 'combinedResult should be true when all messages succeed')
+      // Callback.sendRequest should have been called once per message
+      test.equal(Callback.sendRequest.callCount, 3, 'sendRequest should be called once per message')
+      test.end()
+    })
+
     await consumeMessageTest.end()
   })
 
