@@ -66,31 +66,31 @@ const create = async function (context, request, h) {
   let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
-  let kafkaMessageContext
 
-  if (isIsoMode) {
-    // dataUri is the original encoded payload
-    kafkaMessageContext = {
-      originalRequestPayload: dataUri,
-      originalRequestId: request.info.id
-    }
-
-    if (request.server?.app?.payloadCache) {
-      await setOriginalRequestPayload(
-        kafkaMessageContext,
-        request.server.app.payloadCache
-      )
-      delete kafkaMessageContext.originalRequestPayload
-    }
-
-    // Transform the payload to ISO20022
-    // We're leaving the transformed payload as an object
-    if (isFx) {
-      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.post({ body: payload, headers })).body
-    } else {
-      payload = (await TransformFacades.FSPIOPISO20022.transfers.post({ body: payload, headers })).body
-    }
+  // dataUri is the original encoded payload - need to preserve it for jws validation
+  const kafkaMessageContext = {
+    originalRequestPayload: dataUri,
+    originalRequestId: request.info.id
   }
+
+  if (request.server?.app?.payloadCache) {
+    await setOriginalRequestPayload(
+      kafkaMessageContext,
+      request.server.app.payloadCache
+    )
+    delete kafkaMessageContext.originalRequestPayload
+  }
+
+  // Transform ISO20022 message to fspiop message
+  // We're leaving the transformed payload as an object
+  if (isIsoMode) {
+    const transformer = isFx
+      ? TransformFacades.FSPIOPISO20022.fxTransfers
+      : TransformFacades.FSPIOPISO20022.transfers
+
+    payload = (await transformer.post({ body: payload, headers })).body
+  }
+
   const metric = PROM_METRICS.transferPrepare(isFx)
   const histTimerEnd = Metrics.getHistogram(
     metric,
@@ -145,30 +145,29 @@ const fulfilTransfer = async function (context, request, h) {
 
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
-  let kafkaMessageContext
 
+  // dataUri is the original encoded payload - need to preserve it for jws validation
+  const kafkaMessageContext = {
+    originalRequestPayload: dataUri,
+    originalRequestId: request.info.id
+  }
+
+  if (request.server?.app?.payloadCache) {
+    await setOriginalRequestPayload(
+      kafkaMessageContext,
+      request.server.app.payloadCache
+    )
+    delete kafkaMessageContext.originalRequestPayload
+  }
+
+  // Transform ISO20022 message to fspiop message
+  // We're leaving the transformed payload as an object
   if (isIsoMode) {
-    // dataUri is the original encoded payload
-    kafkaMessageContext = {
-      originalRequestPayload: dataUri,
-      originalRequestId: request.info.id
-    }
+    const transformer = isFx
+      ? TransformFacades.FSPIOPISO20022.fxTransfers
+      : TransformFacades.FSPIOPISO20022.transfers
 
-    if (request.server?.app?.payloadCache) {
-      await setOriginalRequestPayload(
-        kafkaMessageContext,
-        request.server.app.payloadCache
-      )
-      delete kafkaMessageContext.originalRequestPayload
-    }
-
-    // Transform ISO20022 message to fspiop message
-    // We're leaving the transformed payload as an object
-    if (isFx) {
-      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.put({ body: payload, headers })).body
-    } else {
-      payload = (await TransformFacades.FSPIOPISO20022.transfers.put({ body: payload, headers })).body
-    }
+    payload = (await transformer.put({ body: payload, headers })).body
   }
 
   const metric = PROM_METRICS.transferFulfil(isFx)
@@ -264,30 +263,29 @@ const fulfilTransferError = async function (context, request, h) {
   let { dataUri, payload } = request
   const isFx = request.path?.includes(ROUTES.fxTransfers)
   const isIsoMode = Config.API_TYPE === Hapi.API_TYPES.iso20022
-  let kafkaMessageContext
 
+  // dataUri is the original encoded payload - need to preserve it for jws validation
+  const kafkaMessageContext = {
+    originalRequestPayload: dataUri,
+    originalRequestId: request.info.id
+  }
+
+  if (request.server?.app?.payloadCache) {
+    await setOriginalRequestPayload(
+      kafkaMessageContext,
+      request.server.app.payloadCache
+    )
+    delete kafkaMessageContext.originalRequestPayload
+  }
+
+  // Transform ISO20022 message to fspiop message
+  // We're leaving the transformed payload as an object
   if (isIsoMode) {
-    // dataUri is the original encoded payload
-    kafkaMessageContext = {
-      originalRequestPayload: dataUri,
-      originalRequestId: request.info.id
-    }
+    const transformer = isFx
+      ? TransformFacades.FSPIOPISO20022.fxTransfers
+      : TransformFacades.FSPIOPISO20022.transfers
 
-    if (request.server?.app?.payloadCache) {
-      await setOriginalRequestPayload(
-        kafkaMessageContext,
-        request.server.app.payloadCache
-      )
-      delete kafkaMessageContext.originalRequestPayload
-    }
-
-    // Transform ISO20022 message to fspiop message
-    // We're leaving the transformed payload as an object
-    if (isFx) {
-      payload = (await TransformFacades.FSPIOPISO20022.fxTransfers.putError({ body: payload, headers })).body
-    } else {
-      payload = (await TransformFacades.FSPIOPISO20022.transfers.putError({ body: payload, headers })).body
-    }
+    payload = (await transformer.putError({ body: payload, headers })).body
   }
 
   const metric = PROM_METRICS.transferFulfilError(isFx)
