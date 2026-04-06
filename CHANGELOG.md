@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.9.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.8.2...v16.9.0) (2026-04-06)
+
+
+### Features
+
+* preserve original payload for jws validation [#4437](https://github.com/mojaloop/ml-api-adapter/issues/4437) ([#651](https://github.com/mojaloop/ml-api-adapter/issues/651)) ([346b2e4](https://github.com/mojaloop/ml-api-adapter/commit/346b2e46828a750a71da581874ed13102f61906f))
+
+
+### Bug Fixes
+
+* upgrade of lodash to fix problem with npm release ([#654](https://github.com/mojaloop/ml-api-adapter/issues/654)) ([7f83cc7](https://github.com/mojaloop/ml-api-adapter/commit/7f83cc747aa3713e1957a197a3edd079b8e07e76))
+* vulnerabilities of lodash ([#653](https://github.com/mojaloop/ml-api-adapter/issues/653)) ([41b58a5](https://github.com/mojaloop/ml-api-adapter/commit/41b58a52ee5955475ae646c42d15bc5ecc755b1d))
+
+
+### Chore
+
+* maintenance updates ([#635](https://github.com/mojaloop/ml-api-adapter/issues/635)) ([4e4f509](https://github.com/mojaloop/ml-api-adapter/commit/4e4f509511826521634f0c4390b0341d294ea4dc))
+
 ### [16.8.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.8.1...v16.8.2) (2026-02-05)
 
 
