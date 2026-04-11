@@ -130,7 +130,11 @@
               "group.id": "ml-group-notification-event",
               "metadata.broker.list": "kafka:29092",
               "socket.keepalive.enable": true,
-              "allow.auto.create.topics": true
+              "allow.auto.create.topics": true,
+              "session.timeout.ms": 30000,
+              "heartbeat.interval.ms": 10000,
+              "max.poll.interval.ms": 300000,
+              "partition.assignment.strategy": "cooperative-sticky"
             },
             "topicConf": {
               "auto.offset.reset": "earliest"
