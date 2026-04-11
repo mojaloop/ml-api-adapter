@@ -37,10 +37,16 @@ const Notification = require('../../handlers/notification')
 
 axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
 
+// Grace period (ms) to tolerate transient isAssigned=false during consumer group rebalance
+const REBALANCE_GRACE_PERIOD_MS = 60000
+let lastHealthyTimestamp = Date.now()
+
 /**
  * @function getSubServiceHealthBroker
  *
- * @description Gets the health for the Notification broker
+ * @description Gets the health for the Notification broker.
+ * Tolerates brief isAssigned=false windows during Kafka consumer group
+ * rebalances by allowing a grace period before reporting DOWN.
  * @returns Promise<object> The SubService health object for the broker
  */
 const getSubServiceHealthBroker = async () => {
@@ -49,8 +55,14 @@ const getSubServiceHealthBroker = async () => {
   try {
     if (!Config.HANDLERS_DISABLED) {
       const isOk = await Notification.isHealthy()
-      if (!isOk) {
-        throw new Error('Kafka consumer is not healthy!')
+      if (isOk) {
+        lastHealthyTimestamp = Date.now()
+      } else {
+        const elapsed = Date.now() - lastHealthyTimestamp
+        if (elapsed > REBALANCE_GRACE_PERIOD_MS) {
+          throw new Error('Kafka consumer is not healthy!')
+        }
+        logger.warn(`getSubServiceHealthBroker: consumer unhealthy for ${elapsed}ms, within ${REBALANCE_GRACE_PERIOD_MS}ms grace period`)
       }
     }
     await Producer.allConnected() // returns true or throws error
