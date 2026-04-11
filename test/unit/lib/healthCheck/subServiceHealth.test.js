@@ -82,8 +82,30 @@ Test('SubServiceHealth test', subServiceHealthTest => {
       test.end()
     })
 
-    brokerTest.test('returns DOWN when Notification is not connected', async test => {
+    brokerTest.test('returns OK during rebalance grace period when Notification is not healthy', async test => {
       // Arrange
+      Notification.isHealthy.resolves(false)
+      const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
+      const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
+        '../../handlers/notification': Notification,
+        '@mojaloop/central-services-stream': { Util: { Producer } }
+      })
+
+      const expected = { name: serviceName.broker, status: statusEnum.OK }
+
+      // Act - first call is within grace period (lastHealthyTimestamp initialized to Date.now())
+      const result = await subServiceHealthProxy.getSubServiceHealthBroker()
+
+      // Assert
+      test.ok(Notification.isHealthy.calledOnce, 'Notification.isHealthy should be called')
+      test.ok(producerStub.calledOnce, 'Producer.allConnected should still be called during grace period')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return OK during grace period')
+      test.end()
+    })
+
+    brokerTest.test('returns DOWN when Notification is not healthy and grace period has expired', async test => {
+      // Arrange
+      const clock = sandbox.useFakeTimers(Date.now())
       Notification.isHealthy.resolves(false)
       const producerStub = sandbox.stub(Producer, 'allConnected').resolves(true)
       const subServiceHealthProxy = proxyquire('../../../../src/lib/healthCheck/subServiceHealth', {
@@ -93,13 +115,15 @@ Test('SubServiceHealth test', subServiceHealthTest => {
 
       const expected = { name: serviceName.broker, status: statusEnum.DOWN }
 
-      // Act
+      // Act - advance past the 60s grace period
+      clock.tick(61000)
       const result = await subServiceHealthProxy.getSubServiceHealthBroker()
 
       // Assert
       test.ok(Notification.isHealthy.calledOnce, 'Notification.isHealthy should be called')
-      test.notOk(producerStub.called, 'Producer.allConnected should not be called if notification is not connected')
-      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN')
+      test.notOk(producerStub.called, 'Producer.allConnected should not be called after grace period expires')
+      test.deepEqual(result, expected, 'getSubServiceHealthBroker should return DOWN after grace period')
+      clock.restore()
       test.end()
     })
 
