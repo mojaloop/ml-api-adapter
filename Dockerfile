@@ -1,5 +1,5 @@
 # Arguments
-ARG NODE_VERSION=24.15.0-alpine3.23
+ARG NODE_VERSION=24.14.1-alpine3.23
 
 # NOTE: Ensure you set NODE_VERSION Build Argument as follows...
 #
