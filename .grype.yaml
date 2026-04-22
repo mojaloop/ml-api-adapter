@@ -44,6 +44,9 @@ ignore:
     reason: >-
       Base image npm package: diff - bundled in Node.js base image npm, not fixable via application dependencies as of
       2026-02-25 (low severity)
+  - vulnerability: GHSA-xq3m-2v4x-88gg
+    include-aliases: true
+    reason: "@mojaloop/event-sdk > protobufjs"
 output:
   - table
   - json
