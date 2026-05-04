@@ -58,7 +58,10 @@
     },
     "JWS": {
       "JWS_SIGN": false,
-      "JWS_SIGNING_KEY_PATH": "secrets/jwsSigningKey.key"
+      "JWS_SIGNING_KEY_PATH": "secrets/jwsSigningKey.key",
+      "JWS_VALIDATE": false,
+      "JWS_VERIFICATION_KEYS_DIRECTORY": "secrets/jwsVerificationKeys",
+      "JWS_VALIDATE_PUT_PARTIES": false
     }
   },
   "MAX_CALLBACK_TIME_LAG_DILATION_MILLISECONDS": 200,
