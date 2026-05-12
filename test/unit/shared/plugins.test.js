@@ -163,8 +163,7 @@ Test('plugins - registerPlugins with JWS_VALIDATE', (t) => {
           ACCEPT: { VALIDATELIST: ['1'] }
         },
         JWS_VALIDATE: jwsValidate,
-        JWS_VERIFICATION_KEYS_DIRECTORY: keysDir,
-        JWS_VALIDATE_PUT_PARTIES: false
+        JWS_VERIFICATION_KEYS_DIRECTORY: keysDir
       },
       'hapi-swagger': stub('stub-swagger'),
       '@hapi/good': stub('stub-good'),
