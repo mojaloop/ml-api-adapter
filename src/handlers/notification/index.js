@@ -30,6 +30,7 @@
  ******/
 'use strict'
 
+const safeStringify = require('fast-safe-stringify')
 const Logger = require('@mojaloop/central-services-logger')
 const EventSdk = require('@mojaloop/event-sdk')
 const Metrics = require('@mojaloop/central-services-metrics')
@@ -440,6 +441,8 @@ const processMessage = async (msg, span) => {
       payload = (await TransformFacades.FSPIOP.transfers.put({ body: fspiopObject })).body
     } else if (Config.IS_ISO_MODE && fromSwitch && action === Action.FX_PREPARE_DUPLICATE) {
       payload = (await TransformFacades.FSPIOP.fxTransfers.put({ body: fspiopObject })).body
+    } else {
+      payload = safeStringify(fspiopObject)
     }
     headers = createCallbackHeaders({ dfspId: destination, transferId: id, headers: content.headers, httpMethod: PUT, endpointTemplate }, fromSwitch)
     logger.verbose(`Notification::processMessage - Callback.sendRequest(${callbackURLTo}, ${PUT}, ${JSON.stringify(headers)}, ${payload}, ${id}, ${source}, ${destination})`)
