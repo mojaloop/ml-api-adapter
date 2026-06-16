@@ -20,13 +20,14 @@
     "url": "git@github.com:mojaloop/ml-api-adapter.git"
   },
   "engines": {
-    "node": ">=18.x"
+    "node": ">=20.x"
   },
   "pre-commit": [
     "lint",
     "test",
     "dep:check",
-    "audit:check"
+    "audit:check",
+    "license:check"
   ],
   "scripts": {
     "start": "npm run start:api",
@@ -166,6 +167,7 @@
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.7",
     "@mojaloop/inter-scheme-proxy-cache-lib": "2.10.0",
+    "@mojaloop/license-scanner-tool": "^1.1.0",
     "audit-ci": "7.1.0",
     "get-port": "5.1.1",
     "jsdoc": "4.0.5",
