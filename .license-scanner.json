@@ -1,0 +1,9 @@
+{
+  "exceptions": {
+    "pause-stream@0.0.11": {
+      "reason": "Dual MIT OR Apache-2.0 (github.com/dominictarr/pause-stream); declared in deprecated array form [\"MIT\",\"Apache2\"], which syft can't parse to SPDX, so it reads as empty.",
+      "expires": "2027-01-01"
+    }
+  }
+}
+

@@ -24,6 +24,12 @@
     }
   },
   "HTTP_REQUEST_TIMEOUT_MS": 20000,
+  "HTTP_AGENT": {
+    "KEEP_ALIVE": true,
+    "MAX_SOCKETS": 512,
+    "MAX_FREE_SOCKETS": 512,
+    "KEEP_ALIVE_MSECS": 30000
+  },
   "PORT": 3000,
   "HOSTNAME": "http://ml-api-adapter",
   "ENDPOINT_SOURCE_URL": "http://localhost:3001",
