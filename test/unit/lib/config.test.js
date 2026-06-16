@@ -182,5 +182,54 @@ Test('Config tests', configTest => {
     test.end()
   })
 
+  configTest.test('HTTP_AGENT config', httpAgentTest => {
+    const AGENT_ENV = ['HTTP_AGENT_KEEP_ALIVE', 'HTTP_AGENT_MAX_SOCKETS', 'HTTP_AGENT_MAX_FREE_SOCKETS', 'HTTP_AGENT_KEEP_ALIVE_MSECS']
+    const clearAgentEnv = () => AGENT_ENV.forEach(k => delete process.env[k])
+
+    httpAgentTest.test('wires HTTP_AGENT_* env vars from config when set', test => {
+      clearAgentEnv()
+      try {
+        const DefaultStub = Util.clone(Default)
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+        DefaultStub.HTTP_AGENT = { KEEP_ALIVE: false, MAX_SOCKETS: 1000, MAX_FREE_SOCKETS: 256, KEEP_ALIVE_MSECS: 60000 }
+        const Config = Proxyquire(`${src}/lib/config`, { '../../config/default.json': DefaultStub })
+        test.equal(process.env.HTTP_AGENT_MAX_SOCKETS, '1000', 'MAX_SOCKETS wired to env as string')
+        test.equal(process.env.HTTP_AGENT_KEEP_ALIVE, 'false', 'KEEP_ALIVE wired to env as string')
+        test.deepEqual(Config.HTTP_AGENT, DefaultStub.HTTP_AGENT, 'exposes HTTP_AGENT on config')
+      } finally {
+        clearAgentEnv()
+      }
+      test.end()
+    })
+
+    httpAgentTest.test('does not set env vars when HTTP_AGENT is absent', test => {
+      clearAgentEnv()
+      const DefaultStub = Util.clone(Default)
+      DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+      DefaultStub.HTTP_AGENT = undefined
+      const Config = Proxyquire(`${src}/lib/config`, { '../../config/default.json': DefaultStub })
+      test.equal(process.env.HTTP_AGENT_MAX_SOCKETS, undefined, 'no env var set when HTTP_AGENT absent')
+      test.ok(Config, 'config loads without HTTP_AGENT')
+      test.end()
+    })
+
+    httpAgentTest.test('does not overwrite an explicitly-set HTTP_AGENT_* env var', test => {
+      clearAgentEnv()
+      process.env.HTTP_AGENT_MAX_SOCKETS = '4096'
+      try {
+        const DefaultStub = Util.clone(Default)
+        DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+        DefaultStub.HTTP_AGENT = { MAX_SOCKETS: 512 }
+        Proxyquire(`${src}/lib/config`, { '../../config/default.json': DefaultStub })
+        test.equal(process.env.HTTP_AGENT_MAX_SOCKETS, '4096', 'explicit env var wins over config value')
+      } finally {
+        clearAgentEnv()
+      }
+      test.end()
+    })
+
+    httpAgentTest.end()
+  })
+
   configTest.end()
 })

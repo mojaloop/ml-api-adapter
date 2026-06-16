@@ -86,7 +86,7 @@
     "@now-ims/hapi-now-auth": "2.1.0",
     "axios": "1.18.0",
     "blipp": "4.0.2",
-    "commander": "15.0.0",
+    "commander": "14.0.3",
     "docdash": "2.0.2",
     "fast-safe-stringify": "2.1.1",
     "glob": "13.0.6",
@@ -167,7 +167,7 @@
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.7",
     "@mojaloop/inter-scheme-proxy-cache-lib": "2.10.0",
-    "@mojaloop/license-scanner-tool": "^1.1.0",
+    "@mojaloop/license-scanner-tool": "^1.1.1",
     "audit-ci": "7.1.0",
     "get-port": "5.1.1",
     "jsdoc": "4.0.5",

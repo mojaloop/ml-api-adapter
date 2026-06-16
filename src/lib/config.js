@@ -33,7 +33,7 @@ const DEFAULT_PROTOCOL_VERSION = {
 
 const wireHttpAgentEnv = (httpAgent = {}) => {
   const setEnv = (name, value) => {
-    if (value !== undefined && value !== null) process.env[name] ??= String(value)
+    if (value != null) process.env[name] ??= String(value)
   }
   setEnv('HTTP_AGENT_KEEP_ALIVE', httpAgent.KEEP_ALIVE)
   setEnv('HTTP_AGENT_MAX_SOCKETS', httpAgent.MAX_SOCKETS)
