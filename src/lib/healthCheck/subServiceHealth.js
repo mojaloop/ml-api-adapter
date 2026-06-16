@@ -21,13 +21,13 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Shashikant Hirugade <shashi.mojaloop@gmail.com>
 
  * Lewis Daly <lewis@vesselstech.com>
  --------------
  ******/
 'use strict'
 
-const http = require('node:http')
 const axios = require('axios')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const { statusEnum, serviceName } = require('@mojaloop/central-services-shared').HealthCheck.HealthCheckEnums
@@ -35,7 +35,9 @@ const { logger } = require('../../shared/logger')
 const Config = require('../../lib/config')
 const Notification = require('../../handlers/notification')
 
-axios.defaults.httpAgent = new http.Agent({ keepAlive: true })
+// NOTE: do not set axios.defaults.httpAgent here. axios is deduped to a single instance,
+// so central-services-shared (required above) already installs bounded http/https agents on
+// these shared defaults; overriding httpAgent here would clobber them with an unbounded pool.
 
 /**
  * @function getSubServiceHealthBroker

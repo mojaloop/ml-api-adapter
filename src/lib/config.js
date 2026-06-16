@@ -31,6 +31,17 @@ const DEFAULT_PROTOCOL_VERSION = {
   }
 }
 
+const wireHttpAgentEnv = (httpAgent = {}) => {
+  const setEnv = (name, value) => {
+    if (value !== undefined && value !== null) process.env[name] ??= String(value)
+  }
+  setEnv('HTTP_AGENT_KEEP_ALIVE', httpAgent.KEEP_ALIVE)
+  setEnv('HTTP_AGENT_MAX_SOCKETS', httpAgent.MAX_SOCKETS)
+  setEnv('HTTP_AGENT_MAX_FREE_SOCKETS', httpAgent.MAX_FREE_SOCKETS)
+  setEnv('HTTP_AGENT_KEEP_ALIVE_MSECS', httpAgent.KEEP_ALIVE_MSECS)
+}
+wireHttpAgentEnv(RC.HTTP_AGENT)
+
 const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) => {
   const T_PROTOCOL_VERSION = {
     ...defaultProtocolVersions,
@@ -76,6 +87,7 @@ const config = {
   HUB_NAME: RC.HUB_PARTICIPANT.NAME,
   HOSTNAME: RC.HOSTNAME.replace(/\/$/, ''),
   HTTP_REQUEST_TIMEOUT_MS: RC.HTTP_REQUEST_TIMEOUT_MS || 20000,
+  HTTP_AGENT: RC.HTTP_AGENT,
   PORT: RC.PORT,
   AMOUNT: RC.AMOUNT,
   DFSP_URLS: RC.DFSP_URLS,
