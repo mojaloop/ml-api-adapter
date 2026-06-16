@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.10.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.9.2...v16.10.0) (2026-06-16)
+
+
+### Features
+
+* make http agent configurable ([#666](https://github.com/mojaloop/ml-api-adapter/issues/666)) ([1c575fd](https://github.com/mojaloop/ml-api-adapter/commit/1c575fd0c5d7ff284b8499fa1ec30f26fe3c7045))
+* validate inbound JWS + update deps and Node.js 24.15.0 ([#658](https://github.com/mojaloop/ml-api-adapter/issues/658)) ([4527f1f](https://github.com/mojaloop/ml-api-adapter/commit/4527f1fa8a5b200252bef31332d6b0f708ae7725))
+
 ### [16.9.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.9.1...v16.9.2) (2026-05-02)
 
 
