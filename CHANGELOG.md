@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.10.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.10.0...v16.10.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* update build orb version to 2.1.3 ([#668](https://github.com/mojaloop/ml-api-adapter/issues/668)) ([3b37fe5](https://github.com/mojaloop/ml-api-adapter/commit/3b37fe5b478148731e4dc38790c137055b411b36))
+
 ## [16.10.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.9.2...v16.10.0) (2026-06-16)
 
 
