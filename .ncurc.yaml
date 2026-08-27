@@ -1,5 +1,11 @@
 ## Add a TODO comment indicating the reason for each rejected dependency upgrade added to this list, and what should be done to resolve it (i.e. handle it through a story, etc).
 reject: [
+  # central-services-shared 18.38.x: multiple behavioural regressions in a minor release
+  # (documented in central-ledger/quoting-service holds: Util.omitNil undefined handling,
+  # APIDocumentation option rename). In this repo 18.38.2 additionally triggers
+  # "DataCloneError: async (fsp) => ... could not be cloned" in the participant cache
+  # path during unit tests. Hold at 18.37.0. Reproduced 2026-08-27 [mojaloop/#4479].
+  "@mojaloop/central-services-shared",
     # v6+ (ref: https://github.com/sindresorhus/get-port/releases/tag/v6.0.0) is an ESM library and thus not compatible with CommonJS. Future story needed to resolve.
     # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
     "get-port",
