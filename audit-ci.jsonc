@@ -5,9 +5,10 @@
   "moderate": true,
   "allowlist": [ // NOTE: Please add as much information as possible to any items added to the allowList
     // sanitize-html 2.17.7 pulls htmlparser2 12.x, which is ESM-only and breaks the
-    // current CommonJS/nyc coverage runtime through shins/apiDocBuilder.
-    "GHSA-g8qq-57p8-ggw5|shins>sanitize-html",
-    "GHSA-jxwj-j7wr-gfrw|shins>sanitize-html",
-    "GHSA-vccv-cmxp-4j9h|shins>sanitize-html"
+    // current CommonJS/nyc coverage runtime through shins/apiDocBuilder. Allowlist
+    // by advisory because npm reports different dependency paths in local and CI installs.
+    "GHSA-g8qq-57p8-ggw5",
+    "GHSA-jxwj-j7wr-gfrw",
+    "GHSA-vccv-cmxp-4j9h"
   ]
 }

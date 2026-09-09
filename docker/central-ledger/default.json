@@ -440,6 +440,32 @@
             }
           }
         }
+      },
+      "DEFERREDSETTLEMENT": {
+        "CLOSE": {
+          "config": {
+            "options": {
+              "mode": 2,
+              "batchSize": 1,
+              "pollFrequency": 10,
+              "recursiveTimeout": 100,
+              "messageCharset": "utf8",
+              "messageAsJSON": true,
+              "sync": true,
+              "consumeTimeout": 1000
+            },
+            "rdkafkaConf": {
+              "client.id": "cs-con-deferredsettlement-close",
+              "group.id": "cs-group-deferredsettlement-close",
+              "metadata.broker.list": "kafka:29092",
+              "socket.keepalive.enable": true,
+              "allow.auto.create.topics": true
+            },
+            "topicConf": {
+              "auto.offset.reset": "earliest"
+            }
+          }
+        }
       }
     },
     "PRODUCER": {
