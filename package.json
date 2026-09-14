@@ -79,7 +79,7 @@
     "@mojaloop/central-services-logger": "11.10.6",
     "@mojaloop/central-services-metrics": "12.8.8",
     "@mojaloop/central-services-shared": "18.37.0",
-    "@mojaloop/central-services-stream": "11.9.3",
+    "@mojaloop/central-services-stream": "11.10.0",
     "@mojaloop/event-sdk": "14.8.5",
     "@mojaloop/ml-schema-transformer-lib": "2.10.1",
     "@mojaloop/sdk-standard-components": "19.19.1",
@@ -150,7 +150,7 @@
     "undici": "8.9.0",
     "fast-xml-parser": "5.7.0",
     "fast-xml-builder": "1.1.7",
-    "qs": "6.15.2",
+    "qs": "6.15.3",
     "minimatch@3.0.5": "3.1.5",
     "yaml": "2.8.3",
     "@grpc/proto-loader": {
@@ -168,12 +168,16 @@
     "protobufjs@7": "7.6.5",
     "protobufjs@8": "8.7.2",
     "sanitize-html": "2.17.6",
-    "js-yaml": "4.3.1",
-    "fast-uri": "3.1.5",
+    "js-yaml": "4.3.2",
+    "fast-uri": "3.1.6",
     "linkify-it": "5.0.2",
     "nanoid": "3.3.18",
     "protobufjs": "8.6.5",
-    "body-parser": "1.20.6"
+    "body-parser": "1.20.6",
+    "browserslist": "4.28.7",
+    "mysql2": "3.23.1",
+    "baseline-browser-mapping": "2.11.0",
+    "joi": "17.13.6"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.10",
