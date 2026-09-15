@@ -80,7 +80,7 @@
     "@mojaloop/central-services-metrics": "12.8.8",
     "@mojaloop/central-services-shared": "18.39.1",
     "@mojaloop/central-services-stream": "11.10.0",
-    "@mojaloop/event-sdk": "14.8.5",
+    "@mojaloop/event-sdk": "14.8.4",
     "@mojaloop/ml-schema-transformer-lib": "2.10.1",
     "@mojaloop/sdk-standard-components": "19.19.1",
     "@now-ims/hapi-now-auth": "2.1.0",
