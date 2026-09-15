@@ -43,7 +43,7 @@ services:
       - kafka
       - redis-node-0
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:3000/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --silent --output /dev/null http://localhost:3000/health"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -107,9 +107,9 @@ services:
       interval: 30s
 
   central-ledger:
-    image: mojaloop/central-ledger:latest
+    image: mojaloop/central-ledger:v20.0.0
     container_name: ml_central-ledger
-    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node dist/api/index.js"
     links:
       - mysql
       - kafka
@@ -129,14 +129,14 @@ services:
       - ml-mojaloop-net
     user: 'root'
     healthcheck:
-      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl --fail http://localhost:3001/health"]
+      test: ["CMD", "sh", "-c" ,"set -e;apk --no-cache add curl;curl http://localhost:3001/health"]
       timeout: 20s
       retries: 10
       interval: 30s
 
   central-handler-position-batch:
-    image: mojaloop/central-ledger:latest
-    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node src/handlers/index.js handler --positionbatch"
+    image: mojaloop/central-ledger:v20.0.0
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node dist/handlers/index.js handler --positionbatch"
     ports:
       - "3002:3001"
     links:
@@ -165,7 +165,8 @@ services:
     user: root
 
   mysql:
-    image: mysql:9
+    image: mysql:8.0.33
+    command: --default-authentication-plugin=mysql_native_password
     container_name: ml_mysql
     # Disable logging as it is far too verbose for debugging locally
     logging:

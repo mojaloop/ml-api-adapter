@@ -47,6 +47,21 @@ ignore:
   - vulnerability: GHSA-xq3m-2v4x-88gg
     include-aliases: true
     reason: "@mojaloop/event-sdk > protobufjs"
+  - vulnerability: GHSA-g8qq-57p8-ggw5
+    include-aliases: true
+    reason: >-
+      shins > sanitize-html transitive dependency. Updating sanitize-html to 2.17.7 pulls htmlparser2 12.x, which is
+      ESM-only and breaks the current CommonJS/nyc runtime through shins/apiDocBuilder.
+  - vulnerability: GHSA-jxwj-j7wr-gfrw
+    include-aliases: true
+    reason: >-
+      shins > sanitize-html transitive dependency. Updating sanitize-html to 2.17.7 pulls htmlparser2 12.x, which is
+      ESM-only and breaks the current CommonJS/nyc runtime through shins/apiDocBuilder.
+  - vulnerability: GHSA-vccv-cmxp-4j9h
+    include-aliases: true
+    reason: >-
+      shins > sanitize-html transitive dependency. Updating sanitize-html to 2.17.7 pulls htmlparser2 12.x, which is
+      ESM-only and breaks the current CommonJS/nyc runtime through shins/apiDocBuilder.
 output:
   - table
   - json

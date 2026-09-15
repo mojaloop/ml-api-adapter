@@ -35,6 +35,12 @@
   },
   "MONGODB": {
     "DISABLED": true,
+    "DEBUG": false,
+    "HOST": "objstore",
+    "PORT": 27017,
+    "USER": "",
+    "PASSWORD": "",
+    "DATABASE": "mlos",
     "URI": "mongodb://objstore:27017/mlos"
   },
   "ERROR_HANDLING": {
@@ -54,7 +60,35 @@
     "TIMEOUT": {
       "DISABLED": false,
       "TIMEXP": "*/15 * * * * *",
-      "TIMEZONE": "UTC"
+      "TIMEZONE": "UTC",
+      "DIST_LOCK": {
+        "enabled": false,
+        "lockTimeout": 10000,
+        "acquireTimeout": 5000,
+        "driftFactor": 0.01,
+        "retryCount": 3,
+        "retryDelay": 200,
+        "retryJitter": 100,
+        "redisConfigs": [
+          {
+            "type": "redis-cluster",
+            "cluster": [
+              {
+                "host": "redis-node-0",
+                "port": 6379
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "SETTINGS": {
+      "RULES": {
+        "SCRIPTS_FOLDER": "./scripts/transferSettlementTemp",
+        "SCRIPT_TIMEOUT": 100,
+        "CONSUMER_COMMIT": true,
+        "FROM_SWITCH": true
+      }
     }
   },
   "INSTRUMENTATION": {
@@ -82,8 +116,9 @@
       "HUB_FEE"
     ]
   },
-  "INTERNAL_TRANSFER_VALIDITY_SECONDS": "432000",
+  "INTERNAL_TRANSFER_VALIDITY_SECONDS": 432000,
   "ENABLE_ON_US_TRANSFERS": false,
+  "PAYEE_PARTICIPANT_CURRENCY_VALIDATION_ENABLED": false,
   "PROXY_CACHE": {
     "enabled": true,
     "type": "redis-cluster",
@@ -99,6 +134,10 @@
     "EXPIRES_IN_MS": 1000
   },
   "API_DOC_ENDPOINTS_ENABLED": true,
+  "WINDOW_AGGREGATION": {
+    "RETRY_COUNT": 3,
+    "RETRY_INTERVAL": 3000
+  },
   "KAFKA": {
     "EVENT_TYPE_ACTION_TOPIC_MAP" : {
       "POSITION":{
@@ -214,7 +253,7 @@
             "rdkafkaConf": {
               "client.id": "cl-con-bulk-get",
               "group.id": "cl-group-bulk-get",
-              "metadata.broker.list": "kafka:9092",
+              "metadata.broker.list": "kafka:29092",
               "socket.keepalive.enable": true,
               "allow.auto.create.topics": true
             },
@@ -392,7 +431,33 @@
             "rdkafkaConf": {
               "client.id": "TESTONLY",
               "group.id": "TESTONLY",
-              "metadata.broker.list": "kafka:9092",
+              "metadata.broker.list": "kafka:29092",
+              "socket.keepalive.enable": true,
+              "allow.auto.create.topics": true
+            },
+            "topicConf": {
+              "auto.offset.reset": "earliest"
+            }
+          }
+        }
+      },
+      "DEFERREDSETTLEMENT": {
+        "CLOSE": {
+          "config": {
+            "options": {
+              "mode": 2,
+              "batchSize": 1,
+              "pollFrequency": 10,
+              "recursiveTimeout": 100,
+              "messageCharset": "utf8",
+              "messageAsJSON": true,
+              "sync": true,
+              "consumeTimeout": 1000
+            },
+            "rdkafkaConf": {
+              "client.id": "cs-con-deferredsettlement-close",
+              "group.id": "cs-group-deferredsettlement-close",
+              "metadata.broker.list": "kafka:29092",
               "socket.keepalive.enable": true,
               "allow.auto.create.topics": true
             },
