@@ -7,9 +7,10 @@ export ENDPOINT_URL=http://localhost:4545/notification
 
 function dump_docker_logs {
     local exit_code="$?"
-    echo "==> integration script failed; dumping docker compose status and central-ledger logs"
+    echo "==> integration script failed; dumping docker compose status and service logs"
     docker compose ps || true
     docker compose logs central-ledger || true
+    docker compose logs ml-api-adapter || true
     exit "$exit_code"
 }
 
