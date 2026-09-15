@@ -142,7 +142,7 @@
     "jsonpointer": "5.0.0",
     "cross-spawn": "7.0.6",
     "trim": "0.0.3",
-    "yargs-parser": "20.2.9",
+    "yargs-parser": "21.1.1",
     "jws": "3.2.3",
     "validator": ">=13.15.22",
     "lodash": "4.18.1",
