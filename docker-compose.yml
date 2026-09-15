@@ -125,7 +125,6 @@ services:
         condition: service_started
     environment:
       - CLEDG_SIDECAR__DISABLED=true
-      - CLEDG_HANDLERS__DISABLED=true
     networks:
       - ml-mojaloop-net
     user: 'root'
