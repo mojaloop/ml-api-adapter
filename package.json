@@ -80,7 +80,7 @@
     "@mojaloop/central-services-metrics": "12.8.8",
     "@mojaloop/central-services-shared": "18.37.0",
     "@mojaloop/central-services-stream": "11.10.0",
-    "@mojaloop/event-sdk": "14.8.5",
+    "@mojaloop/event-sdk": "14.8.4",
     "@mojaloop/ml-schema-transformer-lib": "2.10.1",
     "@mojaloop/sdk-standard-components": "19.19.1",
     "@now-ims/hapi-now-auth": "2.1.0",
@@ -177,7 +177,8 @@
     "browserslist": "4.28.7",
     "mysql2": "3.23.1",
     "baseline-browser-mapping": "2.11.0",
-    "joi": "17.13.6"
+    "joi": "17.13.6",
+    "htmlparser2": "9.1.0"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.10",
