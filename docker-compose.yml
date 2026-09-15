@@ -109,7 +109,7 @@ services:
   central-ledger:
     image: mojaloop/central-ledger:v20.0.0
     container_name: ml_central-ledger
-    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node dist/api/index.js"
     links:
       - mysql
       - kafka
@@ -136,7 +136,7 @@ services:
 
   central-handler-position-batch:
     image: mojaloop/central-ledger:v20.0.0
-    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node src/handlers/index.js handler --positionbatch"
+    command: sh -c "node /opt/app/wait4/wait4.js central-ledger && "CLEDG_HANDLERS__API__DISABLED=true" node dist/handlers/index.js handler --positionbatch"
     ports:
       - "3002:3001"
     links:
