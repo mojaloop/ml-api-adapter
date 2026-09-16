@@ -60,6 +60,7 @@ const { FspEndpointTypes, FspEndpointTemplates } = Enum.EndPoints
 let consumerConfig = null
 let notificationConsumer = {}
 let autoCommitEnabled = true
+let commitStrategy = 'sync'
 let PayloadCache
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
@@ -125,6 +126,7 @@ const startConsumer = async ({ payloadCache } = {}) => {
     if (consumerConfig.rdkafkaConf['enable.auto.commit'] !== undefined) {
       autoCommitEnabled = consumerConfig.rdkafkaConf['enable.auto.commit']
     }
+    commitStrategy = consumerConfig.options?.commitStrategy
     notificationConsumer = new Consumer([topicName], consumerConfig)
 
     await PayloadCache?.connect()
@@ -138,6 +140,21 @@ const startConsumer = async ({ payloadCache } = {}) => {
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)
     logger.error(fspiopError)
     throw fspiopError
+  }
+}
+
+/**
+  * @function commitMessage
+  * @description Commits the consumer offset for the given message: non-blocking via
+  * Consumer.commitMessage when commitStrategy is 'async', blocking via Consumer.commitMessageSync
+  * otherwise.
+  * @param {object} msg - the message whose offset should be committed
+  */
+const commitMessage = (msg) => {
+  if (commitStrategy === 'async') {
+    notificationConsumer.commitMessage(msg)
+  } else {
+    notificationConsumer.commitMessageSync(msg)
   }
 }
 
@@ -187,14 +204,14 @@ const consumeMessage = async (error, message) => {
             .createInternalServerFSPIOPError(`Notification message processing error: ${err?.message}`, err)
 
           if (!autoCommitEnabled) {
-            notificationConsumer.commitMessageSync(msg)
+            commitMessage(msg)
           }
           if (!isBatch) throw fspiopError // do not throw in batch mode, so that other messages can be processed
           return false
         })
 
         if (!autoCommitEnabled) {
-          notificationConsumer.commitMessageSync(msg)
+          commitMessage(msg)
         }
         logger.verbose('Notification:consumeMessage - message processed')
         combinedResult = (combinedResult && result)

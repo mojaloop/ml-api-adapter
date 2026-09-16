@@ -3,6 +3,10 @@
     "pause-stream@0.0.11": {
       "reason": "Dual MIT OR Apache-2.0 (github.com/dominictarr/pause-stream); declared in deprecated array form [\"MIT\",\"Apache2\"], which syft can't parse to SPDX, so it reads as empty.",
       "expires": "2027-01-01"
+    },
+    "oer-utils@5.1.2": {
+      "reason": "Apache-2.0 per the package's LICENSE file (github.com/interledgerjs/oer-utils); the license field is simply missing from this release's package.json. The older oer-utils@1.3.4 elsewhere in the tree is the same project and correctly declares \"Apache-2.0\".",
+      "expires": "2027-01-01"
     }
   }
 }

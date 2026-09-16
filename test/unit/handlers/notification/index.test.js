@@ -4686,6 +4686,80 @@ Test('Notification Service tests', async notificationTest => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
     })
 
+    await consumeMessageTest.test('commit asynchronously (non-blocking) when commitStrategy is async', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.options.commitStrategy = 'async'
+      const commitMessageStub = sandbox.stub(Consumer.prototype, 'commitMessage').returns(true)
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          content: {
+            headers: {},
+            payload: {},
+            context: {
+              originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+      const result = await Notification.consumeMessage(null, [msg])
+      test.ok(result)
+      test.ok(commitMessageStub.calledOnce, 'commitMessage (async) called once')
+      test.equal(Consumer.prototype.commitMessageSync.callCount, 0, 'commitMessageSync (blocking) not called')
+      test.end()
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      delete Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.options.commitStrategy
+    })
+
+    await consumeMessageTest.test('commit asynchronously from the error-catch path when commitStrategy is async', tryCatchEndTest(async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.options.commitStrategy = 'async'
+      const commitMessageStub = sandbox.stub(Consumer.prototype, 'commitMessage').returns(true)
+      const msg = {
+        value: {
+          metadata: {
+            event: {
+              type: 'prepare',
+              action: 'prepare',
+              state: {
+                status: 'success',
+                code: 0
+              }
+            }
+          },
+          to: 'dfsp2',
+          from: 'dfsp1',
+          id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+        }
+      }
+      try {
+        mockPayloadCache.getPayload.returns(Promise.resolve({}))
+        test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+        await Notification.consumeMessage(null, msg)
+        test.fail('Should not have caught an error here since it should have been dealt with')
+      } catch (e) {
+        test.pass('Error successfully thrown')
+        test.ok(commitMessageStub.calledOnce, 'commitMessage (async) called once from the error-catch path')
+        test.equal(Consumer.prototype.commitMessageSync.callCount, 0, 'commitMessageSync (blocking) not called')
+      }
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      delete Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.options.commitStrategy
+    }))
+
     consumeMessageTest.test('process the message with tracestate metrics for prepare', async test => {
       Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = true
       const ts = {
