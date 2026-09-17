@@ -1,6 +1,5 @@
 # Arguments
-ARG NODE_VERSION=24.14.1-alpine3.23
-
+ARG NODE_VERSION="24.18.0-alpine3.24"
 # NOTE: Ensure you set NODE_VERSION Build Argument as follows...
 #
 #  export NODE_VERSION="$(cat .nvmrc)-alpine" \
@@ -23,8 +22,12 @@ RUN apk add --no-cache -t build-dependencies make gcc g++ python3 libtool openss
     # && npm install -g node-gyp
 COPY package.json package-lock.json* /opt/app/
 
-RUN npm ci
-RUN npm prune --omit=dev
+# Lifecycle scripts are skipped for supply-chain safety (docker:S6505); node-rdkafka is
+# the only production dependency that needs its native build, so run it explicitly. Dev
+# dependencies are omitted here rather than pruned afterwards: `npm prune` re-extracts
+# node-rdkafka and would discard the native build made just above.
+RUN npm ci --omit=dev --ignore-scripts
+RUN npm rebuild node-rdkafka
 
 FROM node:${NODE_VERSION}
 
