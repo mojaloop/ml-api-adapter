@@ -107,10 +107,6 @@ services:
       interval: 30s
 
   central-ledger:
-    # Pinned: `latest` moved to v20.0.0 on 2026-09-08 and no longer completes
-    # `npm run migrate` against this compose config, so the container exits(1) and the
-    # integration suite fails on a missing central_ledger schema. v19.14.0 is the release
-    # `latest` pointed at while these tests were green (same pin as quoting-service).
     image: mojaloop/central-ledger:v19.14.0
     container_name: ml_central-ledger
     command: sh -c "node /opt/app/wait4/wait4.js central-ledger && npm run migrate && node src/api/index.js"

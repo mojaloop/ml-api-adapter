@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.11.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.10.1...v16.11.0) (2026-09-16)
+
+
+### Features
+
+* opt-in async offset-commit strategy for notification consumer ([#679](https://github.com/mojaloop/ml-api-adapter/issues/679)) ([100b774](https://github.com/mojaloop/ml-api-adapter/commit/100b7748bba93b4ac85b59f3cbf6b9c7d2c18fed))
+
 ### [16.10.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.10.0...v16.10.1) (2026-06-29)
 
 
