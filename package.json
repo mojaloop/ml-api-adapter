@@ -129,6 +129,9 @@
     "convict": "6.2.5",
     "form-data": "4.0.6",
     "immutable": "5.1.9",
+    "browserslist": "4.28.9",
+    "body-parser": "1.20.6",
+    "mysql2": "3.24.3",
     "on-headers": "1.1.0",
     "path-to-regexp": "0.1.13",
     "markdown-it": "14.2.0",
@@ -166,7 +169,9 @@
       "protobufjs": "8.8.0",
       "@mojaloop/central-services-stream": "$@mojaloop/central-services-stream"
     },
-    "uuid": "14.0.0"
+    "uuid": "14.0.0",
+    "nanoid": "3.3.18",
+    "linkify-it": "5.0.2"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.10",
