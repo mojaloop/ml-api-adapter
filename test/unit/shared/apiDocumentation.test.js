@@ -22,16 +22,26 @@
 'use strict'
 
 const Path = require('path')
+const Hapi = require('@hapi/hapi')
 const Test = require('tapes')(require('tape'))
-const APIDocBuilder = require('@mojaloop/central-services-shared/src/util/documentation').APIDocBuilder
+const APIDocumentation = require('@mojaloop/central-services-shared').Util.Hapi.APIDocumentation
 
-Test('API documentation dependencies', async test => {
-  const documentPath = Path.resolve(__dirname, '../../../src/interface/api-swagger.yaml')
-  const html = await APIDocBuilder.generateDocumentation({ documentPath })
-  const swaggerJSON = APIDocBuilder.swaggerJSON({ documentPath })
+Test('API documentation dependency', async test => {
+  const server = Hapi.server()
+  const pathToSwaggerFile = Path.resolve(__dirname, '../../../src/interface/api-swagger.yaml')
 
-  test.ok(html.includes('<html '), 'Shins generates HTML documentation')
-  test.ok(html.includes('Open API for FSP Interoperability'), 'generated documentation contains the API title')
-  test.equal(JSON.parse(swaggerJSON).openapi, '3.0.2', 'Swagger JSON is generated from the YAML document')
-  test.end()
+  try {
+    await server.register({ plugin: APIDocumentation.plugin, options: { pathToSwaggerFile } })
+
+    const docs = await server.inject('/documentation')
+    const spec = await server.inject('/swagger.json')
+
+    test.equal(docs.statusCode, 200, 'documentation page is available')
+    test.ok(docs.payload.includes('/swagger.json'), 'documentation page references the API specification')
+    test.equal(spec.statusCode, 200, 'Swagger JSON is available')
+    test.equal(JSON.parse(spec.payload).openapi, '3.0.2', 'Swagger JSON is generated from the YAML document')
+  } finally {
+    await server.stop()
+    test.end()
+  }
 })

@@ -4,22 +4,5 @@ reject: [
     # Issue is tracked here: https://github.com/mojaloop/project/issues/3616
     "get-port",
     "commander",
-    # These direct dependency bumps are outside this security override PR. Updating the Mojaloop package set together
-    # currently causes npm peer dependency resolution failures around @mojaloop/event-sdk and
-    # @mojaloop/central-services-logger. Handle through a separate coordinated dependency-refresh story/PR.
-    "@hapi/hapi",
-    "@mojaloop/central-services-error-handling",
-    "@mojaloop/central-services-health",
-    "@mojaloop/central-services-logger",
-    "@mojaloop/central-services-metrics",
-    "@mojaloop/central-services-shared",
-    "@mojaloop/central-services-stream",
-    "@mojaloop/database-lib",
-    "@mojaloop/event-sdk",
-    "@mojaloop/license-scanner-tool",
-    "@mojaloop/ml-schema-transformer-lib",
-    "@mojaloop/sdk-standard-components",
-    "axios",
-    "npm-check-updates",
-    "sinon",
+    "@mojaloop/event-sdk" #This lib requires ESM module
 ]

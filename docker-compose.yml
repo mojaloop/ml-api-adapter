@@ -165,6 +165,7 @@ services:
     user: root
 
   mysql:
+    # TODO: Upgrade to MySQL 9 when the central-ledger database driver supports it; keep integration tests aligned with deployments.
     image: mysql:8.0.33
     command: --default-authentication-plugin=mysql_native_password
     container_name: ml_mysql
