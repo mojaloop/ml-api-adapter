@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.11.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.11.0...v16.11.1) (2026-09-22)
+
+
+### Chore
+
+* **deps:** update brace-expansion override ([#676](https://github.com/mojaloop/ml-api-adapter/issues/676)) ([ef4f600](https://github.com/mojaloop/ml-api-adapter/commit/ef4f600e413f161d3bec669d76d4223b7fa8e373))
+
 ## [16.11.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.10.1...v16.11.0) (2026-09-16)
 
 
