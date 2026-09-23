@@ -1,5 +1,4 @@
 scan-type: source
-
 ignore:
   - vulnerability: CVE-2025-9230
   - vulnerability: CVE-2025-9232
@@ -29,16 +28,16 @@ ignore:
       2026-02-23 (high severity)
   - vulnerability: CVE-2026-27171
     include-aliases: true
-    reason: "Alpine base image package (apk): zlib - no npm fix available as of 2026-02-23 (moderate severity)"
+    reason: 'Alpine base image package (apk): zlib - no npm fix available as of 2026-02-23 (moderate severity)'
   - vulnerability: GHSA-2g4f-4pwh-qvx6
     include-aliases: true
-    reason: "Unfixable npm transitive vulnerability: ajv (moderate severity) as of 2026-02-23"
+    reason: 'Unfixable npm transitive vulnerability: ajv (moderate severity) as of 2026-02-23'
   - vulnerability: GHSA-43fc-jf86-j433
     include-aliases: true
-    reason: "Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-02-23"
+    reason: 'Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-02-23'
   - vulnerability: GHSA-38c4-r59v-3vqw
     include-aliases: true
-    reason: "Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-02-23"
+    reason: 'Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-02-23'
   - vulnerability: GHSA-73rr-hh4g-fpgx
     include-aliases: true
     reason: >-
@@ -46,7 +45,7 @@ ignore:
       2026-02-25 (low severity)
   - vulnerability: GHSA-xq3m-2v4x-88gg
     include-aliases: true
-    reason: "@mojaloop/event-sdk > protobufjs"
+    reason: '@mojaloop/event-sdk > protobufjs'
   - vulnerability: GHSA-g8qq-57p8-ggw5
     include-aliases: true
     reason: >-
@@ -62,6 +61,54 @@ ignore:
     reason: >-
       shins > sanitize-html transitive dependency. Updating sanitize-html to 2.17.7 pulls htmlparser2 12.x, which is
       ESM-only and breaks the current CommonJS/nyc runtime through shins/apiDocBuilder.
+  - vulnerability: GHSA-mh99-v99m-4gvg
+    include-aliases: true
+    reason: >-
+      Base image npm package: brace-expansion - bundled in Node.js base image, not fixable via application dependencies
+      as of 2026-09-23 (high severity)
+  - vulnerability: GHSA-rgw5-rvv9-x895
+    include-aliases: true
+    reason: >-
+      Base image npm package: brace-expansion - bundled in Node.js base image, not fixable via application dependencies
+      as of 2026-09-23 (high severity)
+  - vulnerability: GHSA-mwp4-54f8-5fhr
+    include-aliases: true
+    reason: >-
+      Base image npm package: ip-address - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (high severity)
+  - vulnerability: CVE-2026-85091
+    include-aliases: true
+    reason: 'Alpine base image package (apk): zlib - no npm fix available as of 2026-09-23 (high severity)'
+  - vulnerability: GHSA-r292-9mhp-454m
+    include-aliases: true
+    reason: >-
+      Base image npm package: tar - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (high severity)
+  - vulnerability: GHSA-4xrf-jv44-h6hh
+    include-aliases: true
+    reason: >-
+      Base image npm package: ip-address - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (moderate severity)
+  - vulnerability: GHSA-22jq-vg5j-6vgg
+    include-aliases: true
+    reason: >-
+      Base image npm package: ip-address - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (moderate severity)
+  - vulnerability: GHSA-v3r7-h72x-cjcm
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (moderate severity)
+  - vulnerability: GHSA-m8rv-5g2x-5cg5
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (moderate severity)
+  - vulnerability: GHSA-8xcm-r25x-g524
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-09-23 (moderate severity)
 output:
   - table
   - json
