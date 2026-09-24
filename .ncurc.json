@@ -1,0 +1,12 @@
+{
+  "reject": [
+    "get-port",
+    "why-get-port: v6+ is ESM-only and this suite is CommonJS (carried over from the yaml config)",
+    "commander",
+    "why-commander: newer majors ship an ESM entry that this CommonJS suite cannot require (carried over from the yaml config)",
+    "@mojaloop/event-sdk",
+    "why-event-sdk: newer releases require an ESM module this suite cannot load (carried over from the yaml config)",
+    "@types/node",
+    "why-types-node: its major must match the Node runtime major in .nvmrc (24); a higher major only weakens type checking; bump together with the runtime"
+  ]
+}
