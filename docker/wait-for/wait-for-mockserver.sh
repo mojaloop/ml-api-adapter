@@ -3,15 +3,15 @@
 
 source /opt/wait-for/wait-for.env
 
-MOCKSERVER_URL="http://$WAIT_FOR_MOCK_HOST:$WAIT_FOR_MOCK_PORT" # NOSONAR -- isolated Docker test network
+MOCKSERVER_URL="http://$WAIT_FOR_MOCK_HOST:$WAIT_FOR_MOCK_PORT"
 
 health_check() {
-  curl --fail --silent -X GET "$MOCKSERVER_URL"
+  curl --fail --silent -X GET "$MOCKSERVER_URL" # NOSONAR -- isolated Docker test network
   return $?
 }
 
 command() {
-  curl --fail --silent -X PUT "$MOCKSERVER_URL/expectation" -d '{ "httpRequest": { "method": ".*", "path": "/.*transfers.*" }, "times" : { "remainingTimes" : 0,	"unlimited" : true }, "timeToLive" : { "unlimited" : true }, "httpResponse": { "statusCode": 200, "body": "{}" } }'
+  curl --fail --silent -X PUT "$MOCKSERVER_URL/expectation" -d '{ "httpRequest": { "method": ".*", "path": "/.*transfers.*" }, "times" : { "remainingTimes" : 0,	"unlimited" : true }, "timeToLive" : { "unlimited" : true }, "httpResponse": { "statusCode": 200, "body": "{}" } }' # NOSONAR -- isolated Docker test network
   return $?
 }
 
