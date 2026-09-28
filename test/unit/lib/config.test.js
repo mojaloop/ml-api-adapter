@@ -135,6 +135,45 @@ Test('Config tests', configTest => {
       test.end()
     })
 
+    getFileContentTest.test('uses default protocol versions when overrides are absent', test => {
+      const DefaultStub = Util.clone(Default)
+      DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+      DefaultStub.PROTOCOL_VERSIONS = undefined
+
+      const Config = Proxyquire(`${src}/lib/config`, {
+        '../../config/default.json': DefaultStub
+      })
+
+      test.deepEqual(Config.PROTOCOL_VERSIONS, {
+        CONTENT: {
+          DEFAULT: '1.1',
+          VALIDATELIST: ['1.1', '1.0', '2.0']
+        },
+        ACCEPT: {
+          DEFAULT: '1',
+          VALIDATELIST: ['1', '1.0', '1.1', '2', '2.0']
+        }
+      }, 'default protocol versions are retained')
+      test.end()
+    })
+
+    getFileContentTest.test('parses boxed-string protocol validation lists', test => {
+      const DefaultStub = Util.clone(Default)
+      DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+      DefaultStub.PROTOCOL_VERSIONS = {
+        CONTENT: { VALIDATELIST: Object('["1.1"]') },
+        ACCEPT: { VALIDATELIST: Object('["1"]') }
+      }
+
+      const Config = Proxyquire(`${src}/lib/config`, {
+        '../../config/default.json': DefaultStub
+      })
+
+      test.deepEqual(Config.PROTOCOL_VERSIONS.CONTENT.VALIDATELIST, ['1.1'])
+      test.deepEqual(Config.PROTOCOL_VERSIONS.ACCEPT.VALIDATELIST, ['1'])
+      test.end()
+    })
+
     getFileContentTest.test('throw error when file not found', test => {
       try {
         const DefaultStub = Util.clone(Default)

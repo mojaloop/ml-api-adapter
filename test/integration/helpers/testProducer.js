@@ -33,7 +33,7 @@
 
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 const Logger = require('@mojaloop/central-services-logger')
-const { randomUUID } = require('crypto')
+const { randomUUID } = require('node:crypto')
 const Utility = require('@mojaloop/central-services-shared').Util.Kafka
 const Enum = require('@mojaloop/central-services-shared').Enum
 const Config = require('../../../src/lib/config')
@@ -41,8 +41,8 @@ const TransferState = Enum.Transfers.TransferState
 const TransferInternalState = Enum.Transfers.TransferInternalState
 const TransferEventType = Enum.Events.Event.Type
 const TransferEventAction = Enum.Events.Event.Action
-const amount = parseFloat(Number(Math.floor(Math.random() * 100 * 100) / 100 + 100).toFixed(2)) // decimal amount between 100.01 and 200.00
-const expiration = new Date((new Date()).getTime() + (24 * 60 * 60 * 1000)) // tomorrow
+const amount = Number.parseFloat(Number(Math.floor(Math.random() * 100 * 100) / 100 + 100).toFixed(2)) // decimal amount between 100.01 and 200.00
+const expiration = new Date(Date.now() + (24 * 60 * 60 * 1000)) // tomorrow
 const Time = require('@mojaloop/central-services-shared').Util.Time
 
 const transfer = {
@@ -135,9 +135,9 @@ exports.transferReject = async (transferId) => {
 }
 
 const requestBodys = (transferId = null) => {
-  const localTransfer = Object.assign({}, transfer, { transferId: transferId || randomUUID() })
-  const localFulfil = Object.assign({}, fulfil, { completedTimestamp: new Date() })
-  const localReject = Object.assign({}, fulfil, { transferState: TransferInternalState.ABORTED_REJECTED })
+  const localTransfer = { ...transfer, transferId: transferId || randomUUID() }
+  const localFulfil = { ...fulfil, completedTimestamp: new Date() }
+  const localReject = { ...fulfil, transferState: TransferInternalState.ABORTED_REJECTED }
 
   return {
     messageProtocol: function () {

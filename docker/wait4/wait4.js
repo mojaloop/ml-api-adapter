@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-'use-strict'
-const util = require('util')
+'use strict'
+const util = require('node:util')
 /**
  * @file wait4.js
  * @description Waits for a given service's prerequisite services to be up and running.
@@ -25,8 +25,8 @@ async function main () {
     console.info(`wait4 Service: ${service.name}`)
 
     // merge config with environment or defaults
-    config.retries = parseInt(process.env.WAIT4_RETRIES || config.retries || 10)
-    config.waitMs = parseInt(process.env.WAIT4_WAIT_MS || config.waitMs || 2000)
+    config.retries = Number.parseInt(process.env.WAIT4_RETRIES || config.retries || 10)
+    config.waitMs = Number.parseInt(process.env.WAIT4_WAIT_MS || config.waitMs || 2000)
 
     // wait for services connections or paradox to be ready
     const waitresses = getWaiters(service.wait4, config)
@@ -88,7 +88,7 @@ async function wrapWithRetries (method, waitJob, retries, waitTimeMs) {
     // method do it's wait job
     waitJob = await method(waitJob, RC)
     waitJob.status = 'connected'
-    return Promise.resolve(waitJob)
+    return waitJob
   } catch (err) {
     console.info(`wait4 Retry(${waitJob.uri})`)
     if (retries > 0) {
@@ -102,7 +102,7 @@ async function wrapWithRetries (method, waitJob, retries, waitTimeMs) {
     // no more retries left
     console.error(`wait4 Out of retries for uri:${waitJob.uri}\n\t\tand method: ${waitJob.method}`)
     waitJob.status = 'stalled'
-    return Promise.reject(err)
+    throw err
   }
 }
 
@@ -113,8 +113,8 @@ async function wrapWithRetries (method, waitJob, retries, waitTimeMs) {
  */
 function getRC (waitJob) {
   // acquire rc parameters
-  const namespace = (waitJob.rc && waitJob.rc.namespace) || 'CLEDG'
-  const configPath = (waitJob.rc && waitJob.rc.configPath) || '../config/default.json'
+  const namespace = waitJob.rc?.namespace || 'CLEDG'
+  const configPath = waitJob.rc?.configPath || '../config/default.json'
 
   // require rc to deliver config
   try {
@@ -131,7 +131,7 @@ function getRC (waitJob) {
  * @param {object} RC
  */
 async function methodMongoDB (waitJob, RC) {
-  const isDisabled = RC.MONGODB.DISABLED && RC.MONGODB.DISABLED.toString().trim().toLowerCase() === 'true'
+  const isDisabled = RC.MONGODB.DISABLED?.toString().trim().toLowerCase() === 'true'
   if (isDisabled) {
     return `MongoDB(${waitJob.uri}) Disabled`
   }
@@ -198,7 +198,7 @@ async function methodMySQLAlt (waitJob, RC) {
  */
 async function methodNCat (waitJob) {
   const [host, port] = waitJob.uri.toString().split(':').map(x => x.trim())
-  const { execSync } = require('child_process')
+  const { execSync } = require('node:child_process')
   const command = `nc -z ${host} ${port}`
   execSync(command)
   return waitJob

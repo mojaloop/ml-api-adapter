@@ -194,8 +194,8 @@ const consumeMessage = async (error, message) => {
       const contextFromMessage = EventSdk.Tracer.extractContextFromMessage(msg.value)
       const span = EventSdk.Tracer.createChildSpanFromContext('ml_notification_event', contextFromMessage)
       const traceTags = span.getTracestateTags()
-      if (traceTags.timeApiPrepare && parseInt(traceTags.timeApiPrepare)) timeApiPrepare = parseInt(traceTags.timeApiPrepare)
-      if (traceTags.timeApiFulfil && parseInt(traceTags.timeApiFulfil)) timeApiFulfil = parseInt(traceTags.timeApiFulfil)
+      if (traceTags.timeApiPrepare && Number.parseInt(traceTags.timeApiPrepare)) timeApiPrepare = Number.parseInt(traceTags.timeApiPrepare)
+      if (traceTags.timeApiFulfil && Number.parseInt(traceTags.timeApiFulfil)) timeApiFulfil = Number.parseInt(traceTags.timeApiFulfil)
 
       try {
         const result = await processMessage(msg, span).catch(err => {
@@ -778,11 +778,11 @@ const processMessage = async (msg, span) => {
   // special event emitted by central-ledger when the Payee sent a status of `RESERVED` in PUT /transfers/{ID}
   // and the ledger failed to commit the transfer
   if ([Action.RESERVED_ABORTED, Action.FX_RESERVED_ABORTED].includes(action)) {
-    if (parseFloat(Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT) < 1.1) {
+    if (Number.parseFloat(Config.PROTOCOL_VERSIONS.CONTENT.DEFAULT) < 1.1) {
       logger.info(`Notification::processMessage - Action: ${action} - Skipping reserved_aborted notification callback (${source}).`)
       return
     }
-    // TODO: this should possibly be address by a new endpoint-type FSPIOP_CALLBACK_URL_TRANSFER_PATCH, but for the time being lets avoid adding a new enum as we want to simplify the configurations and consolidate them instead in future.
+    // Reuse the PUT endpoint until callback endpoint configuration is consolidated.
     const callbackURLTo = await getEndpointFn(destination, REQUEST_TYPE.PUT)
     const endpointTemplate = getEndpointTemplate(REQUEST_TYPE.PUT)
     const method = PATCH
@@ -824,11 +824,11 @@ const processMessage = async (msg, span) => {
         jwsSigner
       })
     } catch (err) {
-      histTimerEndSendRequest({ success: false, dest: source, action, status: callbackResponse && callbackResponse.status })
+      histTimerEndSendRequest({ success: false, dest: source, action, status: callbackResponse?.status })
       histTimerEnd({ success: false, action })
       throw err
     }
-    histTimerEndSendRequest({ success: true, dest: source, action, status: callbackResponse && callbackResponse.status })
+    histTimerEndSendRequest({ success: true, dest: source, action, status: callbackResponse?.status })
     histTimerEnd({ success: true, action })
     return callbackResponse
   }
@@ -1115,7 +1115,7 @@ const isHealthy = async () => {
   * @throws {Error} - if the consumer hasn't been initialized, or disconnect() throws an error
   */
 const disconnect = async () => {
-  if (!notificationConsumer || !notificationConsumer.disconnect) {
+  if (!notificationConsumer?.disconnect) {
     throw new Error('Tried to disconnect from notificationConsumer, but notificationConsumer is not initialized')
   }
 
