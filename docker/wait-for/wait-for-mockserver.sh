@@ -4,11 +4,13 @@
 source /opt/wait-for/wait-for.env
 
 function healthCheck() {  
-  curl -s -X GET "http://$WAIT_FOR_MOCK_HOST:$WAIT_FOR_MOCK_PORT"
+  # MockServer is isolated to the Docker test network and carries no credentials or production data.
+  curl -s -X GET "http://$WAIT_FOR_MOCK_HOST:$WAIT_FOR_MOCK_PORT" # NOSONAR
 }
 
 function command() {
-  curl -s -X PUT "http://$WAIT_FOR_MOCK_HOST:$WAIT_FOR_MOCK_PORT/expectation" -d '{ "httpRequest": { "method": ".*", "path": "/.*transfers.*" }, "times" : { "remainingTimes" : 0,	"unlimited" : true }, "timeToLive" : { "unlimited" : true }, "httpResponse": { "statusCode": 200, "body": "{}" } }';
+  # MockServer is isolated to the Docker test network and carries no credentials or production data.
+  curl -s -X PUT "http://$WAIT_FOR_MOCK_HOST:$WAIT_FOR_MOCK_PORT/expectation" -d '{ "httpRequest": { "method": ".*", "path": "/.*transfers.*" }, "times" : { "remainingTimes" : 0,	"unlimited" : true }, "timeToLive" : { "unlimited" : true }, "httpResponse": { "statusCode": 200, "body": "{}" } }'; # NOSONAR
 }
 
 until healthCheck; do

@@ -23,8 +23,9 @@ RUN apk add --no-cache -t build-dependencies make gcc g++ python3 libtool openss
     # && npm install -g node-gyp
 COPY package.json package-lock.json* /opt/app/
 
-RUN npm ci
-RUN npm prune --omit=dev
+RUN npm ci --ignore-scripts \
+    && npm prune --omit=dev --ignore-scripts \
+    && npm rebuild node-rdkafka
 
 FROM node:${NODE_VERSION}
 
