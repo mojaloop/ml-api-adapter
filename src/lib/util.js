@@ -24,7 +24,7 @@
  --------------
  ******/
 
-const Path = require('path')
+const Path = require('node:path')
 const {
   Util: { Hapi, EventFramework: { Tags: { getQueryTags } } },
   Enum: { Events: { Event: { Action } }, Tags: { QueryTags } }

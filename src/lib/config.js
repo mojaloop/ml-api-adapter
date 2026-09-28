@@ -1,6 +1,8 @@
 // const RC = require('parse-strings-in-object')(require('rc')('MLAPI', require('../../config/default.json')))
 const RC = require('rc')('MLAPI', require('../../config/default.json'))
-const fs = require('fs')
+const fs = require('node:fs')
+
+const isString = value => typeof value === 'string' || Object.prototype.toString.call(value) === '[object String]'
 
 const getFileContent = (path) => {
   if (!fs.existsSync(path)) {
@@ -48,29 +50,23 @@ const getProtocolVersions = (defaultProtocolVersions, overrideProtocolVersions) 
     ...overrideProtocolVersions
   }
 
-  if (overrideProtocolVersions && overrideProtocolVersions.CONTENT) {
+  if (overrideProtocolVersions?.CONTENT) {
     T_PROTOCOL_VERSION.CONTENT = {
       ...defaultProtocolVersions.CONTENT,
       ...overrideProtocolVersions.CONTENT
     }
   }
-  if (overrideProtocolVersions && overrideProtocolVersions.ACCEPT) {
+  if (overrideProtocolVersions?.ACCEPT) {
     T_PROTOCOL_VERSION.ACCEPT = {
       ...defaultProtocolVersions.ACCEPT,
       ...overrideProtocolVersions.ACCEPT
     }
   }
 
-  if (T_PROTOCOL_VERSION.CONTENT &&
-    T_PROTOCOL_VERSION.CONTENT.VALIDATELIST &&
-    (typeof T_PROTOCOL_VERSION.CONTENT.VALIDATELIST === 'string' ||
-      T_PROTOCOL_VERSION.CONTENT.VALIDATELIST instanceof String)) {
+  if (isString(T_PROTOCOL_VERSION.CONTENT?.VALIDATELIST)) {
     T_PROTOCOL_VERSION.CONTENT.VALIDATELIST = JSON.parse(T_PROTOCOL_VERSION.CONTENT.VALIDATELIST)
   }
-  if (T_PROTOCOL_VERSION.ACCEPT &&
-    T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST &&
-    (typeof T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST === 'string' ||
-      T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST instanceof String)) {
+  if (isString(T_PROTOCOL_VERSION.ACCEPT?.VALIDATELIST)) {
     T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST = JSON.parse(T_PROTOCOL_VERSION.ACCEPT.VALIDATELIST)
   }
   return T_PROTOCOL_VERSION

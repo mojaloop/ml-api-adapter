@@ -140,7 +140,7 @@ exports.getNotification = async function (request, h) {
   const fsp = request.params.fsp
   const operation = request.params.operation
   let response = null
-  if (notifications[fsp] && notifications[fsp][operation] && notifications[fsp][operation][id]) {
+  if (notifications[fsp]?.[operation]?.[id]) {
     response = notifications[fsp][operation][id]
   }
   console.log('Response: %s', JSON.stringify(response))

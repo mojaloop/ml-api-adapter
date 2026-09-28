@@ -44,7 +44,7 @@ const { Action } = Enum.Events.Event
 const { SUCCESS } = Enum.Events.EventStatus
 const { decodePayload } = Util.StreamingProtocol
 
-const FX_ACTIONS = [
+const FX_ACTIONS = new Set([
   Action.FX_GET,
   Action.FX_ABORT,
   Action.FX_COMMIT,
@@ -62,7 +62,7 @@ const FX_ACTIONS = [
   Action.FX_TIMEOUT_RESERVED,
   Action.FX_TIMEOUT_RECEIVED,
   Action.FX_NOTIFY
-]
+])
 
 const getOriginalPayload = async (content, payloadCache = undefined) => {
   let originalPayload
@@ -114,7 +114,7 @@ const notificationMessageDto = async (message, payloadCache = undefined) => {
   const actionLower = action.toLowerCase()
   const status = state.status.toLowerCase()
   const isSuccess = status === SUCCESS.status
-  const isFx = FX_ACTIONS.includes(actionLower)
+  const isFx = FX_ACTIONS.has(actionLower)
   const fromSwitch = (from === HUB_NAME)
   const isOriginalId = content.context?.isOriginalId
 
