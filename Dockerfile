@@ -18,7 +18,17 @@ WORKDIR /opt/app
 
 COPY package.json package-lock.json* /opt/app/
 
-RUN apk add --no-cache -t build-dependencies autoconf automake bash g++ gcc git libtool make openssl-dev python3 \
+RUN apk add --no-cache -t build-dependencies \
+      autoconf \
+      automake \
+      bash \
+      g++ \
+      gcc \
+      git \
+      libtool \
+      make \
+      openssl-dev \
+      python3 \
     && npm ci --ignore-scripts \
     && npm prune --omit=dev --ignore-scripts \
     && npm rebuild node-rdkafka
@@ -26,13 +36,11 @@ RUN apk add --no-cache -t build-dependencies autoconf automake bash g++ gcc git 
 FROM node:${NODE_VERSION}
 
 WORKDIR /opt/app
-# Create empty log file & link stdout to the application log file
+# Create the application user and link the application log to stdout
 RUN mkdir ./logs \
     && touch ./logs/combined.log \
-    && ln -sf /dev/stdout ./logs/combined.log
-
-# Create a non-root user: ml-user
-RUN adduser -D app-user
+    && ln -sf /dev/stdout ./logs/combined.log \
+    && adduser -D app-user
 USER app-user
 
 COPY --chown=app-user --from=builder /opt/app .

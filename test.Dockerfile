@@ -5,7 +5,17 @@ WORKDIR /opt/app
 
 COPY package.json package-lock.json* /opt/app/
 
-RUN apk add --no-cache -t build-dependencies autoconf automake g++ gcc git libressl-dev libtool make openssl-dev python3 \
+RUN apk add --no-cache -t build-dependencies \
+      autoconf \
+      automake \
+      g++ \
+      gcc \
+      git \
+      libressl-dev \
+      libtool \
+      make \
+      openssl-dev \
+      python3 \
     && npm ci --ignore-scripts \
     && npm rebuild node-rdkafka \
     && apk del build-dependencies
