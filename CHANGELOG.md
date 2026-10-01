@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.12.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.11.1...v16.12.0) (2026-10-01)
+
+
+### Features
+
+* upgrade streaming lib version to add more metrics ([#683](https://github.com/mojaloop/ml-api-adapter/issues/683)) ([8e1f692](https://github.com/mojaloop/ml-api-adapter/commit/8e1f6920ae95488cb955ccad0ee529398845f7e7))
+
 ### [16.11.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.11.0...v16.11.1) (2026-09-22)
 
 
