@@ -174,6 +174,23 @@ Test('Config tests', configTest => {
       test.end()
     })
 
+    getFileContentTest.test('does not parse empty protocol validation lists', test => {
+      const DefaultStub = Util.clone(Default)
+      DefaultStub.ENDPOINT_SECURITY.JWS.JWS_SIGN = false
+      DefaultStub.PROTOCOL_VERSIONS = {
+        CONTENT: { VALIDATELIST: '' },
+        ACCEPT: { VALIDATELIST: '' }
+      }
+
+      const Config = Proxyquire(`${src}/lib/config`, {
+        '../../config/default.json': DefaultStub
+      })
+
+      test.equal(Config.PROTOCOL_VERSIONS.CONTENT.VALIDATELIST, '')
+      test.equal(Config.PROTOCOL_VERSIONS.ACCEPT.VALIDATELIST, '')
+      test.end()
+    })
+
     getFileContentTest.test('throw error when file not found', test => {
       try {
         const DefaultStub = Util.clone(Default)
