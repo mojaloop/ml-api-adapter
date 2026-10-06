@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.12.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.0...v16.12.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* address SonarCloud code quality findings ([#682](https://github.com/mojaloop/ml-api-adapter/issues/682)) ([b0bc16e](https://github.com/mojaloop/ml-api-adapter/commit/b0bc16e5aeb2ce919aa43958e0db4ef7c9e1bfbf))
+
 ## [16.12.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.11.1...v16.12.0) (2026-10-01)
 
 
