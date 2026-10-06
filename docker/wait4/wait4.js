@@ -19,28 +19,26 @@ const util = require('node:util')
 async function main () {
   console.log('args are', process.argv)
 
-  try {
-    const config = require(process.env.WAIT4_CONFIG || './wait4.config.js')
-    const service = getService(config)
-    console.info(`wait4 Service: ${service.name}`)
+  const config = require(process.env.WAIT4_CONFIG || './wait4.config.js')
+  const service = getService(config)
+  console.info(`wait4 Service: ${service.name}`)
 
-    // merge config with environment or defaults
-    config.retries = Number.parseInt(process.env.WAIT4_RETRIES || config.retries || 10)
-    config.waitMs = Number.parseInt(process.env.WAIT4_WAIT_MS || config.waitMs || 2000)
+  // merge config with environment or defaults
+  config.retries = Number.parseInt(process.env.WAIT4_RETRIES || config.retries || 10)
+  config.waitMs = Number.parseInt(process.env.WAIT4_WAIT_MS || config.waitMs || 2000)
 
-    // wait for services connections or paradox to be ready
-    const waitresses = getWaiters(service.wait4, config)
-    const report = await Promise.all(waitresses)
+  // wait for services connections or paradox to be ready
+  const waitresses = getWaiters(service.wait4, config)
+  const report = await Promise.all(waitresses)
 
-    console.info(`wait4 Report:\n${util.inspect(report, false, 5, true)}`)
-    process.exit(0)
-  } catch (error) {
-    console.error(`wait4 Error: ${error}`)
-    process.exit(1)
-  }
+  console.info(`wait4 Report:\n${util.inspect(report, false, 5, true)}`)
+  process.exit(0)
 }
 
-main()
+main().catch(error => {
+  console.error(`wait4 Error: ${error}`)
+  process.exit(1)
+})
 
 function getService (config) {
   const serviceName = process.argv.slice(-1).pop() || process.env.WAIT4_SERVICE
