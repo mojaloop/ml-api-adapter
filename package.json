@@ -135,6 +135,7 @@
     "on-headers": "1.1.0",
     "path-to-regexp": "0.1.13",
     "markdown-it": "14.3.2",
+    "openapi-backend": "5.21.0",
     "postcss": "8.5.28",
     "shins": {
       "sanitize-html": "2.17.7",
