@@ -167,7 +167,8 @@ const createHandlers = async (handlers) => {
       logger.debug(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
         await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-        await RegisterHandlers.registerNotificationHandler({ payloadCache: initializePayloadCache() })
+        // The handler can reject at runtime even though its inferred type is not Promise-like.
+        await RegisterHandlers.registerNotificationHandler({ payloadCache: initializePayloadCache() }) // NOSONAR
       } else {
         const error = `Handler Setup - ${JSON.stringify(handler)} is not a valid handler to register!`
         const fspiopError = ErrorHandling.Factory.createInternalServerFSPIOPError(error)
@@ -248,7 +249,8 @@ const initialize = async function ({ service, port, modules = [], runHandlers = 
       await createHandlers(handlers)
     } else {
       await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
-      await RegisterHandlers.registerAllHandlers({ payloadCache: initializePayloadCache() })
+      // Awaiting preserves rejected-promise propagation during startup.
+      await RegisterHandlers.registerAllHandlers({ payloadCache: initializePayloadCache() }) // NOSONAR
     }
     logger.verbose('handlers init is done')
   }

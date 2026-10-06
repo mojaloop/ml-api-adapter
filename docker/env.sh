@@ -9,6 +9,7 @@ get_external_ip() {
     # Need to find a way to support Windows here
     echo "$(route get ifconfig.me | grep interface | sed -e 's/.*: //' | xargs ipconfig getifaddr)"
   fi
+  return 0
 }
 
 # set/override dynamic variables

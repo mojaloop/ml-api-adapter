@@ -1,7 +1,9 @@
 scan-type: source
 
 ignore:
-
+  - vulnerability: GHSA-vfj7-8cjw-p6xm
+    include-aliases: true
+    reason: "Unfixable npm transitive vulnerability: braces 3.0.3 is the latest release as of 2026-10-06"
 output:
   - table
   - json
