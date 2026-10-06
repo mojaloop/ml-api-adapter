@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/ml-api-adapter",
-  "version": "16.11.1",
+  "version": "16.12.0",
   "description": "Convert from ML API to/from internal Central Services messaging format",
   "license": "Apache-2.0",
   "private": true,
@@ -74,12 +74,12 @@
     "@hapi/hapi": "21.4.10",
     "@hapi/inert": "7.1.2",
     "@hapi/vision": "7.0.3",
-    "@mojaloop/central-services-error-handling": "13.2.0",
-    "@mojaloop/central-services-health": "15.2.3",
+    "@mojaloop/central-services-error-handling": "13.2.1",
+    "@mojaloop/central-services-health": "15.2.4",
     "@mojaloop/central-services-logger": "11.10.6",
-    "@mojaloop/central-services-metrics": "12.8.8",
-    "@mojaloop/central-services-shared": "18.39.3",
-    "@mojaloop/central-services-stream": "11.10.1",
+    "@mojaloop/central-services-metrics": "12.8.9",
+    "@mojaloop/central-services-shared": "18.39.4",
+    "@mojaloop/central-services-stream": "11.11.0",
     "@mojaloop/event-sdk": "14.8.4",
     "@mojaloop/ml-schema-transformer-lib": "2.10.1",
     "@mojaloop/sdk-standard-components": "19.19.1",
@@ -98,7 +98,7 @@
   },
   "overrides": {
     "@hapi/wreck": "18.1.2",
-    "@grpc/grpc-js": "1.14.4",
+    "@grpc/grpc-js": "1.14.5",
     "axios": "$axios",
     "@mojaloop/central-services-shared": {
       ".": "$@mojaloop/central-services-shared",
@@ -125,7 +125,7 @@
         "ajv": "8.18.0"
       }
     },
-    "brace-expansion": "5.0.9",
+    "brace-expansion": "5.0.12",
     "convict": "6.2.5",
     "form-data": "4.0.6",
     "immutable": "5.1.9",
@@ -134,7 +134,7 @@
     "mysql2": "3.24.3",
     "on-headers": "1.1.0",
     "path-to-regexp": "0.1.13",
-    "markdown-it": "14.2.0",
+    "markdown-it": "14.3.2",
     "postcss": "8.5.28",
     "shins": {
       "sanitize-html": "2.17.7",
@@ -150,14 +150,14 @@
     "cross-spawn": "7.0.6",
     "trim": "0.0.3",
     "yargs-parser": "21.1.1",
-    "js-yaml": "4.3.2",
+    "js-yaml": "5.4.3",
     "jws": "3.2.3",
     "validator": "13.15.35",
     "lodash": "4.18.1",
     "lodash-es": "4.18.1",
     "undici": "8.10.2",
     "fast-xml-parser": "5.7.0",
-    "fast-uri": "3.1.7",
+    "fast-uri": "3.1.8",
     "fast-xml-builder": "1.1.7",
     "qs": "6.16.0",
     "minimatch@3.0.5": "3.1.5",
@@ -167,6 +167,7 @@
     },
     "@mojaloop/event-sdk": {
       "protobufjs": "8.8.0",
+      "moment": "2.31.0",
       "@mojaloop/central-services-stream": "$@mojaloop/central-services-stream"
     },
     "uuid": "14.0.0",
@@ -174,7 +175,7 @@
     "linkify-it": "5.0.2"
   },
   "devDependencies": {
-    "@mojaloop/database-lib": "^11.3.10",
+    "@mojaloop/database-lib": "^11.3.11",
     "@mojaloop/inter-scheme-proxy-cache-lib": "2.10.0",
     "@mojaloop/license-scanner-tool": "^1.1.2",
     "audit-ci": "7.1.0",
@@ -193,7 +194,7 @@
     "sinon": "22.1.0",
     "standard": "17.1.2",
     "standard-version": "9.5.0",
-    "supertest": "7.3.0",
+    "supertest": "7.3.1",
     "tap-spec": "5.0.0",
     "tap-xunit": "2.4.1",
     "tape": "5.10.2",
