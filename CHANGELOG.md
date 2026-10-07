@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.12.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.1...v16.12.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* handle wait script promise rejections ([#685](https://github.com/mojaloop/ml-api-adapter/issues/685)) ([eb0dbb3](https://github.com/mojaloop/ml-api-adapter/commit/eb0dbb337841166b3205c9a8681b6aacacb9e03b))
+
 ### [16.12.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.0...v16.12.1) (2026-10-06)
 
 
