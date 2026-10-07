@@ -27,30 +27,25 @@ async function main () {
     waitingMap[serviceName] = 'starting'
   })
 
-  try {
-    let allHealthy = await areAllServicesHealthy(waitingMap)
+  let allHealthy = await areAllServicesHealthy(waitingMap)
 
-    while (!allHealthy && retries > 0) {
-      await sleep(waitTimeMs)
-      allHealthy = await areAllServicesHealthy(waitingMap)
+  while (!allHealthy && retries > 0) {
+    await sleep(waitTimeMs)
+    allHealthy = await areAllServicesHealthy(waitingMap)
 
-      if (retries === 0) {
-        throw new Error(`Out of retries waiting for service health.\nStill waiting for: ${getServicesForStatus(waitingMap, 'starting')}`)
-      }
-
-      console.log('Still waiting for service health. Retries', retries)
-      console.log(`${getServicesForStatus(waitingMap, 'healthy').length} services are healthy. Expected: ${expectedContainers.length}`)
-      console.log('Waiting for', getServicesForStatus(waitingMap, 'starting'))
-
-      retries--
+    if (retries === 0) {
+      throw new Error(`Out of retries waiting for service health.\nStill waiting for: ${getServicesForStatus(waitingMap, 'starting')}`)
     }
 
-    console.log('All services are healthy. Time to get to work!')
-    process.exit(0)
-  } catch (error) {
-    console.error(`_wait4_all: ${error}`)
-    process.exit(1)
+    console.log('Still waiting for service health. Retries', retries)
+    console.log(`${getServicesForStatus(waitingMap, 'healthy').length} services are healthy. Expected: ${expectedContainers.length}`)
+    console.log('Waiting for', getServicesForStatus(waitingMap, 'starting'))
+
+    retries--
   }
+
+  console.log('All services are healthy. Time to get to work!')
+  process.exit(0)
 }
 
 /**
@@ -138,4 +133,7 @@ async function sleep (timeMs) {
   return new Promise((resolve, reject) => setTimeout(() => resolve(), timeMs))
 }
 
-main()
+main().catch(error => {
+  console.error(`_wait4_all: ${error}`)
+  process.exit(1)
+})
