@@ -39,7 +39,7 @@ const Proxyquire = require('proxyquire')
 const { CACHE_TYPES } = require('../../../../src/lib/payloadCache/constants')
 const RedisCacheStub = require('@mojaloop/central-services-shared/src/util/redis/redisCache')
 
-test('PayloadCache tests -->', payloadCacheTest => {
+test('PayloadCache tests -->', payloadCacheTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   const sandbox = Sinon.createSandbox()
   sandbox.stub(RedisCacheStub.prototype, 'set')
   sandbox.stub(RedisCacheStub.prototype, 'get')

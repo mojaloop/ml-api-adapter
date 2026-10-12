@@ -38,7 +38,7 @@ const {
   unwrapResponse
 } = require('../../../helpers/general')
 
-test('route handler', (handlerTest) => {
+test('route handler', (handlerTest) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   handlerTest.beforeEach(t => {

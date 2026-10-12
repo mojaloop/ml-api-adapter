@@ -33,7 +33,7 @@ const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../../../src/lib/config')
 const Setup = require('../../../src/shared/setup')
 
-test('Api index', indexTest => {
+test('Api index', indexTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   indexTest.beforeEach(test => {

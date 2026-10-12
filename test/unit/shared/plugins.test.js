@@ -44,7 +44,7 @@ const buildSignedHeaders = ({ signingKey, method, urlPath, body, source = FSPIOP
 
 const makeTempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'jws-test-'))
 
-test('plugins - loadJwsKeys', (t) => {
+test('plugins - loadJwsKeys', (t) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   t.test('returns empty for missing dir', (assert) => {
     assert.deepEqual(loadJwsKeys('/no/such/path'), {})
     assert.end()
@@ -73,7 +73,7 @@ test('plugins - loadJwsKeys', (t) => {
   t.end()
 })
 
-test('plugins - watchJwsKeys', (t) => {
+test('plugins - watchJwsKeys', (t) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   t.test('returns null for missing dir', (assert) => {
     assert.is(watchJwsKeys('/no/such/path', {}), null)
     assert.end()
@@ -136,7 +136,7 @@ test('plugins - watchJwsKeys', (t) => {
   t.end()
 })
 
-test('plugins - registerPlugins with JWS_VALIDATE', (t) => {
+test('plugins - registerPlugins with JWS_VALIDATE', (t) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   t.beforeEach((assert) => {

@@ -41,7 +41,7 @@ const Logger = require('@mojaloop/central-services-logger')
 
 const Notification = require('../../../../src/handlers/notification/index')
 
-test('SubServiceHealth test', subServiceHealthTest => {
+test('SubServiceHealth test', subServiceHealthTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   subServiceHealthTest.beforeEach(t => {

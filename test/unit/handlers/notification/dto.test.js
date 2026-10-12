@@ -44,7 +44,7 @@ const { API_TYPES } = require('../../../../src/shared/constants')
 const Config = require('../../../../src/lib/config')
 const { decodePayload } = Util.StreamingProtocol
 
-test('notificationMessageDto', async notificationMessageDtoTest => {
+test('notificationMessageDto', async notificationMessageDtoTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   notificationMessageDtoTest.beforeEach(t => {

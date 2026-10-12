@@ -32,7 +32,7 @@ const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
 const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 
-test('cli', async (cliTest) => {
+test('cli', async (cliTest) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   cliTest.beforeEach(test => {
     console.log('start')
     test.end()

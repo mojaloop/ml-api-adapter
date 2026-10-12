@@ -33,7 +33,7 @@ const Base = require('../../base')
 const Notification = require('../../../../src/handlers/notification')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 
-test('metadata routes', (metadataRoutesTest) => {
+test('metadata routes', (metadataRoutesTest) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   metadataRoutesTest.beforeEach(t => {

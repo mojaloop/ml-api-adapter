@@ -42,6 +42,6 @@ test('return error if required fields are missing on prepare', async function (a
   await Endpoints.initializeCache(Config.ENDPOINT_CACHE_CONFIG, { hubName: Config.HUB_NAME, hubNameRegex })
   const res = await server.inject(req)
   await server.stop()
-  assert.equal(202, res.statusCode)
+  assert.equal(res.statusCode, 202)
   assert.end()
 })

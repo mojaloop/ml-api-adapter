@@ -50,7 +50,7 @@ const HeadersLib = require(`${src}/lib/headers`)
 const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
 const { mockPayloadCache } = require('../../mocks')
 
-test('Notification Service tests', async notificationTest => {
+test('Notification Service tests', async notificationTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
   let createCallbackHeadersSpy
   let Notification

@@ -34,7 +34,7 @@ const Headers = require('../../../src/lib/headers')
 const Mustache = require('mustache')
 const Config = require('../../../src/lib/config')
 
-test('Headers tests', headersTest => {
+test('Headers tests', headersTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
   const Sinon = require('sinon')
 

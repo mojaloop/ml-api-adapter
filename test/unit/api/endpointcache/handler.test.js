@@ -63,7 +63,7 @@ const handler = proxyquire('../../../../src/api/endpointcache/handler', {
 })
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 
-test('route handler', (handlerTest) => {
+test('route handler', (handlerTest) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   handlerTest.beforeEach(t => {

@@ -42,7 +42,7 @@ const {
 
 const apiTags = ['api']
 
-test('metadata handler', (handlerTest) => {
+test('metadata handler', (handlerTest) => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let originalScale
   let originalPrecision
   let originalHostName
