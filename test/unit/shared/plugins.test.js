@@ -1,6 +1,6 @@
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Rewire = require('rewire')
 const Proxyquire = require('proxyquire')
@@ -44,7 +44,7 @@ const buildSignedHeaders = ({ signingKey, method, urlPath, body, source = FSPIOP
 
 const makeTempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'jws-test-'))
 
-Test('plugins - loadJwsKeys', (t) => {
+test('plugins - loadJwsKeys', (t) => {
   t.test('returns empty for missing dir', (assert) => {
     assert.deepEqual(loadJwsKeys('/no/such/path'), {})
     assert.end()
@@ -73,7 +73,7 @@ Test('plugins - loadJwsKeys', (t) => {
   t.end()
 })
 
-Test('plugins - watchJwsKeys', (t) => {
+test('plugins - watchJwsKeys', (t) => {
   t.test('returns null for missing dir', (assert) => {
     assert.is(watchJwsKeys('/no/such/path', {}), null)
     assert.end()
@@ -136,7 +136,7 @@ Test('plugins - watchJwsKeys', (t) => {
   t.end()
 })
 
-Test('plugins - registerPlugins with JWS_VALIDATE', (t) => {
+test('plugins - registerPlugins with JWS_VALIDATE', (t) => {
   let sandbox
 
   t.beforeEach((assert) => {

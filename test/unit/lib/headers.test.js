@@ -28,13 +28,13 @@
 'use strict'
 
 const Proxyquire = require('proxyquire')
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Util = require('@mojaloop/central-services-shared').Util
 const Headers = require('../../../src/lib/headers')
 const Mustache = require('mustache')
 const Config = require('../../../src/lib/config')
 
-Test('Headers tests', headersTest => {
+test('Headers tests', headersTest => {
   let sandbox
   const Sinon = require('sinon')
 

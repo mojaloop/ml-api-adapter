@@ -34,7 +34,7 @@
 
 const Proxyquire = require('proxyquire')
 const src = '../../../../src'
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const EventSdk = require('@mojaloop/event-sdk')
 const { Kafka: { Consumer }, Util: { Producer } } = require('@mojaloop/central-services-stream')
@@ -50,7 +50,7 @@ const HeadersLib = require(`${src}/lib/headers`)
 const PayloadCache = require(`${src}/lib/payloadCache/PayloadCache`)
 const { mockPayloadCache } = require('../../mocks')
 
-Test('Notification Service tests', async notificationTest => {
+test('Notification Service tests', async notificationTest => {
   let sandbox
   let createCallbackHeadersSpy
   let Notification

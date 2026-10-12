@@ -33,14 +33,14 @@
 
  ******/
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const { Enum } = require('@mojaloop/central-services-shared')
 const dto = require('../../../../src/domain/transfer/dto')
 const mocks = require('../../mocks')
 
 const { Event, EventStatus } = Enum.Events
 
-Test('DTO tests -->', dtoTest => {
+test('DTO tests -->', dtoTest => {
   dtoTest.test('eventStateDto test', test => {
     const data = dto.eventStateDto()
     test.same(data, EventStatus.SUCCESS)

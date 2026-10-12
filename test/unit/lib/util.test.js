@@ -35,12 +35,12 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Util = require('../../../src/lib/util')
 const Config = require('../../../src/lib/config')
 const path = require('path')
 
-Test('Util', (utilTests) => {
+test('Util', (utilTests) => {
   utilTests.test('pathForInterface', async (pathForInterfaceTests) => {
     pathForInterfaceTests.test('pathForInterface should return correct path for default API', async (t) => {
       Config.API_TYPE = 'fspiop'

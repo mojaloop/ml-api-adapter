@@ -26,7 +26,7 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 const proxyquire = require('proxyquire')
@@ -42,7 +42,7 @@ const {
 
 const apiTags = ['api']
 
-Test('metadata handler', (handlerTest) => {
+test('metadata handler', (handlerTest) => {
   let originalScale
   let originalPrecision
   let originalHostName

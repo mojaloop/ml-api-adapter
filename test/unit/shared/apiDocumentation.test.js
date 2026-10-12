@@ -23,10 +23,10 @@
 
 const Path = require('path')
 const Hapi = require('@hapi/hapi')
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const APIDocumentation = require('@mojaloop/central-services-shared').Util.Hapi.APIDocumentation
 
-Test('API documentation dependency', async test => {
+test('API documentation dependency', async test => {
   const server = Hapi.server()
   const pathToSwaggerFile = Path.resolve(__dirname, '../../../src/interface/api-swagger.yaml')
 

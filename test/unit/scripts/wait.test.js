@@ -1,6 +1,6 @@
 'use strict'
 
-const Test = require('tape')
+const test = require('tape')
 const { readFileSync } = require('node:fs')
 const { resolve } = require('node:path')
 const { runInNewContext } = require('node:vm')
@@ -34,7 +34,7 @@ async function runScript (script, { config, execSync, log = () => {} } = {}) {
   return { exits, errors }
 }
 
-Test('wait4 exits successfully when no prerequisites are needed', async test => {
+test('wait4 exits successfully when no prerequisites are needed', async test => {
   const result = await runScript(wait4, {
     config: { services: [{ name: 'test-service', wait4: [] }] }
   })
@@ -43,14 +43,14 @@ Test('wait4 exits successfully when no prerequisites are needed', async test => 
   test.end()
 })
 
-Test('wait4 reports a configuration error and exits unsuccessfully', async test => {
+test('wait4 reports a configuration error and exits unsuccessfully', async test => {
   const result = await runScript(wait4)
   test.deepEqual(result.exits, [1])
   test.deepEqual(result.errors, ['wait4 Error: Error: Missing wait configuration'])
   test.end()
 })
 
-Test('wait4 handles a rejection before loading configuration', async test => {
+test('wait4 handles a rejection before loading configuration', async test => {
   const result = await runScript(wait4, {
     log: () => { throw new Error('Startup logging failed') }
   })
@@ -59,7 +59,7 @@ Test('wait4 handles a rejection before loading configuration', async test => {
   test.end()
 })
 
-Test('wait4 handles rejected prerequisite checks after retries', async test => {
+test('wait4 handles rejected prerequisite checks after retries', async test => {
   let attempts = 0
   const result = await runScript(wait4, {
     config: {
@@ -77,7 +77,7 @@ Test('wait4 handles rejected prerequisite checks after retries', async test => {
   test.end()
 })
 
-Test('wait4_all exits successfully when all containers are healthy', async test => {
+test('wait4_all exits successfully when all containers are healthy', async test => {
   const result = await runScript(waitAll, {
     execSync: () => Buffer.from('"healthy"\n')
   })
@@ -86,7 +86,7 @@ Test('wait4_all exits successfully when all containers are healthy', async test 
   test.end()
 })
 
-Test('wait4_all handles a rejected container status check', async test => {
+test('wait4_all handles a rejected container status check', async test => {
   const result = await runScript(waitAll, {
     execSync: () => { throw new Error('Docker unavailable') }
   })
@@ -95,7 +95,7 @@ Test('wait4_all handles a rejected container status check', async test => {
   test.end()
 })
 
-Test('wait4_all reports unhealthy containers and exits unsuccessfully', async test => {
+test('wait4_all reports unhealthy containers and exits unsuccessfully', async test => {
   const result = await runScript(waitAll, {
     execSync: () => Buffer.from('"unhealthy"\n')
   })

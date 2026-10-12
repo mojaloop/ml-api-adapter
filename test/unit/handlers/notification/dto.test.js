@@ -35,7 +35,7 @@
 'use strict'
 
 const Proxyquire = require('proxyquire')
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Util = require('@mojaloop/central-services-shared').Util
 const { notificationMessageDto } = require('../../../../src/handlers/notification/dto')
@@ -44,7 +44,7 @@ const { API_TYPES } = require('../../../../src/shared/constants')
 const Config = require('../../../../src/lib/config')
 const { decodePayload } = Util.StreamingProtocol
 
-Test('notificationMessageDto', async notificationMessageDtoTest => {
+test('notificationMessageDto', async notificationMessageDtoTest => {
   let sandbox
 
   notificationMessageDtoTest.beforeEach(t => {

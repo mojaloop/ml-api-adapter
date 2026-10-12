@@ -26,7 +26,7 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 
@@ -38,7 +38,7 @@ const {
   unwrapResponse
 } = require('../../../helpers/general')
 
-Test('route handler', (handlerTest) => {
+test('route handler', (handlerTest) => {
   let sandbox
 
   handlerTest.beforeEach(t => {

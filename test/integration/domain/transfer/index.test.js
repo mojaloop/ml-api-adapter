@@ -1,12 +1,12 @@
 'use strict'
 
-const Test = require('tape')
+const test = require('tape')
 const TransferService = require('../../../../src/domain/transfer')
 const Fixtures = require('../../../fixtures')
 const Kafka = require('@mojaloop/central-services-stream').Util
 const encodePayload = require('@mojaloop/central-services-shared').Util.StreamingProtocol.encodePayload
 
-Test('transfer service', async (modelTest) => {
+test('transfer service', async (modelTest) => {
   modelTest.test('prepare should', async (prepareTest) => {
     prepareTest.test('produce a transfer prepare message to kafka', async (test) => {
       const transfer = Fixtures.buildTransfer(Fixtures.generateTransferId())

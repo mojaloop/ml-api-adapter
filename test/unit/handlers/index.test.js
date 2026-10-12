@@ -26,13 +26,13 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Config = require('../../../src/lib/config')
 const Proxyquire = require('proxyquire')
 const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 
-Test('cli', async (cliTest) => {
+test('cli', async (cliTest) => {
   cliTest.beforeEach(test => {
     console.log('start')
     test.end()

@@ -26,14 +26,14 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const axios = require('axios')
 const Base = require('../../base')
 const Notification = require('../../../../src/handlers/notification')
 const Producer = require('@mojaloop/central-services-stream').Util.Producer
 
-Test('metadata routes', (metadataRoutesTest) => {
+test('metadata routes', (metadataRoutesTest) => {
   let sandbox
 
   metadataRoutesTest.beforeEach(t => {

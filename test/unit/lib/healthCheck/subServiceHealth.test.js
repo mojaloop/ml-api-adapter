@@ -30,7 +30,7 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const proxyquire = require('proxyquire')
 const axios = require('axios')
@@ -41,7 +41,7 @@ const Logger = require('@mojaloop/central-services-logger')
 
 const Notification = require('../../../../src/handlers/notification/index')
 
-Test('SubServiceHealth test', subServiceHealthTest => {
+test('SubServiceHealth test', subServiceHealthTest => {
   let sandbox
 
   subServiceHealthTest.beforeEach(t => {
