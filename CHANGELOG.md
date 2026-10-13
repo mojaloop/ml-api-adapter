@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.12.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.2...v16.12.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* make Tape test suites discoverable by SonarCloud ([#686](https://github.com/mojaloop/ml-api-adapter/issues/686)) ([912b1f1](https://github.com/mojaloop/ml-api-adapter/commit/912b1f1a3ed8adad231112c548ff75155690400f))
+
 ### [16.12.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.1...v16.12.2) (2026-10-07)
 
 
