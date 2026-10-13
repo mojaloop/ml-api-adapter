@@ -99,6 +99,23 @@ Test('setup', setupTest => {
     test.end()
   })
 
+  setupTest.test('exit immediately after an uncaught exception', (test) => {
+    const listeners = {}
+    const exit = sandbox.stub()
+    Proxyquire('../../../src/shared/setup', {
+      'node:process': {
+        on: (event, listener) => { listeners[event] = listener },
+        exit,
+        '@noCallThru': true
+      }
+    })
+    listeners.uncaughtExceptionMonitor(new Error('Fatal failure'))
+    test.ok(exit.calledOnceWithExactly(1))
+    const rejection = new Error('Unhandled rejection')
+    test.throws(() => listeners.unhandledRejection(rejection), /Unhandled rejection/)
+    test.end()
+  })
+
   setupTest.test('createServer should', async (createServerTest) => {
     createServerTest.test('throw error on fail', async (test) => {
       const errorToThrow = new Boom.Boom('Throw error')
@@ -297,6 +314,44 @@ Test('setup', setupTest => {
         test.fail(`Should have not received an error: ${err}`)
         test.end()
       })
+    })
+
+    initializeTest.test('finish registering each notification handler before starting the next', async (test) => {
+      const events = []
+      RegisterHandlersStub.registerNotificationHandler.callsFake(async () => {
+        events.push('start')
+        await Promise.resolve()
+        events.push('finish')
+      })
+      await Setup.initialize({
+        service: 'api',
+        runHandlers: true,
+        handlers: [
+          { type: 'notification', enabled: true },
+          { type: 'notification', enabled: true }
+        ]
+      })
+      test.deepEqual(events, ['start', 'finish', 'start', 'finish'])
+      test.end()
+    })
+
+    initializeTest.test('stop registration after the first handler rejects', async (test) => {
+      RegisterHandlersStub.registerNotificationHandler.rejects(new Error('Registration failed'))
+      try {
+        await Setup.initialize({
+          service: 'api',
+          runHandlers: true,
+          handlers: [
+            { type: 'notification', enabled: true },
+            { type: 'notification', enabled: true }
+          ]
+        })
+        test.fail('Expected registration to reject')
+      } catch (error) {
+        test.equal(error.message, 'Registration failed')
+        test.ok(RegisterHandlersStub.registerNotificationHandler.calledOnce)
+      }
+      test.end()
     })
 
     initializeTest.test('run no Handlers if runHandlers flag enabled with handlers[] populated and the notificationHandler is disabled', async (test) => {

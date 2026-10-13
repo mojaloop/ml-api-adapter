@@ -5,7 +5,7 @@ WORKDIR /opt/app
 
 COPY package.json package-lock.json* /opt/app/
 
-RUN apk add --no-cache -t build-dependencies \
+RUN apk add --no-cache --virtual build-dependencies \
       autoconf \
       automake \
       g++ \
