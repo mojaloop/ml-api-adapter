@@ -76,13 +76,13 @@
     "@hapi/vision": "7.0.3",
     "@mojaloop/central-services-error-handling": "13.2.1",
     "@mojaloop/central-services-health": "15.2.4",
-    "@mojaloop/central-services-logger": "11.10.6",
+    "@mojaloop/central-services-logger": "11.10.7",
     "@mojaloop/central-services-metrics": "12.8.9",
     "@mojaloop/central-services-shared": "18.39.4",
     "@mojaloop/central-services-stream": "11.11.0",
     "@mojaloop/event-sdk": "14.8.4",
-    "@mojaloop/ml-schema-transformer-lib": "2.10.1",
-    "@mojaloop/sdk-standard-components": "19.19.1",
+    "@mojaloop/ml-schema-transformer-lib": "2.10.2",
+    "@mojaloop/sdk-standard-components": "19.19.3",
     "@now-ims/hapi-now-auth": "2.1.0",
     "axios": "1.20.0",
     "blipp": "4.0.2",
@@ -119,9 +119,11 @@
         }
       },
       "openapi-backend": {
+        ".": "5.21.0",
         "ajv": "8.18.0"
       },
       "@apidevtools/swagger-parser": {
+        ".": "12.1.0",
         "ajv": "8.18.0"
       }
     },
@@ -135,6 +137,7 @@
     "on-headers": "1.1.0",
     "path-to-regexp": "0.1.13",
     "markdown-it": "14.3.2",
+    "handlebars": "4.7.10",
     "openapi-backend": "5.21.0",
     "postcss": "8.5.28",
     "shins": {
@@ -186,7 +189,7 @@
     "license-checker": "25.0.1",
     "nodemon": "3.1.14",
     "npm-audit-resolver": "3.0.0-RC.0",
-    "npm-check-updates": "23.1.0",
+    "npm-check-updates": "23.1.1",
     "nyc": "18.0.0",
     "pre-commit": "2.0.0",
     "proxyquire": "2.1.3",
