@@ -5166,6 +5166,72 @@ Test('Notification Service tests', async notificationTest => {
     await consumeMessageTest.end()
   })
 
+  await notificationTest.test('flow mode (mode 0) should', async flowModeTest => {
+    const flowMessage = () => ({
+      value: {
+        metadata: {
+          event: {
+            type: 'prepare',
+            action: 'prepare',
+            state: {
+              status: 'success',
+              code: 0
+            }
+          }
+        },
+        content: {
+          headers: {},
+          payload: {},
+          context: {
+            originalRequestId: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+          }
+        },
+        to: 'dfsp2',
+        from: 'dfsp1',
+        id: 'b51ec534-ee48-4575-b6a9-ead2955b8098'
+      }
+    })
+
+    await flowModeTest.test('start the consumer with the flow-mode options from the default config', async test => {
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+      const { options } = Consumer.prototype.connect.thisValues[0]._config
+      test.equal(options.mode, Consumer.ENUMS.CONSUMER_MODES.flow, 'mode is flow')
+      test.equal(options.sync, true, 'sync is enabled')
+      test.equal(options.consumeLoopTimeoutDelay, 1, 'consumeLoopTimeoutDelay is set')
+      test.equal(options.flowMaxQueueSize, 500, 'flowMaxQueueSize is set')
+      test.equal(options.healthCheckPollInterval, 25000, 'healthCheckPollInterval is set')
+      test.end()
+    })
+
+    await flowModeTest.test('commit a single message once after processing it when auto-commit is disabled', async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = flowMessage()
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+      const result = await Notification.consumeMessage(null, msg)
+      test.equal(result, true)
+      test.ok(Consumer.prototype.commitMessageSync.calledOnceWithExactly(msg), 'commitMessageSync called once with the message')
+      test.end()
+    })
+
+    await flowModeTest.test('commit a single message once and throw when processing it fails', tryCatchEndTest(async test => {
+      Config.KAFKA_CONFIG.CONSUMER.NOTIFICATION.EVENT.config.rdkafkaConf['enable.auto.commit'] = false
+      const msg = flowMessage()
+      delete msg.value.content
+      mockPayloadCache.getPayload.returns(Promise.resolve({}))
+      test.ok(await Notification.startConsumer({ payloadCache: mockPayloadCache }))
+      try {
+        await Notification.consumeMessage(null, msg)
+        test.fail('Error expected')
+      } catch (err) {
+        test.equal(err.name, 'FSPIOPError')
+        test.ok(Consumer.prototype.commitMessageSync.calledOnceWithExactly(msg), 'commitMessageSync called once with the message')
+      }
+    }))
+
+    await flowModeTest.end()
+  })
+
   await notificationTest.test('isConnected', async isConnectedTest => {
     await isConnectedTest.test('call base class isConnected function - true', async test => {
       // Arrange
