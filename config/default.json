@@ -113,14 +113,17 @@
         "EVENT": {
           "config": {
             "options": {
-              "mode": 2,
+              "mode": 0,
               "batchSize": 1,
               "pollFrequency": 10,
               "recursiveTimeout": 100,
               "messageCharset": "utf8",
               "messageAsJSON": true,
               "sync": true,
-              "consumeTimeout": 1000
+              "consumeTimeout": 1000,
+              "consumeLoopTimeoutDelay": 1,
+              "flowMaxQueueSize": 500,
+              "healthCheckPollInterval": 25000
             },
             "rdkafkaConf": {
               "client.id": "ml-con-notification-event",
