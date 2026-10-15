@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.13.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.3...v16.13.0) (2026-10-15)
+
+
+### Features
+
+* **notification:** switch notification consumer to Kafka flow mode ([#688](https://github.com/mojaloop/ml-api-adapter/issues/688)) ([943378d](https://github.com/mojaloop/ml-api-adapter/commit/943378d122e79c4aa00a398a3c2dc8efec1fd616))
+
 ### [16.12.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.2...v16.12.3) (2026-10-13)
 
 
