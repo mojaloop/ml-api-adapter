@@ -155,7 +155,8 @@
       "@mojaloop/central-services-stream": "$@mojaloop/central-services-stream"
     },
     "linkify-it": "5.0.2",
-    "jws@3": "3.2.3"
+    "jws@3": "3.2.3",
+    "openapi-backend": "5.21.0"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.11",
