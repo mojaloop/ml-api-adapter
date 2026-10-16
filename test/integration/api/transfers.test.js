@@ -35,7 +35,7 @@
 
 'use strict'
 
-const Test = require('tape')
+const test = require('tape')
 const Ilp = require('@mojaloop/sdk-standard-components').Ilp
 const Logger = require('@mojaloop/central-services-logger')
 const EventSdk = require('@mojaloop/event-sdk')
@@ -170,7 +170,7 @@ const createFxISORequest = async (payload, headers) => {
   }
 }
 
-Test('ISO transfer handler', async (handlerTest) => {
+test('ISO transfer handler', async (handlerTest) => {
   const wrapWithRetriesConf = {
     remainingRetries: retryOpts?.retries || 10, // default 10
     timeout: retryOpts?.maxTimeout || 2 // default 2

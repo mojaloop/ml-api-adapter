@@ -33,12 +33,12 @@
 
  ******/
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const { PROM_METRICS } = require('../../../src/shared/constants')
 
 const FX_METRIC_PREFIX = 'ml_fx_'
 
-Test('Constants tests -->', test => {
+test('Constants tests -->', test => {
   test.test('should return valid FX metric names', test => {
     Object.keys(PROM_METRICS).forEach(key => {
       const metric = PROM_METRICS[key](true)

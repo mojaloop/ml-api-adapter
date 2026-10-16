@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.13.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.3...v16.13.0) (2026-10-15)
+
+
+### Features
+
+* **notification:** switch notification consumer to Kafka flow mode ([#688](https://github.com/mojaloop/ml-api-adapter/issues/688)) ([943378d](https://github.com/mojaloop/ml-api-adapter/commit/943378d122e79c4aa00a398a3c2dc8efec1fd616))
+
+### [16.12.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.2...v16.12.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* make Tape test suites discoverable by SonarCloud ([#686](https://github.com/mojaloop/ml-api-adapter/issues/686)) ([912b1f1](https://github.com/mojaloop/ml-api-adapter/commit/912b1f1a3ed8adad231112c548ff75155690400f))
+
+### [16.12.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.1...v16.12.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* handle wait script promise rejections ([#685](https://github.com/mojaloop/ml-api-adapter/issues/685)) ([eb0dbb3](https://github.com/mojaloop/ml-api-adapter/commit/eb0dbb337841166b3205c9a8681b6aacacb9e03b))
+
+### [16.12.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.0...v16.12.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* address SonarCloud code quality findings ([#682](https://github.com/mojaloop/ml-api-adapter/issues/682)) ([b0bc16e](https://github.com/mojaloop/ml-api-adapter/commit/b0bc16e5aeb2ce919aa43958e0db4ef7c9e1bfbf))
+
+## [16.12.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.11.1...v16.12.0) (2026-10-01)
+
+
+### Features
+
+* upgrade streaming lib version to add more metrics ([#683](https://github.com/mojaloop/ml-api-adapter/issues/683)) ([8e1f692](https://github.com/mojaloop/ml-api-adapter/commit/8e1f6920ae95488cb955ccad0ee529398845f7e7))
+
 ### [16.11.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.11.0...v16.11.1) (2026-09-22)
 
 

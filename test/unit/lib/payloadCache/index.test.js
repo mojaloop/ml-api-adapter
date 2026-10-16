@@ -33,13 +33,13 @@
 
  ******/
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const Proxyquire = require('proxyquire')
 const { CACHE_TYPES } = require('../../../../src/lib/payloadCache/constants')
 const RedisCacheStub = require('@mojaloop/central-services-shared/src/util/redis/redisCache')
 
-Test('PayloadCache tests -->', payloadCacheTest => {
+test('PayloadCache tests -->', payloadCacheTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   const sandbox = Sinon.createSandbox()
   sandbox.stub(RedisCacheStub.prototype, 'set')
   sandbox.stub(RedisCacheStub.prototype, 'get')

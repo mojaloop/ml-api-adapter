@@ -7,6 +7,7 @@ QUIET=0
 
 echoerr() {
   if [ "$QUIET" -ne 1 ]; then printf "%s\n" "$*" 1>&2; fi
+  return 0
 }
 
 usage() {
@@ -22,7 +23,7 @@ USAGE
 }
 
 wait_for() {
-  for i in `seq $TIMEOUT` ; do
+  for i in $(seq $TIMEOUT) ; do
     nc -z "$HOST" "$PORT" > /dev/null 2>&1
     
     result=$?

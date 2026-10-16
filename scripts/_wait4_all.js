@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { ML_API_CONTAINER = 'ml_ml-api-adapter' } = process.env
-const { execSync } = require('child_process')
+const { execSync } = require('node:child_process')
 
 /**
  * @file _wait4_all.js
@@ -27,30 +27,25 @@ async function main () {
     waitingMap[serviceName] = 'starting'
   })
 
-  try {
-    let allHealthy = await areAllServicesHealthy(waitingMap, waitTimeMs)
+  let allHealthy = await areAllServicesHealthy(waitingMap)
 
-    while (!allHealthy && retries > 0) {
-      await sleep(waitTimeMs)
-      allHealthy = await areAllServicesHealthy(waitingMap, waitTimeMs)
+  while (!allHealthy && retries > 0) {
+    await sleep(waitTimeMs)
+    allHealthy = await areAllServicesHealthy(waitingMap)
 
-      if (retries === 0) {
-        throw new Error(`Out of retries waiting for service health.\nStill waiting for: ${getServicesForStatus(waitingMap, 'starting')}`)
-      }
-
-      console.log('Still waiting for service health. Retries', retries)
-      console.log(`${getServicesForStatus(waitingMap, 'healthy').length} services are healthy. Expected: ${expectedContainers.length}`)
-      console.log('Waiting for', getServicesForStatus(waitingMap, 'starting'))
-
-      retries--
+    if (retries === 0) {
+      throw new Error(`Out of retries waiting for service health.\nStill waiting for: ${getServicesForStatus(waitingMap, 'starting')}`)
     }
 
-    console.log('All services are healthy. Time to get to work!')
-    process.exit(0)
-  } catch (error) {
-    console.error(`_wait4_all: ${error}`)
-    process.exit(1)
+    console.log('Still waiting for service health. Retries', retries)
+    console.log(`${getServicesForStatus(waitingMap, 'healthy').length} services are healthy. Expected: ${expectedContainers.length}`)
+    console.log('Waiting for', getServicesForStatus(waitingMap, 'starting'))
+
+    retries--
   }
+
+  console.log('All services are healthy. Time to get to work!')
+  process.exit(0)
 }
 
 /**
@@ -83,9 +78,7 @@ async function updateServiceStatus (waitingMap) {
   const startingServices = getServicesForStatus(waitingMap, 'starting')
 
   await Promise.all(startingServices.map(async serviceName => {
-    // TODO: This info may be useful in future!
-    // const currentStatus = waitingMap[serviceName]
-    const progress = await getProgress(serviceName)
+    const progress = getProgress(serviceName)
     waitingMap[serviceName] = progress
   }))
 }
@@ -98,7 +91,7 @@ async function updateServiceStatus (waitingMap) {
  */
 function getProgress (containerName) {
   const command = `docker inspect --format='{{json .State.Health.Status}}' ${containerName}`
-  return execSync(command).toString().replace(/['"]+|[\n]+/g, '')
+  return execSync(command).toString().replace(/['"]+|\n+/g, '')
 }
 
 /**
@@ -140,4 +133,7 @@ async function sleep (timeMs) {
   return new Promise((resolve, reject) => setTimeout(() => resolve(), timeMs))
 }
 
-main()
+main().catch(error => {
+  console.error(`_wait4_all: ${error}`)
+  process.exit(1)
+})

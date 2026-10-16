@@ -61,7 +61,7 @@ const buildTransfer = (transferId, ilpPacketVersion) => {
     },
     ilpPacket: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Packet : ilpV1Packet,
     condition: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Condition : ilpV1Condition,
-    expiration: new Date(new Date().getTime() + 6000),
+    expiration: new Date(Date.now() + 6000),
     extensionList:
     {
       extension:
@@ -89,7 +89,7 @@ const buildFXTransfer = (commitRequestId, ilpPacketVersion) => {
     sourceAmount: { amount: 100, currency: 'KWS' },
     targetAmount: { amount: 200, currency: 'TZS' },
     condition: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Condition : ilpV1Condition,
-    expiration: new Date(new Date().getTime() + 6000),
+    expiration: new Date(Date.now() + 6000),
     ilpPacket: ilpPacketVersion === Ilp.ILP_VERSIONS.v4 ? ilpV4Packet : ilpV1Packet
   }
 }

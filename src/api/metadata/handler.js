@@ -75,9 +75,9 @@ const extractUrls = (request) => {
   request.server.table().filter(route => {
     return route.settings.id !== undefined &&
       Array.isArray(route.settings.tags) &&
-      route.settings.tags.indexOf('api') >= 0
+      route.settings.tags.includes('api')
   }).forEach(route => {
-    urls[route.settings.id] = `${Config.HOSTNAME}${route.path.replace(/\{/g, ':').replace(/\}/g, '')}`
+    urls[route.settings.id] = `${Config.HOSTNAME}${route.path.replaceAll('{', ':').replaceAll('}', '')}`
   })
   return urls
 }

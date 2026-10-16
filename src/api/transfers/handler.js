@@ -115,7 +115,7 @@ const create = async function (context, request, h) {
       payload
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext, isIsoMode)
+    await TransferService.prepare(headers, dataUri, payload, span, kafkaMessageContext, isIsoMode) // NOSONAR -- required to catch runtime promise rejection
 
     histTimerEnd({ success: true })
     return h.response().code(202)
@@ -194,7 +194,7 @@ const fulfilTransfer = async function (context, request, h) {
       dataUri
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext, isIsoMode)
+    await TransferService.fulfil(headers, dataUri, payload, params, span, kafkaMessageContext, isIsoMode) // NOSONAR -- required to catch runtime promise rejection
 
     histTimerEnd({ success: true })
     return h.response().code(200)
@@ -236,7 +236,7 @@ const getTransferById = async function (context, request, h) {
       headers: request.headers,
       params: request.params
     }, EventSdk.AuditEventAction.start)
-    await TransferService.getTransferById(request.headers, request.params, span, isFx)
+    await TransferService.getTransferById(request.headers, request.params, span, isFx) // NOSONAR -- required to catch runtime promise rejection
     histTimerEnd({ success: true })
     return h.response().code(202)
   } catch (err) {
@@ -305,7 +305,7 @@ const fulfilTransferError = async function (context, request, h) {
       params
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext, isIsoMode)
+    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext, isIsoMode) // NOSONAR -- required to catch runtime promise rejection
 
     histTimerEnd({ success: true })
     return h.response().code(200)

@@ -33,6 +33,11 @@ const { Enum: Enums, Util: { Headers: { makeAcceptContentTypeHeader } } } = requ
 const Config = require('../lib/config')
 const uriRegex = /(?:^.*)(\/(transfers|fxTransfers)(\/.*)*)$/
 
+const deleteHeaderCaseInsensitive = (headers, name) => {
+  const key = getHeaderCaseInsensitiveKey(headers, name)
+  if (key) delete headers[key]
+}
+
 /**
  * @function createErrorCallbackHeaders
  * @description It returns the FSPIOP headers for callbacks
@@ -47,12 +52,9 @@ const createCallbackHeaders = (params, fromSwitch = false) => {
   const uri = Mustache.render(params.endpointTemplate, { ID: params.transferId || null, fsp: params.dfspId || null })
   callbackHeaders[Enums.Http.Headers.FSPIOP.URI] = uriRegex.exec(uri)[1]
   if (fromSwitch) {
-    const fspIOPSourceKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SOURCE)
-    if (fspIOPSourceKey) delete callbackHeaders[fspIOPSourceKey]
-    const fspIOPDestinationKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
-    if (fspIOPDestinationKey) delete callbackHeaders[fspIOPDestinationKey]
-    const fspIOPSingatureKey = getHeaderCaseInsensitiveKey(callbackHeaders, Enums.Http.Headers.FSPIOP.SIGNATURE)
-    if (fspIOPSingatureKey) delete callbackHeaders[fspIOPSingatureKey]
+    deleteHeaderCaseInsensitive(callbackHeaders, Enums.Http.Headers.FSPIOP.SOURCE)
+    deleteHeaderCaseInsensitive(callbackHeaders, Enums.Http.Headers.FSPIOP.DESTINATION)
+    deleteHeaderCaseInsensitive(callbackHeaders, Enums.Http.Headers.FSPIOP.SIGNATURE)
     callbackHeaders[Enums.Http.Headers.FSPIOP.SOURCE] = Config.HUB_NAME
     callbackHeaders[Enums.Http.Headers.FSPIOP.DESTINATION] = getHeaderCaseInsensitiveValue(params.headers, Enums.Http.Headers.FSPIOP.DESTINATION)
     if (Config.IS_ISO_MODE) {

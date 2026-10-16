@@ -82,9 +82,8 @@ const getEndpoint = async ({
     await getEndpointSpan?.finish()
     histTimerEnd({ success: true, endpointType, fsp })
 
-    return proxy
-      ? typeof url === 'string' ? { url } : url
-      : typeof url === 'string' ? url : url?.url
+    if (proxy) return typeof url === 'string' ? { url } : url
+    return typeof url === 'string' ? url : url?.url
   } catch (err) {
     log.warn('error in participant.getEndpoint: ', err)
     const fspiopError = ErrorHandler.Factory.reformatFSPIOPError(err)

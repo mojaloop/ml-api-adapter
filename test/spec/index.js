@@ -1,7 +1,7 @@
 'use strict'
 
-const Path = require('path')
-const ChildProcess = require('child_process')
+const Path = require('node:path')
+const ChildProcess = require('node:child_process')
 const Base = require('../functional/base')
 
 process.env.TEST_ILP_PREFIX = 'us.usd.red.'

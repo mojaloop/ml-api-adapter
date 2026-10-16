@@ -26,14 +26,14 @@
 
 'use strict'
 
-const Test = require('tapes')(require('tape'))
+const test = require('tapes')(require('tape'))
 const Sinon = require('sinon')
 const MetricsPlugin = require('@mojaloop/central-services-metrics').plugin
 const Logger = require('@mojaloop/central-services-logger')
 const Config = require('../../../src/lib/config')
 const Setup = require('../../../src/shared/setup')
 
-Test('Api index', indexTest => {
+test('Api index', indexTest => { // NOSONAR -- Tape suite; assertions execute in the nested subtests.
   let sandbox
 
   indexTest.beforeEach(test => {

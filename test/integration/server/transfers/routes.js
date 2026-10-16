@@ -58,7 +58,7 @@ module.exports = [{
     description: 'test endpoint'
   }
 },
-...['dfsp1', 'dfsp2', 'dfsp3', 'dfsp4'].map(fsp =>
+...['dfsp1', 'dfsp2', 'dfsp3', 'dfsp4'].flatMap(fsp =>
   [{
     method: 'POST',
     path: `/${fsp}/transfers`,
@@ -151,7 +151,7 @@ module.exports = [{
         failAction: 'error'
       }
     }
-  }]).flat(),
+  }]),
 {
   method: 'PUT',
   path: '/fxp1/fxTransfers/{transferId}/error',
