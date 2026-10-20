@@ -1,11 +1,9 @@
 {
   "reject": [
     "get-port",
-    "why-get-port: v6+ is ESM-only and this suite is CommonJS (carried over from the yaml config)",
+    "why-get-port: v6+ is ESM-only; node can require() it but the nyc coverage run (append-transform require hook) cannot load it, so test:coverage-check fails (re-tested 2026-10-20)",
     "commander",
-    "why-commander: newer majors ship an ESM entry that this CommonJS suite cannot require (carried over from the yaml config)",
-    "@mojaloop/event-sdk",
-    "why-event-sdk: newer releases require an ESM module this suite cannot load (carried over from the yaml config)",
+    "why-commander: 15.0.0 is ESM-only and the nyc coverage run cannot load it (Cannot use import statement outside a module), dropping src/shared/setup.js below the 90% threshold (re-tested 2026-10-20)",
     "@types/node",
     "why-types-node: its major must match the Node runtime major in .nvmrc (24); a higher major only weakens type checking; bump together with the runtime"
   ]

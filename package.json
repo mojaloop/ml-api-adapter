@@ -78,9 +78,9 @@
     "@mojaloop/central-services-health": "15.2.4",
     "@mojaloop/central-services-logger": "11.10.7",
     "@mojaloop/central-services-metrics": "12.8.9",
-    "@mojaloop/central-services-shared": "18.39.4",
+    "@mojaloop/central-services-shared": "19.0.0",
     "@mojaloop/central-services-stream": "11.12.0",
-    "@mojaloop/event-sdk": "14.8.4",
+    "@mojaloop/event-sdk": "14.8.6",
     "@mojaloop/ml-schema-transformer-lib": "2.10.2",
     "@mojaloop/sdk-standard-components": "19.19.3",
     "@now-ims/hapi-now-auth": "2.1.0",
@@ -156,7 +156,8 @@
     },
     "linkify-it": "5.0.2",
     "jws@3": "3.2.3",
-    "openapi-backend": "5.21.0"
+    "openapi-backend": "5.21.0",
+    "serialize-error": "8.1.0"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.11",
