@@ -133,7 +133,7 @@
     "immutable": "5.1.9",
     "browserslist": "4.28.9",
     "mysql2": "3.24.6",
-    "markdown-it": "14.3.2",
+    "markdown-it": "14.3.3",
     "handlebars": "4.7.10",
     "jsonwebtoken": "9.0.3",
     "cross-spawn": "7.0.6",
