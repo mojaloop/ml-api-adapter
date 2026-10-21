@@ -31,7 +31,7 @@
 const Mustache = require('mustache')
 const { Enum: Enums, Util: { Headers: { makeAcceptContentTypeHeader } } } = require('@mojaloop/central-services-shared')
 const Config = require('../lib/config')
-const uriRegex = /(?:^.*)(\/(transfers|fxTransfers)(\/.*)*)$/
+const uriRegex = /^.*(\/(?:transfers|fxTransfers)(?:\/.*)?)$/
 
 const deleteHeaderCaseInsensitive = (headers, name) => {
   const key = getHeaderCaseInsensitiveKey(headers, name)
