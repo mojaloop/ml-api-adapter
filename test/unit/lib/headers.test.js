@@ -21,6 +21,7 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Keene Ng <keene.ng.2024@smu.edu.sg>
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  --------------
