@@ -21,6 +21,7 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Keene Ng <keene.ng.2024@smu.edu.sg>
 
  * Steven Oderayi <steven.oderayi@modusbox.com>
 
@@ -31,7 +32,7 @@
 const Mustache = require('mustache')
 const { Enum: Enums, Util: { Headers: { makeAcceptContentTypeHeader } } } = require('@mojaloop/central-services-shared')
 const Config = require('../lib/config')
-const uriRegex = /(?:^.*)(\/(transfers|fxTransfers)(\/.*)*)$/
+const uriRegex = /^.*(\/(?:transfers|fxTransfers)(?:\/.*)?)$/
 
 const deleteHeaderCaseInsensitive = (headers, name) => {
   const key = getHeaderCaseInsensitiveKey(headers, name)

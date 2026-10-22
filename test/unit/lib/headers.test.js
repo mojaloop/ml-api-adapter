@@ -21,6 +21,7 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Keene Ng <keene.ng.2024@smu.edu.sg>
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  --------------
@@ -198,6 +199,26 @@ test('Headers tests', headersTest => { // NOSONAR -- Tape suite; assertions exec
       const result = HeadersProxy.createCallbackHeaders(params, fromSwitch)
 
       test.deepEqual(result, expected)
+      test.end()
+    })
+
+    createCallbackHeadersTest.test('extract fspiop-uri without catastrophic backtracking for a URI that does not match', test => {
+      const params = {
+        httpMethod: 'PUT',
+        headers: {
+          'fspiop-source': 'payer',
+          'fspiop-destination': 'payee'
+        }
+      }
+      Mustache.render = sandbox.stub().returns('http://fspiop-uri/transfers' + '/'.repeat(30) + '\n')
+
+      // Measured locally: fixed regex 0 ms, original regex 5.5–7 s for this input.
+      // 1000 ms leaves wide margins on both sides.
+      const start = Date.now()
+      try { Headers.createCallbackHeaders(params) } catch (e) { /* non-matching URI: only the timing matters here */ }
+      const elapsed = Date.now() - start
+
+      test.ok(elapsed < 1000, `took ${elapsed} ms`)
       test.end()
     })
 
