@@ -71,8 +71,8 @@
     "@hapi/basic": "7.0.2",
     "@hapi/boom": "10.0.1",
     "@hapi/good": "9.0.1",
-    "@hapi/hapi": "21.4.10",
-    "@hapi/inert": "7.1.2",
+    "@hapi/hapi": "21.4.11",
+    "@hapi/inert": "7.1.3",
     "@hapi/vision": "7.0.3",
     "@mojaloop/central-services-error-handling": "13.2.1",
     "@mojaloop/central-services-health": "15.2.4",
@@ -100,6 +100,7 @@
     "@hapi/wreck": "18.1.2",
     "@grpc/grpc-js": "1.14.5",
     "axios": "$axios",
+    "@hapi/hapi": "$@hapi/hapi",
     "@mojaloop/central-services-shared": {
       ".": "$@mojaloop/central-services-shared",
       "ajv": "8.20.0",
