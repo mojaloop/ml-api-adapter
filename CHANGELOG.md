@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.13.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.0...v16.13.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* replace inefficient regular expression in callback headers ([#690](https://github.com/mojaloop/ml-api-adapter/issues/690)) ([ad97602](https://github.com/mojaloop/ml-api-adapter/commit/ad97602b5628ef461debca7a9edda6dd8569481b))
+
+
+### Chore
+
+* **deps:** update 2 dependencies + orb, docker ([#680](https://github.com/mojaloop/ml-api-adapter/issues/680)) ([11a1932](https://github.com/mojaloop/ml-api-adapter/commit/11a19325f0b082c278cab55f7f9b3b99f16c53e3))
+
 ## [16.13.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.12.3...v16.13.0) (2026-10-15)
 
 
