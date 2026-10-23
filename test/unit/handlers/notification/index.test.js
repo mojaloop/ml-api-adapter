@@ -4201,6 +4201,42 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await processMessageTest.test('preserve a reserve payload that has no fulfilment', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.IS_ISO_MODE = false
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const payload = { transferState: 'RESERVED' }
+      const msg = { value: Fixtures.createMessageProtocol('reserve', 'reserve', payload) }
+      mockPayloadCache.getPayload.returns(Promise.resolve(payload))
+      await NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+      test.equal(await NotificationProxy.processMessage(msg, span), true)
+      test.deepEqual(JSON.parse(Callback.sendRequest.secondCall.args[0].payload), payload)
+      test.end()
+    })
+
+    await processMessageTest.test('send only the destination callback for FX_RESERVE even when sender confirmations are enabled', async test => {
+      const ConfigStub = Util.clone(Config)
+      ConfigStub.SEND_TRANSFER_CONFIRMATION_TO_PAYEE = true
+      const NotificationProxy = Proxyquire(`${src}/handlers/notification`, {
+        '../../lib/config': ConfigStub
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol('fx-reserve', 'fx-reserve', {
+          commitRequestId: Uuid(),
+          transferState: 'RESERVED'
+        })
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      await NotificationProxy.startConsumer({ payloadCache: mockPayloadCache })
+      const result = await NotificationProxy.processMessage(msg, span)
+      test.equal(result, true)
+      test.ok(Callback.sendRequest.calledOnce, 'does not send a second callback to the sender')
+      test.equal(Callback.sendRequest.firstCall.args[0].destination, msg.value.to)
+      test.end()
+    })
+
     await processMessageTest.test('process a get message with no payload (GET request) received from kafka and forward to proxy', async test => {
       const payeeFsp = 'dfsp2'
       const payerFsp = 'dfsp1-proxied'
@@ -4620,6 +4656,35 @@ Test('Notification Service tests', async notificationTest => {
   })
 
   await notificationTest.test('consumeMessage should', async consumeMessageTest => {
+    await consumeMessageTest.test('wait for each batch callback before processing the next message', async test => {
+      const events = []
+      let releaseFirst
+      const firstDelivery = new Promise(resolve => { releaseFirst = resolve })
+      let deliveries = 0
+      Callback.sendRequest.callsFake(async () => {
+        const delivery = ++deliveries
+        events.push(`start-${delivery}`)
+        if (delivery === 1) await firstDelivery
+        events.push(`finish-${delivery}`)
+        return true
+      })
+      const msg = {
+        value: Fixtures.createMessageProtocol('prepare', 'prepare', { transferId: Uuid() })
+      }
+      const secondMsg = {
+        value: Fixtures.createMessageProtocol('prepare', 'prepare', { transferId: Uuid() })
+      }
+      mockPayloadCache.getPayload.returns(Promise.resolve(msg.value.content.payload))
+      await Notification.startConsumer({ payloadCache: mockPayloadCache })
+      const pending = Notification.consumeMessage(null, [msg, secondMsg])
+      await new Promise(resolve => setImmediate(resolve))
+      test.deepEqual(events, ['start-1'], 'second callback has not started while the first is pending')
+      releaseFirst()
+      test.equal(await pending, true)
+      test.deepEqual(events, ['start-1', 'finish-1', 'start-2', 'finish-2'])
+      test.end()
+    })
+
     await consumeMessageTest.test('process the message', async test => {
       const msg = {
         value: {
