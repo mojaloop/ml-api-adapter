@@ -52,7 +52,8 @@ const { logger } = require('../shared/logger')
 /* istanbul ignore next */
 process.on('uncaughtExceptionMonitor', (err) => {
   logger.error('uncaughtExceptionMonitor error: ', err)
-  // todo: add shutdown logic
+  // Exit immediately after a fatal exception; asynchronous cleanup cannot be
+  // relied on once the process has reached this state.
   process.exit(1)
 })
 /* istanbul ignore next */
@@ -151,7 +152,6 @@ const createServer = async (port, api, routes, modules) => {
  * @returns {Promise<boolean>} Returns true if Handlers were registered
  */
 const createHandlers = async (handlers) => {
-  let handlerIndex
   const registeredHandlers = {
     connection: {},
     register: {},
@@ -161,8 +161,9 @@ const createHandlers = async (handlers) => {
     handlers
   }
 
-  for (handlerIndex in handlers) {
-    const handler = handlers[handlerIndex]
+  // Registration shares the endpoint cache and must complete in input order.
+  await handlers.reduce(async (previousRegistration, handler) => {
+    await previousRegistration
     if (handler.enabled) {
       logger.debug(`Handler Setup - Registering ${JSON.stringify(handler)}!`)
       if (handler.type === Enums.Kafka.Topics.NOTIFICATION) {
@@ -176,7 +177,7 @@ const createHandlers = async (handlers) => {
         throw fspiopError
       }
     }
-  }
+  }, Promise.resolve())
   logger.verbose('createHandlers is done')
   return registeredHandlers
 }
