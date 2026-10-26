@@ -5310,6 +5310,40 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await isHealthyTest.test('returns false without waiting when the payload cache ping hangs', async test => {
+      // Arrange - healthCheck never settles, as happens when the ping is queued
+      // against an unreachable Redis
+      PayloadCache.prototype.healthCheck.returns(new Promise(() => {}))
+      const payloadCache = new PayloadCache({ type: 'redis', host: 'localhost', port: 6379 })
+      await Notification.startConsumer({ payloadCache })
+      sandbox.stub(Consumer.prototype, 'isHealthy').resolves(true)
+
+      // Act
+      const started = Date.now()
+      const result = await Notification.isHealthy()
+      const elapsed = Date.now() - started
+
+      // Assert
+      test.equal(result, false, 'isHealthy should return false when the ping does not answer')
+      test.ok(elapsed < 5000, `should give up well before a probe timeout (took ${elapsed}ms)`)
+      test.end()
+    })
+
+    await isHealthyTest.test('returns false when the payload cache health check throws', async test => {
+      // Arrange
+      PayloadCache.prototype.healthCheck.rejects(new Error('redis unreachable'))
+      const payloadCache = new PayloadCache({ type: 'redis', host: 'localhost', port: 6379 })
+      await Notification.startConsumer({ payloadCache })
+      sandbox.stub(Consumer.prototype, 'isHealthy').resolves(true)
+
+      // Act
+      const result = await Notification.isHealthy()
+
+      // Assert
+      test.equal(result, false, 'isHealthy should return false rather than throwing')
+      test.end()
+    })
+
     await isHealthyTest.end()
   })
 
