@@ -21,6 +21,7 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Yong Zhuo Yu <yongzhuoyu@gmail.com>
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
@@ -1097,12 +1098,14 @@ const processMessage = async (msg, span) => {
   * @returns {boolean}
   */
 const isConnected = () => {
-  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected() : true)
+  // PayloadCache extends RedisCache, where isConnected is a getter, not a method
+  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected : true)
 }
 
-/* istanbul ignore next */
 const isHealthy = async () => {
-  return (await notificationConsumer.isHealthy()) && (PayloadCache ? PayloadCache.isConnected() : true)
+  // healthCheck() pings Redis, so the health probe reflects reachability rather
+  // than just the client's connection state
+  return (await notificationConsumer.isHealthy()) && (PayloadCache ? await PayloadCache.healthCheck() : true)
 }
 
 /**

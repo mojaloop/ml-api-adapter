@@ -84,7 +84,9 @@ Test('Notification Service tests', async notificationTest => {
     sandbox.stub(PayloadCache.prototype, 'disconnect').returns(Promise.resolve(true))
     sandbox.stub(PayloadCache.prototype, 'getPayload').returns(Promise.resolve(true))
     sandbox.stub(PayloadCache.prototype, 'setPayload').returns(Promise.resolve(true))
-    sandbox.stub(PayloadCache.prototype, 'isConnected').returns(true)
+    // isConnected is a getter on RedisCache, not a method
+    sandbox.stub(PayloadCache.prototype, 'isConnected').get(() => true)
+    sandbox.stub(PayloadCache.prototype, 'healthCheck').returns(Promise.resolve(true))
 
     // sandbox.stub(Consumer.prototype, 'consume').callsArgAsync(0)
     sandbox.stub(Consumer.prototype, 'consume').returns(Promise.resolve(true)) // .callsArgAsync(0)
@@ -5261,7 +5263,54 @@ Test('Notification Service tests', async notificationTest => {
       test.end()
     })
 
+    await isConnectedTest.test('reads isConnected as a getter on a real PayloadCache', async test => {
+      // Arrange - a real PayloadCache (extends RedisCache), not the mock, so the
+      // getter-vs-method contract is exercised
+      const payloadCache = new PayloadCache({ type: 'redis', host: 'localhost', port: 6379 })
+      await Notification.startConsumer({ payloadCache })
+      sandbox.stub(Consumer.prototype, 'isConnected').returns(true)
+
+      // Act
+      const result = Notification.isConnected()
+
+      // Assert
+      test.equal(result, true, 'isConnected should return true without throwing')
+      test.end()
+    })
+
     await isConnectedTest.end()
+  })
+
+  await notificationTest.test('isHealthy', async isHealthyTest => {
+    await isHealthyTest.test('returns true when the consumer and the payload cache are healthy', async test => {
+      // Arrange
+      await Notification.startConsumer({ payloadCache: mockPayloadCache })
+      sandbox.stub(Consumer.prototype, 'isHealthy').resolves(true)
+
+      // Act
+      const result = await Notification.isHealthy()
+
+      // Assert
+      test.equal(result, true, 'isHealthy should return true')
+      test.end()
+    })
+
+    await isHealthyTest.test('returns false when the payload cache health check fails', async test => {
+      // Arrange - healthCheck reports the cache as unreachable
+      PayloadCache.prototype.healthCheck.resolves(false)
+      const payloadCache = new PayloadCache({ type: 'redis', host: 'localhost', port: 6379 })
+      await Notification.startConsumer({ payloadCache })
+      sandbox.stub(Consumer.prototype, 'isHealthy').resolves(true)
+
+      // Act
+      const result = await Notification.isHealthy()
+
+      // Assert
+      test.equal(result, false, 'isHealthy should return false when the cache is unhealthy')
+      test.end()
+    })
+
+    await isHealthyTest.end()
   })
 
   await notificationTest.test('disconnect', async disconnectTest => {
