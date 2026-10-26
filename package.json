@@ -143,7 +143,7 @@
     "js-yaml": "5.4.3",
     "lodash": "4.18.1",
     "lodash-es": "4.18.1",
-    "fast-uri": "3.1.8",
+    "fast-uri": "3.1.9",
     "qs": "6.16.0",
     "minimatch@3.0.5": "3.1.5",
     "yaml": "2.9.1",
@@ -158,7 +158,8 @@
     "linkify-it": "5.0.2",
     "jws@3": "3.2.3",
     "openapi-backend": "5.21.0",
-    "serialize-error": "8.1.0"
+    "serialize-error": "8.1.0",
+    "follow-redirects": "1.16.1"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.11",
