@@ -21,6 +21,7 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Yong Zhuo Yu <yongzhuoyu@gmail.com>
 
  * Georgi Georgiev <georgi.georgiev@modusbox.com>
  * Shashikant Hirugade <shashikant.hirugade@modusbox.com>
@@ -65,6 +66,11 @@ let PayloadCache
 
 const hubNameRegex = HeaderValidation.getHubNameRegex(Config.HUB_NAME)
 const API_TYPE = Config.API_TYPE
+
+// Upper bound for the payload cache health check. RedisCache.healthCheck()
+// retries the ping and, while Redis is unreachable, the command can sit in the
+// client's offline queue, so bound it to keep readiness/liveness probes fast.
+const PAYLOAD_CACHE_HEALTH_CHECK_TIMEOUT_MS = 1000
 
 const recordTxMetrics = (timeApiPrepare, timeApiFulfil, success) => {
   const endTime = Date.now()
@@ -1097,12 +1103,40 @@ const processMessage = async (msg, span) => {
   * @returns {boolean}
   */
 const isConnected = () => {
-  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected() : true)
+  // PayloadCache extends RedisCache, where isConnected is a getter, not a method
+  return notificationConsumer.isConnected() && (PayloadCache ? PayloadCache.isConnected : true)
 }
 
-/* istanbul ignore next */
+/**
+  * @function isPayloadCacheHealthy
+  *
+  * @description Pings the payload cache, resolving false if it does not answer
+  * within PAYLOAD_CACHE_HEALTH_CHECK_TIMEOUT_MS so that probes fail fast rather
+  * than waiting on a retried command queued against an unreachable Redis.
+  *
+  * @returns {Promise<boolean>}
+  */
+const isPayloadCacheHealthy = async () => {
+  let timer
+  try {
+    return await Promise.race([
+      PayloadCache.healthCheck(),
+      new Promise(resolve => {
+        timer = setTimeout(() => resolve(false), PAYLOAD_CACHE_HEALTH_CHECK_TIMEOUT_MS)
+      })
+    ])
+  } catch (err) {
+    logger.warn('payload cache health check failed: ', err)
+    return false
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 const isHealthy = async () => {
-  return (await notificationConsumer.isHealthy()) && (PayloadCache ? PayloadCache.isConnected() : true)
+  // healthCheck() pings Redis, so the health probe reflects reachability rather
+  // than just the client's connection state
+  return (await notificationConsumer.isHealthy()) && (PayloadCache ? await isPayloadCacheHealthy() : true)
 }
 
 /**

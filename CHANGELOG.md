@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.13.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.1...v16.13.2) (2026-10-26)
+
+
+### Bug Fixes
+
+* **notification:** read PayloadCache.isConnected as a getter ([#692](https://github.com/mojaloop/ml-api-adapter/issues/692)) ([afe6151](https://github.com/mojaloop/ml-api-adapter/commit/afe615171cc07cde741556f00928e54d51a7f6eb))
+
 ### [16.13.1](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.0...v16.13.1) (2026-10-22)
 
 

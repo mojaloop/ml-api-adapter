@@ -66,12 +66,15 @@ const mockFxFulfilPayload = ({
   completedTimestamp
 })
 
+// Mirrors the RedisCache contract that PayloadCache extends: isConnected is a
+// getter, not a method, and healthCheck() pings the server
 const mockPayloadCache = {
   connect: Sinon.stub(),
   disconnect: Sinon.stub(),
   getPayload: Sinon.stub(),
   setPayload: Sinon.stub(),
-  isConnected: Sinon.stub().returns(true)
+  healthCheck: Sinon.stub().resolves(true),
+  get isConnected () { return true }
 }
 
 module.exports = {
