@@ -5,6 +5,8 @@
     "commander",
     "why-commander: 15.0.0 is ESM-only and the nyc coverage run cannot load it (Cannot use import statement outside a module), dropping src/shared/setup.js below the 90% threshold (re-tested 2026-10-20)",
     "@types/node",
-    "why-types-node: its major must match the Node runtime major in .nvmrc (24); a higher major only weakens type checking; bump together with the runtime"
+    "why-types-node: its major must match the Node runtime major in .nvmrc (24); a higher major only weakens type checking; bump together with the runtime",
+    "@mojaloop/central-services-logger",
+    "why-central-services-logger: @mojaloop/central-services-shared 19.0.0 (latest) declares a central-services-logger 11.x.x peer, so npm ci fails with ERESOLVE on logger 12.0.0; bump once a shared release accepts logger 12 (2026-11-20)"
   ]
 }
