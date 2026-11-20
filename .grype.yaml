@@ -180,11 +180,73 @@ ignore:
     reason: >-
       Base image npm package: undici 6.27.0 (bundled in npm) - base image node:24.21.0-alpine3.24, no fix in image as of
       2026-10-16 (low severity)
-  - vulnerability: GHSA-vfj7-8cjw-p6xm
+  - vulnerability: GHSA-xjj6-f33q-929c
     include-aliases: true
     reason: >-
-      braces 3.0.3 stack-exhaustion ReDoS - dev-only transitive via @mojaloop/api-snippets > ts-auto-mock > micromatch;
-      no patched release of braces 3.x exists as of 2026-10-16; also allowlisted in audit-ci.jsonc
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-10-28 (high severity)
+  - vulnerability: GHSA-rxp7-6hxx-x8q5
+    include-aliases: true
+    reason: >-
+      Base image npm package: ip-address - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-10-28 (moderate severity)
+  - vulnerability: GHSA-4qv8-2p9j-2685
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-10-28 (moderate severity)
+  - vulnerability: GHSA-9fm3-97px-rjf6
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-10-28 (moderate severity)
+  - vulnerability: GHSA-qrxm-fqhp-jwvm
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-10-28 (high severity)
+  - vulnerability: GHSA-2m5v-pch6-74hx
+    include-aliases: true
+    reason: >-
+      Base image npm package: undici - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-10-28 (high severity)
+  - vulnerability: CVE-2026-107891
+    include-aliases: true
+    reason: 'Alpine base image package (apk): musl - no npm fix available as of 2026-10-28 (info severity)'
+  - vulnerability: CVE-2026-95692
+    include-aliases: true
+    reason: 'Alpine base image package (apk): libcrypto3 - no npm fix available as of 2026-11-20 (high severity)'
+  - vulnerability: CVE-2026-4738
+    include-aliases: true
+    reason: 'Alpine base image package (apk): zlib - no npm fix available as of 2026-11-20 (critical severity)'
+  - vulnerability: CVE-2026-107496
+    include-aliases: true
+    reason: 'Alpine base image package (apk): libcrypto3 - no npm fix available as of 2026-11-20 (high severity)'
+  - vulnerability: CVE-2026-95691
+    include-aliases: true
+    reason: 'Alpine base image package (apk): libcrypto3 - no npm fix available as of 2026-11-20 (high severity)'
+  - vulnerability: CVE-2026-88823
+    include-aliases: true
+    reason: 'Alpine base image package (apk): libcrypto3 - no npm fix available as of 2026-11-20 (high severity)'
+  - vulnerability: GHSA-3g3m-2fjr-6pw4
+    include-aliases: true
+    reason: >-
+      Base image npm package: glob - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-11-20 (moderate severity)
+  - vulnerability: GHSA-g3hv-75wg-m249
+    include-aliases: true
+    reason: >-
+      Base image npm package: minimatch - bundled in Node.js base image, not fixable via application dependencies as of
+      2026-11-20 (moderate severity)
+  - vulnerability: CVE-2026-88822
+    include-aliases: true
+    reason: 'Alpine base image package (apk): libcrypto3 - no npm fix available as of 2026-11-20 (moderate severity)'
+  - vulnerability: GHSA-mrwp-f3q8-3g9p
+    include-aliases: true
+    reason: 'Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-11-20'
+  - vulnerability: GHSA-4528-x5fx-h6hg
+    include-aliases: true
+    reason: 'Unfixable npm transitive vulnerability: unknown (unknown severity) as of 2026-11-20'
 output:
   - table
   - json
