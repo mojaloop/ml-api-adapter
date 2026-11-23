@@ -114,7 +114,7 @@
       "@mojaloop/central-services-shared": {
         ".": "$@mojaloop/central-services-shared",
         "ajv": "8.18.0",
-        "joi": "18.2.9",
+        "joi": "18.3.1",
         "@mojaloop/inter-scheme-proxy-cache-lib": {
           "ajv": "8.18.0"
         }
@@ -159,7 +159,9 @@
     "jws@3": "3.2.3",
     "openapi-backend": "5.21.0",
     "serialize-error": "8.1.0",
-    "follow-redirects": "1.16.1"
+    "follow-redirects": "1.16.2",
+    "joi@17": "17.13.9",
+    "joi@18": "18.3.1"
   },
   "devDependencies": {
     "@mojaloop/database-lib": "^11.3.11",
