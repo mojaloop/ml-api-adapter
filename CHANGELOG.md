@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.13.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.2...v16.13.3) (2026-11-24)
+
+
+### Chore
+
+* **deps:** pin follow-redirects at 1.16.1 and quote the Dockerfile NODE_VERSION argument ([#691](https://github.com/mojaloop/ml-api-adapter/issues/691)) ([92f5dde](https://github.com/mojaloop/ml-api-adapter/commit/92f5dde123f08b0e6bcdde6b4de441a80bf4f072))
+
 ### [16.13.2](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.1...v16.13.2) (2026-10-26)
 
 
