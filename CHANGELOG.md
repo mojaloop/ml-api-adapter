@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [16.13.4](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.3...v16.13.4) (2026-11-26)
+
+
+### Bug Fixes
+
+* **iso20022:** quote NbOfTxs examples as strings ([#694](https://github.com/mojaloop/ml-api-adapter/issues/694)) ([1d1eba6](https://github.com/mojaloop/ml-api-adapter/commit/1d1eba65172a7423b5da80d55b24e9626f39ffee)), closes [#693](https://github.com/mojaloop/ml-api-adapter/issues/693)
+
 ### [16.13.3](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.2...v16.13.3) (2026-11-24)
 
 
