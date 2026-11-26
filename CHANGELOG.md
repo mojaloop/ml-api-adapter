@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [16.14.0](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.4...v16.14.0) (2026-11-26)
+
+
+### Features
+
+* adding sbom with current version to trigger SBOM generation … ([#695](https://github.com/mojaloop/ml-api-adapter/issues/695)) ([6f31244](https://github.com/mojaloop/ml-api-adapter/commit/6f312447f241592cc3ff5e954220fc2a965d9804))
+
 ### [16.13.4](https://github.com/mojaloop/ml-api-adapter/compare/v16.13.3...v16.13.4) (2026-11-26)
 
 
