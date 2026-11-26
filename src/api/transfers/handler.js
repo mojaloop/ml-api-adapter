@@ -305,7 +305,7 @@ const fulfilTransferError = async function (context, request, h) {
       params
     }, EventSdk.AuditEventAction.start)
 
-    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, kafkaMessageContext, isIsoMode) // NOSONAR -- required to catch runtime promise rejection
+    await TransferService.transferError(headers, dataUri, payload, params, span, isFx, { context: kafkaMessageContext, isIsoMode }) // NOSONAR -- required to catch runtime promise rejection
 
     histTimerEnd({ success: true })
     return h.response().code(200)

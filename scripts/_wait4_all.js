@@ -17,7 +17,7 @@ const expectedContainers = [
   ML_API_CONTAINER
 ]
 
-let retries = 70
+const retries = 70
 const waitTimeMs = 10_000
 
 async function main () {
@@ -27,25 +27,23 @@ async function main () {
     waitingMap[serviceName] = 'starting'
   })
 
-  let allHealthy = await areAllServicesHealthy(waitingMap)
-
-  while (!allHealthy && retries > 0) {
-    await sleep(waitTimeMs)
-    allHealthy = await areAllServicesHealthy(waitingMap)
-
-    if (retries === 0) {
-      throw new Error(`Out of retries waiting for service health.\nStill waiting for: ${getServicesForStatus(waitingMap, 'starting')}`)
-    }
-
-    console.log('Still waiting for service health. Retries', retries)
-    console.log(`${getServicesForStatus(waitingMap, 'healthy').length} services are healthy. Expected: ${expectedContainers.length}`)
-    console.log('Waiting for', getServicesForStatus(waitingMap, 'starting'))
-
-    retries--
-  }
+  await waitForHealthyServices(waitingMap, retries)
 
   console.log('All services are healthy. Time to get to work!')
   process.exit(0)
+}
+
+async function waitForHealthyServices (waitingMap, remainingRetries) {
+  if (await areAllServicesHealthy(waitingMap)) return
+  if (remainingRetries === 0) {
+    throw new Error(`Out of retries waiting for service health.\nStill waiting for: ${getServicesForStatus(waitingMap, 'starting')}`)
+  }
+
+  console.log('Still waiting for service health. Retries', remainingRetries)
+  console.log(`${getServicesForStatus(waitingMap, 'healthy').length} services are healthy. Expected: ${expectedContainers.length}`)
+  console.log('Waiting for', getServicesForStatus(waitingMap, 'starting'))
+  await sleep(waitTimeMs)
+  return waitForHealthyServices(waitingMap, remainingRetries - 1)
 }
 
 /**

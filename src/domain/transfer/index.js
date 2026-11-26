@@ -55,7 +55,8 @@ const { Action } = generalEnum.Events.Event
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const prepare = async (headers, dataUri, payload, span, context = {}, isIsoMode) => {
+const prepare = async (headers, dataUri, payload, span, context, isIsoMode) => {
+  context = context === undefined ? {} : context
   const logPrefix = `domain::${payload.transferId ? 'transfer' : 'fxTransfer'}::prepare`
   logger.debug(`${logPrefix}::start`, { headers, payload })
 
@@ -85,7 +86,8 @@ const prepare = async (headers, dataUri, payload, span, context = {}, isIsoMode)
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const fulfil = async (headers, dataUri, payload, params, span, context = {}, isIsoMode) => {
+const fulfil = async (headers, dataUri, payload, params, span, context, isIsoMode) => {
+  context = context === undefined ? {} : context
   const logPrefix = `domain::${payload.transferState ? 'transfer' : 'fxTransfer'}::fulfil`
   logger.debug(`${logPrefix}::start(${params.id || params.ID})`, { headers, params, payload })
 
@@ -141,10 +143,14 @@ const getTransferById = async (headers, params, span, isFx = false) => {
 * @param {object} params - the http request uri parameters
 * @param {object} span - the parent event span
 * @param {boolean} isFx - is fxTransfer
+* @param {object} options - callback context and ISO mode options
+* @param {object} [options.context={}] - Kafka message context
+* @param {boolean} [options.isIsoMode] - whether the incoming payload uses ISO format
 *
 * @returns {boolean} Returns true on successful publishing of message to kafka, throws error on failures
 */
-const transferError = async (headers, dataUri, payload, params, span, isFx = false, context = {}, isIsoMode) => {
+const transferError = async (headers, dataUri, payload, params, span, isFx, { context = {}, isIsoMode } = {}) => {
+  isFx = isFx === undefined ? false : isFx
   const logPrefix = `domain::${isFx ? 'fx_' : ''}transfer::abort`
   logger.debug(`${logPrefix}::start(${params.id || params.ID})`, { headers, params, payload })
 

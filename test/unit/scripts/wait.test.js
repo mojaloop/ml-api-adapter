@@ -104,3 +104,28 @@ test('wait4_all reports unhealthy containers and exits unsuccessfully', async te
   test.match(result.errors[0], /_wait4_all: Error: One or more services went to unhealthy/)
   test.end()
 })
+
+test('wait4_all fails after exhausting retries while services are still starting', async test => {
+  let inspections = 0
+  const result = await runScript(waitAll, {
+    execSync: () => {
+      inspections++
+      return Buffer.from('"starting"\n')
+    }
+  })
+  test.equal(inspections, 5 * 71, 'checks all five containers initially and after 70 waits')
+  test.deepEqual(result.exits, [1])
+  test.match(result.errors[0], /Out of retries waiting for service health/)
+  test.end()
+})
+
+test('wait4_all waits for starting services before reporting success', async test => {
+  let inspections = 0
+  const result = await runScript(waitAll, {
+    execSync: () => Buffer.from(++inspections <= 5 ? '"starting"\n' : '"healthy"\n')
+  })
+  test.equal(inspections, 10)
+  test.deepEqual(result.exits, [0])
+  test.deepEqual(result.errors, [])
+  test.end()
+})
